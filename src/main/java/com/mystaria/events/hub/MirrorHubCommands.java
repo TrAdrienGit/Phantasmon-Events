@@ -20,6 +20,7 @@ import com.mystaria.phantasmon.client.api.PhantasmonApi;
  * <li>{@code anchor <hub>}: its anchor where the player stands; on a multiplayer server it sends the blocks (one per
  * hub), in a single-player world it receives them (one per admin);</li>
  * <li>{@code resize <hub> <delta>}: the radius grows (or shrinks, negative) around the same centre;</li>
+ * <li>{@code debug <hub>}: shows or hides its limits (world border look), on this client;</li>
  * <li>{@code delete <hub>}: the hub and all its anchors.</li>
  * </ul>
  */
@@ -53,6 +54,10 @@ public final class MirrorHubCommands {
 															IntegerArgumentType.getInteger(context, "delta"));
 													return 1;
 												}))))
+								.then(ClientCommandManager.literal("debug").then(hubArgument().executes(context -> {
+									PhantasmonApi.hubs().adminToggleDebug(StringArgumentType.getString(context, "hub"));
+									return 1;
+								})))
 								.then(ClientCommandManager.literal("delete").then(hubArgument().executes(context -> {
 									PhantasmonApi.hubs().adminDeleteHub(StringArgumentType.getString(context, "hub"));
 									return 1;

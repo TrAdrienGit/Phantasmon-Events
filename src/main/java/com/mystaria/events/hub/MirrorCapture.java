@@ -97,15 +97,26 @@ public final class MirrorCapture {
 
 	/** The server set a block (ClientLevelMirrorMixin), {@code old} the one it replaces. */
 	public static void onBlock(BlockPos pos, BlockState old, BlockState state) {
-		if (old == state) {
-			return;
+		if (old != state) {
+			note(pos, MirrorTerrain.name(Minecraft.getInstance().level, pos, state));
 		}
+	}
+
+	/** The server sent a block entity's data (ClientPacketListenerMirrorMixin): a Templates block's look, a sign's text. */
+	public static void onBlockEntity(BlockPos pos) {
+		ClientLevel level = Minecraft.getInstance().level;
+		if (level != null) {
+			note(pos, MirrorTerrain.name(level, pos, level.getBlockState(pos)));
+		}
+	}
+
+	private static void note(BlockPos pos, String name) {
 		for (Source source : SOURCES.values()) {
 			int x = pos.getX() - source.zone.minX();
 			int z = pos.getZ() - source.zone.minZ();
 			int y = pos.getY() - MirrorTerrain.MIN_Y;
 			if (source.hashes != null && source.zone.inside(x, z) && y >= 0 && y < MirrorTerrain.HEIGHT) {
-				source.changes.add(List.of(x, y, z, MirrorTerrain.name(state)));
+				source.changes.add(List.of(x, y, z, name));
 				source.hashes.remove(MirrorTerrain.key(x / MirrorTerrain.TILE, z / MirrorTerrain.TILE));
 			}
 		}
@@ -187,7 +198,8 @@ public final class MirrorCapture {
 						ids[i] = -1;
 						continue;
 					}
-					String name = MirrorTerrain.name(level.getBlockState(pos.set(ox + x, MirrorTerrain.MIN_Y + y, oz + z)));
+					pos.set(ox + x, MirrorTerrain.MIN_Y + y, oz + z);
+					String name = MirrorTerrain.name(level, pos, level.getBlockState(pos));
 					ids[i] = palette.computeIfAbsent(name, key -> {
 						names.add(key);
 						return (short) (names.size() - 1);

@@ -3,7 +3,8 @@
 	"package": "com.mystaria.events.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"ClientLevelMirrorMixin"
+		"ClientLevelMirrorMixin",
+		"ClientPacketListenerMirrorMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

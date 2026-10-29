@@ -17,6 +17,10 @@ import java.util.zip.GZIPOutputStream;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -28,6 +32,10 @@ import com.mystaria.phantasmon.client.hub.HubAnchorDto;
  * anchor's centre block, the whole height of the world (y -64 to 319), never turned, cut into tiles of 16 × 16 blocks
  * from the zone's north-west corner. A tile travels as {@value #TILE_VOLUME} int16 ids into its own palette of block
  * state strings (order y, z, x; {@code -1} unknown or outside the zone), gzipped and in base64.
+ *
+ * <p>A block with a block entity whose data the server sends to the clients carries it, in the same string, as SNBT
+ * after the state ({@code templates:fence[...]{...}}): Templates' blocks keep in it the block they look like, signs
+ * their text.
  */
 final class MirrorTerrain {
 
@@ -79,7 +87,11 @@ final class MirrorTerrain {
 	}
 
 	private static final Map<BlockState, String> NAMES = new IdentityHashMap<>();
-	private static final Map<String, BlockState> STATES = new ConcurrentHashMap<>();
+	private static final Map<String, Block> BLOCKS = new ConcurrentHashMap<>();
+
+	/** A block to write: its state, and its block entity's data or null. */
+	record Block(BlockState state, CompoundTag nbt) {
+	}
 
 	private MirrorTerrain() {
 	}
@@ -108,18 +120,28 @@ final class MirrorTerrain {
 		return Base64.getEncoder().encodeToString(bytes.toByteArray());
 	}
 
-	/** Client thread. */
-	static String name(BlockState state) {
-		return NAMES.computeIfAbsent(state, BlockStateParser::serialize);
+	/** The block as a string, with its block entity's data if it has some. Client thread. */
+	static String name(Level level, BlockPos pos, BlockState state) {
+		String name = NAMES.computeIfAbsent(state, BlockStateParser::serialize);
+		if (!state.hasBlockEntity()) {
+			return name;
+		}
+		BlockEntity blockEntity = level.getBlockEntity(pos);
+		if (blockEntity == null) {
+			return name;
+		}
+		CompoundTag tag = blockEntity.saveWithoutMetadata(level.registryAccess());
+		return tag.isEmpty() ? name : name + tag;
 	}
 
-	/** The state of that string; air for a block of a mod this game lacks. */
-	static BlockState state(String name) {
-		return STATES.computeIfAbsent(name, key -> {
+	/** The block of that string; air for a block of a mod this game lacks. */
+	static Block block(String name) {
+		return BLOCKS.computeIfAbsent(name, key -> {
 			try {
-				return BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK.asLookup(), key, false).blockState();
+				BlockStateParser.BlockResult result = BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK.asLookup(), key, true);
+				return new Block(result.blockState(), result.nbt());
 			} catch (CommandSyntaxException ex) {
-				return Blocks.AIR.defaultBlockState();
+				return new Block(Blocks.AIR.defaultBlockState(), null);
 			}
 		});
 	}

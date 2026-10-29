@@ -17,6 +17,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 import com.mystaria.phantasmon.client.api.PhantasmonApi;
@@ -42,7 +43,7 @@ public final class MirrorCopy {
 	private static final long TARGET_MILLIS = 15;
 
 	/** Blocks to write: a fetched tile, or blocks the server changed. */
-	private record Write(List<BlockPos> positions, List<BlockState> states) {
+	private record Write(List<BlockPos> positions, List<MirrorTerrain.Block> states) {
 	}
 
 	private static final class Copy {
@@ -204,10 +205,10 @@ public final class MirrorCopy {
 							copy.toFetch.add(key); // older than blocks already written: fetched again
 							return;
 						}
-						List<BlockState> palette = new ArrayList<>();
-						tile.palette().forEach(name -> palette.add(MirrorTerrain.state(name)));
+						List<MirrorTerrain.Block> palette = new ArrayList<>();
+						tile.palette().forEach(name -> palette.add(MirrorTerrain.block(name)));
 						List<BlockPos> positions = new ArrayList<>();
-						List<BlockState> states = new ArrayList<>();
+						List<MirrorTerrain.Block> states = new ArrayList<>();
 						int ox = copy.zone.minX() + tx * MirrorTerrain.TILE;
 						int oz = copy.zone.minZ() + tz * MirrorTerrain.TILE;
 						int i = 0;
@@ -238,14 +239,14 @@ public final class MirrorCopy {
 			return;
 		}
 		List<BlockPos> positions = new ArrayList<>();
-		List<BlockState> states = new ArrayList<>();
+		List<MirrorTerrain.Block> states = new ArrayList<>();
 		for (Object raw : changes) {
 			if (raw instanceof List<?> change && change.size() == 4 && change.get(0) instanceof Number x
 					&& change.get(1) instanceof Number y && change.get(2) instanceof Number z && change.get(3) instanceof String state
 					&& copy.zone.inside(x.intValue(), z.intValue())) {
 				positions.add(new BlockPos(copy.zone.minX() + x.intValue(), MirrorTerrain.MIN_Y + y.intValue(),
 						copy.zone.minZ() + z.intValue()));
-				states.add(MirrorTerrain.state(state));
+				states.add(MirrorTerrain.block(state));
 				copy.changedAt.put(MirrorTerrain.key(x.intValue() / MirrorTerrain.TILE, z.intValue() / MirrorTerrain.TILE), version);
 			}
 		}
@@ -262,7 +263,7 @@ public final class MirrorCopy {
 		}
 		var dimension = mc.player.level().dimension();
 		List<BlockPos> positions = new ArrayList<>(batch);
-		List<BlockState> states = new ArrayList<>(batch);
+		List<MirrorTerrain.Block> states = new ArrayList<>(batch);
 		while (positions.size() < batch && !WRITES.isEmpty()) {
 			Write head = WRITES.peek();
 			int end = Math.min(head.positions().size(), cursor + batch - positions.size());
@@ -284,9 +285,21 @@ public final class MirrorCopy {
 				}
 				for (int i = 0; i < positions.size(); i++) {
 					BlockPos pos = positions.get(i);
-					BlockState state = states.get(i);
-					if (level.isInWorldBounds(pos) && level.getBlockState(pos) != state) {
+					MirrorTerrain.Block block = states.get(i);
+					BlockState state = block.state();
+					if (!level.isInWorldBounds(pos)) {
+						continue;
+					}
+					if (level.getBlockState(pos) != state) {
 						level.setBlock(pos, state, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_SUPPRESS_DROPS);
+					}
+					if (block.nbt() != null) {
+						BlockEntity blockEntity = level.getBlockEntity(pos);
+						if (blockEntity != null) {
+							blockEntity.loadWithComponents(block.nbt(), level.registryAccess());
+							blockEntity.setChanged();
+							level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+						}
 					}
 				}
 			} finally {
