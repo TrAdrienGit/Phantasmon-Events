@@ -1,0 +1,11 @@
+{
+	"required": true,
+	"package": "com.mystaria.events.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"ClientLevelMirrorMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

@@ -1,0 +1,40 @@
+# === Gradle ===
+.gradle/
+build/
+out/
+classes/
+
+# === Fabric / Minecraft dev run ===
+run/
+runs/
+logs/
+crash-reports/
+remappedSrc/
+*.log
+
+# === IDE ===
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.factorypath
+.project
+.settings/
+bin/
+*.launch
+*.code-workspace
+
+# === OS ===
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# === JVM ===
+hs_err_pid*
+replay_pid*
+*.hprof
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar

@@ -1,0 +1,29 @@
+{
+	"schemaVersion": 1,
+	"id": "phantasmon_events",
+	"version": "${version}",
+	"name": "Phantasmon Events",
+	"description": "Phantasmon add-on for community events: mirror hubs copying a multiplayer server's terrain into a single-player world.",
+	"authors": [
+		"Mystaria"
+	],
+	"license": "GPL-3.0-only",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"com.mystaria.events.PhantasmonEvents"
+		]
+	},
+	"mixins": [
+		"phantasmon_events.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.18.1",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
+		"fabric-api": "*",
+		"cobblemon": ">=1.8.1",
+		"phantasmon": ">=0.1.0 <0.2.0",
+		"cobblemon_spectacle": ">=0.1.0 <0.2.0"
+	}
+}
