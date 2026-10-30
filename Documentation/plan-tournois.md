@@ -113,4 +113,6 @@ Chaque phase se termine par une validation en jeu par Adrien.
   surbrillance et flèche à l'écran ; dates JJ-MM-AAAA ; effacement d'un tournoi annulé.
 - Reste : test grandeur nature (plus de joueurs : exemptions, appariements par points), T4 (double élimination),
   T5 (page web).
-
+- 2026-10-30 : T4 (arbre en double élimination, tours ouverts par un admin, finale décisive) et T5 (page web
+  publique `/t`) **validés à deux comptes** ; check-in accepté si l'équipe Ghost **ou** la party Cobblemon respecte le
+  format. À reprendre : le design de la page web (premier jet fonctionnel).

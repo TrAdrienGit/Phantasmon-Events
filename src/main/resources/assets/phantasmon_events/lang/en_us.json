@@ -115,5 +115,12 @@
 	"phantasmon_events.error.error_tournament_no_match": "[Tournament] This player has no match this round.",
 	"phantasmon_events.opponent.near": "%s — opponent: %s  %s %s m",
 	"phantasmon_events.opponent.far": "%s — opponent: %s (not nearby)",
-	"phantasmon_events.error.error_tournament_team_invalid": "[Tournament] Your active Ghost team breaks the tournament's format: fix it (PC, P key) then confirm again."
+	"phantasmon_events.error.error_tournament_team_invalid": "[Tournament] Your active Ghost team breaks the tournament's format: fix it (PC, P key) then confirm again.",
+	"phantasmon_events.screen.wave": "Wave %s / %s (bracket)",
+	"phantasmon_events.screen.web": "Full bracket: %s",
+	"phantasmon_events.screen.bracket.winners": "[W] ",
+	"phantasmon_events.screen.bracket.losers": "[L] ",
+	"phantasmon_events.screen.bracket.final": "[Final] ",
+	"phantasmon_events.screen.bracket.reset": "[Reset final] ",
+	"phantasmon_events.error.error_tournament_too_late": "[Tournament] This match is decided and its players already moved on in the bracket: it can't be corrected anymore."
 }

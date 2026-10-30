@@ -70,7 +70,7 @@ public final class TournamentOpponent {
 				if (!"RUNNING".equals(t.status())) {
 					continue;
 				}
-				for (TournamentDto.Match m : t.matchesOf(t.currentRound())) {
+				for (TournamentDto.Match m : t.currentMatches()) {
 					if (m.player2() == null || "DONE".equals(m.status())) {
 						continue;
 					}

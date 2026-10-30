@@ -79,7 +79,8 @@ public final class TournamentCommands {
 						return 1;
 					})))
 					.then(ClientCommandManager.literal("checkin").then(tournament().executes(context -> {
-						call(PhantasmonApi.post("/tournaments/" + arg(context, "tournament") + "/check-in", null, TournamentDto.class),
+						call(PhantasmonApi.post("/tournaments/" + arg(context, "tournament") + "/check-in", PhantasmonApi.cobblemonParty(),
+								TournamentDto.class),
 								"phantasmon_events.tournament.checked_in");
 						return 1;
 					})))));

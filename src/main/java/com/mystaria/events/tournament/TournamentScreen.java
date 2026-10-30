@@ -115,7 +115,9 @@ public final class TournamentScreen extends Screen {
 				addRenderableWidget(action("phantasmon_events.screen.unregister", x, y, "/tournaments/" + t.name() + "/register", true));
 			}
 			if (registered && t.status().equals("CHECK_IN") && !mine(t).checkedIn()) {
-				addRenderableWidget(action("phantasmon_events.screen.check_in", x + 104, y, "/tournaments/" + t.name() + "/check-in", false));
+				addRenderableWidget(Button.builder(Component.translatable("phantasmon_events.screen.check_in"), b ->
+						send(PhantasmonApi.post("/tournaments/" + t.name() + "/check-in", PhantasmonApi.cobblemonParty(), TournamentDto.class)))
+						.bounds(x + 104, y, 100, 20).build());
 			}
 			if (admin) {
 				adminButtons(t, x, w, typed);
@@ -295,10 +297,15 @@ public final class TournamentScreen extends Screen {
 	/** The current round's matches, then the standings, as far as the room goes. */
 	private void renderRounds(GuiGraphics g, TournamentDto t, int x, int y, int w) {
 		int limitY = height - 114;
-		g.drawString(font, Component.translatable("phantasmon_events.screen.round", t.currentRound(),
-				t.plannedRounds() == null ? "?" : t.plannedRounds()).withStyle(ChatFormatting.YELLOW), x, y, 0xFFFFFFFF, false);
+		g.drawString(font, Component.translatable(t.swiss() ? "phantasmon_events.screen.round" : "phantasmon_events.screen.wave",
+				t.currentRound(), t.plannedRounds() == null ? "?" : t.plannedRounds()).withStyle(ChatFormatting.YELLOW), x, y, 0xFFFFFFFF, false);
 		y += 11;
-		for (TournamentDto.Match m : t.matchesOf(t.currentRound())) {
+		if (!t.swiss()) {
+			g.drawString(font, Component.translatable("phantasmon_events.screen.web", "server-linux.tail192969.ts.net/t/" + t.name())
+					.withStyle(ChatFormatting.DARK_AQUA), x, y, 0xFFFFFFFF, false);
+			y += 11;
+		}
+		for (TournamentDto.Match m : t.currentMatches()) {
 			if (y > limitY - 40) {
 				g.drawString(font, "…", x, y, 0xFFC0C0C0, false);
 				y += 10;
@@ -310,7 +317,9 @@ public final class TournamentScreen extends Screen {
 			} else {
 				ChatFormatting state = m.status().equals("DONE") ? ChatFormatting.GREEN
 						: m.status().equals("PLAYING") ? ChatFormatting.AQUA : ChatFormatting.YELLOW;
-				line = Component.literal(m.player1()).withStyle(m.player1().equals(m.winner()) ? ChatFormatting.BOLD : ChatFormatting.RESET)
+				Component where = t.swiss() ? Component.empty() : Component.translatable("phantasmon_events.screen.bracket."
+						+ m.bracket().toLowerCase(Locale.ROOT)).withStyle(ChatFormatting.DARK_GRAY);
+				line = where.copy().append(Component.literal(m.player1())).withStyle(m.player1().equals(m.winner()) ? ChatFormatting.BOLD : ChatFormatting.RESET)
 						.append(Component.literal(" " + m.wins1() + " - " + m.wins2() + " ").withStyle(state))
 						.append(Component.literal(m.player2()).withStyle(m.player2().equals(m.winner()) ? ChatFormatting.BOLD : ChatFormatting.RESET))
 						.append(Component.translatable("phantasmon_events.screen.match." + m.status().toLowerCase(Locale.ROOT)).withStyle(state))
