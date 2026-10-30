@@ -56,7 +56,7 @@
 	"key.phantasmon_events.tournaments": "Tournois",
 	"key.categories.phantasmon_events": "Phantasmon Events",
 	"phantasmon_events.screen.delete": "Effacer",
-	"phantasmon_events.error.error_tournament_not_cancelled": "[Tournoi] Seul un tournoi annulé peut être effacé : annulez-le d'abord.",
+	"phantasmon_events.error.error_tournament_not_over": "[Tournoi] Seul un tournoi annulé ou terminé peut être effacé.",
 	"phantasmon_events.screen.start": "Démarrer",
 	"phantasmon_events.screen.next_round": "Ronde suivante",
 	"phantasmon_events.screen.round_plus": "+1",

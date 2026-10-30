@@ -56,7 +56,7 @@
 	"key.phantasmon_events.tournaments": "Tournaments",
 	"key.categories.phantasmon_events": "Phantasmon Events",
 	"phantasmon_events.screen.delete": "Erase",
-	"phantasmon_events.error.error_tournament_not_cancelled": "[Tournament] Only a cancelled tournament can be erased: cancel it first.",
+	"phantasmon_events.error.error_tournament_not_over": "[Tournament] Only a cancelled or finished tournament can be erased.",
 	"phantasmon_events.screen.start": "Start",
 	"phantasmon_events.screen.next_round": "Next round",
 	"phantasmon_events.screen.round_plus": "+1",

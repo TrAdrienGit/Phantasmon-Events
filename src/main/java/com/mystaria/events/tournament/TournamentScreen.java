@@ -123,7 +123,7 @@ public final class TournamentScreen extends Screen {
 				adminButtons(t, x, w, typed);
 			}
 		}
-		if (t != null && admin && t.status().equals("CANCELLED")) {
+		if (t != null && admin && (t.status().equals("CANCELLED") || t.status().equals("FINISHED"))) {
 			addRenderableWidget(Button.builder(Component.translatable("phantasmon_events.screen.delete"), b ->
 					PhantasmonApi.delete("/admin/tournaments/" + t.name(), Void.class).thenAccept(ignored -> Minecraft.getInstance().execute(() -> {
 						selected = null;
