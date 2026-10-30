@@ -104,3 +104,13 @@ l'écran pour ce qui concerne le joueur (« Ronde 3 » / « contre MystAria_ »)
 | T5 | Page web publique (classement, rondes, arbre, en direct) |
 
 Chaque phase se termine par une validation en jeu par Adrien.
+
+## 7. État (2026-10-30)
+
+- T1 (création, inscriptions, check-in) et T3 partiel (menu des tournois, formulaire de création) : **validés**.
+- T2 (weekly jouables) : **validé à deux comptes**. Ajustements d'Adrien : équipe vérifiée au check-in ; une ronde
+  **appaire** les joueurs sans ouvrir de lobby, ils lancent leur combat eux-mêmes (seulement entre eux) ; adversaire en
+  surbrillance et flèche à l'écran ; dates JJ-MM-AAAA ; effacement d'un tournoi annulé.
+- Reste : test grandeur nature (plus de joueurs : exemptions, appariements par points), T4 (double élimination),
+  T5 (page web).
+

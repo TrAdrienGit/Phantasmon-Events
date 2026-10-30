@@ -24,14 +24,29 @@ public final class PhantasmonEvents implements ClientModInitializer {
 	public void onInitializeClient() {
 		MirrorHubCommands.register();
 		TournamentCommands.register();
+		com.mystaria.events.tournament.TournamentScreen.register();
+		com.mystaria.events.tournament.TournamentAnnouncer.register();
+		com.mystaria.events.tournament.TournamentOpponent.register();
+		net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback.EVENT.register((graphics, tickCounter) ->
+				com.mystaria.events.tournament.TournamentOpponent.render(graphics));
+		net.minecraft.client.KeyMapping tournaments = net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper.registerKeyBinding(
+				new net.minecraft.client.KeyMapping("key.phantasmon_events.tournaments", com.mojang.blaze3d.platform.InputConstants.UNKNOWN.getValue(),
+						"key.categories.phantasmon_events"));
 		MirrorCopy.register();
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			while (tournaments.consumeClick()) {
+				if (client.screen == null) {
+					client.setScreen(new com.mystaria.events.tournament.TournamentScreen());
+				}
+			}
 			MirrorCapture.tick();
+			com.mystaria.events.tournament.TournamentOpponent.tick();
 			MirrorCopy.tick();
 		});
 		ClientChunkEvents.CHUNK_LOAD.register((level, chunk) -> MirrorCapture.onChunkLoad(chunk.getPos()));
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> client.execute(() -> {
 			MirrorCapture.reset();
+			com.mystaria.events.tournament.TournamentOpponent.reset();
 			MirrorCopy.reset();
 		}));
 		LOG.info("Phantasmon Events loaded");

@@ -32,8 +32,8 @@ import com.mystaria.phantasmon.client.api.PhantasmonApi;
  * <ul>
  * <li>Every player: {@code /phantasmon tournament list | info <t> | register <t> | unregister <t> | checkin <t>}.</li>
  * <li>Admins: {@code /events tournament create <name> <swiss|bracket> <bo> <format>},
- * {@code schedule <t> <start|opens|closes> <yyyy-MM-dd HH:mm>}, {@code add | remove <t> <player>},
- * {@code checkin <t>} (opens the check-in), {@code cancel <t>}.</li>
+ * {@code schedule <t> <start|opens|closes> <dd-MM-yyyy HH:mm>}, {@code add | remove <t> <player>},
+ * {@code checkin <t>} (opens the check-in), {@code cancel <t>}, {@code delete <t>} (a cancelled one, erased).</li>
  * </ul>
  */
 public final class TournamentCommands {
@@ -43,7 +43,7 @@ public final class TournamentCommands {
 			"gen9nationaldexru", "gen9nationaldexmonotype", "gen9nationaldexlc", "gen9nationaldex1v1", "gen9nationaldexag",
 			"gen9ou", "gen9ubers", "gen9uu", "gen9ru", "gen9nu", "gen9pu", "gen9zu", "gen9lc", "gen9monotype", "gen91v1",
 			"gen9anythinggoes");
-	private static final DateTimeFormatter INPUT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+	private static final DateTimeFormatter INPUT = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
 	private static final DateTimeFormatter SHOWN = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT);
 
 	private static volatile List<String> names = List.of();
@@ -55,6 +55,11 @@ public final class TournamentCommands {
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
 			// Under /phantasmon: the server (Cobblemon Academy) has its own /tournament, which hides a client one.
 			dispatcher.register(ClientCommandManager.literal("phantasmon").then(ClientCommandManager.literal("tournament")
+					.executes(context -> {
+						// The chat closes after the command: the screen opens on the next tick.
+						Minecraft.getInstance().tell(() -> Minecraft.getInstance().setScreen(new TournamentScreen()));
+						return 1;
+					})
 					.then(ClientCommandManager.literal("list").executes(context -> {
 						list();
 						return 1;
@@ -125,6 +130,14 @@ public final class TournamentCommands {
 							.then(ClientCommandManager.literal("checkin").then(tournament().executes(context -> {
 								call(PhantasmonApi.post("/admin/tournaments/" + arg(context, "tournament") + "/check-in", null,
 										TournamentDto.class), "phantasmon_events.tournament.admin.check_in_open");
+								return 1;
+							})))
+							.then(ClientCommandManager.literal("delete").then(tournament().executes(context -> {
+								String name = arg(context, "tournament");
+								PhantasmonApi.delete("/admin/tournaments/" + name, Void.class)
+										.thenAccept(ignored -> onClient(() -> chat(Component.translatable(
+												"phantasmon_events.tournament.admin.deleted", name).withStyle(ChatFormatting.LIGHT_PURPLE))))
+										.exceptionally(TournamentCommands::failed);
 								return 1;
 							})))
 							.then(ClientCommandManager.literal("cancel").then(tournament().executes(context -> {
