@@ -7,7 +7,7 @@
 	"authors": [
 		"Mystaria"
 	],
-	"license": "GPL-3.0-only",
+	"license": "Apache-2.0",
 	"environment": "client",
 	"entrypoints": {
 		"client": [

@@ -30,3 +30,7 @@ un serveur où l'on ne peut **installer aucun mod serveur**.
 
 - Le contenu des coffres n'est pas envoyé au client : la copie du terrain ne peut pas l'inclure.
 - Sans mod serveur, tout ce que les joueurs voient d'ajouté est client (faux blocs, entités locales).
+
+## License
+
+Apache License 2.0 — see [`LICENSE`](./LICENSE). Free to use, modify and redistribute; forks and redistributions must keep [`NOTICE`](./NOTICE) and credit the original author.
