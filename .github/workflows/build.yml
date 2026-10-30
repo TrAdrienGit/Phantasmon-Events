@@ -29,7 +29,6 @@ jobs:
         with:
           repository: ${{ github.repository_owner }}/Phantasmon-Client
           path: Phantasmon-Client
-          ref: dev
       - name: publish Phantasmon to Maven local
         working-directory: Phantasmon-Client
         run: chmod +x ./gradlew && ./gradlew publishToMavenLocal
