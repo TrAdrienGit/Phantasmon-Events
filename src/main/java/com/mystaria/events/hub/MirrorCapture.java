@@ -98,14 +98,15 @@ public final class MirrorCapture {
 	/** The server set a block (ClientLevelMirrorMixin), {@code old} the one it replaces. */
 	public static void onBlock(BlockPos pos, BlockState old, BlockState state) {
 		if (old != state) {
-			note(pos, MirrorTerrain.name(Minecraft.getInstance().level, pos, state));
+			ClientLevel level = Minecraft.getInstance().level;
+			note(pos, MirrorGhosts.isGhost(level, pos) ? MirrorTerrain.stateName(state) : MirrorTerrain.name(level, pos, state));
 		}
 	}
 
 	/** The server sent a block entity's data (ClientPacketListenerMirrorMixin): a Templates block's look, a sign's text. */
 	public static void onBlockEntity(BlockPos pos) {
 		ClientLevel level = Minecraft.getInstance().level;
-		if (level != null) {
+		if (level != null && !MirrorGhosts.isGhost(level, pos)) {
 			note(pos, MirrorTerrain.name(level, pos, level.getBlockState(pos)));
 		}
 	}
@@ -199,7 +200,9 @@ public final class MirrorCapture {
 						continue;
 					}
 					pos.set(ox + x, MirrorTerrain.MIN_Y + y, oz + z);
-					String name = MirrorTerrain.name(level, pos, level.getBlockState(pos));
+					// Under a ghost block, the real one the server sent.
+					String name = MirrorGhosts.isGhost(level, pos) ? MirrorTerrain.stateName(MirrorGhosts.realState(level, pos))
+							: MirrorTerrain.name(level, pos, level.getBlockState(pos));
 					ids[i] = palette.computeIfAbsent(name, key -> {
 						names.add(key);
 						return (short) (names.size() - 1);

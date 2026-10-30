@@ -120,9 +120,16 @@ final class MirrorTerrain {
 		return Base64.getEncoder().encodeToString(bytes.toByteArray());
 	}
 
-	/** The block as a string, with its block entity's data if it has some. Client thread. */
+	/** The block as a string, without block entity data. */
+	static String stateName(BlockState state) {
+		synchronized (NAMES) {
+			return NAMES.computeIfAbsent(state, BlockStateParser::serialize);
+		}
+	}
+
+	/** The block as a string, with its block entity's data if it has some. Thread of {@code level}. */
 	static String name(Level level, BlockPos pos, BlockState state) {
-		String name = NAMES.computeIfAbsent(state, BlockStateParser::serialize);
+		String name = stateName(state);
 		if (!state.hasBlockEntity()) {
 			return name;
 		}

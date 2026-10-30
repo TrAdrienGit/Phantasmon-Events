@@ -122,5 +122,10 @@
 	"phantasmon_events.screen.bracket.losers": "[L] ",
 	"phantasmon_events.screen.bracket.final": "[Finale] ",
 	"phantasmon_events.screen.bracket.reset": "[Finale décisive] ",
-	"phantasmon_events.error.error_tournament_too_late": "[Tournoi] Ce match est décidé et ses joueurs sont déjà passés au tour suivant de l'arbre : il ne se corrige plus."
+	"phantasmon_events.error.error_tournament_too_late": "[Tournoi] Ce match est décidé et ses joueurs sont déjà passés au tour suivant de l'arbre : il ne se corrige plus.",
+	"phantasmon_events.hub.cleaned": "[Hub] « %s » : %s bloc(s) fantôme(s) retiré(s).",
+	"phantasmon_events.hub.clean_failed": "[Hub] Impossible de nettoyer « %s ».",
+	"phantasmon_events.hub.tp_solo_only": "[Hub] Le téléport ne marche que dans un monde solo.",
+	"phantasmon_events.hub.tp_unknown": "[Hub] Aucun joueur « %s » dans le hub ici.",
+	"phantasmon_events.hub.tp_done": "[Hub] Téléporté à %s."
 }

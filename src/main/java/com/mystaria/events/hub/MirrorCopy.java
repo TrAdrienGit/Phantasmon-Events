@@ -30,6 +30,11 @@ import com.mystaria.phantasmon.client.hub.HubAnchorDto;
  * the anchor was posed at; never turned. A block changed by hand in the copy stays until the same block changes on the
  * server. A resized hub is built again.
  *
+ * <p><b>Ghost blocks</b> (Adrien 2026-10-30): what the admin places by hand in the copy ({@link MirrorEdits}) is sent to
+ * the backend and shown, client-only, to the players in the source zone ({@link MirrorGhosts}) and in the other
+ * copies. Breaking a ghost removes it; breaking a real block stays here. A ghost removed (broken, cleared, or replaced
+ * by a real block on the server) gives its tile back from the backend's terrain.
+ *
  * <p>Blocks are written by the integrated server, in batches sized to take about {@value #TARGET_MILLIS} ms of each
  * tick, so a large zone fills in progressively without freezing the game.
  */
@@ -41,6 +46,7 @@ public final class MirrorCopy {
 	/** Fetched tiles waiting to be written, at most (memory). */
 	private static final int MAX_WAITING = 4;
 	private static final long TARGET_MILLIS = 15;
+	private static final int GHOST_FLUSH_TICKS = 10;
 
 	/** Blocks to write: a fetched tile, or blocks the server changed. */
 	private record Write(List<BlockPos> positions, List<MirrorTerrain.Block> states) {
@@ -53,6 +59,10 @@ public final class MirrorCopy {
 		int fetching;
 		/** Tile → version of the last blocks changed in it: an older tile fetched is fetched again. */
 		final Map<Long, Long> changedAt = new HashMap<>();
+		/** Ghost blocks, zone-relative {@code BlockPos.asLong} → state: tiles written leave them be. */
+		final Map<Long, String> ghosts = new HashMap<>();
+		/** Ghost blocks placed or broken here, to send. */
+		final List<List<Object>> ghostsOut = new ArrayList<>();
 
 		Copy(HubAnchorDto anchor) {
 			this.anchor = anchor;
@@ -80,6 +90,11 @@ public final class MirrorCopy {
 			}
 			switch (type) {
 				case "EventsMirrorBlocks" -> receiveBlocks(copy, data);
+				case "EventsMirrorGhosts" -> {
+					if (data.get("changes") instanceof List<?> changes) {
+						receiveGhosts(copy, changes);
+					}
+				}
 				case "EventsMirrorTileChanged" -> {
 					if (data.get("tx") instanceof Number tx && data.get("tz") instanceof Number tz) {
 						copy.toFetch.add(MirrorTerrain.key(tx.intValue(), tz.intValue()));
@@ -108,6 +123,12 @@ public final class MirrorCopy {
 				long key = copy.toFetch.iterator().next();
 				copy.toFetch.remove(key);
 				fetchTile(copy, (int) (key >> 32), (int) key);
+			}
+		}
+		edits(mc);
+		if (ticks % GHOST_FLUSH_TICKS == 0) {
+			for (Copy copy : COPIES.values()) {
+				flushGhosts(copy);
 			}
 		}
 		write(mc);
@@ -167,6 +188,16 @@ public final class MirrorCopy {
 		COPIES.put(hub, copy);
 		// Subscribed first, so no change falls between the tiles fetched and the stream.
 		PhantasmonApi.send("EventsMirrorSubscribe", Map.of("hub", hub));
+		PhantasmonApi.get("/events/mirror/" + hub + "/ghosts", List.class)
+				.thenAccept(list -> Minecraft.getInstance().execute(() -> {
+					if (COPIES.get(hub) == copy) {
+						receiveGhosts(copy, list);
+					}
+				}))
+				.exceptionally(ex -> {
+					LOG.warn("Could not fetch the ghost blocks of mirror hub {}", hub, ex);
+					return null;
+				});
 		PhantasmonApi.get("/events/mirror/" + hub, MirrorTerrain.Info.class)
 				.thenAccept(info -> Minecraft.getInstance().execute(() -> {
 					if (COPIES.get(hub) != copy) {
@@ -216,7 +247,8 @@ public final class MirrorCopy {
 							for (int z = 0; z < MirrorTerrain.TILE; z++) {
 								for (int x = 0; x < MirrorTerrain.TILE; x++, i++) {
 									short id = ids[i];
-									if (id >= 0 && id < palette.size()) {
+									if (id >= 0 && id < palette.size() && (copy.ghosts.isEmpty()
+											|| !copy.ghosts.containsKey(BlockPos.asLong(tx * MirrorTerrain.TILE + x, y, tz * MirrorTerrain.TILE + z)))) {
 										positions.add(new BlockPos(ox + x, MirrorTerrain.MIN_Y + y, oz + z));
 										states.add(palette.get(id));
 									}
@@ -252,6 +284,78 @@ public final class MirrorCopy {
 		}
 		if (!positions.isEmpty()) {
 			WRITES.add(new Write(positions, states));
+		}
+	}
+
+	/** {@code [x, y, z, state]} zone-relative; {@code ""} removes the ghost and gives its tile back. */
+	private static void receiveGhosts(Copy copy, List<?> changes) {
+		List<BlockPos> positions = new ArrayList<>();
+		List<MirrorTerrain.Block> states = new ArrayList<>();
+		for (Object raw : changes) {
+			if (!(raw instanceof List<?> change) || change.size() != 4 || !(change.get(0) instanceof Number nx)
+					|| !(change.get(1) instanceof Number ny) || !(change.get(2) instanceof Number nz)
+					|| !(change.get(3) instanceof String state)) {
+				continue;
+			}
+			int x = nx.intValue();
+			int y = ny.intValue();
+			int z = nz.intValue();
+			if (!copy.zone.inside(x, z) || y < 0 || y >= MirrorTerrain.HEIGHT) {
+				continue;
+			}
+			if (state.isEmpty()) {
+				copy.ghosts.remove(BlockPos.asLong(x, y, z));
+				copy.toFetch.add(MirrorTerrain.key(x / MirrorTerrain.TILE, z / MirrorTerrain.TILE));
+			} else {
+				copy.ghosts.put(BlockPos.asLong(x, y, z), state);
+				positions.add(new BlockPos(copy.zone.minX() + x, MirrorTerrain.MIN_Y + y, copy.zone.minZ() + z));
+				states.add(MirrorTerrain.block(state));
+			}
+		}
+		if (!positions.isEmpty()) {
+			WRITES.add(new Write(positions, states));
+		}
+	}
+
+	/** The blocks changed by hand in a copy: placed ones become ghosts, a broken ghost goes. */
+	private static void edits(Minecraft mc) {
+		List<MirrorEdits.Edit> edits = MirrorEdits.drain();
+		if (edits.isEmpty() || mc.player == null) {
+			return;
+		}
+		var dimension = mc.player.level().dimension();
+		for (MirrorEdits.Edit edit : edits) {
+			if (!edit.dimension().equals(dimension)) {
+				continue;
+			}
+			for (Copy copy : COPIES.values()) {
+				int x = edit.pos().getX() - copy.zone.minX();
+				int y = edit.pos().getY() - MirrorTerrain.MIN_Y;
+				int z = edit.pos().getZ() - copy.zone.minZ();
+				if (!copy.zone.inside(x, z) || y < 0 || y >= MirrorTerrain.HEIGHT) {
+					continue;
+				}
+				long key = BlockPos.asLong(x, y, z);
+				if (edit.name().isEmpty()) {
+					if (copy.ghosts.remove(key) != null) {
+						copy.ghostsOut.add(List.of(x, y, z, ""));
+					}
+				} else if (!edit.name().equals(copy.ghosts.put(key, edit.name()))) {
+					copy.ghostsOut.add(List.of(x, y, z, edit.name()));
+				}
+			}
+		}
+	}
+
+	private static void flushGhosts(Copy copy) {
+		if (copy.ghostsOut.isEmpty()) {
+			return;
+		}
+		List<List<Object>> out = new ArrayList<>(copy.ghostsOut);
+		copy.ghostsOut.clear();
+		for (int from = 0; from < out.size(); from += 4096) {
+			PhantasmonApi.send("EventsMirrorGhosts", Map.of("hub", copy.anchor.hub(),
+					"changes", out.subList(from, Math.min(out.size(), from + 4096))));
 		}
 	}
 

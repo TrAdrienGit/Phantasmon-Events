@@ -5,7 +5,10 @@
 	"client": [
 		"ClientLevelMirrorMixin",
 		"ClientPacketListenerMirrorMixin",
-		"EntityGlowOpponentMixin"
+		"EntityGlowOpponentMixin",
+		"LevelGhostEditMixin",
+		"MultiPlayerGameModeGhostMixin",
+		"ServerPlayerGameModeGhostMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

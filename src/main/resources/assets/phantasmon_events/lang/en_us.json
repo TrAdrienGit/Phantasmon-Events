@@ -122,5 +122,10 @@
 	"phantasmon_events.screen.bracket.losers": "[L] ",
 	"phantasmon_events.screen.bracket.final": "[Final] ",
 	"phantasmon_events.screen.bracket.reset": "[Reset final] ",
-	"phantasmon_events.error.error_tournament_too_late": "[Tournament] This match is decided and its players already moved on in the bracket: it can't be corrected anymore."
+	"phantasmon_events.error.error_tournament_too_late": "[Tournament] This match is decided and its players already moved on in the bracket: it can't be corrected anymore.",
+	"phantasmon_events.hub.cleaned": "[Hub] \"%s\": %s ghost block(s) removed.",
+	"phantasmon_events.hub.clean_failed": "[Hub] Could not clean \"%s\".",
+	"phantasmon_events.hub.tp_solo_only": "[Hub] Teleporting only works in a single-player world.",
+	"phantasmon_events.hub.tp_unknown": "[Hub] No player \"%s\" in the hub here.",
+	"phantasmon_events.hub.tp_done": "[Hub] Teleported to %s."
 }
