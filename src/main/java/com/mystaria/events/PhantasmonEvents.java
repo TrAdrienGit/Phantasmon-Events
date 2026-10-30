@@ -12,8 +12,6 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import com.mystaria.events.hub.MirrorCapture;
 import com.mystaria.events.hub.MirrorCopy;
 import com.mystaria.events.hub.MirrorGhosts;
-import com.mystaria.events.hub.MirrorHubCommands;
-import com.mystaria.events.tournament.TournamentCommands;
 
 /** Phantasmon Events: add-on of Phantasmon for Adrien's community events (mirror hubs first). Client only. */
 public final class PhantasmonEvents implements ClientModInitializer {
@@ -23,8 +21,7 @@ public final class PhantasmonEvents implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
-		MirrorHubCommands.register();
-		TournamentCommands.register();
+		EventsCommands.register();
 		com.mystaria.events.tournament.TournamentScreen.register();
 		com.mystaria.events.tournament.TournamentAnnouncer.register();
 		com.mystaria.events.tournament.TournamentOpponent.register();

@@ -83,5 +83,5 @@ Ensuite : le moteur d'événements (portes, chronos, points, panneau de maître 
 ## 7. État (2026-10-29)
 
 E0 à E3 faites et validées en jeu par Adrien, avec ses ajustements (décision D-38) : une seule commande
-`/events hub anchor` (source sur un serveur, copie en solo), taille par rayon sans limite haute, toute la hauteur
+`/phantasmon event hub anchor` (source sur un serveur, copie en solo), taille par rayon sans limite haute, toute la hauteur
 du monde, Anchors jamais tournés, terrain par colonnes de 16 × 16. E4 : avatars, vocal et combats Ghost validés.

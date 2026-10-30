@@ -89,7 +89,7 @@ l'écran pour ce qui concerne le joueur (« Ronde 3 » / « contre MystAria_ »)
   backend ; il écoute les fins de combats Ghost (`LiveBattleService`) pour remplir les matchs ; il pousse les
   changements aux clients par WebSocket (`EventsTournament*`).
 - **Client** (`Phantasmon-Events`) : écrans en jeu (liste des tournois, inscription, inscrits, rondes, classement,
-  arbre, panneau admin) ; commandes `/events tournament …` en secours.
+  arbre, panneau admin) ; plus de commandes : `/phantasmon event tournament` ouvre le menu (D-39).
 - **Page web** : servie par le backend (accessible publiquement par l'adresse Tailscale Funnel déjà en place),
   lecture seule, mise à jour en direct.
 
