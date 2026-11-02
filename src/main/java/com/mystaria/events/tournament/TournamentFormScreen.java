@@ -27,7 +27,7 @@ import com.mystaria.phantasmon.client.api.PhantasmonApi;
 public final class TournamentFormScreen extends Screen {
 
 	/** Formats a tournament may use (the backend checks them), National Dex first, with their Showdown names. */
-	static final List<String[]> FORMATS = List.of(
+	public static final List<String[]> FORMATS = List.of(
 			new String[] { "gen9nationaldex", "[Gen 9] National Dex" },
 			new String[] { "gen9nationaldexubers", "[Gen 9] National Dex Ubers" },
 			new String[] { "gen9nationaldexuu", "[Gen 9] National Dex UU" },

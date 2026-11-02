@@ -13,7 +13,9 @@ import com.mystaria.events.tournament.TournamentScreen;
  * <ul>
  * <li>{@code tournament}: opens the tournaments menu, where players register and check in, and admins create and run
  * the tournaments;</li>
- * <li>{@code hub ...}: the mirror hubs, admins only ({@link MirrorHubCommands}).</li>
+ * <li>{@code hub ...}: the mirror hubs, admins only ({@link MirrorHubCommands});</li>
+ * <li>{@code npc ...}, {@code open}, {@code close}, {@code list}: events and their trainer NPCs, admins only
+ * ({@link com.mystaria.events.npc.NpcCommands}).</li>
  * </ul>
  */
 public final class EventsCommands {
@@ -29,6 +31,10 @@ public final class EventsCommands {
 							Minecraft.getInstance().tell(() -> Minecraft.getInstance().setScreen(new TournamentScreen()));
 							return 1;
 						}))
-						.then(MirrorHubCommands.node()))));
+						.then(MirrorHubCommands.node())
+						.then(com.mystaria.events.npc.NpcCommands.nodes().get(0))
+						.then(com.mystaria.events.npc.NpcCommands.nodes().get(1))
+						.then(com.mystaria.events.npc.NpcCommands.nodes().get(2))
+						.then(com.mystaria.events.npc.NpcCommands.nodes().get(3)))));
 	}
 }

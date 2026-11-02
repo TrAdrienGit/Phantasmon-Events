@@ -31,6 +31,7 @@ public final class PhantasmonEvents implements ClientModInitializer {
 				new net.minecraft.client.KeyMapping("key.phantasmon_events.tournaments", com.mojang.blaze3d.platform.InputConstants.UNKNOWN.getValue(),
 						"key.categories.phantasmon_events"));
 		MirrorCopy.register();
+		com.mystaria.events.npc.EventNpcs.register();
 		MirrorGhosts.register();
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (tournaments.consumeClick()) {
@@ -42,6 +43,7 @@ public final class PhantasmonEvents implements ClientModInitializer {
 			MirrorGhosts.tick();
 			com.mystaria.events.tournament.TournamentOpponent.tick();
 			MirrorCopy.tick();
+			com.mystaria.events.npc.EventNpcs.tick();
 		});
 		ClientChunkEvents.CHUNK_LOAD.register((level, chunk) -> {
 			MirrorCapture.onChunkLoad(chunk.getPos());
@@ -52,6 +54,7 @@ public final class PhantasmonEvents implements ClientModInitializer {
 			MirrorGhosts.reset();
 			com.mystaria.events.tournament.TournamentOpponent.reset();
 			MirrorCopy.reset();
+			com.mystaria.events.npc.EventNpcs.clear();
 		}));
 		LOG.info("Phantasmon Events loaded");
 	}

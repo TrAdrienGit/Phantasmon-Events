@@ -85,3 +85,21 @@ Ensuite : le moteur d'événements (portes, chronos, points, panneau de maître 
 E0 à E3 faites et validées en jeu par Adrien, avec ses ajustements (décision D-38) : une seule commande
 `/phantasmon event hub anchor` (source sur un serveur, copie en solo), taille par rayon sans limite haute, toute la hauteur
 du monde, Anchors jamais tournés, terrain par colonnes de 16 × 16. E4 : avatars, vocal et combats Ghost validés.
+
+## Dresseurs PNJ (Adrien 2026-11-02)
+
+- Un admin pose un dresseur PNJ où il se tient, dans un événement : `/phantasmon event npc create <événement> <nom>`
+  (l'événement est créé fermé s'il n'existe pas). Les joueurs ne voient et ne défient les PNJ d'un événement que s'il
+  est ouvert (`/phantasmon event open|close <événement>`, `list`) ; les admins les voient toujours, grisés s'il est fermé.
+- La roue de Cobblemon (touche R maintenue), comme sur un joueur : « Combattre avec mon équipe Ghost » ou « avec mon
+  équipe Cobblemon » ; pour un admin, aussi « Modifier le dresseur ». Un clic droit ouvre l'éditeur (admins) : nom, skin
+  d'un pseudo Minecraft, événement, IA, format, équipe copiée de son équipe Ghost ou Cobblemon, déplacer ici,
+  ouvrir/fermer l'événement, l'affronter, supprimer. `/phantasmon event npc move` amène le dernier PNJ édité (sinon le
+  plus proche) exactement là où se tient l'admin, tourné comme lui.
+- Il regarde le joueur le plus proche dans un rayon de 10 blocs et le suit des yeux, en tournant lentement (tête, puis
+  corps au-delà de 45°) ; personne : il revient doucement à son orientation.
+- Le combat : comme le combat solo admin — le client du joueur fait tourner le moteur, l'IA joue le PNJ ; un vrai combat
+  Ghost (Spectacle, intro, ambiance), regardable, jamais enregistré.
+- IA : Aléatoire, puis l'« IA forte » de Cobblemon (Facile 1, Normale 3, Difficile 4, Très difficile 5). À venir : une IA
+  « Expert » maison (anticipation, prédictions des changements, pièges et boosts).
+- Côté client : entité joueur locale (`npc/EventNpcEntity`) ; liste relue à l'arrivée, au changement de dimension, toutes les 30 s et sur `EventsNpcsChanged`.
