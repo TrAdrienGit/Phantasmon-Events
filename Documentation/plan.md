@@ -103,3 +103,15 @@ du monde, Anchors jamais tournés, terrain par colonnes de 16 × 16. E4 : avatar
 - IA : Aléatoire, puis l'« IA forte » de Cobblemon (Facile 1, Normale 3, Difficile 4, Très difficile 5). À venir : une IA
   « Expert » maison (anticipation, prédictions des changements, pièges et boosts).
 - Côté client : entité joueur locale (`npc/EventNpcEntity`) ; liste relue à l'arrivée, au changement de dimension, toutes les 30 s et sur `EventsNpcsChanged`.
+
+## À faire : la copie sur notre serveur dédié (Adrien 2026-11-02)
+
+La copie d'un hub miroir ne sera plus un monde solo mais **la map de notre serveur dédié Cobblemon Academy** (sur
+server-linux, monde issu de la map Mirror). Aujourd'hui la copie écrit de vrais blocs par le **serveur intégré** du
+monde solo ; sur un serveur dédié, le client ne peut plus écrire dans le monde. Trois voies, à trancher avec Adrien :
+1. **Blocs côté client** sur le serveur dédié, comme les constructions de hub (D-34) : chaque joueur Phantasmon voit
+   la copie, le serveur ne la connaît pas (collisions locales, pas de blocs réels pour les joueurs sans Phantasmon).
+2. **Commandes d'un admin opérateur** : un client admin connecté au serveur dédié écrit les blocs reçus par
+   `/setblock` et `/fill` (vrais blocs, mais débit limité et il faut qu'un admin soit connecté).
+3. **Un petit mod serveur** sur ce serveur-là uniquement, puisque c'est le nôtre (la règle « aucun mod serveur »
+   visait les serveurs des autres) : il écrit les blocs reçus du backend directement, sans joueur connecté.
