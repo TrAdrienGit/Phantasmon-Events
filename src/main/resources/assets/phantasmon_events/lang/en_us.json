@@ -163,5 +163,6 @@
   "phantasmon_events.npc.edit": "Edit the trainer",
   "phantasmon_events.npc.moved_named": "%s is now here.",
   "phantasmon_events.npc.ai.expert": "Expert",
+  "phantasmon_events.npc.ai.reborn": "Reborn",
   "phantasmon_events.npc.ai_debug": "AI debug"
 }

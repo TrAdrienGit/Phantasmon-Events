@@ -25,7 +25,7 @@ import com.mystaria.phantasmon.client.api.PhantasmonApi;
  */
 public final class NpcEditScreen extends Screen {
 
-	static final List<String> AIS = List.of("random", "easy", "normal", "hard", "veryhard", "expert");
+	static final List<String> AIS = List.of("random", "easy", "normal", "hard", "veryhard", "expert", "reborn");
 
 	private EventNpcDto npc;
 	private EditBox name;
