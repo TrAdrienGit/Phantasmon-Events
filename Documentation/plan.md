@@ -113,7 +113,15 @@ du monde, Anchors jamais tournés, terrain par colonnes de 16 × 16. E4 : avatar
     les deux camps choisissent en même temps : réponses adverses pondérées par leur usage et par ce qu'elles valent
     contre notre attaque évidente (prédiction des changements : frapper le Pokémon qui entre) ; Méga-Évolution dès que
     possible, Téracristallisation et capacité Z quand elles gagnent l'échange (une seule fois) ; meilleur duel après un KO ;
-  - à venir : plusieurs tours d'avance, Téra adverse, objets et talents révélés en combat, ajuster d'après les parties.
+  - v3 (2026-11-03, après la v2 trop faible : aucun changement, aucune anticipation) : lecture **d'équipe** — tableau
+    des duels de chaque Pokémon contre chaque Pokémon adverse ; un Pokémon seule réponse à une menace vaut plus (on le
+    préserve, quitte à perdre un tour à changer) ; un Pokémon qui bat tout ce qui reste est une condition de victoire
+    (gardée jusqu'à ce que les réponses adverses tombent), de même côté adverse (ses réponses et sa condition de victoire
+    deviennent des cibles) ; plateau noté (PV pondérés par l'importance, menaces encore couvertes, conditions de victoire,
+    duel sur le terrain, boosts, pièges, statuts) ; recherche sur **deux tours**, choix simultanés, réponses adverses
+    prédites ; tour joué : changements avec Piège de Roc et Picots, priorité et Vitesse, KO qui annule l'attaque du plus
+    lent, boosts, soins, statuts, Abri, poison et brûlure, Restes, remplacement après un KO ; lead choisi au lobby ;
+  - à venir : Téra adverse, objets et talents révélés en combat, régler les poids d'après les parties.
 - Côté client : entité joueur locale (`npc/EventNpcEntity`) ; liste relue à l'arrivée, au changement de dimension, toutes les 30 s et sur `EventsNpcsChanged`.
 
 ## La copie sur notre serveur dédié (Adrien 2026-11-02, voie 3 choisie)
