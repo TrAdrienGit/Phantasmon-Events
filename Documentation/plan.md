@@ -98,20 +98,42 @@ du monde, Anchors jamais tournés, terrain par colonnes de 16 × 16. E4 : avatar
   plus proche) exactement là où se tient l'admin, tourné comme lui.
 - Il regarde le joueur le plus proche dans un rayon de 10 blocs et le suit des yeux, en tournant lentement (tête, puis
   corps au-delà de 45°) ; personne : il revient doucement à son orientation.
+- **Dans un hub** (Adrien 2026-11-03) : posé ou déplacé à l'intérieur de la zone d'un hub, le PNJ appartient à ce hub ;
+  sa place est gardée en coordonnées du hub et chaque client le montre dans chaque zone de ce hub (la source, les
+  copies, les ancres ordinaires), donc tous ceux qui ont ce hub le voient et peuvent le défier. Hors de tout hub, il
+  reste à sa place dans son monde.
 - Le combat : comme le combat solo admin — le client du joueur fait tourner le moteur, l'IA joue le PNJ ; un vrai combat
   Ghost (Spectacle, intro, ambiance), regardable, jamais enregistré.
-- IA : Aléatoire, puis l'« IA forte » de Cobblemon (Facile 1, Normale 3, Difficile 4, Très difficile 5). À venir : une IA
-  « Expert » maison (anticipation, prédictions des changements, pièges et boosts).
+- IA : Aléatoire, puis l'« IA forte » de Cobblemon (Facile 1, Normale 3, Difficile 4, Très difficile 5), puis
+  **Expert**, l'IA maison (`battle/ExpertBattleAI` dans Phantasmon ; combats simples seulement, les seuls joués) :
+  - v1 (2026-11-03) : calcul de dégâts proche des jeux, un tour d'avance contre la meilleure réponse adverse ;
+  - v2 (2026-11-03) : ne lit plus la vraie équipe adverse — ce qui est visible (Pokémon sur le terrain, PV, boosts,
+    statut, attaques déjà utilisées, Pokémon déjà vus) et le reste tiré des statistiques Smogon d'octobre 2026
+    (`assets/phantasmon/ai/smogon_sets.json`, `tools/smogon_sets.py` : attaques courantes, objet, talent, EV et nature) ;
+    les deux camps choisissent en même temps : réponses adverses pondérées par leur usage et par ce qu'elles valent
+    contre notre attaque évidente (prédiction des changements : frapper le Pokémon qui entre) ; Méga-Évolution dès que
+    possible, Téracristallisation et capacité Z quand elles gagnent l'échange (une seule fois) ; meilleur duel après un KO ;
+  - à venir : plusieurs tours d'avance, Téra adverse, objets et talents révélés en combat, ajuster d'après les parties.
 - Côté client : entité joueur locale (`npc/EventNpcEntity`) ; liste relue à l'arrivée, au changement de dimension, toutes les 30 s et sur `EventsNpcsChanged`.
 
-## À faire : la copie sur notre serveur dédié (Adrien 2026-11-02)
+## La copie sur notre serveur dédié (Adrien 2026-11-02, voie 3 choisie)
 
-La copie d'un hub miroir ne sera plus un monde solo mais **la map de notre serveur dédié Cobblemon Academy** (sur
-server-linux, monde issu de la map Mirror). Aujourd'hui la copie écrit de vrais blocs par le **serveur intégré** du
-monde solo ; sur un serveur dédié, le client ne peut plus écrire dans le monde. Trois voies, à trancher avec Adrien :
-1. **Blocs côté client** sur le serveur dédié, comme les constructions de hub (D-34) : chaque joueur Phantasmon voit
-   la copie, le serveur ne la connaît pas (collisions locales, pas de blocs réels pour les joueurs sans Phantasmon).
-2. **Commandes d'un admin opérateur** : un client admin connecté au serveur dédié écrit les blocs reçus par
-   `/setblock` et `/fill` (vrais blocs, mais débit limité et il faut qu'un admin soit connecté).
-3. **Un petit mod serveur** sur ce serveur-là uniquement, puisque c'est le nôtre (la règle « aucun mod serveur »
-   visait les serveurs des autres) : il écrit les blocs reçus du backend directement, sans joueur connecté.
+La copie d'un hub miroir peut maintenant être **la map de notre serveur dédié** (server-linux, Cobblemon Academy, monde
+issu de Mirror) au lieu d'un monde solo :
+- un admin connecté à ce serveur pose la copie : `/phantasmon event hub anchor <hub> copy` (sans le mot, rien ne
+  change : copie en solo, source sur un serveur ; `source` force une source) ;
+- le **mod serveur** `mirror-server/` (`phantasmon-mirror-server`, seulement sur ce serveur, `environment: server`) lit
+  toutes les 10 s les copies posées sur ce serveur (`GET /server/mirror/copies?fingerprint=`, empreinte calculée comme
+  sur le client depuis `address`), charge leur terrain tuile par tuile puis suit les changements en interrogeant le
+  backend toutes les secondes (`/server/mirror/{hub}/feed?since=`) — sans joueur connecté ; il écrit les blocs sur le
+  fil du serveur, 15 ms par tick au plus. Configuration `config/phantasmon-mirror-server.json` (`backend_url`, `token`,
+  `address`) ;
+- le backend garde pour chaque hub les 2 000 derniers messages envoyés aux copies ; s'il en manque, le mod reconstruit
+  la copie. Routes `/server/mirror/**` protégées par un jeton partagé (`PHANTASMON_MIRROR_SERVER_TOKEN`), 404 sans jeton
+  configuré ;
+- les blocs fantômes des autres copies y sont écrits ; les blocs qu'un **opérateur** pose ou casse à la main dans la
+  copie deviennent des blocs fantômes (2026-11-03) : le mod les voit sur le serveur (mêmes mixins que la copie solo),
+  les envoie toutes les 0,5 s (`POST /server/mirror/{hub}/ghosts`) et ils apparaissent dans la zone source et les
+  autres copies ; les autres joueurs ne peuvent rien y peindre.
+
+Pas encore essayé en jeu : le serveur Minecraft reste éteint pour l'instant (mémoire).

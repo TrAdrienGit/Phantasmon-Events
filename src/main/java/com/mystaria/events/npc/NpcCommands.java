@@ -108,15 +108,9 @@ public final class NpcCommands {
 		if (mc.player == null || mc.level == null) {
 			return;
 		}
-		Map<String, Object> body = new HashMap<>();
+		Map<String, Object> body = NpcEditScreen.here();
 		body.put("event", event.toLowerCase(Locale.ROOT));
 		body.put("name", name.strip());
-		body.put("server_fingerprint", PhantasmonApi.serverFingerprint());
-		body.put("dimension", mc.level.dimension().location().toString());
-		body.put("x", mc.player.getX());
-		body.put("y", mc.player.getY());
-		body.put("z", mc.player.getZ());
-		body.put("yaw", (double) mc.player.getYRot());
 		PhantasmonApi.post("/admin/events/npcs", body, EventNpcDto.class)
 				.thenAccept(npc -> mc.execute(() -> {
 					chat(Component.translatable("phantasmon_events.npc.created", npc.name(), npc.event()).withStyle(ChatFormatting.GREEN));

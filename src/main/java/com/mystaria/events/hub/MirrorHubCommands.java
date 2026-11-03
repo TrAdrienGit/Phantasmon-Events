@@ -29,7 +29,9 @@ import com.mystaria.phantasmon.client.hub.HubAvatarEntity;
  * <ul>
  * <li>{@code create <name> <radius>}: a new mirror hub (radius from 1, no upper limit: admins only);</li>
  * <li>{@code anchor <hub>}: its anchor where the player stands; on a multiplayer server it sends the blocks (one per
- * hub), in a single-player world it receives them (one per admin);</li>
+ * hub), in a single-player world it receives them (one per admin); {@code anchor <hub> copy} poses a copy on a
+ * multiplayer server too — our own dedicated server, whose server mod builds it (Adrien 2026-11-02) — and
+ * {@code anchor <hub> source} a source;</li>
  * <li>{@code resize <hub> <delta>}: the radius grows (or shrinks, negative) around the same centre;</li>
  * <li>{@code debug <hub>}: shows or hides its limits (world border look), on this client;</li>
  * <li>{@code delete <hub>}: the hub and all its anchors;</li>
@@ -59,7 +61,13 @@ public final class MirrorHubCommands {
 				.then(ClientCommandManager.literal("anchor").then(hubArgument().executes(context -> {
 					PhantasmonApi.hubs().createMirrorAnchor(StringArgumentType.getString(context, "hub"));
 					return 1;
-				})))
+				}).then(ClientCommandManager.literal("copy").executes(context -> {
+					PhantasmonApi.hubs().createMirrorAnchor(StringArgumentType.getString(context, "hub"), true);
+					return 1;
+				})).then(ClientCommandManager.literal("source").executes(context -> {
+					PhantasmonApi.hubs().createMirrorAnchor(StringArgumentType.getString(context, "hub"), false);
+					return 1;
+				}))))
 				.then(ClientCommandManager.literal("resize").then(hubArgument()
 						.then(ClientCommandManager.argument("delta", IntegerArgumentType.integer())
 								.executes(context -> {

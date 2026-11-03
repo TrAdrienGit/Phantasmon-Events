@@ -25,7 +25,7 @@ import com.mystaria.phantasmon.client.api.PhantasmonApi;
  */
 public final class NpcEditScreen extends Screen {
 
-	static final List<String> AIS = List.of("random", "easy", "normal", "hard", "veryhard");
+	static final List<String> AIS = List.of("random", "easy", "normal", "hard", "veryhard", "expert");
 
 	private EventNpcDto npc;
 	private EditBox name;
@@ -122,7 +122,11 @@ public final class NpcEditScreen extends Screen {
 		}
 	}
 
-	/** Where the admin stands, facing where they look: the place of an NPC moved there. */
+	/**
+	 * Where the admin stands, facing where they look: the place of an NPC posed or moved there. Inside a hub's zone, the
+	 * place is given in that hub's coordinates ({@code hub}): the NPC then belongs to the hub and stands in all its
+	 * zones (Adrien 2026-11-03).
+	 */
 	static Map<String, Object> here() {
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.player == null || mc.level == null) {
@@ -135,6 +139,20 @@ public final class NpcEditScreen extends Screen {
 		body.put("y", mc.player.getY());
 		body.put("z", mc.player.getZ());
 		body.put("yaw", (double) mc.player.getYRot());
+		body.put("hub", null);
+		List<com.mystaria.phantasmon.client.hub.HubAnchorDto> anchors = PhantasmonApi.anchorsHere();
+		for (com.mystaria.phantasmon.client.hub.HubAnchorDto anchor : anchors == null ? List.<com.mystaria.phantasmon.client.hub.HubAnchorDto>of() : anchors) {
+			com.mystaria.phantasmon.client.hub.HubCoordinates hub = anchor.coordinates();
+			if (hub.contains(mc.player.getX(), mc.player.getY(), mc.player.getZ())) {
+				double[] inHub = hub.toHub(mc.player.getX(), mc.player.getZ());
+				body.put("hub", anchor.hub());
+				body.put("x", inHub[0]);
+				body.put("y", mc.player.getY() - hub.originY());
+				body.put("z", inHub[1]);
+				body.put("yaw", (double) hub.toHubYaw(mc.player.getYRot()));
+				break;
+			}
+		}
 		return body;
 	}
 
@@ -146,7 +164,7 @@ public final class NpcEditScreen extends Screen {
 		PhantasmonApi.post("/admin/events/" + npc.event() + "/open", Map.of("open", open), Map.class)
 				.thenAccept(ignored -> Minecraft.getInstance().execute(() -> {
 					npc = new EventNpcDto(npc.uuid(), npc.event(), open, npc.name(), npc.skin(), npc.x(), npc.y(), npc.z(), npc.yaw(),
-							npc.ai(), npc.formatId(), npc.teamSize(), npc.teamSpecies());
+							npc.ai(), npc.formatId(), npc.teamSize(), npc.teamSpecies(), npc.hub());
 					message = Component.translatable(open ? "phantasmon_events.npc.event_opened" : "phantasmon_events.npc.event_closed", npc.event())
 							.withStyle(ChatFormatting.GREEN);
 					rebuildWidgets();

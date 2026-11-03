@@ -1,0 +1,20 @@
+{
+	"schemaVersion": 1,
+	"id": "phantasmon_mirror_server",
+	"version": "${version}",
+	"name": "Phantasmon Mirror Server",
+	"description": "Builds the copies of Phantasmon's mirror hubs in this server's world, from the Phantasmon backend. For Phantasmon's own dedicated server only.",
+	"authors": ["Mystaria"],
+	"license": "Apache-2.0",
+	"environment": "server",
+	"mixins": ["phantasmon_mirror_server.mixins.json"],
+	"entrypoints": {
+		"server": ["com.mystaria.events.mirrorserver.MirrorServer"]
+	},
+	"depends": {
+		"fabricloader": ">=0.18.1",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}

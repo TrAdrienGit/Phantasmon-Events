@@ -1,5 +1,6 @@
 package com.mystaria.events.npc;
 
+import java.util.UUID;
 import java.util.function.Supplier;
 
 import com.mojang.authlib.GameProfile;
@@ -20,13 +21,32 @@ public final class EventNpcEntity extends RemotePlayer {
 
 	private final Supplier<PlayerSkin> skin;
 	private EventNpcDto npc;
+	/** Where it stands in this world (a hub's NPC: in one of the hub's zones). */
+	private double placeX;
+	private double placeY;
+	private double placeZ;
+	private float placeYaw;
 
-	EventNpcEntity(ClientLevel level, EventNpcDto npc, Supplier<PlayerSkin> skin) {
+	/** {@code entityUuid}: the NPC's own for its first place here (the battle intro finds it by it), else derived. */
+	EventNpcEntity(ClientLevel level, EventNpcDto npc, UUID entityUuid, Supplier<PlayerSkin> skin) {
 		super(level, new GameProfile(npc.uuid(), shortName(npc.name())));
-		setUUID(npc.uuid());
+		setUUID(entityUuid);
 		this.skin = skin;
 		this.npc = npc;
 		getEntityData().set(DATA_PLAYER_MODE_CUSTOMISATION, (byte) 0x7F);
+	}
+
+	void place(double x, double y, double z, float yaw) {
+		boolean first = placeX == 0 && placeY == 0 && placeZ == 0;
+		placeX = x;
+		placeY = y;
+		placeZ = z;
+		placeYaw = yaw;
+		if (first) {
+			moveTo(x, y, z, yaw, 0);
+			yHeadRot = yaw;
+			yBodyRot = yaw;
+		}
 	}
 
 	/** A game profile's name is 16 characters at most. */
@@ -80,7 +100,7 @@ public final class EventNpcEntity extends RemotePlayer {
 	public void tick() {
 		super.tick();
 		// Stands still where it was posed.
-		setPos(npc.x(), npc.y(), npc.z());
+		setPos(placeX, placeY, placeZ);
 		setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
 		// Looks at the nearest player within 10 blocks and follows them with its eyes — turning slowly, eased, never
 		// snapping round (Adrien 2026-11-02); with nobody near, slowly back to where it was posed facing.
@@ -95,7 +115,7 @@ public final class EventNpcEntity extends RemotePlayer {
 				}
 			}
 		}
-		float wantHead = npc.yaw();
+		float wantHead = placeYaw;
 		float wantPitch = 0;
 		if (near != null) {
 			double dx = near.getX() - getX();
@@ -110,7 +130,7 @@ public final class EventNpcEntity extends RemotePlayer {
 		if (Math.abs(offset) > 45) {
 			wantBody = wantHead - Math.signum(offset) * 45;
 		} else if (near == null) {
-			wantBody = npc.yaw();
+			wantBody = placeYaw;
 		}
 		yRotO = getYRot();
 		yBodyRotO = yBodyRot;

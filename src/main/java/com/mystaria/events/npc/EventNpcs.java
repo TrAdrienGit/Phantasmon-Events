@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,7 +32,10 @@ public final class EventNpcs {
 	private static final Logger LOG = LoggerFactory.getLogger(EventNpcs.class);
 	private static final int REFRESH_TICKS = 600;
 
-	private static final Map<UUID, EventNpcEntity> SHOWN = new HashMap<>();
+	/** Shown NPCs by place: {@code <npc uuid>} for a world NPC, {@code <npc uuid>@<anchor uuid>} for a hub's. */
+	private static final Map<String, EventNpcEntity> SHOWN = new HashMap<>();
+	/** The last list, placed again when this world's hub anchors change. */
+	private static EventNpcDto[] last = new EventNpcDto[0];
 	/** Skins by account name, kept for the session; an empty Optional while loading or if there is none. */
 	private static final Map<String, Optional<PlayerSkin>> SKINS = new ConcurrentHashMap<>();
 	private static ClientLevel level;
@@ -87,6 +91,8 @@ public final class EventNpcs {
 		}
 		if (++ticks >= REFRESH_TICKS) {
 			refresh();
+		} else if (ticks % 40 == 0) {
+			show(last); // anchors listed meanwhile: hub NPCs take their places
 		}
 	}
 
@@ -111,30 +117,72 @@ public final class EventNpcs {
 				}));
 	}
 
-	private static void show(EventNpcDto[] npcs) {
-		Map<UUID, EventNpcDto> wanted = new HashMap<>();
+	/** A place of an NPC in this world: {@code key} in {@link #SHOWN}, position and facing. */
+	private record Place(String key, EventNpcDto npc, double x, double y, double z, float yaw) {
+	}
+
+	/**
+	 * Each NPC's places here: a world NPC where it was posed; a hub's NPC (Adrien 2026-11-03) in each of that hub's
+	 * zones in this world — source, copy or ordinary anchor — from its hub coordinates.
+	 */
+	private static List<Place> places(EventNpcDto[] npcs) {
+		List<Place> places = new java.util.ArrayList<>();
+		List<com.mystaria.phantasmon.client.hub.HubAnchorDto> anchors = PhantasmonApi.anchorsHere();
 		for (EventNpcDto npc : npcs) {
-			wanted.put(npc.uuid(), npc);
+			if (npc.hub() == null) {
+				places.add(new Place(npc.uuid().toString(), npc, npc.x(), npc.y(), npc.z(), npc.yaw()));
+				continue;
+			}
+			for (com.mystaria.phantasmon.client.hub.HubAnchorDto anchor : anchors == null ? List.<com.mystaria.phantasmon.client.hub.HubAnchorDto>of() : anchors) {
+				if (!anchor.hub().equalsIgnoreCase(npc.hub())) {
+					continue;
+				}
+				com.mystaria.phantasmon.client.hub.HubCoordinates hub = anchor.coordinates();
+				double[] local = hub.toLocal(npc.x(), npc.z());
+				places.add(new Place(npc.uuid() + "@" + anchor.uuid(), npc, local[0], hub.originY() + npc.y(), local[1],
+						hub.toLocalYaw(npc.yaw())));
+			}
+		}
+		return places;
+	}
+
+	private static void show(EventNpcDto[] npcs) {
+		last = npcs;
+		if (level == null) {
+			return;
+		}
+		Map<String, Place> wanted = new HashMap<>();
+		for (Place place : places(npcs)) {
+			wanted.put(place.key(), place);
 		}
 		SHOWN.entrySet().removeIf(entry -> {
-			EventNpcDto now = wanted.get(entry.getKey());
+			Place now = wanted.get(entry.getKey());
 			EventNpcEntity entity = entry.getValue();
 			// Gone, or renamed / reskinned (the profile and skin are fixed at creation).
-			if (now == null || !now.name().equals(entity.npc().name()) || !java.util.Objects.equals(now.skin(), entity.npc().skin())) {
+			if (now == null || !now.npc().name().equals(entity.npc().name())
+					|| !java.util.Objects.equals(now.npc().skin(), entity.npc().skin())) {
 				entity.discard();
 				return true;
 			}
-			entity.update(now);
+			entity.update(now.npc());
+			entity.place(now.x(), now.y(), now.z(), now.yaw());
 			return false;
 		});
-		for (EventNpcDto npc : npcs) {
-			if (!SHOWN.containsKey(npc.uuid())) {
-				String skinName = npc.skin() != null ? npc.skin() : npc.name().replace(' ', '_');
-				EventNpcEntity entity = new EventNpcEntity(level, npc, () -> skin(skinName));
-				entity.moveTo(npc.x(), npc.y(), npc.z(), npc.yaw(), 0);
-				level.addEntity(entity);
-				SHOWN.put(npc.uuid(), entity);
+		Set<UUID> ownUuidTaken = new java.util.HashSet<>();
+		SHOWN.values().forEach(entity -> ownUuidTaken.add(entity.getUUID()));
+		for (Place place : wanted.values()) {
+			if (SHOWN.containsKey(place.key())) {
+				continue;
 			}
+			EventNpcDto npc = place.npc();
+			// The NPC's own UUID for one of its places (the battle intro finds it by it), a derived one for the others.
+			UUID entityUuid = ownUuidTaken.add(npc.uuid()) ? npc.uuid()
+					: UUID.nameUUIDFromBytes(("phantasmon-event-npc:" + place.key()).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+			String skinName = npc.skin() != null ? npc.skin() : npc.name().replace(' ', '_');
+			EventNpcEntity entity = new EventNpcEntity(level, npc, entityUuid, () -> skin(skinName));
+			entity.place(place.x(), place.y(), place.z(), place.yaw());
+			level.addEntity(entity);
+			SHOWN.put(place.key(), entity);
 		}
 	}
 
@@ -168,6 +216,7 @@ public final class EventNpcs {
 			entity.discard();
 		}
 		SHOWN.clear();
+		last = new EventNpcDto[0];
 	}
 
 	/** The NPC entity nearest the player within {@code range}, or null. */
