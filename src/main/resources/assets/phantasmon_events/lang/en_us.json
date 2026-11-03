@@ -162,5 +162,6 @@
   "phantasmon_events.error.error_battle_invalid_party": "Unreadable Cobblemon party.",
   "phantasmon_events.npc.edit": "Edit the trainer",
   "phantasmon_events.npc.moved_named": "%s is now here.",
-  "phantasmon_events.npc.ai.expert": "Expert"
+  "phantasmon_events.npc.ai.expert": "Expert",
+  "phantasmon_events.npc.ai_debug": "AI debug"
 }

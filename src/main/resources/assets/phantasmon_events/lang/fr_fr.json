@@ -162,5 +162,6 @@
   "phantasmon_events.error.error_battle_invalid_party": "Équipe Cobblemon illisible.",
   "phantasmon_events.npc.edit": "Modifier le dresseur",
   "phantasmon_events.npc.moved_named": "%s est maintenant ici.",
-  "phantasmon_events.npc.ai.expert": "Expert"
+  "phantasmon_events.npc.ai.expert": "Expert",
+  "phantasmon_events.npc.ai_debug": "Debug IA"
 }

@@ -33,6 +33,7 @@ public final class NpcEditScreen extends Screen {
 	private EditBox event;
 	private String ai;
 	private String[] format;
+	private boolean aiDebug;
 	private Component message;
 
 	/** The NPC last opened in the editor: {@code /phantasmon event npc move} moves it. */
@@ -43,6 +44,7 @@ public final class NpcEditScreen extends Screen {
 		this.npc = npc;
 		lastEdited = npc.uuid();
 		this.ai = AIS.contains(npc.ai()) ? npc.ai() : "normal";
+		this.aiDebug = npc.aiDebug();
 		this.format = formats().stream().filter(f -> f[0].equals(npc.formatId())).findFirst().orElse(formats().get(0));
 	}
 
@@ -69,7 +71,10 @@ public final class NpcEditScreen extends Screen {
 				.create(left + 158, y + 10, 152, 20, Component.translatable("phantasmon_events.npc.ai"), (b, value) -> ai = value));
 		y += 34;
 		addRenderableWidget(CycleButton.<String[]>builder(value -> Component.literal(value[1])).withValues(formats()).withInitialValue(format)
-				.create(left, y, 310, 20, Component.translatable("phantasmon_events.npc.format"), (b, value) -> format = value));
+				.create(left, y, 196, 20, Component.translatable("phantasmon_events.npc.format"), (b, value) -> format = value));
+		// AI debug: its reasoning in the chat of the player battling it, turn by turn (the Expert AI).
+		addRenderableWidget(CycleButton.onOffBuilder(aiDebug)
+				.create(left + 202, y, 108, 20, Component.translatable("phantasmon_events.npc.ai_debug"), (b, value) -> aiDebug = value));
 		y += 26;
 		addRenderableWidget(Button.builder(Component.translatable("phantasmon_events.npc.save"), b -> save()).bounds(left, y, 152, 20).build());
 		addRenderableWidget(Button.builder(Component.translatable("phantasmon_events.npc.move_here"), b -> moveHere()).bounds(left + 158, y, 152, 20).build());
@@ -112,6 +117,7 @@ public final class NpcEditScreen extends Screen {
 		body.put("event", event.getValue().strip().toLowerCase(Locale.ROOT));
 		body.put("ai", ai);
 		body.put("format_id", format[0]);
+		body.put("ai_debug", aiDebug);
 		post("/admin/events/npcs/" + npc.uuid(), body, "phantasmon_events.npc.saved");
 	}
 
@@ -164,7 +170,7 @@ public final class NpcEditScreen extends Screen {
 		PhantasmonApi.post("/admin/events/" + npc.event() + "/open", Map.of("open", open), Map.class)
 				.thenAccept(ignored -> Minecraft.getInstance().execute(() -> {
 					npc = new EventNpcDto(npc.uuid(), npc.event(), open, npc.name(), npc.skin(), npc.x(), npc.y(), npc.z(), npc.yaw(),
-							npc.ai(), npc.formatId(), npc.teamSize(), npc.teamSpecies(), npc.hub());
+							npc.ai(), npc.formatId(), npc.teamSize(), npc.teamSpecies(), npc.hub(), npc.aiDebug());
 					message = Component.translatable(open ? "phantasmon_events.npc.event_opened" : "phantasmon_events.npc.event_closed", npc.event())
 							.withStyle(ChatFormatting.GREEN);
 					rebuildWidgets();

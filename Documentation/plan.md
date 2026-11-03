@@ -121,7 +121,13 @@ du monde, Anchors jamais tournés, terrain par colonnes de 16 × 16. E4 : avatar
     duel sur le terrain, boosts, pièges, statuts) ; recherche sur **deux tours**, choix simultanés, réponses adverses
     prédites ; tour joué : changements avec Piège de Roc et Picots, priorité et Vitesse, KO qui annule l'attaque du plus
     lent, boosts, soins, statuts, Abri, poison et brûlure, Restes, remplacement après un KO ; lead choisi au lobby ;
-  - à venir : Téra adverse, objets et talents révélés en combat, régler les poids d'après les parties.
+  - v4 (2026-11-03, après la v3 : changements « en panique » quand tout semblait perdu, sweeper adverse laissé se
+    booster, pas de course à la priorité) : objets, talents et Téra révélés lus dans le journal Showdown du combat
+    (`-item`, `-enditem`, `-ability`, `-terastallize`) et appliqués à l'adversaire ; chaque changement d'affilée coûte
+    plus cher ; les boosts comptent dans les duels du Pokémon sur le terrain (un sweeper boosté devient une condition de
+    victoire adverse à arrêter) et pèsent plus ; une attaque prioritaire qui achève gagne le duel quelle que soit la
+    Vitesse ; Buée Noire, Hurlement, Draco-Queue… effacent les boosts ;
+  - à venir : régler les poids d'après les parties.
 - Côté client : entité joueur locale (`npc/EventNpcEntity`) ; liste relue à l'arrivée, au changement de dimension, toutes les 30 s et sur `EventsNpcsChanged`.
 
 ## La copie sur notre serveur dédié (Adrien 2026-11-02, voie 3 choisie)
