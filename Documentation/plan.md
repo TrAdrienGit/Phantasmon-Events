@@ -60,7 +60,7 @@ joueurs Phantasmon proches  ──────►  copie de référence de la zo
 
 ## 5. Ce qu'il faut dans Phantasmon
 
-Events ne doit pas toucher au code de Phantasmon, comme Spectacle (D-37). Il faut donc une petite API publique dans
+Events ne doit pas toucher au code de Phantasmon, comme Showtime (D-37). Il faut donc une petite API publique dans
 Phantasmon-Client, à ajouter et valider avant :
 
 - déclarer une zone comme membre d'un hub, sans construction par schematic ni contrôle de zone vide ;
@@ -72,7 +72,7 @@ Côté backend, une nouvelle décision **D-38** (hubs miroirs), dans les deux do
 
 | Phase | Contenu | Fini quand |
 |---|---|---|
-| E0 | Projet Fabric (comme Spectacle), dépendance à Phantasmon et Spectacle, dépôt GitHub, déploiement dans les deux instances | Le jar vide se charge avec Phantasmon |
+| E0 | Projet Fabric (comme Showtime), dépendance à Phantasmon et Showtime, dépôt GitHub, déploiement dans les deux instances | Le jar vide se charge avec Phantasmon |
 | E1 | Phantasmon : API d'extension (hub sans schematic, messages Events). Backend : D-38, table des hubs miroirs, commandes admin `create` / `delete` / `list` | Un admin crée un hub miroir, il apparaît dans la liste |
 | E2 | Capture : instantanés et deltas envoyés par les clients sur le serveur, copie de référence au backend | Le backend a une copie juste de la zone, mise à jour quand on pose ou casse un bloc |
 | E3 | Copie solo : pose de la copie, construction en vrais blocs, deltas en direct, rotation | Un bloc posé sur le serveur apparaît dans le monde solo en quelques secondes |
@@ -103,7 +103,7 @@ du monde, Anchors jamais tournés, terrain par colonnes de 16 × 16. E4 : avatar
   copies, les ancres ordinaires), donc tous ceux qui ont ce hub le voient et peuvent le défier. Hors de tout hub, il
   reste à sa place dans son monde.
 - Le combat : comme le combat solo admin — le client du joueur fait tourner le moteur, l'IA joue le PNJ ; un vrai combat
-  Ghost (Spectacle, intro, ambiance), regardable, jamais enregistré.
+  Ghost (Showtime, intro, ambiance), regardable, jamais enregistré.
 - IA : Aléatoire, puis l'« IA forte » de Cobblemon (Facile 1, Normale 3, Difficile 4, Très difficile 5), puis
   **Expert**, l'IA maison (`battle/ExpertBattleAI` dans Phantasmon ; combats simples seulement, les seuls joués) :
   - v1 (2026-11-03) : calcul de dégâts proche des jeux, un tour d'avance contre la meilleure réponse adverse ;

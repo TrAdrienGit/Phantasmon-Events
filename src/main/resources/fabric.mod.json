@@ -24,6 +24,6 @@
 		"fabric-api": "*",
 		"cobblemon": ">=1.8.1",
 		"phantasmon": ">=0.1.0 <0.2.0",
-		"cobblemon_spectacle": ">=0.1.0 <0.2.0"
+		"cobblemon_battle_showtime": ">=0.1.0 <0.2.0"
 	}
 }

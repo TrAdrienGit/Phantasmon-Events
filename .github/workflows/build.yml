@@ -15,14 +15,14 @@ jobs:
           # Loom needs a JDK 25 to run Gradle; the mod itself targets Java 21.
           java-version: '25'
           distribution: 'microsoft'
-      # Phantasmon Events compiles against Cobblemon Spectacle and Phantasmon, from Maven local.
-      - name: checkout Cobblemon Spectacle
+      # Phantasmon Events compiles against Cobblemon Battle Showtime and Phantasmon, from Maven local.
+      - name: checkout Cobblemon Battle Showtime
         uses: actions/checkout@v6
         with:
-          repository: ${{ github.repository_owner }}/Cobblemon-Spectacle
-          path: Cobblemon-Spectacle
-      - name: publish Cobblemon Spectacle to Maven local
-        working-directory: Cobblemon-Spectacle
+          repository: ${{ github.repository_owner }}/Cobblemon-Battle-Showtime
+          path: Cobblemon-Battle-Showtime
+      - name: publish Cobblemon Battle Showtime to Maven local
+        working-directory: Cobblemon-Battle-Showtime
         run: chmod +x ./gradlew && ./gradlew publishToMavenLocal
       - name: checkout Phantasmon
         uses: actions/checkout@v6

@@ -1,6 +1,6 @@
 # Phantasmon Events
 
-> Add-on client de Phantasmon (jar séparé, qui dépend de Phantasmon et de Cobblemon Spectacle). Commencé le
+> Add-on client de Phantasmon (jar séparé, qui dépend de Phantasmon et de Cobblemon Battle Showtime). Commencé le
 > 2026-10-29 : voir le [plan](Documentation/plan.md).
 
 Outils pour organiser des événements communautaires Cobblemon (tournois, ligue, jeux) au-dessus de Phantasmon, sur

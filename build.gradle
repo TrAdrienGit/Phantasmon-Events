@@ -13,7 +13,7 @@ repositories {
 		url = "https://api.modrinth.com/maven"
 		content { includeGroup "maven.modrinth" }
 	}
-	// Phantasmon and Cobblemon Spectacle: `./gradlew publishToMavenLocal` in their own folders puts them there.
+	// Phantasmon and Cobblemon Battle Showtime: `./gradlew publishToMavenLocal` in their own folders puts them there.
 	mavenLocal() {
 		content {
 			includeGroup "com.mystaria"
@@ -33,7 +33,7 @@ dependencies {
 	compileOnly "org.jetbrains.kotlin:kotlin-stdlib:2.0.21"
 
 	modImplementation "com.mystaria.phantasmon:phantasmon-client:${project.phantasmon_version}"
-	modImplementation "com.mystaria:cobblemon-spectacle:${project.spectacle_version}"
+	modImplementation "com.mystaria:cobblemon-battle-showtime:${project.showtime_version}"
 }
 
 processResources {
