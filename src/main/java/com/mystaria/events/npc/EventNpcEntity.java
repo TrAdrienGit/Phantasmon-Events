@@ -19,6 +19,8 @@ import net.minecraft.world.damagesource.DamageSource;
  */
 public final class EventNpcEntity extends RemotePlayer {
 
+	private static final java.util.concurrent.atomic.AtomicInteger NEXT_ID = new java.util.concurrent.atomic.AtomicInteger(-3_000_000);
+
 	private final Supplier<PlayerSkin> skin;
 	private EventNpcDto npc;
 	/** Where it stands in this world (a hub's NPC: in one of the hub's zones). */
@@ -31,6 +33,9 @@ public final class EventNpcEntity extends RemotePlayer {
 	EventNpcEntity(ClientLevel level, EventNpcDto npc, UUID entityUuid, Supplier<PlayerSkin> skin) {
 		super(level, new GameProfile(npc.uuid(), shortName(npc.name())));
 		setUUID(entityUuid);
+		// Client-only: an id far from the server's, which count up from 0. With the same id as one of its mobs, the
+		// NPC vanishes when that mob is removed (seen on a freshly started server, whose ids are still low).
+		setId(NEXT_ID.getAndDecrement());
 		this.skin = skin;
 		this.npc = npc;
 		getEntityData().set(DATA_PLAYER_MODE_CUSTOMISATION, (byte) 0x7F);
