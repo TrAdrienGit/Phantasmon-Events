@@ -164,5 +164,6 @@
   "phantasmon_events.npc.moved_named": "%s est maintenant ici.",
   "phantasmon_events.npc.ai.expert": "Expert",
   "phantasmon_events.npc.ai.reborn": "Reborn",
+  "phantasmon_events.npc.ai.reborn_tweak": "Reborn-Tweak",
   "phantasmon_events.npc.ai_debug": "Debug IA"
 }
