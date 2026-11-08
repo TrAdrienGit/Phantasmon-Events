@@ -235,9 +235,15 @@ public final class TournamentScreen extends Screen {
 	}
 
 	@Override
+	public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+		super.renderBackground(g, mouseX, mouseY, partialTick);
+		com.mystaria.events.EventsLook.card(g, width, height, 238);
+	}
+
+	@Override
 	public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
 		super.render(g, mouseX, mouseY, partialTick);
-		g.drawCenteredString(font, title, width / 2, 12, 0xFFFFFFFF);
+		g.drawCenteredString(font, title, width / 2, 12, com.mystaria.events.EventsLook.title());
 		int x = left() + LIST_W + 10;
 		int w = panelWidth();
 		int y = 34;

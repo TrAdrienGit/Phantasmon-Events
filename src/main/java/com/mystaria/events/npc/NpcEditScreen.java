@@ -199,10 +199,16 @@ public final class NpcEditScreen extends Screen {
 	}
 
 	@Override
+	public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+		super.renderBackground(g, mouseX, mouseY, partialTick);
+		com.mystaria.events.EventsLook.card(g, width, height, 165);
+	}
+
+	@Override
 	public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
 		super.render(g, mouseX, mouseY, partialTick);
 		int left = width / 2 - 155;
-		g.drawCenteredString(font, title, width / 2, 14, 0xFFFFFFFF);
+		g.drawCenteredString(font, title, width / 2, 14, com.mystaria.events.EventsLook.title());
 		g.drawString(font, Component.translatable("phantasmon_events.npc.name"), left, 36, 0xFFA0A0A0);
 		g.drawString(font, Component.translatable("phantasmon_events.npc.skin"), left + 158, 36, 0xFFA0A0A0);
 		g.drawString(font, Component.translatable("phantasmon_events.npc.event"), left, 70, 0xFFA0A0A0);

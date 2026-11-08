@@ -151,9 +151,15 @@ public final class TournamentFormScreen extends Screen {
 	}
 
 	@Override
+	public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+		super.renderBackground(g, mouseX, mouseY, partialTick);
+		com.mystaria.events.EventsLook.card(g, width, height, 165);
+	}
+
+	@Override
 	public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
 		super.render(g, mouseX, mouseY, partialTick);
-		g.drawCenteredString(font, title, width / 2, 16, 0xFFFFFFFF);
+		g.drawCenteredString(font, title, width / 2, 16, com.mystaria.events.EventsLook.title());
 		int left = width / 2 - 155;
 		int y = editing == null ? 40 + 30 + 24 + 30 : 70;
 		g.drawString(font, Component.translatable("phantasmon_events.screen.form.starts_at"), left, y, 0xFFC0C0C0, false);
