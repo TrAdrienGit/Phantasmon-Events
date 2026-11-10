@@ -86,6 +86,12 @@ E0 à E3 faites et validées en jeu par Adrien, avec ses ajustements (décision 
 `/phantasmon event hub anchor` (source sur un serveur, copie en solo), taille par rayon sans limite haute, toute la hauteur
 du monde, Anchors jamais tournés, terrain par colonnes de 16 × 16. E4 : avatars, vocal et combats Ghost validés.
 
+## Gestionnaire des hubs : onglet « Hubs Event » (à faire, Adrien 2026-11-10)
+
+Phantasmon a un gestionnaire des hubs pour les admins (touche H). Events doit y ajouter son onglet « Hubs Event »
+(hubs miroirs compris) par `PhantasmonApi.registerHubManagerTab` : `shows` = type `MIRROR`, détails (rayon,
+terrain), boutons (agrandir / réduire, effacer les blocs fantômes) et création d'un hub miroir.
+
 ## Dresseurs PNJ (Adrien 2026-11-02)
 
 - Un admin pose un dresseur PNJ où il se tient, dans un événement : `/phantasmon event npc create <événement> <nom>`
