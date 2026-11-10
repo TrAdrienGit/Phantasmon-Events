@@ -105,11 +105,11 @@ du monde, Anchors jamais tournés, terrain par colonnes de 16 × 16. E4 : avatar
 - Le combat : comme le combat solo admin — le client du joueur fait tourner le moteur, l'IA joue le PNJ ; un vrai combat
   Ghost (Showtime, intro, ambiance), regardable, jamais enregistré.
 - IA : Aléatoire, puis l'« IA forte » de Cobblemon (Facile 1, Normale 3, Difficile 4, Très difficile 5), puis
-  **Expert**, l'IA maison (`battle/ExpertBattleAI` dans Phantasmon ; combats simples seulement, les seuls joués) :
+  **Expert**, l'IA maison (`ai/ExpertBattleAI` dans Phantasmon Events depuis le 2026-11-10, TODO-35 ; combats simples seulement, les seuls joués) :
   - v1 (2026-11-03) : calcul de dégâts proche des jeux, un tour d'avance contre la meilleure réponse adverse ;
   - v2 (2026-11-03) : ne lit plus la vraie équipe adverse — ce qui est visible (Pokémon sur le terrain, PV, boosts,
     statut, attaques déjà utilisées, Pokémon déjà vus) et le reste tiré des statistiques Smogon d'octobre 2026
-    (`assets/phantasmon/ai/smogon_sets.json`, `tools/smogon_sets.py` : attaques courantes, objet, talent, EV et nature) ;
+    (`assets/phantasmon_events/ai/smogon_sets.json`, `tools/smogon_sets.py` d'Events : attaques courantes, objet, talent, EV et nature) ;
     les deux camps choisissent en même temps : réponses adverses pondérées par leur usage et par ce qu'elles valent
     contre notre attaque évidente (prédiction des changements : frapper le Pokémon qui entre) ; Méga-Évolution dès que
     possible, Téracristallisation et capacité Z quand elles gagnent l'échange (une seule fois) ; meilleur duel après un KO ;

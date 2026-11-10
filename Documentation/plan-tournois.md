@@ -116,3 +116,13 @@ Chaque phase se termine par une validation en jeu par Adrien.
 - 2026-10-30 : T4 (arbre en double élimination, tours ouverts par un admin, finale décisive) et T5 (page web
   publique `/t`) **validés à deux comptes** ; check-in accepté si l'équipe Ghost **ou** la party Cobblemon respecte le
   format. À reprendre : le design de la page web (premier jet fonctionnel).
+
+## 8. À reprendre : le formulaire de création (Adrien, 2026-11-10)
+
+À faire à part de la séparation d'Events (TODO-35), pas encore commencé :
+
+- **Dates plus explicites** : « début (facultatif) » ne dit pas ce qu'il date. Garder ouverture et fermeture des
+  inscriptions, ajouter **ouverture du check-in** et **fermeture du check-in** ; chaque étape reste aussi déclenchable
+  à la main par un admin.
+- **Saisie guidée** : l'admin tape seulement les chiffres, le champ met lui-même le format. Date : taper `10112026`
+  donne `10-11-2026`. Heure : taper `1910` donne `19:10` (plus de séparateur à écrire à la main).

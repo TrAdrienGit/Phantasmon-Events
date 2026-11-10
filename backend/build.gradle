@@ -1,0 +1,90 @@
+// Phantasmon Events' backend module (D-41): loaded by the Phantasmon backend from its addons/ folder, never run alone.
+// Same package as the core (com.mystaria.phantasmon_backend.events), so the core's component, entity and repository
+// scanning finds it with nothing to register. Compiles against the core's jar in Maven local: in ../../Phantasmon-Backend,
+// `./gradlew publishToMavenLocal`.
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '4.1.1' apply false
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.mystaria'
+version = '0.1.0'
+base { archivesName = 'phantasmon-events-backend' }
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+repositories {
+	mavenLocal {
+		content {
+			includeGroup 'com.mystaria'
+		}
+	}
+	mavenCentral()
+}
+
+dependencyManagement {
+	imports {
+		mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+	}
+}
+
+ext.phantasmonBackend = 'com.mystaria:phantasmon-backend:0.1.0'
+
+dependencies {
+	// Provided by the Phantasmon backend at runtime: never packed in this jar.
+	compileOnly phantasmonBackend
+	compileOnly 'org.springframework.boot:spring-boot-starter-data-jpa'
+	compileOnly 'org.springframework.boot:spring-boot-starter-security'
+	compileOnly 'org.springframework.boot:spring-boot-flyway'
+	compileOnly 'org.flywaydb:flyway-core'
+	compileOnly 'org.springframework.boot:spring-boot-starter-validation'
+	compileOnly 'org.springframework.boot:spring-boot-starter-webmvc'
+	compileOnly 'org.springframework.boot:spring-boot-starter-websocket'
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	// Tests start the whole Phantasmon backend with this module on its classpath, as in production.
+	testImplementation phantasmonBackend
+	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-websocket-test'
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+	testImplementation 'org.testcontainers:testcontainers-postgresql'
+	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security'
+	testImplementation 'org.springframework.boot:spring-boot-flyway'
+	testImplementation 'org.flywaydb:flyway-database-postgresql'
+	testImplementation 'org.springframework.boot:spring-boot-starter-validation'
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	testImplementation 'org.springframework.boot:spring-boot-starter-websocket'
+	testImplementation 'org.springframework.boot:spring-boot-restclient'
+	testRuntimeOnly 'org.postgresql:postgresql'
+	testRuntimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+	testRuntimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+	testImplementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+	testCompileOnly 'org.projectlombok:lombok'
+	testAnnotationProcessor 'org.projectlombok:lombok'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// Controllers bind @PathVariable / @RequestParam by parameter name (what the Spring Boot plugin would set).
+tasks.withType(JavaCompile).configureEach {
+	options.compilerArgs << '-parameters'
+}
+
+tasks.named('jar') {
+	manifest {
+		attributes 'Implementation-Title': 'Phantasmon Events backend', 'Implementation-Version': project.version
+	}
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

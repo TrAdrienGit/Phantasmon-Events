@@ -30,6 +30,10 @@ public final class PhantasmonEvents implements ClientModInitializer {
 		net.minecraft.client.KeyMapping tournaments = net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper.registerKeyBinding(
 				new net.minecraft.client.KeyMapping("key.phantasmon_events.tournaments", com.mojang.blaze3d.platform.InputConstants.UNKNOWN.getValue(),
 						"key.categories.phantasmon_events"));
+		// The NPCs' own AI levels (TODO-35, D-41): Phantasmon only knows Cobblemon's.
+		com.mystaria.phantasmon.client.api.PhantasmonApi.registerBattleAi("expert", com.mystaria.events.ai.ExpertBattleAI::new);
+		com.mystaria.phantasmon.client.api.PhantasmonApi.registerBattleAi("reborn", com.mystaria.events.ai.RebornBattleAI::new);
+		com.mystaria.phantasmon.client.api.PhantasmonApi.registerBattleAi("reborn_tweak", debug -> new com.mystaria.events.ai.RebornBattleAI(debug, true));
 		MirrorCopy.register();
 		com.mystaria.events.npc.EventNpcs.register();
 		MirrorGhosts.register();
