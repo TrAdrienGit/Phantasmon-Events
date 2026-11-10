@@ -165,5 +165,16 @@
   "phantasmon_events.npc.ai.expert": "Expert",
   "phantasmon_events.npc.ai.reborn": "Reborn",
   "phantasmon_events.npc.ai.reborn_tweak": "Reborn-Tweak",
-  "phantasmon_events.npc.ai_debug": "AI debug"
+  "phantasmon_events.npc.ai_debug": "AI debug",
+  "phantasmon_events.hub_tab.title": "Event hubs",
+  "phantasmon_events.hub_tab.radius": "Radius: %s blocks around the source",
+  "phantasmon_events.hub_tab.resize": "Radius ±",
+  "phantasmon_events.hub_tab.field.delta": "Radius change (blocks, negative to shrink)",
+  "phantasmon_events.hub_tab.source": "Place the source here",
+  "phantasmon_events.hub_tab.copy": "Place a copy here",
+  "phantasmon_events.hub_tab.limits": "Limits",
+  "phantasmon_events.hub_tab.clean": "Clean ghost blocks",
+  "phantasmon_events.hub_tab.create": "+ Create a mirror hub",
+  "phantasmon_events.hub_tab.field.name": "Name",
+  "phantasmon_events.hub_tab.field.radius": "Radius (blocks)"
 }

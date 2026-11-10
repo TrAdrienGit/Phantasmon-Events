@@ -165,5 +165,16 @@
   "phantasmon_events.npc.ai.expert": "Expert",
   "phantasmon_events.npc.ai.reborn": "Reborn",
   "phantasmon_events.npc.ai.reborn_tweak": "Reborn-Tweak",
-  "phantasmon_events.npc.ai_debug": "Debug IA"
+  "phantasmon_events.npc.ai_debug": "Debug IA",
+  "phantasmon_events.hub_tab.title": "Hubs Event",
+  "phantasmon_events.hub_tab.radius": "Rayon : %s blocs autour de la source",
+  "phantasmon_events.hub_tab.resize": "Rayon ±",
+  "phantasmon_events.hub_tab.field.delta": "Variation du rayon (blocs, négatif pour réduire)",
+  "phantasmon_events.hub_tab.source": "Poser la source ici",
+  "phantasmon_events.hub_tab.copy": "Poser une copie ici",
+  "phantasmon_events.hub_tab.limits": "Limites",
+  "phantasmon_events.hub_tab.clean": "Nettoyer les fantômes",
+  "phantasmon_events.hub_tab.create": "+ Créer un hub miroir",
+  "phantasmon_events.hub_tab.field.name": "Nom",
+  "phantasmon_events.hub_tab.field.radius": "Rayon (blocs)"
 }

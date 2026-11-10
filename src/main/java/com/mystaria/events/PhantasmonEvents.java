@@ -35,6 +35,7 @@ public final class PhantasmonEvents implements ClientModInitializer {
 		com.mystaria.phantasmon.client.api.PhantasmonApi.registerBattleAi("reborn", com.mystaria.events.ai.RebornBattleAI::new);
 		com.mystaria.phantasmon.client.api.PhantasmonApi.registerBattleAi("reborn_tweak", debug -> new com.mystaria.events.ai.RebornBattleAI(debug, true));
 		MirrorCopy.register();
+		com.mystaria.events.hub.EventHubsTab.register();
 		com.mystaria.events.npc.EventNpcs.register();
 		MirrorGhosts.register();
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
