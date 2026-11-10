@@ -3,7 +3,8 @@
 > Plan du 2026-11-10, validé par Adrien le même jour (décision D-41). Suivi côté Phantasmon : TODO-35
 > (`Phantasmon-*/Documentation/project/known-issues.md`).
 >
-> **Avancement** : E1, E4 et E2 faites le 2026-11-10 (voir §4) ; E3 (déploiement) et E5 (doc) restent. Les décisions ouvertes (§5) suivent les propositions tant
+> **Avancement** : **séparation terminée le 2026-11-10** (E1 à E5, voir §4). Validé en jeu par Adrien : IA expert et
+> Reborn-Tweak ; hubs miroirs pas encore retestés en jeu depuis E2. Les décisions ouvertes (§5) suivent les propositions tant
 > qu'Adrien ne dit pas autre chose ; la 1 doit être tranchée avant E2.
 
 ## 1. Le besoin (Adrien, 2026-11-10)
@@ -154,3 +155,12 @@ dans `HubCatalogService` et les règles des Anchors miroirs dans `HubAnchorServi
 2. **Nom et version du module** : `phantasmon-events-backend`, même numéro de version que le mod Events (proposé).
 3. **`TrainerProfile` (V20)** et **mutes du chat du hub (V21)** : restent dans le cœur (profils d'animation de
    Showtime, modération du hub). À confirmer.
+
+**E3 faite (2026-11-10).** Sauvegarde de la base, puis `deploy-ubuntu.sh` : V25 appliquée, module installé dans
+`/opt/phantasmon/addons/`, ses migrations ont reconnu les tables existantes ; hubs, Anchors et PNJ conservés ;
+`GET /version` annonce `phantasmon_events`.
+
+**E5 faite (2026-11-10).** La référence du module ([`backend-reference.md`](backend-reference.md) : module, routes,
+messages `Events*`, codes d'erreur, tables) quitte `Phantasmon-Backend/Documentation/reference/`, qui n'en garde que
+des renvois ; ajouts au cœur : `kind` des hubs, `GET /version` → `addons`, `ERROR_HUB_KIND_UNAVAILABLE`, guide de
+déploiement (`addons/`, `--no-events`).
