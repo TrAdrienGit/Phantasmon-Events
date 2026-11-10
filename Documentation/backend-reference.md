@@ -17,6 +17,8 @@
   `EventNpcService` (`NpcOpponentProvider`), `TournamentRunService` (`TournamentHook`), `MirrorHubKind` (`HubKind`,
   type `MIRROR`), `EventsPublicRoutes` (`PublicRoutesProvider`), `EventsAddon` (`BackendAddon`, annoncé par
   `GET /version` : `"addons": {"phantasmon_events": "<version>"}`).
+- Sans le module, le cœur garde les hubs `MIRROR` en base mais les masque (`GET /hubs`, `/hub/anchors`) et refuse
+  d'y entrer (`ERROR_HUB_KIND_UNAVAILABLE`) : ils reviennent tels quels quand le module est réinstallé.
 - Configuration : `PHANTASMON_MIRROR_SERVER_TOKEN` (ou `phantasmon.mirror.server-token`), jeton du serveur dédié ;
   vide : copie du serveur dédié désactivée.
 
