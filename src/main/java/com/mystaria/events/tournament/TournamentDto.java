@@ -6,7 +6,8 @@ import java.util.UUID;
 /** A tournament as the backend shows it ({@code GET /tournaments/{name}}); dates ISO-8601, null if not set. */
 public record TournamentDto(String name, String kind, int bestOf, String formatId, String formatName, String status,
 		String startsAt, String registrationOpensAt, String registrationClosesAt, boolean registrationOpen,
-		Integer plannedRounds, int currentRound, List<Player> players, List<Match> matches, List<Standing> standings) {
+		Integer plannedRounds, int currentRound, List<Player> players, List<Match> matches, List<Standing> standings,
+		String checkInOpensAt, String checkInClosesAt, String createdAt) {
 
 	public record Player(UUID uuid, String username, boolean checkedIn, boolean dropped) {
 	}

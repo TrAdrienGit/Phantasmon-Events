@@ -78,6 +78,47 @@ public class TournamentRunService implements TournamentHook {
 		scheduler.shutdownNow();
 	}
 
+	// ---------------------------------------------------------------- dates (2026-11-11)
+
+	/** The tournaments whose start at the check-in's closing failed (too few players), with that date: not retried. */
+	private final Map<UUID, java.time.Instant> autoStartFailed = new java.util.concurrent.ConcurrentHashMap<>();
+
+	/**
+	 * The steps the dates trigger: the check-in opens at its opening date, and at its closing date the tournament
+	 * starts with those present and its first round (or wave) opens. A step an admin already took is skipped; a start that fails (fewer than two players
+	 * present) stays in the check-in for an admin to decide, and is not retried until its date changes.
+	 */
+	@org.springframework.scheduling.annotation.Scheduled(fixedRate = 15_000)
+	void datedSteps() {
+		java.time.Instant now = java.time.Instant.now();
+		for (Tournament t : tournaments.findAllByOrderByCreatedAtDesc()) {
+			if (t.over() || Tournament.RUNNING.equals(t.getStatus())) {
+				continue;
+			}
+			try {
+				if (Tournament.REGISTRATION.equals(t.getStatus()) && t.getCheckInOpensAt() != null && !now.isBefore(t.getCheckInOpensAt())
+						&& (t.getCheckInClosesAt() == null || now.isBefore(t.getCheckInClosesAt()))) {
+					tournamentService.openCheckIn(t.getName());
+					log.info("Tournament {}: check-in opened at its date", t.getName());
+				} else if (t.getCheckInClosesAt() != null && !now.isBefore(t.getCheckInClosesAt())
+						&& !t.getCheckInClosesAt().equals(autoStartFailed.get(t.getUuid()))) {
+					if (Tournament.REGISTRATION.equals(t.getStatus()) && t.getCheckInOpensAt() != null) {
+						tournamentService.openCheckIn(t.getName()); // both dates passed while down: check-in first
+					}
+					transaction.executeWithoutResult(status -> start(null, t.getName()));
+					// Nobody is there to launch it: the first round (or wave) follows at once, players are invited.
+					transaction.executeWithoutResult(status -> nextRound(null, t.getName()));
+					log.info("Tournament {}: started at the check-in's closing, first round open", t.getName());
+				}
+			} catch (ApiException ex) {
+				autoStartFailed.put(t.getUuid(), t.getCheckInClosesAt());
+				log.warn("Tournament {}: dated step not taken ({})", t.getName(), ex.getErrorCode());
+			} catch (RuntimeException ex) {
+				log.warn("Tournament {}: dated step failed", t.getName(), ex);
+			}
+		}
+	}
+
 	// ---------------------------------------------------------------- admin
 
 	/** Registration or check-in → running: those who did not check in (when a check-in was held) are left out. */

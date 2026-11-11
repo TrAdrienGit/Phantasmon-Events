@@ -50,6 +50,6 @@ public class PublicTournamentController {
 				view.status(), view.startsAt(), view.registrationOpensAt(), view.registrationClosesAt(), view.registrationOpen(),
 				view.plannedRounds(), view.currentRound(), view.players().stream()
 						.map(p -> new TournamentService.PlayerView(null, p.username(), p.checkedIn(), p.dropped())).toList(),
-				view.matches(), view.standings());
+				view.matches(), view.standings(), view.checkInOpensAt(), view.checkInClosesAt(), view.createdAt());
 	}
 }

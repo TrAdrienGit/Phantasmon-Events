@@ -5,7 +5,6 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.minecraft.client.Minecraft;
 
 import com.mystaria.events.hub.MirrorHubCommands;
-import com.mystaria.events.tournament.TournamentScreen;
 
 /**
  * Phantasmon Events' commands, all under {@code /phantasmon event} (Adrien 2026-10-30: as few commands as possible,
@@ -28,7 +27,7 @@ public final class EventsCommands {
 				ClientCommandManager.literal("phantasmon").then(ClientCommandManager.literal("event")
 						.then(ClientCommandManager.literal("tournament").executes(context -> {
 							// The chat closes after the command: the screen opens on the next tick.
-							Minecraft.getInstance().tell(() -> Minecraft.getInstance().setScreen(new TournamentScreen()));
+							Minecraft.getInstance().tell(() -> com.mystaria.phantasmon.client.api.PhantasmonApi.openMenu(com.mystaria.events.tournament.TournamentsPage.ID));
 							return 1;
 						}))
 						.then(MirrorHubCommands.node())

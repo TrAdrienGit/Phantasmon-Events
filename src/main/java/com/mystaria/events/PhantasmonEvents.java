@@ -22,7 +22,7 @@ public final class PhantasmonEvents implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		EventsCommands.register();
-		com.mystaria.events.tournament.TournamentScreen.register();
+		com.mystaria.events.tournament.TournamentsPage.register();
 		com.mystaria.events.tournament.TournamentAnnouncer.register();
 		com.mystaria.events.tournament.TournamentOpponent.register();
 		net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback.EVENT.register((graphics, tickCounter) ->
@@ -44,7 +44,7 @@ public final class PhantasmonEvents implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (tournaments.consumeClick()) {
 				if (client.screen == null) {
-					client.setScreen(new com.mystaria.events.tournament.TournamentScreen());
+					com.mystaria.phantasmon.client.api.PhantasmonApi.openMenu(com.mystaria.events.tournament.TournamentsPage.ID);
 				}
 			}
 			MirrorCapture.tick();

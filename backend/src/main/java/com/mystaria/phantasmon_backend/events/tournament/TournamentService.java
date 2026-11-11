@@ -36,7 +36,7 @@ public class TournamentService {
 	public record View(String name, String kind, int bestOf, String formatId, String formatName, String status,
 			Instant startsAt, Instant registrationOpensAt, Instant registrationClosesAt, boolean registrationOpen,
 			Integer plannedRounds, int currentRound, List<PlayerView> players, List<MatchView> matches,
-			List<StandingView> standings) {
+			List<StandingView> standings, Instant checkInOpensAt, Instant checkInClosesAt, Instant createdAt) {
 	}
 
 	/** A match: its players' names, games won by each, winner (null until decided). */
@@ -52,13 +52,20 @@ public class TournamentService {
 	public record PlayerView(UUID uuid, String username, boolean checkedIn, boolean dropped) {
 	}
 
-	/** {@code POST /admin/tournaments}; dates optional (ISO-8601). */
+	/**
+	 * {@code POST /admin/tournaments}; dates optional (ISO-8601). {@code startsAt}: older clients' start, kept as
+	 * information; the check-in's closing is the start now.
+	 */
 	public record CreateRequest(String name, String kind, Integer bestOf, String formatId, Instant startsAt,
-			Instant registrationOpensAt, Instant registrationClosesAt) {
+			Instant registrationOpensAt, Instant registrationClosesAt, Instant checkInOpensAt, Instant checkInClosesAt) {
 	}
 
-	/** {@code POST /admin/tournaments/{name}/schedule}: the dates to change (absent: unchanged). */
-	public record ScheduleRequest(Instant startsAt, Instant registrationOpensAt, Instant registrationClosesAt) {
+	/**
+	 * {@code POST /admin/tournaments/{name}/schedule}: the dates to change (absent: unchanged; {@code clear} lists the
+	 * ones to remove: {@code registration_opens_at}...).
+	 */
+	public record ScheduleRequest(Instant startsAt, Instant registrationOpensAt, Instant registrationClosesAt,
+			Instant checkInOpensAt, Instant checkInClosesAt, List<String> clear) {
 	}
 
 	private final TournamentRepository tournaments;
@@ -172,9 +179,12 @@ public class TournamentService {
 			throw new ApiException(HttpStatus.CONFLICT, "ERROR_TOURNAMENT_NAME_TAKEN", Map.of("tournament", name));
 		}
 		Tournament tournament = new Tournament(UUID.randomUUID(), name, kind, bestOf, format, adminUuid);
-		tournament.setStartsAt(request.startsAt());
 		tournament.setRegistrationOpensAt(request.registrationOpensAt());
 		tournament.setRegistrationClosesAt(request.registrationClosesAt());
+		tournament.setCheckInOpensAt(request.checkInOpensAt());
+		tournament.setCheckInClosesAt(request.checkInClosesAt());
+		tournament.setStartsAt(request.checkInClosesAt() != null ? request.checkInClosesAt() : request.startsAt());
+		checkDates(tournament);
 		tournaments.saveAndFlush(tournament);
 		log.info("Admin {} created tournament {} ({}, best of {}, {})", adminUuid, name, kind, bestOf, format);
 		return changed(tournament);
@@ -183,16 +193,43 @@ public class TournamentService {
 	@Transactional
 	public View schedule(String name, ScheduleRequest request) {
 		Tournament tournament = requireNotOver(name);
+		List<String> clear = request.clear() == null ? List.of() : request.clear();
 		if (request.startsAt() != null) {
 			tournament.setStartsAt(request.startsAt());
 		}
-		if (request.registrationOpensAt() != null) {
+		if (request.registrationOpensAt() != null || clear.contains("registration_opens_at")) {
 			tournament.setRegistrationOpensAt(request.registrationOpensAt());
 		}
-		if (request.registrationClosesAt() != null) {
+		if (request.registrationClosesAt() != null || clear.contains("registration_closes_at")) {
 			tournament.setRegistrationClosesAt(request.registrationClosesAt());
 		}
+		if (request.checkInOpensAt() != null || clear.contains("check_in_opens_at")) {
+			tournament.setCheckInOpensAt(request.checkInOpensAt());
+		}
+		if (request.checkInClosesAt() != null || clear.contains("check_in_closes_at")) {
+			tournament.setCheckInClosesAt(request.checkInClosesAt());
+			tournament.setStartsAt(request.checkInClosesAt());
+		}
+		checkDates(tournament);
 		return changed(tournament);
+	}
+
+	/**
+	 * The dates in order: registration opening before its closing, check-in opening before its closing, and the
+	 * check-in opening no earlier than the registration's.
+	 */
+	private static void checkDates(Tournament t) {
+		boolean wrong = before(t.getRegistrationClosesAt(), t.getRegistrationOpensAt())
+				|| before(t.getCheckInClosesAt(), t.getCheckInOpensAt())
+				|| before(t.getCheckInOpensAt(), t.getRegistrationOpensAt())
+				|| before(t.getCheckInClosesAt(), t.getRegistrationOpensAt());
+		if (wrong) {
+			throw new ApiException(HttpStatus.BAD_REQUEST, "ERROR_TOURNAMENT_INVALID_DATES", Map.of("tournament", t.getName()));
+		}
+	}
+
+	private static boolean before(Instant later, Instant earlier) {
+		return later != null && earlier != null && !later.isAfter(earlier);
 	}
 
 	/** An admin registers a player by name (one who has used Phantasmon), whatever the window. */
@@ -342,7 +379,8 @@ public class TournamentService {
 				format == null ? tournament.getFormatId() : format.name(), tournament.getStatus(), tournament.getStartsAt(),
 				tournament.getRegistrationOpensAt(), tournament.getRegistrationClosesAt(), registrationOpen(tournament),
 				tournament.getPlannedRounds() == null ? null : tournament.getPlannedRounds().intValue(),
-				tournament.getCurrentRound(), entries, matchViews, standings);
+				tournament.getCurrentRound(), entries, matchViews, standings, tournament.getCheckInOpensAt(),
+				tournament.getCheckInClosesAt(), tournament.getCreatedAt());
 	}
 
 	/**

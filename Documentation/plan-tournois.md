@@ -112,17 +112,53 @@ Chaque phase se termine par une validation en jeu par Adrien.
   **appaire** les joueurs sans ouvrir de lobby, ils lancent leur combat eux-mêmes (seulement entre eux) ; adversaire en
   surbrillance et flèche à l'écran ; dates JJ-MM-AAAA ; effacement d'un tournoi annulé ou terminé.
 - Reste : test grandeur nature (plus de joueurs : exemptions, appariements par points), T4 (double élimination),
-  T5 (page web).
+  T5 (page web) ; la page web est refaite le 2026-11-11 (§9).
 - 2026-10-30 : T4 (arbre en double élimination, tours ouverts par un admin, finale décisive) et T5 (page web
   publique `/t`) **validés à deux comptes** ; check-in accepté si l'équipe Ghost **ou** la party Cobblemon respecte le
   format. À reprendre : le design de la page web (premier jet fonctionnel).
 
-## 8. À reprendre : le formulaire de création (Adrien, 2026-11-10)
+## 8. Formulaire de création (fait et validé le 2026-11-11)
 
-À faire à part de la séparation d'Events (TODO-35), pas encore commencé :
+- **Dates explicites** : ouverture et fermeture des inscriptions, **ouverture du check-in** et **fermeture du
+  check-in** (le « début »). Toutes facultatives et contrôlées dans l'ordre (`ERROR_TOURNAMENT_INVALID_DATES`).
+- **Étapes déclenchées par les dates** (choix d'Adrien) : à l'ouverture du check-in, il s'ouvre tout seul ; à sa
+  fermeture, le tournoi démarre avec les présents et sa première ronde (ou vague) s'ouvre. Un démarrage impossible
+  (moins de deux présents) laisse le tournoi en check-in pour un admin. Chaque étape reste déclenchable à la main.
+- **Saisie guidée** : l'admin tape seulement les chiffres ; `10112026` s'affiche `10-11-2026`, `1910` s'affiche
+  `19:10`. Une croix efface une date ; en modification, une date effacée est retirée (`clear`).
 
-- **Dates plus explicites** : « début (facultatif) » ne dit pas ce qu'il date. Garder ouverture et fermeture des
-  inscriptions, ajouter **ouverture du check-in** et **fermeture du check-in** ; chaque étape reste aussi déclenchable
-  à la main par un admin.
-- **Saisie guidée** : l'admin tape seulement les chiffres, le champ met lui-même le format. Date : taper `10112026`
-  donne `10-11-2026`. Heure : taper `1910` donne `19:10` (plus de séparateur à écrire à la main).
+## 9. Affichage refait (fait et validé le 2026-11-11)
+
+**En jeu**, les tournois sont une page du menu Phantasmon (« Tournois », `TournamentsPage`, ouverte aussi par la
+touche des tournois et `/events`), dans la DA V2, en grand format (640 × 360) :
+
+- **Liste** : cartes par tournoi (couleur de statut, format, Bo, type, têtes des premiers inscrits, prochaine date,
+  badge « Inscrit » / « Présent »), filtres « À venir · en cours » / « Terminés », bouton de création (admins).
+- **Fiche** : en-tête (retour, statut, action principale : s'inscrire, « Je suis là », se désinscrire), ligne
+  d'infos, frise des quatre étapes avec leurs dates, onglets :
+  - **Joueurs** : grille avec tête, pseudo, état (présent, en attente, éliminé) ;
+  - **Matchs** : ronde par ronde (suisse) ou vague en cours (arbre), cartes de match à deux lignes (tête, pseudo,
+    manches gagnées), bord coloré selon l'état (à jouer, en cours, fini), vainqueur en avant, ses propres matchs
+    encadrés ;
+  - **Classement** : tableau avec médailles (or, argent, bronze), têtes, points, V - D, Buchholz ;
+  - **Arbre** (double élimination) : `BracketView`, winners en colonnes, losers dessous, grande finale, traits
+    coudés, glissable ; **plein écran** (`BracketScreen`) avec zoom à la molette ;
+  - **Admin** : boutons des étapes (modifier les dates, ouvrir le check-in, démarrer, ronde ou vague suivante,
+    ± ronde, terminer, annuler, effacer), avec confirmation pour ce qui ne se rattrape pas, et ce que les dates
+    feront toutes seules.
+- **Actions d'admin au clic** : un joueur (victoire, forfait, relancer le combat, retirer ou éliminer) ou un match
+  (victoire ou forfait de l'un ou l'autre, relancer) ; plus de pseudo à taper. « Ajouter un joueur » demande le pseudo.
+- Les têtes viennent du skin du joueur (`PhantasmonApi.drawPlayerHead`).
+
+**Sur le web** (`/t`, `/t/<nom>`), page refaite comme un site de tournoi : accueil en sections « En cours »,
+« À venir », « Terminés » (cartes avec têtes) ; fiche avec en-tête, étiquettes, frise des étapes datées, onglets
+Joueurs, Matchs, Classement (vainqueur mis en avant), Arbre (traits SVG, glissable) ; mode clair et sombre,
+téléphone ; mise à jour en direct sans clignoter. Les têtes passent par le backend (`/public/heads/<pseudo>`) : les
+visiteurs n'appellent aucun service tiers et aucun UUID ne sort.
+
+## 10. À faire : retours sur la page web (Adrien, 2026-11-11)
+
+- **Un vrai nom de tournoi** : l'admin tape un nom lisible (majuscules, espaces, accents : « Weekly OU #1 ») ; le
+  slug minuscule qui sert d'identifiant (URL, commandes) en est tiré tout seul. Les pages affichent le nom, plus le slug.
+- **La carte du tournoi collée à l'en-tête** de la page web : lui donner de l'air au-dessus.
+- **« Bo1 »** : « Bo » et « 1 » ne sont pas de la même couleur dans l'étiquette ; une seule couleur.

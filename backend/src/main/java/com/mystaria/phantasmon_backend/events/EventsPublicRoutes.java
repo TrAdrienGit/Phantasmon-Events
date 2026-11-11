@@ -15,7 +15,7 @@ public class EventsPublicRoutes implements PublicRoutesProvider {
 	public List<PublicRoute> publicRoutes() {
 		return List.of(
 				// Tournaments' public page (read only, no player UUIDs).
-				new PublicRoute(HttpMethod.GET, "/t", "/t/", "/t/*", "/public/tournaments", "/public/tournaments/*"),
+				new PublicRoute(HttpMethod.GET, "/t", "/t/", "/t/*", "/public/tournaments", "/public/tournaments/*", "/public/heads/*"),
 				// Our dedicated server's mirror copy: checked by its own token (ServerMirrorController).
 				new PublicRoute(HttpMethod.GET, "/server/mirror/**"),
 				new PublicRoute(HttpMethod.POST, "/server/mirror/*/ghosts"));

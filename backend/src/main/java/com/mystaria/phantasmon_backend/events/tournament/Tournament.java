@@ -17,8 +17,8 @@ import lombok.Setter;
 /**
  * A tournament (Phantasmon Events, plan-tournois.md): weekly Swiss rounds ({@code SWISS}) or a double elimination
  * bracket ({@code BRACKET}), played in Ghost battles of one Smogon format, each match in best of 1, 3 or 5.
- * {@code REGISTRATION} → {@code CHECK_IN} → {@code RUNNING} → {@code FINISHED} (or {@code CANCELLED}); every step is
- * an admin's.
+ * {@code REGISTRATION} → {@code CHECK_IN} → {@code RUNNING} → {@code FINISHED} (or {@code CANCELLED}): the check-in
+ * opens and the tournament starts by themselves at their dates when set (2026-11-11), or when an admin says so.
  */
 @Entity
 @Table(name = "tournaments")
@@ -62,6 +62,14 @@ public class Tournament {
 
 	@Column(name = "registration_closes_at")
 	private Instant registrationClosesAt;
+
+	/** The check-in opens by itself at this time (null: by an admin only). */
+	@Column(name = "check_in_opens_at")
+	private Instant checkInOpensAt;
+
+	/** The check-in closes and the tournament starts by itself at this time (null: by an admin only). */
+	@Column(name = "check_in_closes_at")
+	private Instant checkInClosesAt;
 
 	/** Swiss: the rounds planned (computed at the start, changed by the admins); null before. */
 	@Column(name = "planned_rounds")

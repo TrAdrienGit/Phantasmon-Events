@@ -15,7 +15,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-import com.mystaria.events.tournament.TournamentFormScreen;
+import com.mystaria.events.tournament.TournamentForm;
 import com.mystaria.phantasmon.client.api.PhantasmonApi;
 
 /**
@@ -51,7 +51,7 @@ public final class NpcEditScreen extends Screen {
 	static List<String[]> formats() {
 		List<String[]> all = new ArrayList<>();
 		all.add(new String[] { "free", Component.translatable("phantasmon_events.npc.format_free").getString() });
-		all.addAll(TournamentFormScreen.FORMATS);
+		all.addAll(TournamentForm.FORMATS);
 		return all;
 	}
 
