@@ -34,6 +34,8 @@ public final class PhantasmonEvents implements ClientModInitializer {
 		com.mystaria.phantasmon.client.api.PhantasmonApi.registerBattleAi("expert", com.mystaria.events.ai.ExpertBattleAI::new);
 		com.mystaria.phantasmon.client.api.PhantasmonApi.registerBattleAi("reborn", com.mystaria.events.ai.RebornBattleAI::new);
 		com.mystaria.phantasmon.client.api.PhantasmonApi.registerBattleAi("reborn_tweak", debug -> new com.mystaria.events.ai.RebornBattleAI(debug, true));
+		// Reserved battle content (TODO-37): Phantasmon gives it as a reward; Showtime plays it.
+		com.mystaria.showtime.api.ShowtimeHooks.registerIntro(new com.mystaria.events.intro.GymLeaderIntro());
 		MirrorCopy.register();
 		com.mystaria.events.hub.EventHubsTab.register();
 		com.mystaria.events.npc.EventNpcs.register();

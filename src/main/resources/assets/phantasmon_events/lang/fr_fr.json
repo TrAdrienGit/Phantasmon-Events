@@ -176,5 +176,10 @@
   "phantasmon_events.hub_tab.clean": "Nettoyer les fantômes",
   "phantasmon_events.hub_tab.create": "+ Créer un hub miroir",
   "phantasmon_events.hub_tab.field.name": "Nom",
-  "phantasmon_events.hub_tab.field.radius": "Rayon (blocs)"
+  "phantasmon_events.hub_tab.field.radius": "Rayon (blocs)",
+  "phantasmon_events.intro.gym_leader": "Champion d'arène",
+  "phantasmon_events.intro.gym_leader.title": "CHAMPION D'ARÈNE",
+  "phantasmon_events.intro.gym_leader.challenger": "CHALLENGER",
+  "phantasmon_events.intro.gym_leader.line": "« Prouve ta valeur, challenger ! »",
+  "phantasmon_events.ambiance.gym_leader": "Arène du champion"
 }

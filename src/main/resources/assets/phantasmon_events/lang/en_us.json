@@ -176,5 +176,10 @@
   "phantasmon_events.hub_tab.clean": "Clean ghost blocks",
   "phantasmon_events.hub_tab.create": "+ Create a mirror hub",
   "phantasmon_events.hub_tab.field.name": "Name",
-  "phantasmon_events.hub_tab.field.radius": "Radius (blocks)"
+  "phantasmon_events.hub_tab.field.radius": "Radius (blocks)",
+  "phantasmon_events.intro.gym_leader": "Gym Leader",
+  "phantasmon_events.intro.gym_leader.title": "GYM LEADER",
+  "phantasmon_events.intro.gym_leader.challenger": "CHALLENGER",
+  "phantasmon_events.intro.gym_leader.line": "“Prove your worth, challenger!”",
+  "phantasmon_events.ambiance.gym_leader": "Gym Leader's Arena"
 }

@@ -92,6 +92,34 @@ Phantasmon a un gestionnaire des hubs pour les admins (touche H). Events y ajout
 (`hub/EventHubsTab`, par `PhantasmonApi.registerHubManagerTab`) : `shows` = type `MIRROR`, détails (rayon,
 terrain), boutons (agrandir / réduire, effacer les blocs fantômes) et création d'un hub miroir.
 
+## Intros et ambiances réservées (fait et validé, 2026-11-11)
+
+Contenu de combat qu'un admin donne en récompense (TODO-37 de Phantasmon, kinds `INTRO` / `AMBIANCE`) ; Showtime
+(1.2.0) ne le montre qu'aux joueurs qui l'ont gagné.
+
+- Intro **« Champion d'arène »** (`intro/GymLeaderIntro`, `phantasmon_events:gym_leader`, réservée) : le badge du
+  champion surgit dans un éventail de lumière dorée, le champion se dresse en silhouette puis s'éclaire sous son titre
+  et son nom, sa réplique s'écrit ; le bandeau du challenger entre par le bas, « VS » s'abat, les deux équipes sont
+  comptées. Elle met en vedette celui qui l'a choisie dans le lobby (`intro_by`), sur les deux écrans.
+- Ambiance **« Arène du champion »** (`assets/phantasmon_events/ambiances/gym_leader.json`, `"reserved": true`) : le
+  stade de Showtime en or et bronze, crépuscule, foule or et pourpre.
+- Pour en ajouter : une classe `CustomIntro` enregistrée dans `PhantasmonEvents` (`ShowtimeHooks.registerIntro`),
+  ou un fichier d'ambiance avec `"reserved": true` ; noms dans les fichiers de langue (`phantasmon_events.intro.*`,
+  `phantasmon_events.ambiance.*`). Elles apparaissent d'elles-mêmes dans la page Récompenses.
+
+### À faire : les intros de la Ligue (Adrien 2026-11-11)
+
+Sur le modèle validé de « Champion d'arène » (qualité et ambiance retenues) :
+
+- **Une intro par type de champion d'arène** (18 types), différenciées par :
+  - **le logo du type** au cœur du badge, à la place de l'étoile (piste : les symboles des cartes Pokémon ; les logos
+    ne sont pas encore choisis) ;
+  - **les couleurs du type** : rayons, badge, étincelles, bandeau et ambiance assortie.
+- **Une intro de membre du Conseil 4** et **une intro de Maître de la Ligue**, avec le **logo de la Ligue**
+  (pas encore créé).
+- Bloqué par : les logos des types et celui de la Ligue. En attendant, le code peut déjà prendre un type en paramètre
+  (couleurs, emplacement du logo) pour que chaque intro n'ait plus qu'à recevoir son image.
+
 ## Dresseurs PNJ (Adrien 2026-11-02)
 
 - Un admin pose un dresseur PNJ où il se tient, dans un événement : `/phantasmon event npc create <événement> <nom>`
