@@ -181,5 +181,12 @@
   "phantasmon_events.intro.gym_leader.title": "CHAMPION D'ARÈNE",
   "phantasmon_events.intro.gym_leader.challenger": "CHALLENGER",
   "phantasmon_events.intro.gym_leader.line": "« Prouve ta valeur, challenger ! »",
-  "phantasmon_events.ambiance.gym_leader": "Arène du champion"
+  "phantasmon_events.ambiance.gym_leader": "Arène du champion",
+  "phantasmon_events.intro.gym_type": "Arène · %s",
+  "phantasmon_events.intro.elite_four": "Conseil 4",
+  "phantasmon_events.intro.elite_four.title": "CONSEIL 4",
+  "phantasmon_events.intro.elite_four.line": "« Seuls les plus forts franchissent cette porte. »",
+  "phantasmon_events.intro.champion": "Maître de la Ligue",
+  "phantasmon_events.intro.champion.title": "MAÎTRE DE LA LIGUE",
+  "phantasmon_events.intro.champion.line": "« Montre-moi tout ce qui t'a mené jusqu'ici ! »"
 }

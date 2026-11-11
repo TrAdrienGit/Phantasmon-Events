@@ -35,7 +35,8 @@ public final class PhantasmonEvents implements ClientModInitializer {
 		com.mystaria.phantasmon.client.api.PhantasmonApi.registerBattleAi("reborn", com.mystaria.events.ai.RebornBattleAI::new);
 		com.mystaria.phantasmon.client.api.PhantasmonApi.registerBattleAi("reborn_tweak", debug -> new com.mystaria.events.ai.RebornBattleAI(debug, true));
 		// Reserved battle content (TODO-37): Phantasmon gives it as a reward; Showtime plays it.
-		com.mystaria.showtime.api.ShowtimeHooks.registerIntro(new com.mystaria.events.intro.GymLeaderIntro());
+		// The League's intros: the first gym leader's, one per gym type, the Elite Four's and the Champion's.
+		com.mystaria.events.intro.LeagueIntro.all().forEach(com.mystaria.showtime.api.ShowtimeHooks::registerIntro);
 		MirrorCopy.register();
 		com.mystaria.events.hub.EventHubsTab.register();
 		com.mystaria.events.npc.EventNpcs.register();

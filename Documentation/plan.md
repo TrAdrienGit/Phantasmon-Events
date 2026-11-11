@@ -107,18 +107,25 @@ Contenu de combat qu'un admin donne en récompense (TODO-37 de Phantasmon, kinds
   ou un fichier d'ambiance avec `"reserved": true` ; noms dans les fichiers de langue (`phantasmon_events.intro.*`,
   `phantasmon_events.ambiance.*`). Elles apparaissent d'elles-mêmes dans la page Récompenses.
 
-### À faire : les intros de la Ligue (Adrien 2026-11-11)
+### Les intros de la Ligue (fait et validé le 2026-11-11)
 
-Sur le modèle validé de « Champion d'arène » (qualité et ambiance retenues) :
+Sur le modèle validé de « Champion d'arène » (`intro/LeagueIntro`, une mise en scène pour toutes) :
 
-- **Une intro par type de champion d'arène** (18 types), différenciées par :
-  - **le logo du type** au cœur du badge, à la place de l'étoile (piste : les symboles des cartes Pokémon ; les logos
-    ne sont pas encore choisis) ;
-  - **les couleurs du type** : rayons, badge, étincelles, bandeau et ambiance assortie.
-- **Une intro de membre du Conseil 4** et **une intro de Maître de la Ligue**, avec le **logo de la Ligue**
-  (pas encore créé).
-- Bloqué par : les logos des types et celui de la Ligue. En attendant, le code peut déjà prendre un type en paramètre
-  (couleurs, emplacement du logo) pour que chaque intro n'ait plus qu'à recevoir son image.
+- **Une intro par type de champion d'arène** (`phantasmon_events:gym_<type>`, 18), nommées « Arène · Feu »… : couleurs
+  du type (rayons, cadre, face, étincelles, liseré, réplique, « VS »), cadre octogonal, et au cœur le logo du type.
+  Par défaut l'icône de type de Cobblemon (`cobblemon:textures/gui/types.png`, aucun fichier à fournir) ; un PNG
+  carré déposé dans `assets/phantasmon_events/textures/intro/types/<type>.png` la remplace (logos des cartes, plus tard).
+- **Conseil 4** (`phantasmon_events:elite_four`) : violet et argent, cadre hexagonal, logo de la Ligue ; en plus
+  (2026-11-11) : deux portes frappées d'un hexagone qui s'ouvrent sur la salle, quatre sceaux qui s'allument un à un
+  autour de l'emblème et se relient en carré, une brume au sol, quatre losanges après le titre, une cloche au dévoilement.
+- **Maître de la Ligue** (`phantasmon_events:champion`), la plus prestigieuse : or et blanc, cadre à douze côtés
+  doublé, logo de la Ligue ; en plus (2026-11-11) : l'iris doré qui se ferme sur un point de lumière puis éclate,
+  des colonnes de lumière, deux éventails de rayons, trois comètes en orbite, une couronne posée sur l'emblème au
+  dévoilement, une secousse et la fanfare de défi réussi, une pluie de feuilles d'or, un reflet qui balaie le nom,
+  un double liseré et des cloches finales.
+- Le **logo de la Ligue** est provisoire (`textures/intro/league.png`, 56 × 59) : remplacer le fichier suffit.
+- L'intro générique `phantasmon_events:gym_leader` (étoile dorée) reste, pour les récompenses déjà données.
+- La page Récompenses les liste en quatre colonnes, sans champ espèce.
 
 ## Dresseurs PNJ (Adrien 2026-11-02)
 

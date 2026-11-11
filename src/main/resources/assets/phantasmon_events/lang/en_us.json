@@ -181,5 +181,12 @@
   "phantasmon_events.intro.gym_leader.title": "GYM LEADER",
   "phantasmon_events.intro.gym_leader.challenger": "CHALLENGER",
   "phantasmon_events.intro.gym_leader.line": "“Prove your worth, challenger!”",
-  "phantasmon_events.ambiance.gym_leader": "Gym Leader's Arena"
+  "phantasmon_events.ambiance.gym_leader": "Gym Leader's Arena",
+  "phantasmon_events.intro.gym_type": "Gym · %s",
+  "phantasmon_events.intro.elite_four": "Elite Four",
+  "phantasmon_events.intro.elite_four.title": "ELITE FOUR",
+  "phantasmon_events.intro.elite_four.line": "“Only the strongest walk through this door.”",
+  "phantasmon_events.intro.champion": "League Champion",
+  "phantasmon_events.intro.champion.title": "LEAGUE CHAMPION",
+  "phantasmon_events.intro.champion.line": "“Show me everything that brought you here!”"
 }
