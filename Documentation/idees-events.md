@@ -43,3 +43,22 @@ champions passés).
 - **À trancher :**
   - Rejoue-t-on un événement complet, ou seulement ses dresseurs ?
   - Les récompenses sont-elles les mêmes qu'à l'époque, ou spéciales « rétro » ?
+
+## 4. Parcours d'anneaux en monture
+
+Les hubs d'événement permettent de construire ce qu'on veut, y compris des anneaux dans le ciel : un parcours à
+faire sur une monture volante (ou nageuse, sur l'eau).
+
+- Chaque anneau est un checkpoint ; on passe les anneaux dans l'ordre, chronométré.
+- Il peut y avoir un classement des meilleurs temps de l'événement, avec des récompenses pour les premiers, et des
+  fantômes du record à battre.
+- **À trancher :** quelles montures (celles de Cobblemon, toutes à égalité ou chacune ses stats) ? Que se passe-t-il
+  si on rate un anneau : retour au dernier checkpoint, ou pénalité de temps ? Course en solo contre la montre ou à
+  plusieurs en même temps ?
+
+## 5. À reprendre des jeux Pokémon
+
+Les jeux regorgent de modes et d'activités qui peuvent devenir des événements, en les refaisant à notre façon (sans
+leurs assets) :
+
+- Pistes à explorer plus tard, une par une, en notant ici celles qu'on retient.
