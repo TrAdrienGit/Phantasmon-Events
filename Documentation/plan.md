@@ -78,7 +78,7 @@ Côté backend, une nouvelle décision **D-38** (hubs miroirs), dans les deux do
 | E3 | Copie solo : pose de la copie, construction en vrais blocs, deltas en direct, rotation | Un bloc posé sur le serveur apparaît dans le monde solo en quelques secondes |
 | E4 | Hub Phantasmon complet : avatars, vocal, combats Ghost entre la zone et les copies | Validation en jeu par Adrien (serveur + monde solo) |
 
-Ensuite : le moteur d'événements (portes, chronos, points, panneau de maître du jeu), puis `Phantasmon-Trahison`.
+Ensuite : le [jeu de trahison](trahison/README.md), dans Events même (décision du 2026-11-13). Le moteur d'événements (portes, chronos, points, panneau de maître du jeu) se construit avec lui.
 
 ## 7. État (2026-10-29)
 

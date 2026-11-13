@@ -23,8 +23,8 @@ un serveur où l'on ne peut **installer aucun mod serveur**.
 - Toute la logique d'un événement vit dans le backend (état, chronos, points, portes, votes) ; Minecraft ne sert
   qu'à l'affichage, côté client.
 - Panneau de maître du jeu : pause, forcer une étape, corriger, rejouer une annonce.
-- Premiers usages : tournois aux règles Smogon, ligue (champions d'arène, Conseil 4), puis le jeu de trahison
-  (`Phantasmon-Trahison`).
+- Premiers usages : tournois aux règles Smogon, ligue (champions d'arène, Conseil 4), puis le
+  [jeu de trahison](Documentation/trahison/README.md), qui fait partie d'Events (même mod, même module backend).
 
 ## Limites connues dès maintenant
 
