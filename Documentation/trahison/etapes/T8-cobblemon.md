@@ -3,20 +3,20 @@
 ## Objectif
 
 Donner au jeu sa couleur Pokémon, sans toucher aux règles de trahison : des énigmes qui parlent Pokémon, un
-Pokémon partenaire à pouvoir, et des combats qui sont des épreuves de salle.
+Pokémon partenaire à pouvoir, et un duel tactique qui est une épreuve de salle.
 
 **Fini quand :** une salle d'essai « Cobblemon » se joue à trois : un texte en Zarbi à déchiffrer, un passage que
-seul le partenaire d'un des joueurs peut ouvrir, et un combat-énigme dont la réussite donne le code de la sortie.
+seul le partenaire d'un des joueurs peut ouvrir, et un duel tactique dont la réussite donne le code de la sortie.
 
 ## À lire avant
 
 - [`plan.md`](../plan.md), section 5 (mécanismes Cobblemon) et section 6.
 - [`architecture.md`](../architecture.md), section 7 (mécanismes).
 - Le code de T3 : `Mechanism`, `MiniGameScreen`, un mécanisme existant comme modèle.
-- `Phantasmon-Client/.../ghost/` : les Pokémon affichés à côté d'un joueur et vus des autres.
-- `Phantasmon-Client/.../api/PhantasmonApi.java` (`startNpcBattle`), `battle/LiveBattleController.java`.
-- `Phantasmon-Backend/.../addon/NpcOpponentProvider.java`, `battle/LiveBattleService.java` (lobby et combat
-  contre un PNJ ; à lire, pas à modifier), et `backend/.../events/npc/EventNpcService.java` qui l'implémente.
+- [`solutions-techniques.md`](../solutions-techniques.md) : S8 (partenaire), S9 (le duel tactique), S10 (pourquoi le vrai combat
+  à équipe imposée est écarté).
+- `Phantasmon-Client/.../ghost/GhostEntityManager.java` : comment une entité Pokémon locale est créée et suit un
+  joueur (à lire comme modèle, pas à appeler).
 - Les données de Cobblemon (espèces, numéros, types, poids, tailles, cris) : dépôt `cobblemon` présent sur la
   machine, lecture seule.
 
@@ -54,8 +54,8 @@ Sur le modèle des mécanismes de T3.5.
 - Au début d'une salle, le backend attribue à chaque membre du groupe un Pokémon partenaire avec un **pouvoir de
   terrain** : `FLASH`, `STRENGTH`, `CUT`, `SURF`. La définition de la salle dit quels pouvoirs elle demande ; le
   tirage garantit que le groupe les a, répartis sur des joueurs différents.
-- Le partenaire suit le joueur, visible de tous : réutiliser l'affichage des Ghosts de Phantasmon s'il s'y prête
-  (à vérifier dans le paquet `ghost`), sinon une entité locale sur le même principe.
+- Le partenaire suit le joueur, visible de tous : une entité Pokémon locale créée par chaque client, comme décrit
+  en S8 (ne pas passer par les Ghosts du joueur, qui sont ses vrais Pokémon).
 - Des emplacements d'un nouveau genre (`power_spot`) : n'agit que le joueur dont le partenaire a le bon pouvoir.
   - Flash : une zone est noire chez tous (voile sombre à l'écran) sauf dans un rayon autour du porteur.
   - Force : pousse un rocher (faux blocs qui se déplacent d'une case).
@@ -65,43 +65,38 @@ Sur le modèle des mécanismes de T3.5.
 - Les fantômes reçoivent un partenaire de type Spectre, sans pouvoir.
 - **Fini quand :** en jeu, une salle demande deux pouvoirs tenus par deux joueurs différents.
 
-### T8.4 Le combat avec équipe imposée (Opus)
+### T8.4 Le duel tactique (Opus)
 
-- Besoin : lancer un combat contre un PNJ où **l'équipe du joueur est imposée** par le jeu (pas son équipe Ghost
-  ni son équipe Cobblemon), et savoir qui a gagné.
-- **Sans modifier Phantasmon.** Chercher ce que les points d'entrée existants permettent : `NpcOpponentProvider`
-  (déjà implémenté par Events pour ses PNJ), `PhantasmonApi.startNpcBattle`, le combat miroir des admins (qui
-  impose une équipe aux deux côtés), les formats. Par exemple : donner au joueur, pour la durée de la salle, une
-  équipe Ghost préparée par le jeu.
-- Rendre d'abord une courte note (`Documentation/trahison/combat-impose.md`) : la voie retenue, ou, si aucune ne
-  marche sans toucher à Phantasmon, ce qui manque exactement. Dans ce second cas, s'arrêter : la décision revient à
-  la propriétaire.
-- **Fini quand :** un essai en jeu lance un combat à équipes imposées depuis un emplacement de salle, et le
-  backend d'Events sait qui a gagné.
+Le combat-énigme est un mini-jeu à nous, pas un vrai combat Pokémon : solution S9, à appliquer.
 
-### T8.5 Le combat-énigme et le gardien (Opus, après T8.4)
-
-- `battle_puzzle` : une situation fixe (équipes de 1 à 3 Pokémon, attaques, objets, PV), un adversaire au script
-  déterministe (il joue toujours la même réponse à la même situation), et un nombre de tours maximal. Une seule
-  suite de coups gagne. Réussir donne un indice (un code). Échouer permet de recommencer.
-  - Les situations sont écrites à la main et vérifiées par simulation dans le moteur de combat de Cobblemon
-    (outil existant : voir la note sur les essais du moteur Showdown).
-  - L'aléatoire du combat doit être neutralisé (attaques à précision totale, pas d'effets à chance) pour que la
-    difficulté soit la même pour tous.
-- `guardian` : un dresseur PNJ barre la sortie ; équipe imposée aux joueurs, IA de niveau réglable. Chaque membre
-  du groupe peut tenter ; une victoire suffit.
+- Mécanisme `battle_puzzle`, côté backend : les règles du duel (S9), la génération d'une position, et sa
+  **validation par recherche exhaustive** : ne garder qu'une position qui a exactement une suite de coups
+  gagnante en N tours. Difficulté réglée par N, le nombre de Pokémon et le nombre d'attaques.
+- Côté client : un écran de mini-jeu (cadre de T3.4) qui montre les deux équipes avec les modèles de Cobblemon,
+  les PV, les attaques, la règle affichée de l'adversaire, et le compteur de tours. Un échec remet la position de
+  départ.
+- Réussir donne un indice (un code), comme tout mécanisme.
+- Tests : 1 000 positions générées ont toutes exactement une solution ; l'adversaire joue toujours la même réponse
+  à la même situation.
 - **Fini quand :** le « Fini quand » de l'étape.
+
+### Le gardien : écarté de la première version
+
+Un vrai combat contre un PNJ, avec une équipe imposée au joueur et un résultat connu du jeu, n'est pas faisable
+sans modifier Phantasmon (solution S10). Ne pas le coder. Les deux pistes pour plus tard sont notées en S10 ; la
+décision revient à la propriétaire.
 
 ## Hors périmètre
 
-Le défi à 1 point entre joueurs. Toute modification des règles de vote.
+Le défi à 1 point entre joueurs. Toute modification des règles de vote. Le gardien (voir ci-dessus).
 
 ## Pièges
 
 - Les énigmes ne doivent pas exiger de connaître la stratégie Pokémon : une à deux étapes Cobblemon par salle, et
   toujours un indice dans la salle pour qui ne connaît pas.
-- Un combat dure : compter son temps dans la durée estimée de la salle.
+- Le duel tactique doit rester lisible par quelqu'un qui ne joue pas à Pokémon : la table des types utile est
+  affichée dans l'écran.
 - Aucune image, aucun son, aucun texte tiré des jeux Pokémon : seulement ce que Cobblemon et Minecraft
   fournissent, ou ce que nous dessinons.
-- Le combat-énigme dépend du moteur de combat : une mise à jour de Cobblemon peut changer une solution. Garder les
-  simulations comme tests.
+- Le duel tactique ne dépend pas du moteur de combat de Cobblemon : seules ses images de Pokémon sont
+  utilisées.

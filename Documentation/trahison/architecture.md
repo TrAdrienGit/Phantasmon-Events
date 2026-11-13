@@ -60,12 +60,11 @@ que Phantasmon offre déjà aux add-ons :
 
 Si une sous-tâche bute sur quelque chose que ces points d'entrée ne permettent pas, l'agent **s'arrête et le
 signale** : on cherche d'abord une autre façon de faire dans Events, et un nouveau point d'extension dans
-Phantasmon ne se décide qu'avec la propriétaire. Deux endroits où la question se posera sont déjà repérés :
+Phantasmon ne se décide qu'avec la propriétaire.
 
-| Étape | Besoin | Ce qu'il faut regarder d'abord |
-|---|---|---|
-| T5 | Décider qui entend qui dans le vocal du hub | Si le filtrage chez celui qui écoute suffit, rien à demander au cœur |
-| T8 | Un combat où l'équipe du joueur est imposée | Ce que le combat contre un PNJ et le combat miroir permettent déjà |
+La recherche du 2026-11-13 ([`solutions-techniques.md`](solutions-techniques.md)) a trouvé une solution dans
+Events pour tout, sauf un point : un vrai combat où l'équipe du joueur est imposée (le « gardien »). Il sort de la
+première version ; le combat-énigme le remplace, sous la forme d'un mini-jeu à nous.
 
 Showtime ne se modifie pas non plus : on utilise son API publique (`ShowtimeHooks`).
 
@@ -197,7 +196,7 @@ Tous les types commencent par `EventsTrahison` (le client de Phantasmon n'accept
   `Documentation/protocole.md`, que chaque étape tient à jour.
 - Le backend répond à une action refusée par `EventsTrahisonSay` privé avec un code (`ERROR_TRAHISON_…`), traduit
   dans les fichiers de langue.
-- Les routes HTTP (`/trahison/…`) servent aux gros contenus : définitions de salles, schématiques, plan.
+- Les routes HTTP (`/events/trahison/…`) servent aux gros contenus : définitions de salles, schématiques, plan.
 
 ## 6. Le monde côté client
 
@@ -227,13 +226,13 @@ Une **zone** sert à trois choses : savoir où est chaque joueur, isoler le son,
 Une porte fermée est un mur de faux blocs posé dans une ouverture réelle. Un faux bloc arrête le joueur parce que
 son propre jeu calcule ses collisions. L'inverse est impossible : retirer un vrai bloc à l'affichage ne permet pas
 de le traverser, le serveur renvoie le joueur en arrière. Donc : **ouvertures réelles, fermetures fausses**.
-Technique à reprendre des blocs fantômes d'Events (réappliquer le faux bloc quand le serveur renvoie le tronçon).
+On réutilise les blocs fantômes d'Events, ouverts à une source de plus (solution S1).
 
 ### Objets du jeu dans le monde
 
 Un **emplacement** est une position marquée dans une salle ou dans le plan. Le client y affiche ce que le backend
-demande (terminal, digicode, objet à ramasser, panneau d'indice, levier) et capte le clic du joueur avant qu'il
-parte vers le serveur. Rien n'utilise de vrais coffres, panneaux ou leviers du serveur : le miroir ne copie pas le
+demande (terminal, digicode, objet à ramasser, panneau d'indice, levier) sous la forme d'une entité locale, et
+capte le clic du joueur avant qu'il parte vers le serveur (solution S3). Rien n'utilise de vrais coffres, panneaux ou leviers du serveur : le miroir ne copie pas le
 contenu des coffres, et on ne pourrait pas les remettre à zéro.
 
 ### Joueurs dans un état spécial

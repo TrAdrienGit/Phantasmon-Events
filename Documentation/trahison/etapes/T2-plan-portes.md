@@ -13,6 +13,7 @@ nez de son partenaire, et la porte finale ne laisse passer que les bracelets à 
 
 - [`plan.md`](../plan.md), section 3 (portes, vote) et section 7 (le plan fixe).
 - [`architecture.md`](../architecture.md), section 6.
+- [`solutions-techniques.md`](../solutions-techniques.md) : S1 (faux blocs), S2 (position des joueurs), S14 (affichage dans le monde).
 - `Phantasmon-Events/.../hub/MirrorGhosts.java`, `MirrorEdits.java` et les mixins `ClientLevelMirrorMixin`,
   `ClientPacketListenerMirrorMixin`, `LevelGhostEditMixin`, `MultiPlayerGameModeGhostMixin` : comment un faux bloc
   tient face aux mises à jour du serveur.
@@ -24,7 +25,7 @@ nez de son partenaire, et la porte finale ne laisse passer que les bracelets à 
 ### T2.1 Le plan et son éditeur (Opus)
 
 - Backend, paquet `layout` : `Layout` (zones, portes, places, cabines, cachettes : architecture, section 6),
-  table `trahison_layouts` (`hub`, `version`, `data jsonb`), routes `GET` et `PUT /trahison/layout/{hub}` (écriture
+  table `trahison_layouts` (`hub`, `version`, `data jsonb`), routes `GET` et `PUT /events/trahison/layout/{hub}` (écriture
   réservée aux admins). Validation à l'enregistrement : 3 portes de couleur par manche, 6 cabines, 9 places, une
   porte finale, aucune zone qui en chevauche une autre.
 - Client, paquet `edit` : un mode éditeur pour les admins (`/phantasmon trahison edit`).
@@ -37,11 +38,14 @@ nez de son partenaire, et la porte finale ne laisse passer que les bracelets à 
 
 ### T2.2 Les faux blocs et les zones (Opus)
 
-- `world/FakeBlocks` : pose et retire des faux blocs dans une boîte, chez ce client seulement, et les maintient
-  quand le serveur renvoie le tronçon ou un bloc. Bloc par défaut d'une porte fermée : réglable par type de porte.
-  Réutiliser le mécanisme d'Events s'il s'y prête, sinon reprendre sa technique.
-- `world/Zones` : à chaque tick, la zone du joueur d'après le plan ; `EventsTrahisonZone` au changement. Le
-  backend garde la zone de chaque joueur dans `Game`.
+- Solution S1, à appliquer telle quelle : ajouter à `hub/MirrorGhosts` d'Events les trois méthodes publiques
+  `putLocal`, `removeLocal`, `clearLocal` (une source nommée, en plus des hubs). C'est la seule retouche au code
+  existant d'Events dans cette étape.
+- `world/FakeBlocks` : traduit l'état des portes reçu du backend en appels à ces méthodes (propriétaire
+  `"trahison"`). Bloc d'une porte fermée : réglable par type de porte.
+- `world/Zones` (solution S2) : à chaque tick, la zone du joueur d'après le plan ; `EventsTrahisonZone { zone, x,
+  y, z }` au changement, et au moins toutes les 2 secondes pendant une partie. Le backend garde la zone et la
+  position de chaque joueur dans `Game`.
 - Les portes s'ouvrent et se ferment sur ordre du backend (état des portes dans la vue).
 - Un fantôme ou un spectateur ne reçoit pas les faux blocs : il traverse.
 - **Fini quand :** une porte fermée arrête un joueur, s'ouvre chez tous en même temps, et survit à un

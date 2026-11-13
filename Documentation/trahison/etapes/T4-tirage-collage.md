@@ -15,7 +15,7 @@ joue avec ces 9 salles au bon endroit.
 - [`architecture.md`](../architecture.md), sections 7 et 8.
 - Le code de T3 : `RoomDefinition`, l'éditeur de salle (capture des blocs).
 - `Phantasmon-Client/.../hub/HubSchematic.java` : lecture des deux formats ; l'écriture est à faire.
-- Les formats : Sponge Schematic version 2 (`.schem`, lu par WorldEdit et Axiom) et Litematica (`.litematic`).
+- [`solutions-techniques.md`](../solutions-techniques.md), S11 : les deux formats champ par champ, l'ordre des blocs, la rotation.
 
 ## Sous-tâches
 
@@ -38,7 +38,7 @@ Backend, paquet `room`.
 Client, paquet `edit`.
 
 - `SchematicWriter` : écrit une salle en `.schem` (Sponge version 2) et en `.litematic`, blocs et entités de bloc
-  compris.
+  compris, en suivant la solution S11 à la lettre.
 - Rotation : si l'orientation de la place diffère de celle de la salle, tourner la schématique par quarts de tour
   avec les outils de Minecraft (`BlockState.rotate`, positions, entités de bloc), puis recalculer les positions
   des emplacements de la même façon.

@@ -18,8 +18,10 @@ Il y a **deux chemins de voix** dans un hub miroir :
 | Simple Voice Chat du serveur | Les joueurs présents sur le serveur de la communauté | Le serveur (portée fixe), puis le client de chacun |
 | Vocal du hub de Phantasmon | Entre le serveur et les copies du hub | Le backend Phantasmon, qui relaie les trames |
 
-Notre mod ne règle pas le serveur de la communauté. Pour le premier chemin, on ne peut donc agir que **chez celui
-qui écoute** : son mod coupe ou baisse la voix d'un joueur précis. C'est le point à vérifier en premier.
+Notre mod ne règle pas le serveur de la communauté. On agit donc **chez celui qui écoute** : son mod coupe ou
+baisse la voix d'un joueur précis. La recherche du 2026-11-13 a montré que c'est possible, pour les deux chemins,
+sans toucher à Phantasmon : voir [`solutions-techniques.md`](../solutions-techniques.md), S4 et S5. Toute l'étape applique ces
+deux solutions.
 
 ## À lire avant
 
@@ -29,35 +31,36 @@ qui écoute** : son mod coupe ou baisse la voix d'un joueur précis. C'est le po
 - `Phantasmon-Backend/.../hub/HubVoice.java` : le relais des trames (à lire, pas à modifier).
 - `Phantasmon-Backend/Documentation/architecture/decisions.md`, D-36 ; `project/known-issues.md`, LIM-15 et
   TODO-34.
-- L'API de Simple Voice Chat (dépôt `simple-voice-chat` présent sur la machine, lecture seule) : les événements
-  côté client.
+- L'API de Simple Voice Chat (dépôt `simple-voice-chat` présent sur la machine, lecture seule) :
+  `api/.../events/ClientReceiveSoundEvent.java`.
 
 ## Sous-tâches
 
-### T5.1 L'essai de faisabilité (Opus)
+### T5.1 Le greffon et la confirmation en jeu (Opus)
 
-Un essai court, jeté ensuite, pour répondre à trois questions :
+La faisabilité est établie par lecture du code (solutions S4 et S5). Il reste à la voir tourner.
 
-1. Un greffon client de Simple Voice Chat peut-il **couper** la voix de proximité reçue d'un joueur donné ?
-   (Chercher un événement de réception du son côté client qui permet de modifier ou d'annuler l'audio.)
-2. Peut-il la **baisser** selon la distance, pour imposer une portée plus courte que celle du serveur ?
-3. Le vocal du hub tient-il 9 voix à la fois sans retard gênant (TODO-34) ?
+- Ajouter à Events son greffon Simple Voice Chat (`trahison/voice/TrahisonVoicePlugin`), comme décrit en S4 :
+  point d'entrée `voicechat` dans `fabric.mod.json`, dépendance `compileOnly` sur l'API, abonnement aux trois
+  variantes de `ClientReceiveSoundEvent`, table des gains lue depuis le fil audio.
+- Une commande d'essai pour admins, `/phantasmon event trahison voice <joueur> <gain>`, qui force le gain d'un
+  joueur (0 = muet, 0.5, 1).
+- Confirmer en jeu, à deux comptes, et noter le résultat dans `Documentation/trahison/vocal-essai.md` :
+  1. gain 0 coupe bien la voix de proximité d'un joueur, sans grésillement ;
+  2. un gain intermédiaire la baisse ;
+  3. la même chose pour une voix venant d'une copie du hub (clé = identifiant de l'avatar, S5) ;
+  4. l'icône « parle » d'un joueur coupé.
+- **Fini quand :** les quatre points sont confirmés. Si l'un échoue, s'arrêter et le signaler : c'est toute la
+  suite de l'étape qui en dépend.
 
-- Rendre un court rapport dans `Documentation/vocal-essai.md` : oui ou non pour chaque question, avec la preuve
-  (classe et méthode de l'API, mesure).
-- **Fini quand :** les trois réponses sont écrites. La suite de l'étape dépend d'elles :
-  - si 1 et 2 sont possibles : voie A (filtrer chez celui qui écoute), décrite ci-dessous ;
-  - sinon : voie B, à concevoir avec la propriétaire avant de continuer (par exemple tout faire passer par le
-    vocal du hub et demander aux joueurs de couper la proximité du serveur le temps de la partie).
-
-### T5.2 Les zones sonores, voie A (Opus)
+### T5.2 Les zones sonores (Opus)
 
 - Le backend connaît la zone de chaque joueur (T2). Il ajoute à la vue, pour chaque joueur, sa **zone sonore** :
   sa zone, ou sa cabine si elle est fermée.
-- Client, paquet `voice` : à la réception d'une voix de proximité, la laisser passer seulement si celui qui parle
-  est dans la même zone sonore que celui qui écoute. Sinon, silence.
-- Portée dans la zone : volume plein jusqu'à 4 blocs, qui tombe à zéro à 8 (réglable). Chuchotement (la touche de
-  Simple Voice Chat) : zéro à 3 blocs.
+- Client, paquet `voice` : à chaque tick, recalculer la table des gains (règles de S4) d'après la vue de la
+  partie : 0 hors de ma zone sonore, sinon selon la distance.
+- Portée dans la zone : gain 1 jusqu'à 4 blocs, qui tombe à 0 à 8 (réglable). Chuchotement (la touche de Simple
+  Voice Chat, lue sur `EntitySound.isWhispering`) : 0 à 3 blocs.
 - Les portes ouvertes ne changent rien : c'est la zone qui compte. Un couloir est une zone à part.
 - Hors partie : rien n'est filtré.
 - **Fini quand :** les trois premiers cas du « Fini quand » de l'étape.
@@ -72,12 +75,11 @@ Règles à obtenir pendant une partie :
 | Fantôme ou spectateur | Les fantômes et spectateurs seulement |
 | Maître du jeu | Tout le monde quand il tient la touche « annonce », sinon comme un spectateur |
 
-- **Sans modifier Phantasmon.** Le vocal du hub relaie les voix aux membres du hub sans connaître le jeu. Le
-  filtrage se fait donc chez celui qui écoute, dans Events : à la réception d'une voix (proximité du serveur ou
-  vocal du hub), le mod la joue ou non d'après la vue de la partie (zone sonore, vivant ou fantôme).
-- Chercher d'abord comment Events peut se placer entre la réception et la lecture d'une voix du hub avec ce que
-  `PhantasmonApi` et le greffon de Simple Voice Chat offrent. Si ce n'est pas possible sans toucher à Phantasmon,
-  s'arrêter et le signaler, avec ce qui manque exactement.
+- Tout se fait dans la table des gains de T5.2, sans toucher à Phantasmon (solution S5) : les voix des copies
+  passent par le même événement, sous l'identifiant de l'avatar. Ajouter cette seconde clé pour chaque joueur.
+- Un vivant met à 0 le gain des fantômes et des spectateurs. Un fantôme ou un spectateur entend tout le monde.
+- L'annonce du maître du jeu : une touche tenue envoie `EventsTrahisonGm { action: "announce", on }` ; le backend
+  le porte dans la vue ; tous les clients mettent son gain à 1 pendant ce temps.
 - **Fini quand :** le dernier cas du « Fini quand » de l'étape, et un fantôme sur le serveur n'est plus entendu
   des vivants.
 
@@ -94,6 +96,7 @@ Changer la configuration du serveur de la communauté. Remplacer Simple Voice Ch
 
 - Ne charger aucune classe de Simple Voice Chat hors de son greffon : le mod reste facultatif (règle de D-36).
 - Un joueur sans Simple Voice Chat n'a pas de voix du tout : le lobby doit le signaler avant le démarrage.
-- La même voix peut arriver par les deux chemins : vérifier comment Phantasmon évite déjà le doublon avant d'y
-  toucher.
+- Pas de doublon à craindre : Phantasmon ne joue la voix du hub que pour un joueur dont l'avatar est affiché,
+  jamais pour un joueur présent en vrai sur le même serveur.
+- L'événement arrive sur le fil audio : ne rien lire du monde ni de la partie depuis là (S4).
 - Le filtrage est chez celui qui écoute : un client sans le mod entend tout. C'est accepté (joueurs de confiance).

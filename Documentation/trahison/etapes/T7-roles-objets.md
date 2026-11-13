@@ -13,6 +13,7 @@ se déroule avec un maître du jeu qui chuchote, donne un indice, met en pause e
 - [`plan.md`](../plan.md), section 3 (« Le couteau et les entraves ») et section 4 en entier.
 - [`architecture.md`](../architecture.md), section 4 (« Qui voit quoi »).
 - Le code de T1 (`Views`, `Settings`), T3.3 (`Inventory`), T6 (`kill`, corps).
+- [`solutions-techniques.md`](../solutions-techniques.md) : S7 (attacher un joueur), S1 (verrou : une porte de faux blocs).
 
 ## Questions à poser avant de commencer
 
@@ -60,8 +61,8 @@ Backend, paquet `game`.
 | Passe | Sur une cabine ou une porte verrouillée | La rouvre |
 | Lettre | N'importe quand | Un message court, anonyme, livré à un joueur par l'animateur |
 
-- Client : un joueur attaché ne peut plus se déplacer (ses touches de mouvement sont ignorées par son mod), il
-  peut regarder et parler. Affichage chez les autres : des liens autour de lui.
+- Client : un joueur attaché ne peut plus se déplacer (mixin sur `KeyboardInput.tick`, solution S7), il peut
+  regarder et parler. Affichage chez les autres : des liens autour de lui.
 - Un joueur attaché ou enfermé ne vote pas : « Allier » par défaut (déjà la règle).
 - Tests : chaque objet ; le couteau ne marche pas à travers une porte fermée (zones différentes).
 - **Fini quand :** en jeu, on trouve un objet, on attache un joueur, un autre le détache, et le couteau tue.

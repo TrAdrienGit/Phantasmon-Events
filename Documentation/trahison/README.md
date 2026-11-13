@@ -20,10 +20,12 @@ installation. Aucun autre mod, aucun autre dépôt. Phantasmon et Showtime ne so
 | Les règles du jeu, validées | [`plan.md`](plan.md) |
 | Comment on le construit : paquets, modèle de partie, protocole, monde, salles | [`architecture.md`](architecture.md) |
 | Le travail, étape par étape, en sous-tâches faites pour un agent | [`etapes/README.md`](etapes/README.md) |
+| Les solutions techniques déjà trouvées (faux blocs, vocal, entités, schématiques…) | [`solutions-techniques.md`](solutions-techniques.md) |
 | Tous les messages et actions (à partir de l'étape T0) | `protocole.md` |
 
 Pour une sous-tâche (par exemple « T3.5 `wiring` ») : lire `architecture.md`, puis la fiche de l'étape, puis sa
-liste « À lire avant », et seulement ensuite écrire du code.
+liste « À lire avant » et les solutions techniques qu'elle cite, et seulement ensuite écrire du code. Quand une
+solution est déjà notée, on l'applique : on ne la recherche pas de nouveau.
 
 ## Règles
 

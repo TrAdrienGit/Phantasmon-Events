@@ -15,6 +15,8 @@ ne pouvait pas passer ; le bracelet du mort vote « Allier » ; un joueur décon
 - [`plan.md`](../plan.md), section 3 (« La mort, les bracelets et les fantômes », « Spectateurs, fantômes et
   déconnexions »).
 - [`architecture.md`](../architecture.md), sections 4 et 6 (« Joueurs dans un état spécial »).
+- [`solutions-techniques.md`](../solutions-techniques.md) : S2 (position), S3 (corps et mannequins), S6 (masquer un mort, skin en
+  noir et blanc).
 - `Phantasmon-Events/.../npc/EventNpcEntity.java`, `EventNpcs.java` : une entité joueur locale avec un skin.
 - `Phantasmon-Client/.../hub/HubAvatars.java` (`skinOf`, avatars des copies).
 - Le code de T1 (`Game`, `Views`) et de T2 (`FakeBlocks`, `Zones`).
@@ -63,11 +65,11 @@ Client, paquet `world`.
 Client.
 
 - Chez un vivant, le vrai personnage d'un mort n'est plus affiché normalement : selon le réglage du maître du
-  jeu, silhouette translucide en noir et blanc, ou rien du tout (ni corps, ni pseudo, ni ombre, ni bruit de pas).
-  Mixin sur le rendu des joueurs, limité aux identifiants concernés.
+  jeu, silhouette en noir et blanc, ou rien du tout (ni corps, ni pseudo, ni ombre). Les deux mixins sont
+  décrits en S6.
 - Chez le fantôme : aucun faux bloc (il traverse les portes), aucun objet cliquable, ses actions de jeu sont
   refusées. Un filtre gris léger sur son écran, et le rappel « tu es un fantôme ».
-- Le skin en noir et blanc : conversion de la texture du skin en niveaux de gris, côté client.
+- Le skin en noir et blanc : texture recalculée en niveaux de gris, une fois par joueur (S6).
 - Spectateurs : inscrits comme tels au lobby (action `spectate`), ou tout membre du hub non inscrit. Même
   traitement que les fantômes, sans corps. Dans une copie du hub, ils sont des avatars : appliquer le même réglage
   d'affichage aux avatars.

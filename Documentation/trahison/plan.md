@@ -278,8 +278,10 @@ autres en direct.
   éclaire une salle noire, Force pousse un rocher, Coupe ouvre un passage, Surf traverse un bassin). Aucun ne
   suffit seul.
 - Combat-énigme : une équipe imposée, une situation donnée, trouver la suite de coups qui gagne en N tours
-  (comme un problème d'échecs). Même difficulté pour tous, puisque tout est fixé.
-- Gardien : un dresseur PNJ barre la sortie, équipes imposées.
+  (comme un problème d'échecs). C'est un mini-jeu de duel tactique à nous, aux règles simples et sans hasard, et
+  non un vrai combat : il se génère et se vérifie tout seul.
+- Gardien : un dresseur PNJ barre la sortie, équipes imposées. Écarté de la première version (il demanderait
+  de modifier Phantasmon).
 
 ### Première banque
 
@@ -388,4 +390,5 @@ Plus aucune question ne bloque le début du travail. Restent à trancher en rout
 1. Les propositions encore marquées **(proposition)** dans ce plan, en particulier : la mort non annoncée, les
    durées des liens et du verrou, la pénalité d'un joueur resté devant les portes, l'habillage Feu / Plante / Eau.
 2. Les noms du jeu (le vote, la porte finale, les bracelets), à choisir dans le lore.
-3. Deux vérifications techniques sur le vocal (section 8).
+3. La confirmation en jeu du vocal : la solution est trouvée (`solutions-techniques.md`, S4 et S5), il reste à
+   la voir tourner.

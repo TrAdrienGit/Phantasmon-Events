@@ -33,7 +33,9 @@ Deux étapes ne se font en même temps que si elles ne touchent pas les mêmes f
 
 1. Donner à l'agent, dans cet ordre : [`Documentation/trahison/README.md`](../README.md),
    [`architecture.md`](../architecture.md), la fiche de l'étape, et le nom de la sous-tâche.
-2. Lui dire de lire d'abord la rubrique « À lire avant » de la fiche.
+2. Lui dire de lire d'abord la rubrique « À lire avant » de la fiche, et les solutions techniques qu'elle cite
+   ([`solutions-techniques.md`](../solutions-techniques.md)) : elles s'appliquent, elles ne se recherchent pas de
+   nouveau.
 3. Il s'arrête quand le « Fini quand » de la sous-tâche est vrai, tests compris, et dit ce qu'il n'a pas pu
    vérifier.
 4. Il ne sort pas du périmètre. Il ne modifie jamais Phantasmon ni Showtime : s'il lui manque quelque chose
@@ -77,4 +79,4 @@ Reprises du plan (section 12). À poser au moment où une étape en a besoin, pa
 | La mort est-elle annoncée ou découverte | T6 |
 | Durées des liens et du verrou | T7 |
 | Noms du jeu tirés du lore (vote, porte finale, bracelets) | T9 |
-| Le mod peut-il filtrer la voix de proximité côté client | T5 (première sous-tâche) |
+| Le gardien (vrai combat à équipe imposée) : le veut-on plus tard, et par quelle piste | Après la première soirée (solution S10) |

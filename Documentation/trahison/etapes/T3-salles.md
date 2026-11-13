@@ -14,6 +14,8 @@ sortie s'ouvre avec la pénalité.
 
 - [`plan.md`](../plan.md), section 5 en entier.
 - [`architecture.md`](../architecture.md), sections 6 et 7.
+- [`solutions-techniques.md`](../solutions-techniques.md) : S3 (objets cliquables), S12 (capture d'une salle), S13 (fichiers sur le
+  backend), S14 (affichage dans le monde).
 - Le code de T2 : `world/FakeBlocks`, `world/Zones`, l'éditeur du plan (même outil de sélection).
 - `Phantasmon-Client/.../gui/PhantasmonCanvasScreen.java` : la toile à échelle fixe des écrans.
 - `Cobblemon-Battle-Showtime/.../gui/ShowtimeMenuScreen.java` : la qualité visée pour un écran.
@@ -27,7 +29,7 @@ sortie s'ouvre avec la pénalité.
 Backend, paquets `room` et `room.mechanism`.
 
 - `RoomDefinition`, `Slot`, `Step` (architecture, section 7). Table `trahison_rooms` (`id`, `version`, `data
-  jsonb`, schématique en fichier sur disque à côté des hubs). Routes `/trahison/rooms` : lister, lire, créer,
+  jsonb`, schématique en fichier sur disque : solution S13). Routes `/events/trahison/rooms` : lister, lire, créer,
   modifier, supprimer (admins).
 - Interface `Mechanism` :
   - `id()`, `difficulty(params)`, `expectedSeconds(params)` ;
@@ -60,8 +62,8 @@ Client, paquet `edit`.
   L'écran affiche la difficulté et la durée totales.
 - Vérifications avant l'enregistrement : chaque étape est atteignable, la dernière ouvre la sortie, aucun
   emplacement n'est utilisé deux fois de façon incompatible, rien ne dépasse du gabarit.
-- Enregistrer : capture des blocs du gabarit (avec leurs entités de bloc : panneaux, bannières), envoi de la
-  définition et de la schématique au backend.
+- Enregistrer : capture des blocs du gabarit avec leurs entités de bloc (panneaux, bannières), par le monde du
+  serveur intégré (solution S12), puis envoi de la définition et de la schématique au backend.
 - `room load <id>` : recolle une salle existante dans le monde solo pour la retoucher.
 - **Fini quand :** une salle construite à la main est enregistrée, rechargée dans un autre monde, et sa chaîne
   est intacte.
@@ -70,9 +72,9 @@ Client, paquet `edit`.
 
 Client, paquets `world` et `room`.
 
-- `world/Interactables` : pour chaque emplacement actif reçu du backend, un objet affiché et cliquable. Le clic
-  est capté avant de partir au serveur (rayon du regard contre la boîte de l'emplacement, portée 4 blocs).
-  Un contour léger au survol, et le nom de l'action (« Examiner », « Ramasser », « Utiliser »).
+- `world/Interactables` (solution S3) : pour chaque emplacement actif reçu du backend, une entité locale sur le
+  modèle d'`EventNpcEntity`, cliquable par `UseEntityCallback` (le clic ne part pas au serveur), portée 4 blocs.
+  Un contour léger quand elle est visée, et le nom de l'action (« Examiner », « Ramasser », « Utiliser »).
 - Rendus de base, sans modèle externe : un terminal (bloc et écran lumineux), un digicode mural, un objet qui
   flotte et tourne, un panneau d'indice (texte ou symboles dessinés sur un mur), un levier, un socle.
 - `room/Inventory` : l'inventaire **virtuel** du joueur pour la salle (une barre d'objets à l'écran, touche pour
