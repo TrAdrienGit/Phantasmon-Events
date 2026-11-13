@@ -27,7 +27,8 @@ public final class TournamentAnnouncer {
 	}
 
 	private static void announce(Map<String, Object> data) {
-		String t = String.valueOf(data.get("tournament"));
+		// The readable name (2026-11-12); an older backend sends the id only.
+		String t = String.valueOf(data.get("title") != null ? data.get("title") : data.get("tournament"));
 		String kind = String.valueOf(data.get("kind"));
 		switch (kind) {
 			case "ROUND" -> {

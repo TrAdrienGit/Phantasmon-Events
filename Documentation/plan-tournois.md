@@ -156,9 +156,11 @@ Joueurs, Matchs, Classement (vainqueur mis en avant), Arbre (traits SVG, glissab
 téléphone ; mise à jour en direct sans clignoter. Les têtes passent par le backend (`/public/heads/<pseudo>`) : les
 visiteurs n'appellent aucun service tiers et aucun UUID ne sort.
 
-## 10. À faire : retours sur la page web (Adrien, 2026-11-11)
+## 10. Retours sur la page web (Adrien, 2026-11-11 ; corrigés le 2026-11-12, à valider)
 
 - **Un vrai nom de tournoi** : l'admin tape un nom lisible (majuscules, espaces, accents : « Weekly OU #1 ») ; le
-  slug minuscule qui sert d'identifiant (URL, commandes) en est tiré tout seul. Les pages affichent le nom, plus le slug.
+  slug minuscule qui sert d'identifiant (URL, commandes) en est tiré tout seul (accents ôtés, `_`, 32 caractères,
+  `_2`, `_3`… s'il est déjà pris). Les pages, le menu et les annonces affichent le nom ; le formulaire montre
+  l'identifiant obtenu. Les anciens tournois, sans nom, gardent leur identifiant.
 - **La carte du tournoi collée à l'en-tête** de la page web : lui donner de l'air au-dessus.
 - **« Bo1 »** : « Bo » et « 1 » ne sont pas de la même couleur dans l'étiquette ; une seule couleur.

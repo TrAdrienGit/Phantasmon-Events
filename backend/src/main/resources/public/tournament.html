@@ -31,7 +31,7 @@
   .live-dot { margin-left: auto; color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 8px; }
   .live-dot i { width: 8px; height: 8px; border-radius: 50%; background: var(--live); box-shadow: 0 0 0 0 rgba(76,208,125,.6); animation: pulse 2s infinite; }
   @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(76,208,125,.55); } 70% { box-shadow: 0 0 0 8px rgba(76,208,125,0); } 100% { box-shadow: 0 0 0 0 rgba(76,208,125,0); } }
-  main { padding: 24px 0 56px; }
+  main.wrap { padding: 28px 16px 56px; }
   h1 { font-size: 30px; line-height: 1.15; margin: 0; letter-spacing: -.01em; }
   h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 30px 0 12px; }
   .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: #fff; }
@@ -159,6 +159,7 @@
   let tab = (location.hash || '').slice(1) || null;
   let shownRound = null;
   let last = '';
+  const title = t => t.display_name || t.name;
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const date = iso => iso ? new Date(iso).toLocaleString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : null;
   const head = (player, size) => player && player !== '-'
@@ -172,7 +173,7 @@
     const more = t.players.length > 6 ? `<span class="more">+${t.players.length - 6}</span>` : '';
     const next = nextStep(t);
     return `<a class="card" href="/t/${encodeURIComponent(t.name)}" style="--c:${COLOUR[t.status]}">
-      <div class="row1"><span class="name">${esc(t.name)}</span><span class="pill ${t.status}">${STATUS[t.status] ?? t.status}</span></div>
+      <div class="row1"><span class="name">${esc(title(t))}</span><span class="pill ${t.status}">${STATUS[t.status] ?? t.status}</span></div>
       <div class="meta">${esc(t.format_name)} · Bo${t.best_of} · ${KIND[t.kind] ?? t.kind}</div>
       <div class="row3"><span class="stack">${shown}</span>${more}<span>${t.players.length} joueur${t.players.length > 1 ? 's' : ''}</span>
         ${next ? `<span style="margin-left:auto">${next}</span>` : ''}</div></a>`;
@@ -318,8 +319,8 @@
   }
 
   function show(t) {
-    crumb.innerHTML = `/ <a href="/t">Tournois</a> / ${esc(t.name)}`;
-    document.title = `${t.name} · Tournois Phantasmon`;
+    crumb.innerHTML = `/ <a href="/t">Tournois</a> / ${esc(title(t))}`;
+    document.title = `${title(t)} · Tournois Phantasmon`;
     const tabs = [['joueurs', `Joueurs<em>${t.players.length}</em>`]];
     if (t.matches.length) {
       tabs.push(['matchs', 'Matchs'], ['classement', 'Classement']);
@@ -331,8 +332,8 @@
     const body = { joueurs: playersTab, matchs: matchesTab, classement: standingsTab, arbre: bracketTab }[chosen](t);
     const keepScroll = document.getElementById('bw');
     const scroll = keepScroll ? [keepScroll.scrollLeft, keepScroll.scrollTop] : null;
-    app.innerHTML = `<section class="hero"><div class="title"><h1>${esc(t.name)}</h1><span class="pill ${t.status}">${STATUS[t.status] ?? t.status}</span></div>
-      <div class="tags"><span class="tag"><b>${esc(t.format_name)}</b></span><span class="tag">Bo<b>${t.best_of}</b></span>
+    app.innerHTML = `<section class="hero"><div class="title"><h1>${esc(title(t))}</h1><span class="pill ${t.status}">${STATUS[t.status] ?? t.status}</span></div>
+      <div class="tags"><span class="tag"><b>${esc(t.format_name)}</b></span><span class="tag"><b>Bo${t.best_of}</b></span>
       <span class="tag">${KIND[t.kind] ?? t.kind}</span><span class="tag"><b>${t.players.length}</b> inscrits · <b>${present}</b> présents</span>
       ${t.status === 'RUNNING' && t.current_round ? `<span class="tag">${t.kind === 'SWISS' ? 'Ronde' : 'Vague'} <b>${t.current_round}</b> / ${t.planned_rounds ?? '?'}</span>` : ''}</div>
       ${steps(t)}</section>

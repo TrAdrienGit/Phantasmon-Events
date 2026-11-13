@@ -283,8 +283,8 @@
   "phantasmon_events.tp.admin.web": "Page publique : %s",
   "phantasmon_events.tp.form.create_title": "Nouveau tournoi",
   "phantasmon_events.tp.form.edit_title": "Dates du tournoi",
-  "phantasmon_events.tp.form.name": "Nom (minuscules, chiffres, _)",
-  "phantasmon_events.tp.form.name_hint": "weekly_ou_12",
+  "phantasmon_events.tp.form.name": "Nom du tournoi",
+  "phantasmon_events.tp.form.name_hint": "Weekly OU #1",
   "phantasmon_events.tp.form.kind": "Type",
   "phantasmon_events.tp.form.best_of": "Manches par match",
   "phantasmon_events.tp.form.format": "Format",
@@ -298,5 +298,6 @@
   "phantasmon_events.tp.form.bad_date": "Date incomplète ou impossible : %s.",
   "phantasmon_events.tp.form.create": "Créer le tournoi",
   "phantasmon_events.tp.form.save": "Enregistrer",
-  "phantasmon_events.error.error_tournament_invalid_dates": "Les dates ne sont pas dans l'ordre (une fermeture avant son ouverture, ou le check-in avant les inscriptions)."
+  "phantasmon_events.error.error_tournament_invalid_dates": "Les dates ne sont pas dans l'ordre (une fermeture avant son ouverture, ou le check-in avant les inscriptions).",
+  "phantasmon_events.tp.form.id": "Identifiant : %s"
 }

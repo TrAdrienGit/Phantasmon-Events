@@ -125,7 +125,9 @@ Reçus par le cœur et confiés au module (`EventsWsHandler`), ou envoyés par l
 Les tournois ont leurs codes `ERROR_TOURNAMENT_*` (nom, format, étape, inscription, check-in, dates dans le désordre
 `ERROR_TOURNAMENT_INVALID_DATES`…), décrits par leur message dans le client Events.
 
-Création (`POST /admin/tournaments`) et dates (`.../schedule`) prennent `registration_opens_at`,
+Création (`POST /admin/tournaments`) prend `display_name` (2 à 48 caractères, le nom lu partout) : l'identifiant
+`name` en est tiré (`TournamentService.slug`, `_2`, `_3`… s'il est pris) ; `name` seul reste accepté. La vue donne
+`display_name` (l'identifiant pour un tournoi sans nom), les annonces `title`. Création et dates (`.../schedule`) prennent `registration_opens_at`,
 `registration_closes_at`, `check_in_opens_at`, `check_in_closes_at` (ISO-8601) ; `schedule` prend aussi `clear`,
 la liste des dates à retirer. Toutes les 15 s, `TournamentRunService.datedSteps` ouvre le check-in à sa date et, à
 sa fermeture, démarre le tournoi et ouvre sa première ronde ; un démarrage impossible n'est pas retenté avant un
@@ -144,6 +146,7 @@ en V18-V19 et V22-V24), la ligne de base `0` puis les `IF NOT EXISTS` ne changen
 |---|---|---|
 | 1 | `V1__tournaments.sql` | Ancien V18 + V19 : `tournaments`, `tournament_players`, `tournament_matches` (§5.2) |
 | 2 | `V2__event_npcs.sql` | Ancien V22 à V24 : `event_groups`, `event_npcs` (§5.3) |
+| 5 | `V5__tournament_display_name.sql` | `tournaments.display_name` (2026-11-12) : le nom lisible, l'identifiant en est tiré |
 | 4 | `V4__tournament_check_in_dates.sql` | `tournaments.check_in_opens_at`, `check_in_closes_at` (2026-11-11) : le check-in s'ouvre et le tournoi démarre à ces dates |
 | 3 | `V3__mirror_anchor_roles.sql` | Règles des Anchors miroirs : `uq_events_mirror_source` (une `SOURCE` par hub), `uq_events_mirror_copy` (une `COPY` par admin et par hub) |
 
@@ -152,7 +155,7 @@ en V18-V19 et V22-V24), la ligne de base `0` puis les `IF NOT EXISTS` ne changen
 - `tournaments` : `uuid` PK, `name` (unique casse ignorée parmi les tournois ni terminés ni annulés,
   `uq_tournament_open_name`), `kind` (`SWISS` | `BRACKET`), `best_of` (1, 3 ou 5), `format_id`, `status`
   (`REGISTRATION`, `CHECK_IN`, `RUNNING`, `FINISHED`, `CANCELLED`), `starts_at`, `registration_opens_at`,
-  `registration_closes_at`, `check_in_opens_at`, `check_in_closes_at` (V4), `planned_rounds`, `current_round`,
+  `registration_closes_at`, `check_in_opens_at`, `check_in_closes_at` (V4), `display_name` (V5), `planned_rounds`, `current_round`,
   `created_by` (FK `players` `ON DELETE SET NULL`), `created_at`.
 - `tournament_players` : PK (`tournament_uuid`, `player_uuid`), FK `ON DELETE CASCADE` des deux côtés, `username`,
   `checked_in`, `dropped`, `registered_at`.

@@ -91,7 +91,7 @@ public final class TournamentsPage implements MenuPage {
 	public Component title() {
 		return switch (view) {
 			case LIST -> Component.translatable("phantasmon_events.tp.title");
-			case DETAIL -> Component.literal(current() == null ? "" : current().name());
+			case DETAIL -> Component.literal(current() == null ? "" : current().title());
 			case FORM -> Component.translatable(form != null && form.editing() != null ? "phantasmon_events.tp.form.edit_title"
 					: "phantasmon_events.tp.form.create_title");
 		};
@@ -248,7 +248,7 @@ public final class TournamentsPage implements MenuPage {
 		MenuUi.row(g, cx, cy, w, CARD_H, hovered);
 		g.fill(cx, cy, cx + 3, cy + CARD_H, statusColour(t.status()));
 		int chipW = statusChip(g, t.status(), cx + w - 6, cy + 5);
-		MenuUi.text(g, Component.literal(t.name()).withStyle(s -> s.withBold(true)), cx + 10, cy + 6, w - chipW - 120, c.white());
+		MenuUi.text(g, Component.literal(t.title()).withStyle(s -> s.withBold(true)), cx + 10, cy + 6, w - chipW - 120, c.white());
 		// Faces of the first players, overlapping, and the count.
 		int shownHeads = Math.min(6, t.players().size());
 		int hx = cx + w - chipW - 18 - shownHeads * 8;
@@ -269,7 +269,7 @@ public final class TournamentsPage implements MenuPage {
 		if (me != null) {
 			Component badge = Component.translatable(me.checkedIn() ? "phantasmon_events.tp.me.present" : "phantasmon_events.tp.me.registered");
 			int bw = MenuUi.width(badge) + 8;
-			int bx = cx + 10 + Math.min(MenuUi.width(Component.literal(t.name()).withStyle(s -> s.withBold(true))), w - chipW - 120) + 8;
+			int bx = cx + 10 + Math.min(MenuUi.width(Component.literal(t.title()).withStyle(s -> s.withBold(true))), w - chipW - 120) + 8;
 			g.fill(bx, cy + 4, bx + bw, cy + 15, me.checkedIn() ? 0xFF1F5E3C : c.accentDim());
 			MenuUi.text(g, badge, bx + 4, cy + 6, bw, c.white());
 		}
@@ -372,7 +372,7 @@ public final class TournamentsPage implements MenuPage {
 				ax -= 108;
 				ui.button(g, ax, y, 104, 14, Component.translatable("phantasmon_events.tp.action.unregister"),
 						() -> host.confirm(Component.translatable("phantasmon_events.tp.action.unregister"),
-								List.of(Component.translatable("phantasmon_events.tp.confirm.unregister", t.name())),
+								List.of(Component.translatable("phantasmon_events.tp.confirm.unregister", t.title())),
 								Component.translatable("phantasmon_events.tp.action.unregister"), true,
 								() -> send(PhantasmonApi.delete("/tournaments/" + t.name() + "/register", TournamentDto.class), null)));
 			}
@@ -763,11 +763,11 @@ public final class TournamentsPage implements MenuPage {
 						() -> send(PhantasmonApi.post(base + "/finish", null, TournamentDto.class), null)) });
 			}
 			buttons.add(new Object[] { "cancel", true, (Runnable) () -> host.confirm(Component.translatable("phantasmon_events.tp.admin.cancel"),
-					List.of(Component.translatable("phantasmon_events.tp.confirm.cancel", t.name())), Component.translatable("phantasmon_events.tp.admin.cancel"), true,
+					List.of(Component.translatable("phantasmon_events.tp.confirm.cancel", t.title())), Component.translatable("phantasmon_events.tp.admin.cancel"), true,
 					() -> send(PhantasmonApi.post(base + "/cancel", null, TournamentDto.class), null)) });
 		} else {
 			buttons.add(new Object[] { "delete", true, (Runnable) () -> host.confirm(Component.translatable("phantasmon_events.tp.admin.delete"),
-					List.of(Component.translatable("phantasmon_events.tp.confirm.delete", t.name())), Component.translatable("phantasmon_events.tp.admin.delete"), true,
+					List.of(Component.translatable("phantasmon_events.tp.confirm.delete", t.title())), Component.translatable("phantasmon_events.tp.admin.delete"), true,
 					() -> PhantasmonApi.delete(base, Void.class).thenAccept(ignored -> Minecraft.getInstance().execute(() -> {
 						host.closeDialog();
 						view = View.LIST;

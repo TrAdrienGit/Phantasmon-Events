@@ -36,7 +36,7 @@ public class TournamentService {
 	public record View(String name, String kind, int bestOf, String formatId, String formatName, String status,
 			Instant startsAt, Instant registrationOpensAt, Instant registrationClosesAt, boolean registrationOpen,
 			Integer plannedRounds, int currentRound, List<PlayerView> players, List<MatchView> matches,
-			List<StandingView> standings, Instant checkInOpensAt, Instant checkInClosesAt, Instant createdAt) {
+			List<StandingView> standings, Instant checkInOpensAt, Instant checkInClosesAt, Instant createdAt, String displayName) {
 	}
 
 	/** A match: its players' names, games won by each, winner (null until decided). */
@@ -57,7 +57,8 @@ public class TournamentService {
 	 * information; the check-in's closing is the start now.
 	 */
 	public record CreateRequest(String name, String kind, Integer bestOf, String formatId, Instant startsAt,
-			Instant registrationOpensAt, Instant registrationClosesAt, Instant checkInOpensAt, Instant checkInClosesAt) {
+			Instant registrationOpensAt, Instant registrationClosesAt, Instant checkInOpensAt, Instant checkInClosesAt,
+			String displayName) {
 	}
 
 	/**
@@ -159,7 +160,13 @@ public class TournamentService {
 
 	@Transactional
 	public View create(UUID adminUuid, CreateRequest request) {
-		String name = request.name() == null ? "" : request.name().strip().toLowerCase(Locale.ROOT);
+		// A readable name (2026-11-12): the id is derived from it, made unique; else an id given as before.
+		String displayName = request.displayName() == null ? null : request.displayName().strip().replaceAll("\\s+", " ");
+		if (displayName != null && (displayName.length() < 2 || displayName.length() > 48)) {
+			throw new ApiException(HttpStatus.BAD_REQUEST, "ERROR_TOURNAMENT_INVALID_NAME", Map.of("name", displayName));
+		}
+		String name = displayName != null && (request.name() == null || request.name().isBlank()) ? freeSlug(displayName)
+				: request.name() == null ? "" : request.name().strip().toLowerCase(Locale.ROOT);
 		if (!NAME.matcher(name).matches()) {
 			throw new ApiException(HttpStatus.BAD_REQUEST, "ERROR_TOURNAMENT_INVALID_NAME", Map.of("name", name));
 		}
@@ -179,6 +186,7 @@ public class TournamentService {
 			throw new ApiException(HttpStatus.CONFLICT, "ERROR_TOURNAMENT_NAME_TAKEN", Map.of("tournament", name));
 		}
 		Tournament tournament = new Tournament(UUID.randomUUID(), name, kind, bestOf, format, adminUuid);
+		tournament.setDisplayName(displayName);
 		tournament.setRegistrationOpensAt(request.registrationOpensAt());
 		tournament.setRegistrationClosesAt(request.registrationClosesAt());
 		tournament.setCheckInOpensAt(request.checkInOpensAt());
@@ -212,6 +220,29 @@ public class TournamentService {
 		}
 		checkDates(tournament);
 		return changed(tournament);
+	}
+
+	/**
+	 * A readable name's id: accents dropped, lower case, every other character run made {@code _}, 32 at most
+	 * ("Weekly OU #1" → {@code weekly_ou_1}); then {@code _2}, {@code _3}... while a tournament not over has it.
+	 */
+	static String slug(String displayName) {
+		String plain = java.text.Normalizer.normalize(displayName, java.text.Normalizer.Form.NFD).replaceAll("\\p{M}", "");
+		String slug = plain.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "");
+		if (slug.length() > 32) {
+			slug = slug.substring(0, 32).replaceAll("_+$", "");
+		}
+		return slug.length() < 2 ? "tournoi" : slug;
+	}
+
+	private String freeSlug(String displayName) {
+		String base = slug(displayName);
+		String candidate = base;
+		for (int i = 2; tournaments.findOpenByName(candidate).isPresent(); i++) {
+			String suffix = "_" + i;
+			candidate = (base.length() + suffix.length() > 32 ? base.substring(0, 32 - suffix.length()) : base) + suffix;
+		}
+		return candidate;
 	}
 
 	/**
@@ -380,7 +411,12 @@ public class TournamentService {
 				tournament.getRegistrationOpensAt(), tournament.getRegistrationClosesAt(), registrationOpen(tournament),
 				tournament.getPlannedRounds() == null ? null : tournament.getPlannedRounds().intValue(),
 				tournament.getCurrentRound(), entries, matchViews, standings, tournament.getCheckInOpensAt(),
-				tournament.getCheckInClosesAt(), tournament.getCreatedAt());
+				tournament.getCheckInClosesAt(), tournament.getCreatedAt(), title(tournament));
+	}
+
+	/** What players read: the readable name, else (an older tournament) its id. */
+	static String title(Tournament tournament) {
+		return tournament.getDisplayName() != null ? tournament.getDisplayName() : tournament.getName();
 	}
 
 	/**

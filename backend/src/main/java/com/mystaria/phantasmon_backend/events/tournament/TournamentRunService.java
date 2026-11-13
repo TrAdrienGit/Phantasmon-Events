@@ -525,6 +525,7 @@ public class TournamentRunService implements TournamentHook {
 	private void announce(UUID player, Tournament tournament, String kind, Map<String, Object> details) {
 		Map<String, Object> data = new HashMap<>(details);
 		data.put("tournament", tournament.getName());
+		data.put("title", TournamentService.title(tournament));
 		data.put("kind", kind);
 		sessionRegistry.send(player, WsMessage.of("EventsTournamentAnnounce", data));
 	}

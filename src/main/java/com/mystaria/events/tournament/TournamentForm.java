@@ -55,7 +55,8 @@ public final class TournamentForm {
 
 	private final TournamentsPage page;
 	private final TournamentDto editing;
-	private final Ui.Field name = new Ui.Field(Ui.Kind.NAME, 32);
+	/** The readable name ("Weekly OU #1"); the backend derives the id from it. */
+	private final Ui.Field name = new Ui.Field(Ui.Kind.TEXT, 48);
 	private final Ui.Field[] dates = new Ui.Field[4];
 	private final Ui.Field[] times = new Ui.Field[4];
 	private String kind = "SWISS";
@@ -78,7 +79,7 @@ public final class TournamentForm {
 			times[i].value = digits[1];
 		}
 		if (editing != null) {
-			name.value = editing.name();
+			name.value = editing.title();
 		}
 	}
 
@@ -103,6 +104,11 @@ public final class TournamentForm {
 		if (editing == null) {
 			ui.field(g, name, x, row + 10, Math.min(w, 260), 15, Component.translatable("phantasmon_events.tp.form.name"),
 					Component.translatable("phantasmon_events.tp.form.name_hint").getString(), false);
+			if (!name.value.isBlank()) {
+				// The id the backend will derive (a suffix may follow if another tournament has it).
+				MenuUi.text(g, Component.translatable("phantasmon_events.tp.form.id", slug(name.value)), x + Math.min(w, 260) + 8, row + 14,
+						Math.max(40, w - Math.min(w, 260) - 8), c.edge());
+			}
 			row += 34;
 			MenuUi.text(g, Component.translatable("phantasmon_events.tp.form.kind"), x, row, 200, c.muted());
 			ui.chip(g, x, row + 11, 120, 15, Component.translatable("phantasmon_events.tp.kind.swiss"), "SWISS".equals(kind), () -> kind = "SWISS");
@@ -161,6 +167,16 @@ public final class TournamentForm {
 		ui.unclip(g);
 	}
 
+	/** The backend's id rule ({@code TournamentService.slug}), to show what the name will give. */
+	static String slug(String displayName) {
+		String plain = java.text.Normalizer.normalize(displayName, java.text.Normalizer.Form.NFD).replaceAll("\\p{M}", "");
+		String slug = plain.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "");
+		if (slug.length() > 32) {
+			slug = slug.substring(0, 32).replaceAll("_+$", "");
+		}
+		return slug.length() < 2 ? "tournoi" : slug;
+	}
+
 	private static boolean validDate(Ui.Field date, Ui.Field time) {
 		try {
 			TournamentsPage.instant(date, time);
@@ -213,7 +229,7 @@ public final class TournamentForm {
 	}
 
 	private java.util.concurrent.CompletableFuture<TournamentDto> create(Map<String, Object> body) {
-		body.put("name", name.value.strip());
+		body.put("display_name", name.value.strip());
 		body.put("kind", kind);
 		body.put("best_of", bestOf);
 		body.put("format_id", format);

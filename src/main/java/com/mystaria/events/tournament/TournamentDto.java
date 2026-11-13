@@ -7,7 +7,12 @@ import java.util.UUID;
 public record TournamentDto(String name, String kind, int bestOf, String formatId, String formatName, String status,
 		String startsAt, String registrationOpensAt, String registrationClosesAt, boolean registrationOpen,
 		Integer plannedRounds, int currentRound, List<Player> players, List<Match> matches, List<Standing> standings,
-		String checkInOpensAt, String checkInClosesAt, String createdAt) {
+		String checkInOpensAt, String checkInClosesAt, String createdAt, String displayName) {
+
+	/** What players read: the readable name, else (an older tournament, an older backend) its id. */
+	public String title() {
+		return displayName != null && !displayName.isBlank() ? displayName : name;
+	}
 
 	public record Player(UUID uuid, String username, boolean checkedIn, boolean dropped) {
 	}

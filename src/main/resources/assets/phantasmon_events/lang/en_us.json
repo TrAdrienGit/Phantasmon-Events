@@ -283,8 +283,8 @@
   "phantasmon_events.tp.admin.web": "Public page: %s",
   "phantasmon_events.tp.form.create_title": "New tournament",
   "phantasmon_events.tp.form.edit_title": "Tournament's dates",
-  "phantasmon_events.tp.form.name": "Name (lower case, digits, _)",
-  "phantasmon_events.tp.form.name_hint": "weekly_ou_12",
+  "phantasmon_events.tp.form.name": "Tournament's name",
+  "phantasmon_events.tp.form.name_hint": "Weekly OU #1",
   "phantasmon_events.tp.form.kind": "Kind",
   "phantasmon_events.tp.form.best_of": "Games per match",
   "phantasmon_events.tp.form.format": "Format",
@@ -298,5 +298,6 @@
   "phantasmon_events.tp.form.bad_date": "Incomplete or impossible date: %s.",
   "phantasmon_events.tp.form.create": "Create the tournament",
   "phantasmon_events.tp.form.save": "Save",
-  "phantasmon_events.error.error_tournament_invalid_dates": "The dates are out of order (a closing before its opening, or the check-in before the registration)."
+  "phantasmon_events.error.error_tournament_invalid_dates": "The dates are out of order (a closing before its opening, or the check-in before the registration).",
+  "phantasmon_events.tp.form.id": "Id: %s"
 }

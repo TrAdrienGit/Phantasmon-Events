@@ -131,6 +131,24 @@ class TournamentDatesIntegrationTest {
 	}
 
 	@Test
+	void aReadableNameGivesTheIdAndTwinsGetASuffix() throws Exception {
+		String title = "Coupe Test " + name.substring(2);
+		String expected = TournamentService.slug(title);
+		String body = "{\"display_name\":\"%s\",\"kind\":\"BRACKET\",\"best_of\":3,\"format_id\":\"gen9ou\"}".formatted(title);
+		mockMvc.perform(post("/admin/tournaments").header("Authorization", adminToken).contentType(MediaType.APPLICATION_JSON).content(body))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.name").value(expected))
+				.andExpect(jsonPath("$.display_name").value(title));
+		mockMvc.perform(post("/admin/tournaments").header("Authorization", adminToken).contentType(MediaType.APPLICATION_JSON).content(body))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.name").value(expected + "_2"));
+		for (String id : new String[] { expected, expected + "_2" }) {
+			mockMvc.perform(post("/admin/tournaments/" + id + "/cancel").header("Authorization", adminToken));
+			mockMvc.perform(delete("/admin/tournaments/" + id).header("Authorization", adminToken));
+		}
+	}
+
+	@Test
 	void tooFewPlayersLeaveItInTheCheckInAndDatesCanBeCleared() throws Exception {
 		create(",\"check_in_opens_at\":\"%s\",\"check_in_closes_at\":\"%s\"".formatted(at(-2), at(-1)))
 				.andExpect(status().isCreated());

@@ -39,8 +39,13 @@ public class Tournament {
 	@Id
 	private UUID uuid;
 
+	/** The id (URL, commands): lower case, digits, {@code _}; derived from {@link #displayName} at creation. */
 	@Column(nullable = false, length = 32)
 	private String name;
+
+	/** The readable name ("Weekly OU #1"), shown everywhere; null for older tournaments (their id is shown). */
+	@Column(name = "display_name", length = 48)
+	private String displayName;
 
 	@Column(nullable = false, length = 8)
 	private String kind;
