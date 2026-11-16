@@ -33,3 +33,37 @@
 - **D39 (câblage plein mais faux)** : fait. Un court-circuit fait sauter tous les fils.
 - **D40 à D43 (trois leviers)** : défauts gardés (bail renouvelable, ordre et délai tirés, `solo` pour l'essai, pas de contrôle de la taille du groupe).
 - **D76 (ordre des places)** : c'était un défaut, pas une question. L'export et le backend utilisent le même ordre, celui du backend (ordre du plan) : le tirage porte l'identifiant de place de chaque salle et l'export associe salle et place par cet identifiant (`TrahisonExport.pair`, test `PlaceCheckTest`). Seule la commande manuelle `export <salles>` garde l'ordre « manche puis identifiant de place ».
+- **D10** Une cabine libre : qui peut y entrer, et un intrus : choix par défaut confirmé (2026-11-16).
+- **D11** Maître du jeu : aucun maître nommé en mode « Maître du jeu » : choix par défaut confirmé (2026-11-16).
+- **D13** Mort aux portes : ce qui reste de la personne : choix par défaut confirmé (2026-11-16).
+- **D45** Maître du jeu qui joue : comment il devient joueur : choix par défaut confirmé (2026-11-16).
+- **D47** Maître du jeu qui joue : sa vue de salle : choix par défaut confirmé (2026-11-16).
+- **D48** Maître du jeu qui joue : ses actions de supervision restent-elles discrètes : choix par défaut confirmé (2026-11-16).
+- **D49** Maître du jeu qui joue : révéler son nom à la fin : choix par défaut confirmé (2026-11-16).
+- **D54** Porte finale : qui est « passé » : choix par défaut confirmé (2026-11-16).
+- **D55** Porte finale : un deuxième actionnement pendant la fenêtre : choix par défaut confirmé (2026-11-16).
+- **D56** Porte finale : plan sans porte, annonce de la fin : choix par défaut confirmé (2026-11-16).
+- **D57** Salles libres : une salle non terminée à l'échéance : choix par défaut confirmé (2026-11-16).
+- **D58** Salles libres : sa propre salle pendant `VOTE` : choix par défaut confirmé (2026-11-16).
+- **D59** Salles libres : cabine de vote et salles : choix par défaut confirmé (2026-11-16).
+- **D60** Câblage : `colors` plus grand que `wires` : choix par défaut confirmé (2026-11-16).
+- **D63** Câblage : le schéma en texte et la langue : choix par défaut confirmé (2026-11-16).
+- **D64** Salles : ce que la mesure change à la difficulté affichée : choix par défaut confirmé (2026-11-16).
+- **D65** Aides : où se règlent les délais : choix par défaut confirmé (2026-11-16).
+- **D68** Mesures : « médiane d'une salle » : choix par défaut confirmé (2026-11-16).
+- **D70** Tirage : la taille des groupes et `three_levers` : choix par défaut confirmé (2026-11-16).
+- **D71** Tirage : le « mécanisme principal » d'une salle : choix par défaut confirmé (2026-11-16).
+- **D72** Tirage : dans quel ordre relâcher les contraintes : choix par défaut confirmé (2026-11-16).
+- **D74** Tirage : réglages par défaut : choix par défaut confirmé (2026-11-16).
+- **D77** Places : qui convertit les positions des emplacements : choix par défaut confirmé (2026-11-16).
+- **D79** Vérification du collage : quand : choix par défaut confirmé (2026-11-16).
+- **D90** Soirée : l'outil de collage : choix par défaut confirmé (2026-11-16).
+- **D91** Soirée : quand tirer et coller : choix par défaut confirmé (2026-11-16).
+- **D84** Source du tirage pour le bouton « Exporter » : choix par défaut confirmé (2026-11-16).
+- **D96** Mort par 0 point : quand elle s'applique : choix par défaut confirmé (2026-11-16).
+- **D98** Position des joueurs déconnectés : choix par défaut confirmé (2026-11-16).
+- **D100** Réglage `announceDeaths` : où le changer : choix par défaut confirmé (2026-11-16).
+- **D101** Durée d'attente d'un déconnecté en mode automatique : choix par défaut confirmé (2026-11-16).
+- **D103** Réglage de l'affichage des fantômes : choix par défaut confirmé (2026-11-16).
+- **D104** Fantôme en mode caché : se voit-il lui-même et voit-il les autres ? : choix par défaut confirmé (2026-11-16).
+- **D105** Marque « (fantôme) » visible de tous : choix par défaut confirmé (2026-11-16).
