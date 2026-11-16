@@ -22,7 +22,9 @@ import net.minecraft.world.phys.Vec3;
 
 import com.mystaria.events.trahison.minigame.Glyphs;
 import com.mystaria.events.trahison.room.Inventory;
+import com.mystaria.events.trahison.room.RoomView;
 import com.mystaria.events.trahison.room.RoomView.Clue;
+import com.mystaria.events.trahison.room.RoomView.Show;
 import com.mystaria.events.trahison.room.RoomView.SlotView;
 import com.mystaria.events.trahison.ui.TrahisonPalette;
 import com.mystaria.events.trahison.ui.TrahisonUi;
@@ -125,7 +127,14 @@ final class InteractableRender {
 			case "terminal" -> terminal(vc, camera, item, puzzle, solved, now);
 			case "keypad" -> keypad(vc, camera, item, puzzle, solved, now);
 			case "wall_clue" -> clues(vc, camera, item, texts, glyphs, true);
-			case "lever" -> lever(vc, camera, item, solved, now);
+			case "lever" -> {
+				Show coop = slot.shows().stream().filter(sh -> sh.isPuzzle() && "three_levers".equals(sh.mechanism())).findFirst().orElse(null);
+				if (coop != null) {
+					coopLever(vc, camera, item, coop, now);
+				} else {
+					lever(vc, camera, item, solved, now);
+				}
+			}
 			case "plate" -> plate(vc, camera, item, puzzle, solved);
 			case "pedestal" -> pedestal(vc, camera, item, puzzle, solved, now);
 			case "document" -> document(vc, camera, item, now);
@@ -257,6 +266,53 @@ final class InteractableRender {
 		int color = solved ? TrahisonPalette.SUCCESS : TrahisonPalette.EDGE_LIGHT;
 		quad(vc, fm, -nx, -ny, nx, ny, tx + nx, ty + ny, tx - nx, ty - ny, -2, color);
 		rect(vc, fm, tx - 4, ty - 4, tx + 4, ty + 4, -3, solved ? TrahisonPalette.SUCCESS : TrahisonPalette.DANGER);
+	}
+
+	/**
+	 * A lever of {@code three_levers}: the handle is down and lit while this lever is engaged, up and dark while it waits
+	 * (it blinks in the last two seconds of the lease), and three small lights under the plate show how many of the three
+	 * levers are engaged together: the progress the group shares. All three green and the handle down once solved.
+	 */
+	private static void coopLever(VertexConsumer vc, Vec3 camera, Item item, Show show, long now) {
+		int number = 0;
+		if (show.role().startsWith("lever_")) {
+			try {
+				number = Integer.parseInt(show.role().substring("lever_".length()));
+			} catch (NumberFormatException ignored) {
+				// a malformed role: drawn as waiting
+			}
+		}
+		LeverState.State state = LeverState.of(item.round(), item.group(), show.step(), number, System.currentTimeMillis());
+		int count = LeverState.count(item.round(), item.group(), show.step(), System.currentTimeMillis());
+		AABB b = item.box();
+		double wallBack = item.faceX() != 0 ? (item.faceX() > 0 ? b.minX : b.maxX) : (item.faceZ() > 0 ? b.minZ : b.maxZ);
+		double sx = item.faceX() != 0 ? wallBack + item.faceX() * 0.04 : b.getCenter().x;
+		double sz = item.faceZ() != 0 ? wallBack + item.faceZ() * 0.04 : b.getCenter().z;
+		double cy = b.minY + Math.min(0.7, Math.max(0.45, b.getYsize() * 0.5));
+		Matrix4f m = rel(camera, sx, cy, sz);
+		float ax = item.faceX() != 0 ? 0.04f : 0.2f;
+		float az = item.faceZ() != 0 ? 0.04f : 0.2f;
+		box(vc, m, -ax, -0.28f, -az, ax, 0.28f, az, TrahisonPalette.PANEL_RAISED);
+		Frame f = new Frame(sx + item.faceX() * 0.045, cy, sz + item.faceZ() * 0.045, item.faceX(), item.faceZ());
+		Matrix4f fm = f.pose(camera).last().pose();
+		rect(vc, fm, -4, -10, 4, 10, 0, TrahisonPalette.BORDER);
+		rect(vc, fm, -3, -9, 3, 9, -1, TrahisonPalette.PANEL_SUNKEN);
+		float angle = (float) Math.toRadians(state.on() ? 150 : 25);
+		float len = 22;
+		float tx = (float) Math.sin(angle) * len;
+		float ty = (float) -Math.cos(angle) * len;
+		float nx = (float) Math.cos(angle) * 2.2f;
+		float ny = (float) Math.sin(angle) * 2.2f;
+		boolean blink = state.fading(now) && now / 150 % 2 == 0;
+		int lit = state.solved() ? TrahisonPalette.SUCCESS : blink ? TrahisonPalette.ACCENT_DIM : TrahisonPalette.ACCENT_HOT;
+		quad(vc, fm, -nx, -ny, nx, ny, tx + nx, ty + ny, tx - nx, ty - ny, -2, state.on() ? lit : TrahisonPalette.EDGE_LIGHT);
+		rect(vc, fm, tx - 4, ty - 4, tx + 4, ty + 4, -3, state.on() ? lit : TrahisonPalette.DANGER);
+		// the shared progress: one light per lever engaged, all green when done
+		for (int i = 0; i < 3; i++) {
+			int x = -11 + i * 8;
+			rect(vc, fm, x, 14, x + 6, 20, -1, TrahisonPalette.BORDER);
+			rect(vc, fm, x + 1, 15, x + 5, 19, -2, state.solved() ? TrahisonPalette.SUCCESS : i < count ? TrahisonPalette.ACCENT_HOT : TrahisonPalette.PANEL_SUNKEN);
+		}
 	}
 
 	private static void plate(VertexConsumer vc, Vec3 camera, Item item, boolean puzzle, boolean solved) {

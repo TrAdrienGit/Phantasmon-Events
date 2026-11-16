@@ -90,8 +90,7 @@ Bouton **Chaîne** du panneau (ou un clic sur un problème qui nomme une étape)
 Bas) ; à droite, l'étape choisie :
 
 - **Id** de l'étape (renommable) ; **Mécanisme** (liste, lue sur le backend à l'ouverture de l'éditeur). Le backend a aujourd'hui `debug_button`,
-  `three_dials`, `ring_dial`, `keypad`, `pickup_set`, `wiring` et `code_breaker` ; `three_levers` est **prévu** (T3.5) : on peut
-  les poser, mais le backend refusera l'enregistrement tant qu'il ne les a pas.
+  `three_dials`, `ring_dial`, `keypad`, `pickup_set`, `wiring`, `code_breaker` et `three_levers` (les six mécanismes de T3.5).
 - **Paramètres** : des lignes clé / valeur (entier, `true` ou `false`, ou texte). Une valeur hors de l'intervalle connu s'affiche
   en rouge. Changer de mécanisme remet les paramètres à leurs valeurs par défaut.
 - **Emplacements des rôles** : chaque rôle du mécanisme est lié à un emplacement. Les rôles et les genres d'emplacement que chacun accepte viennent du
@@ -121,6 +120,10 @@ Bas) ; à droite, l'étape choisie :
 - **Décodeur** (`code_breaker`) : un emplacement `terminal` ou `pedestal` lié au rôle `terminal`, une étape `code_breaker` (paramètres `length` 3 à 5, `alphabet` 4 à 9, `kind` `symbols` ou `digits`, `repeats`, `maxTries`).
   **Aucun indice** : la logique suffit, les joueurs déduisent la combinaison des réponses « bien placé / mal placé » (les essais restent à l'écran). Avec `maxTries` (6 à 30), un terminal qui manque d'essais
   tire une nouvelle combinaison.
+- **Trois leviers** (`three_levers`) : trois emplacements `lever` **aux trois coins** de la salle, liés aux rôles `lever_1`, `lever_2` et `lever_3` d'une même étape (chacun son emplacement), et les paramètres
+  `ordered` (la graine tire l'ordre des leviers), `gap` (délai maximal entre deux, 2 à 8 s) et `hold` (durée pendant laquelle un clic tient le levier, au moins deux fois `gap`). **Aucun indice** : les joueurs
+  cliquent, trois personnes, chacune sur un levier ; l'ordre se trouve par essais (un mauvais ordre ou un retard fait tout lâcher). Il faut **trois joueurs différents** : prévoir la salle pour un groupe de trois.
+  Pour l'essayer seul dans la salle d'essai, mettez `solo` à `true` et `hold` haut (jusqu'à 30) : une seule personne peut alors enclencher les trois (à ne jamais laisser dans une vraie salle).
 
 Règles que la salle doit tenir : une étape qui ouvre la sortie, toutes les autres mènent à elle (rien ne mène nulle part), pas de
 cycle de prérequis, rien ne dépasse de la boîte, un emplacement ne sert qu'une seule énigme.

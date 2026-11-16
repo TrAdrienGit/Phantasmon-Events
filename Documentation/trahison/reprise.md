@@ -1,17 +1,23 @@
-# Reprise du chantier (pause du 2026-11-16, après-midi)
+# Reprise du chantier (pause du 2026-11-16, fin d'après-midi)
 
-> **À la reprise, d'abord :** `git checkout wip/trahison-t24-t33`. La branche `main` s'arrête à 7de54b9 (backend
-> partiel de T2.4 et T3.3, tests verts). La branche wip contient :
-> - **T2.4 cabines et vote, terminée** par l'agent (pupitre `screen/VoteScreen`, `world/CabinFlow`, touche V,
->   tableau des résultats `world/ResultsBoardWorld` + repli HUD, onglet Tableau de l'éditeur, 36 clés de langue,
->   docs). Build client et 193 tests backend verts selon l'agent, **pas encore recontrôlés par l'orchestrateur**.
->   Corrigé au passage : un plan sans cabines laisse le vote libre même avec `cabins_required`.
-> - **T3.3 objets, inventaire, documents, interrompue** (pause à 84 % de la limite) : `GiveRangeTest`, `world/RoomFrame`,
->   dossier client `room/` commencé. État inconnu, le client peut ne pas compiler.
+> **État :** tout est sur `main`, poussé, sans branche wip. Dernier contrôle de l'orchestrateur : build client vert,
+> 284 tests backend verts, 970 clés de langue identiques EN/FR. **Rien n'a encore tourné en jeu.**
 >
-> À faire à la reprise : vérifier que le client compile, relancer un agent T3.3 « reprendre depuis l'arbre de
-> travail » (brief : section T3.3 de `etapes/T3-salles.md`), puis contrôle, tests, fusion dans `main`.
-
+> Fait depuis la pause précédente :
+> - T2.4 cabines et vote, avec les décisions D4 et D5 (fermeture selon les zones, fenêtre de 30 s pour une paire, sortie après le vote) ;
+> - T2.5 porte finale ;
+> - T3.3 objets du monde, inventaire, documents ;
+> - T3.5 : les six mécanismes (`ring_dial`, `keypad`, `pickup_set`, `code_breaker`, `wiring`, `three_levers`), avec
+>   `Mechanism.slotRoles()` ;
+> - les décisions D1 à D8 appliquées, et D9 (la carte) prévue comme étape T11 ([`etapes/T11-carte.md`](etapes/T11-carte.md)).
+>
+> Questions ouvertes pour la propriétaire dans [`decisions.md`](decisions.md) : D10 à D22 et D30 à D43.
+>
+> **Suite, dans l'ordre :**
+> 1. relire `decisions.md` et appliquer les réponses ;
+> 2. T3.6 : indices automatiques, mesure des temps, pénalité des 30 minutes (V9) ;
+> 3. T4 tirage et collage, puis T11 carte, T5, T6, T7, T8, T9, T10 ;
+> 4. préparer la check-list cochable des tests humains au premier déploiement (la liste complète est plus bas).
 
 > Point d'arrêt de l'orchestration du développement. À lire en premier à la reprise, avec
 > [`etapes/README.md`](etapes/README.md).
@@ -277,6 +283,21 @@ Rien n'a encore tourné **en jeu** : aucun déploiement n'a été fait (ni mod, 
     une solution juste ouvre le cadenas.
   - **`wiring` en jeu** : le schéma (carrés de couleur avec symboles) se lit sur le panneau mural et dans l'écran de lecture, dans l'ordre des bornes de gauche ; deux joueurs voient les fils de l'autre et son
     curseur à sa couleur ; un panneau juste résout l'étape et la suite de la chaîne s'ouvre ; la vue réseau ne contient pas le schéma ; une partie rejouée donne un autre schéma et d'autres couleurs à droite.
+
+- **Tests humains T3.5 three_levers** (backend déployé avec le mod ; **trois vrais joueurs** pour le jeu réel, un seul suffit hors ligne et pour l'essai `solo` ; une salle d'essai avec trois emplacements `lever` aux trois coins et
+  une étape `three_levers` liée à `lever_1`, `lever_2`, `lever_3`, puis une étape `debug_button` sur la sortie) :
+  - **Éditeur** : `three_levers` est listé sans « prévu » ; les trois rôles `lever_n` n'acceptent que des emplacements `lever` ; une étape où un levier n'est pas lié, ou deux rôles sur le même emplacement, est refusée à
+    l'enregistrement ; paramètres hors intervalle en rouge (`gap` 9, `hold` 4, `hold` 15 avec `gap` 8 : « au moins deux fois »).
+  - **Hors ligne** : `/phantasmon event trahison minigame three_levers` ouvre un aperçu 400 x 240 : trois leviers verticaux, une poignée en haut (rouge, « En attente ») qui descend (allumée, « Enclenché ») au clic ou à
+    la touche 1, 2 ou 3 ; trois lumières en haut qui comptent les leviers tenus ; les deux joueurs fictifs enclenchent les autres ; la poignée clignote les deux dernières secondes du bail ; les trois tenus ensemble
+    déverrouillent. L'aide (H) se lit en français comme en anglais.
+  - **En jeu, trois joueurs** : au clic sur un levier la poignée descend et s'allume chez les trois, avec un cliquetis plus aigu à chaque levier ; sans autre levier la poignée remonte seule au bout de `hold` secondes (elle
+    clignote avant) ; recliquer pendant le bail le prolonge ; le clic d'un autre joueur sur un levier tenu ne fait rien ; un joueur qui va à un deuxième levier lâche le premier ; trois leviers tenus par trois joueurs
+    dans le bon ordre déverrouillent (déclic, poignées vertes, trois lumières vertes) et la sortie s'ouvre ; le mauvais ordre fait tout lâcher avec le bruit sourd, sans rien dire de l'ordre ; une attente plus longue
+    que le délai fait tout lâcher aussi ; avec `ordered: false` n'importe quel ordre convient ; la latence (clic sur un serveur distant) ne fait pas tomber un levier.
+  - **Un joueur seul** : il ne peut jamais tenir les trois (cliquer un deuxième lâche le premier) ; avec `solo: true` et `hold: 30` il y arrive en courant d'un coin à l'autre, quel que soit le délai.
+  - **Réseau** : la vue d'un joueur ne contient ni `order` ni `gapMs` (seul l'écran du maître du jeu les reçoit) ; « Rejouer » tire un autre ordre et un autre délai.
+  - **Cas limites à regarder** : un groupe de deux ne peut pas résoudre la salle (D42, D43) ; quitter la salle avec un levier tenu : il retombe au bout du bail ; un backend redémarré en pleine tenue garde les leviers tenus jusqu'à la fin de leur bail, pas au-delà.
 
 ## Notes de contrôle de l'orchestrateur (2026-11-16, après 27b1d8c)
 

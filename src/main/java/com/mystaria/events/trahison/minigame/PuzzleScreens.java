@@ -39,7 +39,11 @@ public final class PuzzleScreens {
 	public static final String VIEW = "EventsTrahisonView";
 
 	private static final Map<String, Factory> FACTORIES = new LinkedHashMap<>();
+	/** Screens that exist only for the offline debug command ({@code /phantasmon event trahison minigame}): the mechanism is played in the world. */
+	private static final Map<String, Factory> PREVIEWS = new LinkedHashMap<>();
 	private static final Map<String, Msg> STATES = new HashMap<>();
+	/** When each state of {@link #STATES} arrived (local milliseconds): lets world objects count a lease down from it. */
+	private static final Map<String, Long> STAMPS = new HashMap<>();
 	private static final Map<Integer, Player> PLAYERS = new HashMap<>();
 	private static final List<Integer> GROUP_MEMBERS = new ArrayList<>();
 	private static String hub = "";
@@ -56,6 +60,8 @@ public final class PuzzleScreens {
 		register("pickup_set", PickupSetScreen::new);
 		register("code_breaker", CodeBreakerScreen::new);
 		register("wiring", WiringScreen::new);
+		// three_levers is played in the world (a click on a lever slot): no screen opens for it, only a preview offline.
+		PREVIEWS.put("three_levers", ThreeLeversScreen::new);
 	}
 
 	private PuzzleScreens() {
@@ -66,8 +72,11 @@ public final class PuzzleScreens {
 		FACTORIES.put(mechanism, factory);
 	}
 
+	/** The mechanisms the offline debug command can show: those with a screen, and the previews of those played in the world. */
 	public static Set<String> mechanisms() {
-		return FACTORIES.keySet();
+		Set<String> all = new java.util.TreeSet<>(FACTORIES.keySet());
+		all.addAll(PREVIEWS.keySet());
+		return all;
 	}
 
 	/** Hooks the router to the add-on message stream; called once by {@code Trahison.register()}. */
@@ -83,7 +92,7 @@ public final class PuzzleScreens {
 
 	/** Opens a mechanism's screen with no backend: gestures apply locally only (debug command). */
 	public static boolean openOffline(String mechanism) {
-		Factory factory = FACTORIES.get(mechanism);
+		Factory factory = FACTORIES.getOrDefault(mechanism, PREVIEWS.get(mechanism));
 		if (factory == null) {
 			return false;
 		}
@@ -113,6 +122,7 @@ public final class PuzzleScreens {
 		hub = asString(data.get("hub"), hub);
 		if (phase.isEmpty() || "NONE".equals(phase) || "ENDED".equals(phase)) {
 			STATES.clear();
+			STAMPS.clear();
 			PLAYERS.clear();
 			GROUP_MEMBERS.clear();
 			ownIndex = -1;
@@ -122,6 +132,7 @@ public final class PuzzleScreens {
 		if ("DOORS".equals(phase)) {
 			// A new round: the rooms of the last one are gone and nothing says so, so what we hold of them goes too.
 			STATES.clear();
+			STAMPS.clear();
 			if (Minecraft.getInstance().screen instanceof MiniGameScreen) {
 				Minecraft.getInstance().setScreen(null);
 			}
@@ -165,6 +176,10 @@ public final class PuzzleScreens {
 			return;
 		}
 		STATES.put(key(m.hub(), m.round(), m.group(), m.step()), m);
+		STAMPS.put(key(m.hub(), m.round(), m.group(), m.step()), System.currentTimeMillis());
+		if ("three_levers".equals(m.mechanism())) {
+			com.mystaria.events.trahison.world.LeverState.onMessage(m);
+		}
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.screen instanceof MiniGameScreen open && open.step().equals(m.step()) && (open.group() < 0 || open.group() == m.group() && open.round() == m.round())) {
 			open.onPuzzle(m);
@@ -186,6 +201,17 @@ public final class PuzzleScreens {
 		for (Msg m : STATES.values()) {
 			if (m.step().equals(step)) {
 				return m;
+			}
+		}
+		return null;
+	}
+
+	/** The latest state of a step of the room (round, group), with the local time it arrived, or null. World objects use it. */
+	public static Map.Entry<Msg, Long> lastState(int round, int group, String step) {
+		for (Map.Entry<String, Msg> e : STATES.entrySet()) {
+			Msg m = e.getValue();
+			if (m.step().equals(step) && m.group() == group && Math.max(0, m.round()) == Math.max(0, round)) {
+				return Map.entry(m, STAMPS.getOrDefault(e.getKey(), 0L));
 			}
 		}
 		return null;

@@ -684,6 +684,27 @@ La graine tire le **schéma** : la couleur de la borne de droite que chaque born
   son fil ; le fil prend la couleur de sa borne de droite ; les fils des autres joueurs arrivent par la vue et leur curseur s'allume à leur couleur ; hors ligne :
   `/phantasmon event trahison minigame wiring` (schéma d'essai affiché en orange).
 
+#### Vue du mécanisme `three_levers` (trois leviers à tenir ensemble)
+
+Trois leviers aux trois coins d'une salle, à tenir **en même temps par trois joueurs différents**. Joué **dans le monde**, sans écran : un clic sur un emplacement `lever` envoie `use_slot` ; le backend appelle
+`onUse` avec le rôle de l'emplacement. Aucun écran ne s'ouvre (le routeur `PuzzleScreens` n'a pas d'écran pour lui, seulement un aperçu hors ligne).
+
+- **Tenir = un bail** (décision D40) : un clic enclenche le levier pour `hold` secondes ; recliquer (même joueur) renouvelle ; aucun message de relâchement ni de battement de cœur. L'expiration est évaluée à la demande
+  par le backend (horloge du mécanisme) ; le client décompte depuis les `ms` de la vue.
+- Règles : un joueur ne tient qu'**un** levier à la fois (en enclencher un autre lâche le premier) ; le clic d'un autre joueur sur un levier tenu ne fait rien ; la graine tire l'**ordre** (si `ordered`) et le **délai**
+  (`gap-2..gap` s, au moins 2) ; un levier hors de l'ordre fait tout lâcher (`wrong`, `resets` + 1) ; plus de délai que tiré depuis le dernier enclenchement : tout lâche (`slow`) et l'enclenchement
+  repart comme le premier ; le troisième levier enclenché pendant que les deux autres tiennent résout l'étape (décisions D41 à D43).
+- Paramètres : `ordered` (défaut `true`), `gap` 2 à 8 (défaut 5), `hold` 5 à 30 (défaut 12 ; au moins `2 * gap`), `solo` (défaut `false` ; essai de l'éditeur : un joueur peut enclencher les trois, délai ignoré).
+- Rôles d'emplacement : `lever_1`, `lever_2`, `lever_3` (genre `lever`) ; les trois doivent être liés, chacun à son emplacement (`missing=slot:lever_2`, `duplicate=slot:lever_3`). Aucun indice.
+- Vue : `{ "levers": [ { "on": true, "ms": 8200, "by": 1 }, ... ], "count": 1, "resets": 0, "solved": false }` : `ms` = bail restant à la construction de la vue, `by` = joueur qui tient (-1 : personne),
+  `count` = leviers tenus. **Jamais l'ordre ni le délai** pour un joueur ou un spectateur ; le maître du jeu reçoit en plus `order` (leviers de 1 à 3, dans l'ordre à suivre) et `gapMs`. Résolu : les trois `on`.
+- Geste `puzzle_input` (outils et tests, le jeu passe par `use_slot`) : `{ "lever": 1..3 }`, même effet qu'un clic. Autre chose : `ERROR_TRAHISON_BAD_INPUT`.
+- Événements : `{ "type": "engage", "lever": 2, "count": 2 }`, `{ "type": "hold", ... }` (bail renouvelé), `{ "type": "wrong", "lever": 3 }`, `{ "type": "slow" }`, `{ "type": "unlock" }`.
+- Rendu (`world/InteractableRender.coopLever`, état lu par `world/LeverState`) : poignée en haut et sombre pendant l'attente, en bas et allumée une fois enclenchée (elle clignote pendant les deux dernières secondes
+  du bail), trois petites lumières sous la plaque pour le nombre de leviers tenus ensemble, tout vert une fois résolu. Sons (interface, pas de position) : cliquetis plus aigu à chaque levier, bruit sourd pour `wrong` et `slow`,
+  déverrouillage. Hors ligne : `/phantasmon event trahison minigame three_levers` ouvre un **aperçu** (trois leviers, le bail, les lumières ; boutons 1 à 3 au clavier ; les deux joueurs fictifs enclenchent les autres ;
+  trois tenus ensemble déverrouillent ; ni l'ordre ni le délai ne sont simulés).
+
 ### `EventsTrahisonZone`
 
 - Sens : C2S.
@@ -988,10 +1009,10 @@ section 5. Mécanismes connus à ce jour (rôle d'emplacement : genres acceptés
 `plate`, `pedestal`, `secret`, `inner_door`), `three_dials` (trois molettes de 0 à 9 ; indice `code` de type `digits` ; `dials` : `terminal`, `pedestal`),
 `ring_dial` (anneaux de symboles liés ; indice `symbols` de type `symbols`, voir la vue plus haut ; `terminal` : `terminal`, `pedestal`), `keypad` (digicode mural ;
 indice `code` de type `digits` ; `keypad` : `keypad`, `terminal` ; voir plus haut), `pickup_set` (objets cachés ; indices `spot_1`..`spot_6` de type `item` et `document` de type
-`document` ; `deposit` : `pedestal`, `terminal`, `plate`, `secret`, `inner_door` ; voir plus haut), `code_breaker` (décodeur ; aucun indice ; `terminal` : `terminal`, `pedestal` ; voir plus haut), `wiring` (câblage ; indice `scheme` de type `colors` ; `panel` : `terminal`, `pedestal` ; voir plus haut).
+`document` ; `deposit` : `pedestal`, `terminal`, `plate`, `secret`, `inner_door` ; voir plus haut), `code_breaker` (décodeur ; aucun indice ; `terminal` : `terminal`, `pedestal` ; voir plus haut), `wiring` (câblage ; indice `scheme` de type `colors` ; `panel` : `terminal`, `pedestal` ; voir plus haut), `three_levers` (trois leviers ; aucun indice ; `lever_1`, `lever_2`, `lever_3` : `lever` ; voir plus haut).
 
 Le validateur contrôle en plus les liaisons des rôles : un rôle que le mécanisme ne déclare pas (hors `exit`), ou lié à un emplacement d'un genre qu'il n'accepte pas, donne
-`ERROR_TRAHISON_ROOM_BAD_KIND` (`info` : `role=<rôle>;unknown` ou `role=<rôle>;needs=<genre>|<genre>`) ; et `keypad`, `pickup_set` et `wiring` refusent une étape dont un indice dont les joueurs
+`ERROR_TRAHISON_ROOM_BAD_KIND` (`info` : `role=<rôle>;unknown` ou `role=<rôle>;needs=<genre>|<genre>`) ; et `keypad`, `pickup_set`, `wiring` et `three_levers` (rôle `lever_n` non lié : `missing=slot:lever_n` ; deux rôles sur le même emplacement : `duplicate=slot:lever_n`) refusent une étape dont un indice dont les joueurs
 ont besoin n'est placé nulle part ou seulement à la résolution (`ERROR_TRAHISON_ROOM_BAD_GIVE`, `info` : `missing=<indice>;when=open`, `missing=slot:<rôle>` ou `missing=param:document`).
 
 ## 5. Codes d'erreur

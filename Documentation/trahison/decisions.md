@@ -206,6 +206,49 @@ sont bons). Le panneau démarre sans aucun fil.
 
 Ta réponse :
 
+## D40. Trois leviers (`three_levers`) : « tenir » un levier, c'est quoi sur le réseau
+Choix appliqué : un clic sur un levier l'**enclenche pour `hold` secondes** (bail, 12 par défaut) ; recliquer le même levier (par le même joueur) renouvelle le bail. Il n'y a **aucun message « relâcher »** et
+aucun battement de cœur : le client n'a pas à garder la touche d'utilisation enfoncée, donc la latence ou la gigue du WebSocket ne peut pas faire tomber un levier (la fenêtre fait plusieurs secondes) et un message perdu
+coûte un clic. Le mécanisme garde une horloge (injectée, donc testable) : l'expiration est évaluée à la demande, au geste suivant ou à la vue ; le client décompte depuis les `ms` restantes de la vue. Ce choix
+déroge à D30 (« aucune horloge dans le mécanisme ») pour ce seul mécanisme : sans temps, « en même temps » ne veut rien dire.
+- [x] Bail de `hold` secondes renouvelable par un nouveau clic, expiration paresseuse *(par défaut)*
+- [ ] Vrai maintien : le client envoie `hold` à l'appui sur la touche d'utilisation, `release` au relâchement, et un battement toutes les secondes (le backend lâche seul le levier après 3 s sans battement)
+- [ ] Bail fixe sans renouvellement (un clic = `hold` secondes, point)
+
+Ta réponse :
+
+## D41. Trois leviers : l'ordre n'est dit nulle part
+Choix appliqué : la graine tire l'**ordre** dans lequel les leviers doivent être enclenchés (6 ordres ; paramètre `ordered`, vrai par défaut ; faux : n'importe quel ordre) et le **délai** maximal entre deux enclenchements
+(`gap` de 2 à 8 s, la graine tire une valeur dans `gap-2..gap`, au moins 2). Aucun indice n'est produit : le groupe cherche par essais. Un levier enclenché hors de l'ordre fait tout lâcher (événement `wrong`, compteur
+`resets`, bruit sourd) ; trop lent : tout lâche aussi (`slow`) et l'enclenchement compte comme le premier d'un nouvel essai. Les trois petites lumières de chaque levier disent combien sont enclenchés ensemble, ce qui
+aide à trouver l'ordre (un premier levier juste reste enclenché, un faux fait tout lâcher). Le délai tiré n'est pas montré. `hold` doit valoir au moins deux fois `gap` (validé), pour que le premier levier tienne
+encore quand le troisième s'enclenche.
+- [x] Ordre et délai tirés, découverts par essais, lumières de progression partagées *(par défaut)*
+- [ ] Ordre donné par un indice (`digits` ou `symbols`, rôle `order`) à placer ailleurs dans la salle, comme le code du digicode
+- [ ] Délai affiché sur les leviers (compte à rebours entre deux enclenchements)
+
+Ta réponse :
+
+## D42. Trois leviers : un joueur seul, un test seul, les factices
+Choix appliqué : un joueur ne tient **qu'un levier à la fois** (en enclencher un autre lâche le premier), donc trois leviers tenus veulent trois joueurs différents : un joueur seul, ou deux, n'y arrivent jamais (testé).
+Le paramètre `solo` (faux par défaut) est la seule dérogation, pour la salle d'essai de l'éditeur : un joueur peut enclencher les trois et le délai est ignoré (le bail `hold` court toujours : réglez-le haut, jusqu'à 30 s,
+le temps de courir d'un coin à l'autre). Les factices (bots) de la partie ne touchent pas aux salles : ils ne peuvent pas aider, et le maître du jeu ne peut pas non plus tenir un levier ; une salle avec
+`three_levers` demande donc trois vrais joueurs vivants dans le groupe (un groupe est de 2 ou 3 : **un groupe de 2 ne peut pas la résoudre**, voir la question suivante).
+- [x] `solo` réservé à l'essai, un joueur par levier sinon ; la salle doit être jouée par un groupe de 3 *(par défaut)*
+- [ ] Un levier de plus tenu par le maître du jeu à distance (action MJ `hold_lever`) quand le groupe n'est que de deux
+- [ ] Un levier « bloqué » en position haute par un objet (la salle fournit le contrepoids) quand le groupe n'est que de deux
+
+Ta réponse :
+
+## D43. Trois leviers : la taille du groupe
+Un groupe est une paire ou un solo plus un (jusqu'à 3 joueurs selon la répartition de la manche ; voir les règles des portes). Une salle qui exige trois joueurs distincts ne peut pas être résolue par une paire. Choix
+appliqué : le validateur ne refuse rien, c'est à l'auteur de la salle de le savoir (le guide de l'éditeur le dit) ; T4 (tirage et collage) devra ne proposer `three_levers` qu'aux groupes de trois.
+- [x] Pas de contrôle dans le validateur ; consigne pour T4 *(par défaut)*
+- [ ] Un champ `min_players` dans la définition d'une salle, vérifié au tirage (T4)
+- [ ] Le mécanisme accepte aussi deux joueurs (un levier tenu par deux clics rapprochés d'un même joueur) quand le groupe est de deux
+
+Ta réponse :
+
 ## Tranché
 
 - **D1 (votes de la boucle finale)** : nouvelle répartition tirée par la graine, sans étape des portes. Vérifié dans le code (`GameService.advance`, cas `FINAL` : `startRound(g, true)` fixe `splitIndex` par `seedSplit`, puis entrée directe en `VOTE`) : rien à changer.
