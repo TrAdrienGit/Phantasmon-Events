@@ -3,6 +3,7 @@ package com.mystaria.events.trahison.minigame.widget;
 import java.util.function.IntConsumer;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 
 import com.mystaria.events.trahison.minigame.MiniGameSounds;
 import com.mystaria.events.trahison.ui.TrahisonPalette;
@@ -15,8 +16,18 @@ import com.mystaria.events.trahison.ui.TrahisonUi;
  */
 public final class RotaryRing extends Widget {
 
-	private final int outer;
-	private final int inner;
+	/**
+	 * Draws what the ring carries (glyphs, digits) once its body is drawn. {@code angle} is the ring's current turn in
+	 * degrees, clockwise, including the animation in progress; slot {@code k} of {@code positions} sits at
+	 * {@code angle + k * 360 / positions} (0 = top).
+	 */
+	@FunctionalInterface
+	public interface Painter {
+		void paint(GuiGraphics g, int cx, int cy, int outer, int inner, float angle);
+	}
+
+	private int outer;
+	private int inner;
 	private final int positions;
 	private int position;
 	private float target;
@@ -28,6 +39,10 @@ public final class RotaryRing extends Widget {
 	private IntConsumer onStep = d -> { };
 	private int tone = TrahisonPalette.EDGE;
 	private long touchedAt;
+	private Painter painter;
+	private boolean notches = true;
+	private boolean selected;
+	private Component tip;
 
 	public RotaryRing(int outer, int inner, int positions) {
 		this.outer = outer;
@@ -38,6 +53,63 @@ public final class RotaryRing extends Widget {
 	public RotaryRing onStep(IntConsumer onStep) {
 		this.onStep = onStep;
 		return this;
+	}
+
+	/** Draws the ring's content after its body; also hides the default notches (the content shows the position). */
+	public RotaryRing painter(Painter painter) {
+		this.painter = painter;
+		this.notches = false;
+		return this;
+	}
+
+	/** Marks this ring as the keyboard's target: its rim stays lit. */
+	public RotaryRing selected(boolean selected) {
+		this.selected = selected;
+		return this;
+	}
+
+	/** Tooltip shown while hovering the ring. */
+	public RotaryRing tip(Component tip) {
+		this.tip = tip;
+		return this;
+	}
+
+	@Override
+	public Component tooltip(double mx, double my) {
+		return tip != null && hovered(mx, my) && !dragging ? tip : null;
+	}
+
+	/** Whether the player is dragging this ring right now (a sync from the backend should leave it alone). */
+	public boolean dragging() {
+		return dragging;
+	}
+
+	public int positions() {
+		return positions;
+	}
+
+	/** Resizes the ring (the layout changes with the screen); the centre is set with {@link #at}. */
+	public RotaryRing radii(int outer, int inner) {
+		this.outer = outer;
+		this.inner = inner;
+		return this;
+	}
+
+	public int outer() {
+		return outer;
+	}
+
+	public int inner() {
+		return inner;
+	}
+
+	/** One stop by hand (keyboard, wheel): turns the ring, clicks, and calls {@link #onStep} like a drag would. */
+	public void turn(int dir) {
+		position = Math.floorMod(position + dir, positions);
+		target += dir * step();
+		MiniGameSounds.detent(0.9f + 0.05f * position);
+		touch();
+		onStep.accept(dir);
 	}
 
 	/** The ring's body colour (a game colour's dark tone, for instance). */
@@ -146,11 +218,7 @@ public final class RotaryRing extends Widget {
 		if (!hovered(mx, my) || delta == 0) {
 			return false;
 		}
-		int dir = delta > 0 ? 1 : -1;
-		position = Math.floorMod(position + dir, positions);
-		target += dir * step();
-		MiniGameSounds.detent(0.9f + 0.05f * position);
-		onStep.accept(dir);
+		turn(delta > 0 ? 1 : -1);
 		return true;
 	}
 
@@ -168,13 +236,17 @@ public final class RotaryRing extends Widget {
 		int rim = !enabled ? TrahisonPalette.PANEL_RAISED
 				: dragging ? TrahisonPalette.ACCENT_DIM
 				: touched ? TrahisonPalette.ACCENT
+				: selected ? TrahisonPalette.ACCENT_DIM
 				: hot ? TrahisonPalette.EDGE_LIGHT : TrahisonPalette.EDGE;
 		TrahisonUi.ring(g, cx, cy, outer + 1, inner - 1, TrahisonPalette.BORDER);
 		TrahisonUi.ring(g, cx, cy, outer, inner, rim);
 		TrahisonUi.ring(g, cx, cy, outer - 2, inner + 2, tone);
 		// Notches turn with the ring; the first one is brighter so that the position reads.
+		if (painter != null) {
+			painter.paint(g, cx, cy, outer - 2, inner + 2, shown);
+		}
 		int mid = (outer + inner) / 2;
-		for (int i = 0; i < positions; i++) {
+		for (int i = 0; notches && i < positions; i++) {
 			boolean first = i == 0;
 			TrahisonUi.rotatedFill(g, cx, cy, shown + i * step(), -1, -(outer - 2), 1, -(first ? inner + 2 : mid + 1),
 					first ? TrahisonPalette.ACCENT_HOT : TrahisonPalette.BORDER);

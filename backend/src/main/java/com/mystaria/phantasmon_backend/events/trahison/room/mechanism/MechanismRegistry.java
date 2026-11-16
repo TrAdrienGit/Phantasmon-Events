@@ -34,6 +34,11 @@ public class MechanismRegistry {
 		return m;
 	}
 
+	/** Every mechanism, sorted by id. */
+	public List<Mechanism> all() {
+		return byId.values().stream().sorted(java.util.Comparator.comparing(Mechanism::id)).toList();
+	}
+
 	public Set<String> ids() {
 		return Set.copyOf(byId.keySet());
 	}

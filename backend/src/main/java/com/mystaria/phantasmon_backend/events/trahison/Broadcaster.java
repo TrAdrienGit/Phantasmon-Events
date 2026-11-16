@@ -130,6 +130,18 @@ class Broadcaster implements GameListener, RoomListener {
 		sendViews(g);
 	}
 
+	/** Zones only show in the game master's view: nobody else gets anything when a player changes zone. */
+	@Override
+	public void zonesChanged(Game g) {
+		Audience audience = Audience.of(g);
+		audiences.put(g.hub, audience);
+		for (UUID account : audience.gameMasters()) {
+			if (Views.kindOf(g, account) == Views.Kind.GM) {
+				sendView(g, account);
+			}
+		}
+	}
+
 	// ------------------------------------------------------------------ rooms
 
 	@Override

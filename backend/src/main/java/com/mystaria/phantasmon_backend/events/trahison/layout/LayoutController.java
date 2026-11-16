@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mystaria.phantasmon_backend.admin.AdminService;
@@ -32,9 +33,10 @@ public class LayoutController {
 		this.adminService = adminService;
 	}
 
+	/** The latest plan; with {@code ?version=n} that version (a running game keeps the one it started with). */
 	@GetMapping("/events/trahison/layout/{hub}")
-	public Layout get(@PathVariable String hub) {
-		return layouts.latest(hub);
+	public Layout get(@PathVariable String hub, @RequestParam(required = false) Integer version) {
+		return version == null ? layouts.latest(hub) : layouts.version(hub, version);
 	}
 
 	@PutMapping("/events/trahison/layout/{hub}")

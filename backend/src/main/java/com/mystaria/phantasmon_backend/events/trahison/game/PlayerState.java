@@ -13,8 +13,13 @@ public class PlayerState {
 	/** A fake player added by the game master (never receives messages, acts through {@code Bots}). */
 	public boolean bot;
 
-	// Fields for later steps (T6, T7), unused in T1.
+	/** Zone of the plan the player stands in (null: none known), with his position in hub coordinates; from his client. */
 	public String zone;
+	public Double x;
+	public Double y;
+	public Double z;
+
+	// Fields for later steps (T6, T7).
 	/** Epoch millis until which the player is restrained; null when free. */
 	public Long restrainedUntil;
 	public String role;

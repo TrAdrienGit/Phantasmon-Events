@@ -111,6 +111,13 @@ public final class PuzzleScreens {
 			group = -1;
 			return;
 		}
+		if ("DOORS".equals(phase)) {
+			// A new round: the rooms of the last one are gone and nothing says so, so what we hold of them goes too.
+			STATES.clear();
+			if (Minecraft.getInstance().screen instanceof MiniGameScreen) {
+				Minecraft.getInstance().setScreen(null);
+			}
+		}
 		PLAYERS.clear();
 		for (Object o : asList(data.get("players"))) {
 			Map<String, Object> p = asMap(o);

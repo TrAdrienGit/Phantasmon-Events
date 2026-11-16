@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SplittableRandom;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,6 +18,8 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.mystaria.phantasmon_backend.events.trahison.layout.Layout;
+import com.mystaria.phantasmon_backend.events.trahison.layout.LayoutContent;
 import com.mystaria.phantasmon_backend.events.trahison.room.ActionResult;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomAction;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomException;
@@ -49,6 +52,8 @@ public class GameService {
 	public static final int PLAYERS = 9;
 	/** Longest automatic pause after a disconnection (AUTO mode). */
 	public static final Duration AUTO_PAUSE_MAX = Duration.ofMinutes(5);
+	/** Zone changes reach the game masters at most this often per game. */
+	public static final long ZONE_NOTIFY_MIN_MS = 1000;
 	private static final long GOLDEN = 0x9E3779B97F4A7C15L;
 	private static final long SPLIT_SALT = 0x5DEECE66DL;
 
@@ -62,6 +67,13 @@ public class GameService {
 	private final List<GameListener> listeners = new CopyOnWriteArrayList<>();
 	/** The room engine link; null in tests that play the game alone (then {@code debug_solve} is the only way). */
 	private volatile GameRooms rooms;
+	/** Where the plan of a hub comes from; null in tests that play without a plan (then there is no door). */
+	private volatile LayoutLookup layouts;
+	/** The plan of each game, as of the version it started with (read once, then kept). */
+	private final Map<UUID, LayoutContent> plans = new ConcurrentHashMap<>();
+	/** Game id to when the game masters last got a zone update, and the games with one scheduled. */
+	private final Map<UUID, Long> lastZoneNotify = new ConcurrentHashMap<>();
+	private final java.util.Set<UUID> zonePending = ConcurrentHashMap.newKeySet();
 
 	public GameService(GameStore store, Clock clock, GameScheduler scheduler) {
 		this.store = store;
@@ -76,6 +88,11 @@ public class GameService {
 	/** Plugs the room engine in (before games are reloaded). */
 	public void useRooms(GameRooms gameRooms) {
 		this.rooms = gameRooms;
+	}
+
+	/** Plugs the plan source in: a game then reads the plan of its hub when it starts and computes its doors from it. */
+	public void useLayouts(LayoutLookup lookup) {
+		this.layouts = lookup;
 	}
 
 	// ------------------------------------------------------------------ lookup
@@ -207,7 +224,16 @@ public class GameService {
 			for (int i = 0; i < PLAYERS; i++) {
 				g.bracelets.add(new BraceletState(i, Outcome.START_POINTS));
 			}
-			event(g, "start", Map.of());
+			g.layoutVersion = 0;
+			plans.remove(g.id);
+			if (layouts != null) {
+				try {
+					g.layoutVersion = layouts.find(g.hub, 0).version();
+				} catch (RuntimeException ex) {
+					log.warn("Trahison game {}: could not read the plan of hub {}", g.id, g.hub, ex);
+				}
+			}
+			event(g, "start", Map.of("layoutVersion", g.layoutVersion));
 			enterPhase(g, Phase.PROLOGUE);
 			persist(g);
 			return g;
@@ -380,6 +406,225 @@ public class GameService {
 		}
 	}
 
+	/**
+	 * The game master opens or closes a door of the plan by hand ({@code set_door}). It holds until the stage changes (then
+	 * the defaults apply again). Refused for a door the game's plan does not have.
+	 */
+	public Game setDoor(String hub, String door, boolean open) {
+		Game g = require(hub);
+		synchronized (g) {
+			if (g.phase == Phase.ENDED) {
+				throw new TrahisonException(TrahisonException.GAME_ENDED, "already ended");
+			}
+			if (door == null || !DoorStates.ids(planOf(g)).contains(door)) {
+				throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "no such door in the plan: " + door);
+			}
+			g.doorOverrides.put(door, open);
+			event(g, "set_door", Map.of("door", door, "open", open));
+			persist(g);
+			notifyChanged(g, "doors");
+			return g;
+		}
+	}
+
+	/**
+	 * A player's client says which zone of the plan he stands in, and where (hub coordinates). Anyone who does not play
+	 * is ignored. The database is not written (positions come every couple of seconds); a change of zone reaches the
+	 * game masters' views, at most once per {@link #ZONE_NOTIFY_MIN_MS}.
+	 */
+	public void setZone(String hub, UUID uuid, String zone, double x, double y, double z) {
+		Game g = byHub.get(hub);
+		if (g == null) {
+			return;
+		}
+		synchronized (g) {
+			int i = g.indexOf(uuid);
+			if (i < 0 || g.phase == Phase.ENDED) {
+				return;
+			}
+			PlayerState p = g.players.get(i);
+			String next = zone == null || zone.isBlank() ? null : zone;
+			boolean changed = !java.util.Objects.equals(p.zone, next);
+			p.zone = next;
+			p.x = x;
+			p.y = y;
+			p.z = z;
+			boolean doorsMoved = false;
+			if (g.phase == Phase.DOORS && !g.paused) {
+				List<DoorHint> before = g.doorHints;
+				boolean passed = changed && crossing(g, i, next);
+				boolean opened = updateWindows(g);
+				doorsMoved = passed || opened || !DoorThresholds.hints(g, planOf(g)).equals(before);
+				if (passed || opened) {
+					persist(g);
+				}
+			}
+			if (doorsMoved) {
+				notifyChanged(g, "door"); // everyone's door_hints (and maybe a door) changed
+			}
+			if (changed) {
+				zoneChanged(g);
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------ colour doors (T2.3)
+
+	/** The ids of the colour doors whose window is open now (and drops the windows that ended). */
+	private Set<String> openWindows(Game g, long now) {
+		g.doorWindows.values().removeIf(w -> w.untilMs() <= now);
+		return g.doorWindows.keySet();
+	}
+
+	/**
+	 * A player entered a zone during DOORS: if it is the room side of a colour door that is open, he passed it (as with
+	 * {@code pass_door}); a refusal (his bracelet does not fit, or the doors already taken) is silent. True if he passed.
+	 */
+	private boolean crossing(Game g, int player, String zone) {
+		RoundState r = g.currentRound();
+		if (zone == null || !g.players.get(player).alive || r.passedDoor[player] >= 0) {
+			return false;
+		}
+		long now = clock.millis();
+		for (DoorThresholds.Entry e : DoorThresholds.colorDoors(planOf(g), g.round)) {
+			DoorWindow window = g.doorWindows.get(e.door().id());
+			if (window == null || window.untilMs() <= now || !zone.equals(e.door().zoneB())) {
+				continue;
+			}
+			try {
+				recordPass(g, player, e.index());
+			} catch (TrahisonException ex) {
+				return false;
+			}
+			endWindowIfDone(g, e.door().id(), window);
+			return true;
+		}
+		return false;
+	}
+
+	/** Closes a door's window once everybody it waited for has crossed (or can no longer). */
+	private void endWindowIfDone(Game g, String doorId, DoorWindow window) {
+		RoundState r = g.currentRound();
+		for (int p : window.expected()) {
+			if (g.players.get(p).alive && r.passedDoor[p] < 0) {
+				return;
+			}
+		}
+		g.doorWindows.remove(doorId);
+	}
+
+	/** Opens the colour doors whose threshold is satisfied now. True if one opened. */
+	private boolean updateWindows(Game g) {
+		RoundState r = g.currentRound();
+		long now = clock.millis();
+		Set<String> open = openWindows(g, now);
+		boolean opened = false;
+		for (DoorThresholds.Entry e : DoorThresholds.colorDoors(planOf(g), g.round)) {
+			if (open.contains(e.door().id())) {
+				continue;
+			}
+			List<Integer> expected = DoorThresholds.expected(g, r, e);
+			if (expected.isEmpty()) {
+				continue;
+			}
+			DoorWindow window = new DoorWindow(now + Math.max(1, g.settings.doorOpenSeconds) * 1000L, expected);
+			g.doorWindows.put(e.door().id(), window);
+			scheduleWindowEnd(g, e.door().id(), window);
+			event(g, "door_open", Map.of("door", e.door().id(), "players", expected));
+			opened = true;
+		}
+		return opened;
+	}
+
+	private void scheduleWindowEnd(Game g, String doorId, DoorWindow window) {
+		UUID id = g.id;
+		scheduler.schedule(Instant.ofEpochMilli(window.untilMs()), () -> onWindowEnd(id, doorId, window));
+	}
+
+	private void onWindowEnd(UUID id, String doorId, DoorWindow window) {
+		Game g = byId.get(id);
+		if (g == null) {
+			return;
+		}
+		try {
+			synchronized (g) {
+				if (g.doorWindows.get(doorId) != window) {
+					return; // already closed, or opened again since
+				}
+				g.doorWindows.remove(doorId);
+				persist(g);
+				notifyChanged(g, "door");
+			}
+		} catch (RuntimeException ex) {
+			log.error("Trahison game {}: door window failed", id, ex);
+		}
+	}
+
+	private void zoneChanged(Game g) {
+		long now = clock.millis();
+		Long last = lastZoneNotify.get(g.id);
+		if (last == null || now - last >= ZONE_NOTIFY_MIN_MS) {
+			lastZoneNotify.put(g.id, now);
+			notifyZones(g);
+		} else if (zonePending.add(g.id)) {
+			UUID id = g.id;
+			scheduler.schedule(Instant.ofEpochMilli(last + ZONE_NOTIFY_MIN_MS), () -> flushZones(id));
+		}
+	}
+
+	private void flushZones(UUID id) {
+		Game g = byId.get(id);
+		if (g == null) {
+			return;
+		}
+		synchronized (g) {
+			zonePending.remove(id);
+			lastZoneNotify.put(id, clock.millis());
+			notifyZones(g);
+		}
+	}
+
+	private void notifyZones(Game g) {
+		for (GameListener l : listeners) {
+			try {
+				l.zonesChanged(g);
+			} catch (RuntimeException ex) {
+				log.warn("Trahison listener failed on zonesChanged", ex);
+			}
+		}
+	}
+
+	/** The plan this game uses (the version it started with); empty when there is none or it cannot be read. */
+	private LayoutContent planOf(Game g) {
+		LayoutContent plan = plans.get(g.id);
+		if (plan != null) {
+			return plan;
+		}
+		LayoutLookup lookup = layouts;
+		if (lookup == null) {
+			return LayoutContent.empty();
+		}
+		try {
+			Layout layout = lookup.find(g.hub, g.layoutVersion);
+			plan = layout.content();
+			plans.put(g.id, plan);
+			return plan;
+		} catch (RuntimeException ex) {
+			log.warn("Trahison game {}: could not read the plan of hub {}", g.id, g.hub, ex);
+			return LayoutContent.empty();
+		}
+	}
+
+	/** Recomputes {@link Game#doors} from the stage, the room progress and the game master's overrides. */
+	private void refreshDoors(Game g) {
+		RoundState r = g.currentRound();
+		LayoutContent plan = planOf(g);
+		long now = clock.millis();
+		g.doors = new java.util.LinkedHashMap<>(DoorStates.compute(plan, g.phase, g.round, r == null ? null : r.roomSolved,
+			g.doorOverrides, openWindows(g, now)));
+		g.doorHints = DoorThresholds.hints(g, plan);
+	}
+
 	private static boolean anyLivingDisconnected(Game g) {
 		for (PlayerState p : g.players) {
 			if (p.alive && !p.connected) {
@@ -453,34 +698,39 @@ public class GameService {
 		Game g = require(hub);
 		synchronized (g) {
 			int p = playerAction(g, uuid, Phase.DOORS);
-			if (door < 0 || door >= 3) {
-				throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "door index 0..2");
-			}
-			RoundState r = g.currentRound();
-			if (r.passedDoor[p] >= 0) {
-				throw new TrahisonException(TrahisonException.ALREADY_PASSED, "already passed a door");
-			}
-			Assignment a = r.assignment();
-			Door d = Door.ALL.get(door);
-			if (!d.contains(a.color(p))) {
-				throw new TrahisonException(TrahisonException.WRONG_DOOR, "the bracelet colour is not on that door");
-			}
-			boolean compatible = false;
-			for (Split s : Doors.validSplits(a)) {
-				if (s.group(d).members().contains(p) && consistent(r, s)) {
-					compatible = true;
-					break;
-				}
-			}
-			if (!compatible) {
-				throw new TrahisonException(TrahisonException.DOOR_INCOMPATIBLE, "that door contradicts the doors already taken");
-			}
-			r.passedDoor[p] = door;
-			event(g, "pass_door", Map.of("player", p, "door", door));
+			recordPass(g, p, door);
 			persist(g);
 			notifyChanged(g, "door");
 			return g;
 		}
+	}
+
+	/** Records that player {@code p} took door {@code door} (an index in {@link Door#ALL}); refuses what {@link #passDoor} refuses. */
+	private void recordPass(Game g, int p, int door) {
+		if (door < 0 || door >= 3) {
+			throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "door index 0..2");
+		}
+		RoundState r = g.currentRound();
+		if (r.passedDoor[p] >= 0) {
+			throw new TrahisonException(TrahisonException.ALREADY_PASSED, "already passed a door");
+		}
+		Assignment a = r.assignment();
+		Door d = Door.ALL.get(door);
+		if (!d.contains(a.color(p))) {
+			throw new TrahisonException(TrahisonException.WRONG_DOOR, "the bracelet colour is not on that door");
+		}
+		boolean compatible = false;
+		for (Split s : Doors.validSplits(a)) {
+			if (s.group(d).members().contains(p) && consistent(r, s)) {
+				compatible = true;
+				break;
+			}
+		}
+		if (!compatible) {
+			throw new TrahisonException(TrahisonException.DOOR_INCOMPATIBLE, "that door contradicts the doors already taken");
+		}
+		r.passedDoor[p] = door;
+		event(g, "pass_door", Map.of("player", p, "door", door));
 	}
 
 	/**
@@ -604,6 +854,7 @@ public class GameService {
 				if (g.autoPaused && g.paused && g.autoPauseUntil != null) {
 					scheduleAutoResume(g);
 				}
+				g.doorWindows.forEach((door, window) -> scheduleWindowEnd(g, door, window));
 				log.info("Trahison game {} reloaded in {} (hub {})", g.id, g.phase, g.hub);
 				notifyPhase(g);
 			}
@@ -720,7 +971,7 @@ public class GameService {
 	}
 
 	/** True when every pass so far is a member of its door's group in split {@code s}. */
-	private static boolean consistent(RoundState r, Split s) {
+	static boolean consistent(RoundState r, Split s) {
 		for (int b = 0; b < PLAYERS; b++) {
 			int d = r.passedDoor[b];
 			if (d >= 0 && !s.group(Door.ALL.get(d)).members().contains(b)) {
@@ -812,6 +1063,8 @@ public class GameService {
 			rooms.clear(g.hub);
 		}
 		g.phase = Phase.ENDED;
+		g.doorOverrides.clear();
+		g.doorWindows.clear();
 		g.endedAt = clock.instant();
 		g.deadline = null;
 		g.paused = false;
@@ -824,6 +1077,8 @@ public class GameService {
 	/** Enters a timed stage: full duration, deadline and timer (frozen if the game is paused). */
 	private void enterPhase(Game g, Phase phase) {
 		g.phase = phase;
+		g.doorOverrides.clear(); // a manual door holds for the stage only
+		g.doorWindows.clear();
 		g.remainingMs = g.settings.durationSeconds(phase) * 1000L;
 		if (g.paused) {
 			g.deadline = null;
@@ -887,6 +1142,7 @@ public class GameService {
 	}
 
 	private void notifyPhase(Game g) {
+		refreshDoors(g);
 		for (GameListener l : listeners) {
 			try {
 				l.phaseChanged(g);
@@ -897,6 +1153,7 @@ public class GameService {
 	}
 
 	private void notifyChanged(Game g, String patch) {
+		refreshDoors(g);
 		for (GameListener l : listeners) {
 			try {
 				l.changed(g, patch);

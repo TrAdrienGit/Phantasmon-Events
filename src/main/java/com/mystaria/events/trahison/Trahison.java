@@ -34,6 +34,9 @@ public final class Trahison {
 		com.mystaria.events.trahison.minigame.PuzzleScreens.install();
 		com.mystaria.events.trahison.net.Link.register();
 		com.mystaria.events.trahison.hud.BraceletHud.register();
+		com.mystaria.events.trahison.world.Zones.register();
+		com.mystaria.events.trahison.world.FakeBlocks.register();
+		com.mystaria.events.trahison.world.DoorPanels.register();
 		KeyBindingHelper.registerKeyBinding(MENU_KEY);
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (MENU_KEY.consumeClick()) {

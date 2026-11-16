@@ -61,6 +61,10 @@ nez de son partenaire, et la porte finale ne laisse passer que les bracelets à 
 - Le groupe d'une porte = les bracelets qui l'ont passée. C'est lui qui recevra la salle (T3) et qui votera.
 - **Fini quand :** les deux répartitions possibles fonctionnent en jeu, et une mauvaise combinaison est refusée
   avec le bon message.
+- **Fait le 2026-11-16** (à valider en jeu) : champ `threshold` des portes de couleur (plan, validateur, éditeur ; sans lui, la
+  `zone_a`) ; `game/DoorThresholds` (ouverture, indices), fenêtres `Game.doorWindows` (réglage `door_open_seconds`, 6 par
+  défaut) ; passage par la zone côté salle ; `door_hints` dans la vue ; panneau flottant `world/DoorPanels`. Détails :
+  `protocole.md`, « Seuils des portes de couleur ».
 
 ### T2.4 Les cabines et le vote (Opus)
 

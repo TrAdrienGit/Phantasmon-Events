@@ -122,6 +122,19 @@ public class RoomCatalog {
 		}
 	}
 
+	/** Decodes the base64 of a JSON upload; the decoded size is checked early so that a huge text is not decoded at all. */
+	public byte[] decodeSchematic(String base64) {
+		if (base64 == null || base64.isEmpty() || base64.length() / 4L * 3 > MAX_SCHEMATIC_BYTES + 3) {
+			throw new ApiException(HttpStatus.BAD_REQUEST, SCHEMATIC_INVALID,
+					Map.of("size", base64 == null ? 0 : base64.length() / 4L * 3, "max", MAX_SCHEMATIC_BYTES));
+		}
+		try {
+			return java.util.Base64.getDecoder().decode(base64);
+		} catch (IllegalArgumentException ex) {
+			throw new ApiException(HttpStatus.BAD_REQUEST, SCHEMATIC_INVALID, Map.of("reason", "not base64"));
+		}
+	}
+
 	/** Replaces the room's blocks (written to a temporary file, then moved). The room's definition must exist. */
 	public void writeSchematic(String id, byte[] bytes) {
 		get(id);

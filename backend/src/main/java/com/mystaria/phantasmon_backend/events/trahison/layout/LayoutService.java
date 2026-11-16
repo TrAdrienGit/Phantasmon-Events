@@ -45,6 +45,17 @@ public class LayoutService {
 		return rows.isEmpty() ? Layout.of(hub, 0, true, Instant.EPOCH, LayoutContent.empty()) : rows.get(0);
 	}
 
+	/** The hub's plan at a given version (a running game keeps the one it started with); the latest if that one is gone. */
+	public Layout version(String hub, int version) {
+		checkHub(hub);
+		List<Layout> rows = jdbc.query(
+				"SELECT version, draft, data::text, updated_at FROM trahison_layouts WHERE hub = ? AND version = ?",
+				(rs, n) -> Layout.of(hub, rs.getInt(1), rs.getBoolean(2), rs.getTimestamp(4).toInstant(),
+						mapper.readValue(rs.getString(3), LayoutContent.class)),
+				hub, version);
+		return rows.isEmpty() ? latest(hub) : rows.get(0);
+	}
+
 	/**
 	 * Validates and saves a new version. A refused plan raises {@code 400 ERROR_TRAHISON_LAYOUT_INVALID} whose
 	 * {@code details.errors} lists every {@link LayoutValidator.Issue}; a plan saved on top of a newer one than the

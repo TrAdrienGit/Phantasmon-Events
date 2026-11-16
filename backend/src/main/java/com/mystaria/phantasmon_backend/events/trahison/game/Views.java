@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.mystaria.phantasmon_backend.events.trahison.rules.Door;
+import com.mystaria.phantasmon_backend.events.trahison.rules.Outcome;
 import com.mystaria.phantasmon_backend.events.trahison.rules.DoorGroup;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Placement;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Split;
@@ -62,6 +63,7 @@ public final class Views {
 		Map<String, Object> v = new LinkedHashMap<>();
 		v.put("hub", g.hub);
 		v.put("game_id", g.id.toString());
+		v.put("layout_version", g.layoutVersion);
 		v.put("phase", g.phase.name());
 		v.put("round", g.round);
 		v.put("final_loop", r != null && r.finalLoop);
@@ -111,11 +113,52 @@ public final class Views {
 		boolean splitKnown = r != null && r.splitIndex != null;
 		v.put("groups", splitKnown ? groups(r) : null);
 		v.put("doors_passed", r == null ? null : ints(r.passedDoor));
+		v.put("doors_state", doorsState(g, kind == Kind.PLAYER || kind == Kind.GHOST ? g.indexOf(viewer) : -1));
+		v.put("door_hints", doorHints(g));
 		v.put("viewer", viewer(g, r, kind, viewer));
 		v.put("results", results(g));
 		v.put("winners", g.phase == Phase.ENDED ? new ArrayList<>(g.winners) : null);
 		v.put("gm", kind == Kind.GM ? gmBlock(g, r) : null);
 		return v;
+	}
+
+	/** {@code door id -> "OPEN" | "CLOSED"} as this viewer sees it (a door closed for all may be open for him). */
+	private static Map<String, Object> doorsState(Game g, int viewerIndex) {
+		Map<String, Object> out = new LinkedHashMap<>();
+		g.doors.forEach((id, state) -> out.put(id, state.openFor(viewerIndex) ? "OPEN" : "CLOSED"));
+		return out;
+	}
+
+	/**
+	 * What each colour door of the round says about its threshold (DOORS only; empty otherwise), the same for every
+	 * recipient: who stands there is visible to all anyway. {@code open_until}: when the door closes again, null while it is
+	 * closed.
+	 */
+	private static List<Object> doorHints(Game g) {
+		List<Object> out = new ArrayList<>();
+		for (DoorHint h : g.doorHints) {
+			DoorWindow window = g.doorWindows.get(h.door());
+			Map<String, Object> m = new LinkedHashMap<>();
+			m.put("door", h.door());
+			m.put("index", h.index());
+			m.put("colors", new ArrayList<>(h.colors()));
+			m.put("present", h.present());
+			m.put("open_until", window == null ? null : window.untilMs());
+			m.put("ready", h.ready());
+			m.put("incompatible", h.incompatible());
+			m.put("missing", needs(h.missing()));
+			m.put("alt_missing", h.altMissing() == null ? null : needs(h.altMissing()));
+			out.add(m);
+		}
+		return out;
+	}
+
+	private static List<Object> needs(List<DoorHint.Need> needs) {
+		List<Object> out = new ArrayList<>();
+		for (DoorHint.Need n : needs) {
+			out.add(orderedMap("color", n.color(), "status", n.status()));
+		}
+		return out;
 	}
 
 	private static Long remaining(Game g, Instant now) {
@@ -169,8 +212,11 @@ public final class Views {
 				ownVote = cast != null && mine ? cast.name() : null;
 			}
 		}
+		// The final door's rule (rules.Outcome) decides, so no client knows the threshold.
+		boolean canOpenFinal = index >= 0 && Outcome.canOpenFinalDoor(g.bracelets.size() > index ? g.bracelets.get(index).points : 0,
+			g.players.get(index).alive) && kind == Kind.PLAYER;
 		return orderedMap("kind", kind.name(), "index", index >= 0 ? index : null, "group", group, "side", side,
-			"door_passed", passed, "side_voted", sideVoted, "own_vote", ownVote);
+			"door_passed", passed, "side_voted", sideVoted, "own_vote", ownVote, "can_open_final_door", canOpenFinal);
 	}
 
 	/**
@@ -219,9 +265,14 @@ public final class Views {
 		}
 		List<Object> masters = new ArrayList<>();
 		g.gameMasters.forEach(u -> masters.add(u.toString()));
-		return orderedMap("votes", votes,
+		List<Object> zones = new ArrayList<>();
+		for (int i = 0; i < g.players.size(); i++) {
+			PlayerState p = g.players.get(i);
+			zones.add(orderedMap("index", i, "zone", p.zone, "x", p.x, "y", p.y, "z", p.z));
+		}
+		return orderedMap("votes", votes, "zones", zones,
 			"settings", orderedMap("mode", g.settings.mode.name(), "durations", durations,
-				"no_door_penalty", g.settings.noDoorPenalty),
+				"no_door_penalty", g.settings.noDoorPenalty, "door_open_seconds", g.settings.doorOpenSeconds),
 			"bot_policy", g.botPolicy.name(), "seed", g.seed, "game_masters", masters);
 	}
 

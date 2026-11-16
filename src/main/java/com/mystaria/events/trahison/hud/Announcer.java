@@ -92,6 +92,12 @@ public final class Announcer {
 		} else if ("error".equals(kind) && data.get("code") != null) {
 			String code = String.valueOf(data.get("code"));
 			error(Component.translatableWithFallback("phantasmon_events.error." + code.toLowerCase(Locale.ROOT), code));
+			// A refusal while a puzzle screen is open: the screen shakes and sounds the error (its gesture was refused).
+			Minecraft.getInstance().execute(() -> {
+				if (Minecraft.getInstance().screen instanceof com.mystaria.events.trahison.minigame.MiniGameScreen puzzle) {
+					puzzle.fail();
+				}
+			});
 		}
 	}
 

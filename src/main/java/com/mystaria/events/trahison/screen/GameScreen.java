@@ -36,11 +36,6 @@ import com.mystaria.phantasmon.client.gui.menu.MenuUi;
 public final class GameScreen extends TrahisonScreen {
 
 	private static final String T = "phantasmon_events.trahison.";
-	/**
-	 * Display hint only: the bracelet reading that opens the final door. The button is greyed below it; the backend is the
-	 * one that decides.
-	 */
-	private static final int FINAL_DOOR_POINTS = 9;
 	private static final int ROW_PITCH = 24;
 	private static final int ROW_H = 22;
 	private static final long PENDING_MS = 3000;
@@ -469,10 +464,10 @@ public final class GameScreen extends TrahisonScreen {
 
 	private int drawFinal(GuiGraphics g, View v, int x, int y, int w) {
 		int used = hint(g, T + "hint.final", x, y, w) + 8;
-		Bracelet own = v.ownBracelet();
-		boolean can = v.viewer().kind() == ViewerKind.PLAYER && own != null && own.points() >= FINAL_DOOR_POINTS && !v.paused();
+		// The backend says whether this bracelet opens the door (rules.Outcome): no threshold is known here.
+		boolean can = v.viewer().kind() == ViewerKind.PLAYER && v.viewer().canOpenFinalDoor() && !v.paused();
 		ui.button(g, x, y + used, w, TrahisonUi.BUTTON_H, Component.translatable(T + "final.open"), ButtonKind.PRIMARY,
-				can ? null : Component.translatable(T + "final.need", FINAL_DOOR_POINTS), can ? Messages::openFinalDoor : null);
+				can ? null : Component.translatable(T + "final.need"), can ? Messages::openFinalDoor : null);
 		used += TrahisonUi.BUTTON_H + 8;
 		if (v.finalLoops() > 0) {
 			used += MenuUi.paragraph(g, Component.translatable(T + "final.loops", v.finalLoops()), x, y + used, w, TrahisonPalette.TEXT_MUTED);

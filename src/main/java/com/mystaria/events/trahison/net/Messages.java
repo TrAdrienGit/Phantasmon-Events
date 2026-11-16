@@ -104,6 +104,14 @@ public final class Messages {
 		send(GM, "extend", Map.of("seconds", seconds), true);
 	}
 
+	/** Opens or closes a door of the plan by hand; it holds until the stage changes. */
+	public static void setDoor(String door, boolean open) {
+		Map<String, Object> extra = new LinkedHashMap<>();
+		extra.put("door", door);
+		extra.put("open", open);
+		send(GM, "set_door", extra, true);
+	}
+
 	public static void setPoints(int bracelet, int points) {
 		send(GM, "set_points", Map.of("bracelet", bracelet, "points", Math.max(0, points)), true);
 	}

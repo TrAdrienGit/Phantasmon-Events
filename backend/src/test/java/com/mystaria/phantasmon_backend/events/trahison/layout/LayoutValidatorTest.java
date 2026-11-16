@@ -153,4 +153,17 @@ class LayoutValidatorTest {
 		assertThat(LayoutValidator.validate(LayoutFixtures.with(base, null, doors, null, null), false))
 				.anyMatch(i -> i.code().equals(LayoutValidator.BAD_REFERENCE) && i.ids().equals(List.of("door_final", "nowhere")));
 	}
+
+	@Test
+	void aColourDoorThresholdMustBeAKnownZoneAndIsOptional() {
+		LayoutContent base = LayoutFixtures.complete();
+		assertThat(LayoutValidator.validate(base, false)).isEmpty();
+		List<LayoutDoor> doors = new ArrayList<>(base.doors());
+		LayoutDoor door = doors.get(1);
+		doors.set(1, new LayoutDoor(door.id(), door.type(), door.block(), door.zoneA(), door.zoneB(), door.round(), door.colors(), "hall"));
+		assertThat(LayoutValidator.validate(LayoutFixtures.with(base, null, doors, null, null), false)).isEmpty();
+		doors.set(1, new LayoutDoor(door.id(), door.type(), door.block(), door.zoneA(), door.zoneB(), door.round(), door.colors(), "nowhere"));
+		assertThat(LayoutValidator.validate(LayoutFixtures.with(base, null, doors, null, null), false))
+				.anyMatch(i -> i.code().equals(LayoutValidator.BAD_REFERENCE) && i.info().equals("field=threshold"));
+	}
 }

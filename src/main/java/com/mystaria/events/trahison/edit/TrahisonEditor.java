@@ -24,8 +24,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 
 import com.mystaria.events.trahison.edit.EditKinds.Kind;
 import com.mystaria.events.trahison.edit.LayoutDto.Box;
@@ -53,9 +51,6 @@ public final class TrahisonEditor {
 	public static final KeyMapping OPEN_KEY = new KeyMapping("key.phantasmon_events.trahison_edit",
 			InputConstants.Type.KEYSYM, org.lwjgl.glfw.GLFW.GLFW_KEY_K, "key.categories.phantasmon_events");
 
-	/** How far a click reaches to pick a block. */
-	private static final double REACH = 128.0;
-
 	private static boolean active;
 	/** The hub the plan below was loaded for. */
 	private static String hub;
@@ -66,8 +61,7 @@ public final class TrahisonEditor {
 	static boolean statusError;
 	/** The problems the backend found in the last save, shown in the panel. */
 	static List<Issue> issues = new ArrayList<>();
-	static BlockPos cornerA;
-	static BlockPos cornerB;
+	static final Selection selection = new Selection();
 	static Kind selectedKind = Kind.ZONE;
 	static String selectedId;
 
@@ -83,6 +77,7 @@ public final class TrahisonEditor {
 	/** Called once by {@code Trahison.register()}. */
 	public static void register() {
 		KeyBindingHelper.registerKeyBinding(OPEN_KEY);
+		RoomEditor.register();
 		ClientTickEvents.START_CLIENT_TICK.register(client -> {
 			if (active && client.screen == null && client.player != null) {
 				// Before the game's own key handling, so that nothing reaches the server.
@@ -96,7 +91,10 @@ public final class TrahisonEditor {
 		});
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (OPEN_KEY.consumeClick()) {
-				if (active && client.screen == null) {
+				if (RoomEditor.isActive()) {
+					// The room editor owns the key while it is on (it is a singleplayer tool: the plan editor is off then).
+					RoomEditor.openPanel();
+				} else if (active && client.screen == null) {
 					client.setScreen(new EditorScreen());
 				}
 			}
@@ -118,8 +116,7 @@ public final class TrahisonEditor {
 			hub = null;
 			layout = new LayoutDto();
 			dirty = false;
-			cornerA = null;
-			cornerB = null;
+			selection.clear();
 			selectedId = null;
 			issues = new ArrayList<>();
 		}));
@@ -133,6 +130,11 @@ public final class TrahisonEditor {
 
 	public static boolean isActive() {
 		return active;
+	}
+
+	/** Turns the plan editor off (the room editor takes the clicks and the key). */
+	static void deactivate() {
+		active = false;
 	}
 
 	static String hub() {
@@ -176,8 +178,7 @@ public final class TrahisonEditor {
 			layout = new LayoutDto();
 			dirty = false;
 			selectedId = null;
-			cornerA = null;
-			cornerB = null;
+			selection.clear();
 			issues = new ArrayList<>();
 			reload();
 		}
@@ -187,37 +188,19 @@ public final class TrahisonEditor {
 	// ---------------------------------------------------------------- the two corners
 
 	private static void setCorner(boolean first) {
-		Minecraft mc = Minecraft.getInstance();
-		HitResult hit = mc.player.pick(REACH, 1.0F, false);
-		if (!(hit instanceof BlockHitResult block) || hit.getType() != HitResult.Type.BLOCK) {
+		BlockPos pos = Selection.pick(Minecraft.getInstance());
+		if (pos == null) {
 			chat(Component.translatable("phantasmon_events.trahison.edit.no_block"), true);
 			return;
 		}
-		// Sneaking picks the block in front of the face that was hit: the air of a doorway.
-		BlockPos pos = mc.player.isShiftKeyDown() ? block.getBlockPos().relative(block.getDirection()) : block.getBlockPos();
-		if (first) {
-			cornerA = pos;
-			if (cornerB == null) {
-				cornerB = pos;
-			}
-		} else {
-			cornerB = pos;
-			if (cornerA == null) {
-				cornerA = pos;
-			}
-		}
+		selection.set(first, pos);
 		chat(Component.translatable(first ? "phantasmon_events.trahison.edit.corner_a" : "phantasmon_events.trahison.edit.corner_b",
 				pos.getX(), pos.getY(), pos.getZ()), true);
 	}
 
 	/** The selection in this world's blocks, {@code {minX, minY, minZ, maxX, maxY, maxZ}}, or null. */
 	static int[] selectionLocal() {
-		if (cornerA == null) {
-			return null;
-		}
-		BlockPos b = cornerB == null ? cornerA : cornerB;
-		return new int[] { Math.min(cornerA.getX(), b.getX()), Math.min(cornerA.getY(), b.getY()), Math.min(cornerA.getZ(), b.getZ()),
-				Math.max(cornerA.getX(), b.getX()), Math.max(cornerA.getY(), b.getY()), Math.max(cornerA.getZ(), b.getZ()) };
+		return selection.local();
 	}
 
 	/** The selection in hub coordinates, or null. */
@@ -228,8 +211,7 @@ public final class TrahisonEditor {
 	}
 
 	static void clearSelection() {
-		cornerA = null;
-		cornerB = null;
+		selection.clear();
 	}
 
 	// ---------------------------------------------------------------- the plan
@@ -338,6 +320,7 @@ public final class TrahisonEditor {
 				layout.doors.forEach(d -> {
 					d.zoneA = id.equals(d.zoneA) ? null : d.zoneA;
 					d.zoneB = id.equals(d.zoneB) ? null : d.zoneB;
+					d.threshold = id.equals(d.threshold) ? null : d.threshold;
 				});
 				layout.cabins.forEach(c -> c.zone = id.equals(c.zone) ? null : c.zone);
 			}
@@ -372,6 +355,7 @@ public final class TrahisonEditor {
 				layout.doors.forEach(d -> {
 					d.zoneA = from.equals(d.zoneA) ? to : d.zoneA;
 					d.zoneB = from.equals(d.zoneB) ? to : d.zoneB;
+					d.threshold = from.equals(d.threshold) ? to : d.threshold;
 				});
 				layout.cabins.forEach(c -> c.zone = from.equals(c.zone) ? to : c.zone);
 			}

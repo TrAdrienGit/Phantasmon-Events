@@ -206,6 +206,23 @@ Toutes les positions enregistrées (plan, salles, emplacements) sont en **coordo
 (`HubCoordinates.toHub`), `y` du monde. Les hubs miroirs ne sont jamais tournés et couvrent toute la hauteur. Une
 salle garde ses positions **relatives à l'origine de sa place**.
 
+### D'une position du plan au bloc du monde (décision du 2026-11-16)
+
+Un seul calcul, `trahison/world/HubBlocks`, que partagent l'éditeur (`edit/HubGrid`), les zones, les faux blocs et le système
+des miroirs : le centre d'un hub miroir est le bloc `floor(origine de l'ancre)` (`MirrorTerrain.Zone.of`, d'où partent aussi
+les blocs fantômes de `MirrorGhosts`), le terrain n'est jamais tourné, donc
+
+```
+bloc du monde = ( floor(origineX) + x,  y,  floor(origineZ) + z )      (x, y, z : coordonnées de hub du plan)
+```
+
+quel que soit le `yaw` de l'ancre. Avant ce jour, `HubGrid` arrondissait l'origine fractionnaire **au plus proche** (et
+appliquait le `yaw`) : un plan dessiné avec une origine à `.5` ou plus tombait un bloc à côté des faux blocs et du terrain
+miroir. `HubGrid` utilise maintenant `HubBlocks`. **Un plan enregistré avant ce correctif, avec une ancre dont l'origine a une
+partie fractionnaire de `.5` ou plus, est décalé d'un bloc : le rouvrir dans l'éditeur le montre décalé et il faut le
+redessiner ou le corriger.** (Les positions des joueurs en coordonnées de hub exactes, que Phantasmon calcule avec
+`HubCoordinates`, ne servent pas ici : les zones partent des blocs du monde.)
+
 ### Le plan fixe (`layout`)
 
 Décrit une fois par le maître du jeu avec l'éditeur, gardé par le backend, versionné :
@@ -213,7 +230,7 @@ Décrit une fois par le maître du jeu avec l'éditeur, gardé par le backend, v
 | Élément | Champs |
 |---|---|
 | Zone | `id`, type (`hall`, `corridor`, `doors`, `room_slot`, `vote`, `cabin`, `final`, `alcove`), boîtes |
-| Porte | `id`, type (`color`, `room_exit`, `cabin`, `final`, `plain`), boîte des faux blocs, les deux zones reliées |
+| Porte | `id`, type (`color`, `room_exit`, `cabin`, `final`, `plain`), boîte des faux blocs, les deux zones reliées ; porte `color` : manche, couleurs, et `threshold` (zone du seuil, côté hall, facultative : sinon `zone_a`) |
 | Place de salle | `id`, manche, origine, orientation |
 | Cabine | `id`, porte du vote qu'elle sert, côté (`pair` ou `solo`), zone, porte |
 | Cachette | `id`, position (pour les objets cachés du temps libre) |

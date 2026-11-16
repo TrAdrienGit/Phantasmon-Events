@@ -40,7 +40,8 @@ import tools.jackson.databind.node.ObjectNode;
  *   <li>{@code EventsTrahisonPing}: answered by a Pong;</li>
  *   <li>{@code EventsTrahisonAction}: what a player (or a spectator) does: join, leave, pass_door, vote, open_final_door,
  *       debug_solve, view, and the room actions use_slot, puzzle_input, pick_up;</li>
- *   <li>{@code EventsTrahisonGm}: what the game master does, admins only.</li>
+ *   <li>{@code EventsTrahisonGm}: what the game master does, admins only;</li>
+ *   <li>{@code EventsTrahisonZone}: where a player stands (zone and position), sent by his client.</li>
  * </ul>
  * A refused request is answered to its sender only, by an {@code EventsTrahisonSay} of kind {@code error}. Views go out
  * from {@link Broadcaster}. The hub of a request is the hub of the game its sender plays in, else the {@code hub} field.
@@ -57,6 +58,7 @@ public class TrahisonWsHandler implements WsMessageHandler {
 	static final String PONG = "EventsTrahisonPong";
 	static final String ACTION = "EventsTrahisonAction";
 	static final String GM = "EventsTrahisonGm";
+	static final String ZONE = "EventsTrahisonZone";
 
 	private static final JsonMapper MAPPER = JsonMapper.builder().build();
 
@@ -103,6 +105,8 @@ public class TrahisonWsHandler implements WsMessageHandler {
 				action(playerUuid, in);
 			} else if (GM.equals(type)) {
 				gm(playerUuid, in);
+			} else if (ZONE.equals(type)) {
+				zone(playerUuid, in);
 			}
 			// Later steps add their messages here; an unknown one is ignored.
 		} catch (TrahisonException ex) {
@@ -166,6 +170,26 @@ public class TrahisonWsHandler implements WsMessageHandler {
 		}
 	}
 
+	/**
+	 * {@code EventsTrahisonZone {zone, x, y, z}}: where a player stands (zone id of the plan or empty, hub coordinates).
+	 * Not a request: nothing is answered, a message from a non-player or with bad numbers is dropped, and the database is
+	 * not written. A message from a dropped player tells the game he is back, as any other message.
+	 */
+	private void zone(UUID who, Map<String, Object> in) {
+		Game mine = games.findByPlayer(who);
+		if (mine == null || !(in.get("x") instanceof Number x) || !(in.get("y") instanceof Number y)
+				|| !(in.get("z") instanceof Number z) || !finite(x) || !finite(y) || !finite(z)) {
+			return;
+		}
+		String zone = in.get("zone") instanceof String s && s.length() <= 64 ? s : null;
+		games.setConnected(mine.hub, who, true);
+		games.setZone(mine.hub, who, zone, x.doubleValue(), y.doubleValue(), z.doubleValue());
+	}
+
+	private static boolean finite(Number n) {
+		return Double.isFinite(n.doubleValue());
+	}
+
 	// ------------------------------------------------------------------ game master
 
 	private void gm(UUID who, Map<String, Object> in) {
@@ -190,6 +214,12 @@ public class TrahisonWsHandler implements WsMessageHandler {
 			case "next" -> games.next(hub);
 			case "end" -> games.end(hub);
 			case "extend" -> games.extend(hub, intArg(in, "seconds"));
+			case "set_door" -> {
+				if (!(in.get("open") instanceof Boolean open)) {
+					throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "open required (true or false)");
+				}
+				games.setDoor(hub, doorId(in), open);
+			}
 			case "set_points" -> games.setPoints(hub, intArg(in, "bracelet"), intArg(in, "points"));
 			case "add_bots" -> {
 				BotPolicy policy = null;
@@ -224,7 +254,7 @@ public class TrahisonWsHandler implements WsMessageHandler {
 		throw new TrahisonException(TrahisonException.NO_HUB, "hub required");
 	}
 
-	/** {@code {settings?: {mode, durations: {PHASE: seconds}, no_door_penalty, test_room}, mode?, test_room?, fast?: seconds}}. */
+	/** {@code {settings?: {mode, durations: {PHASE: seconds}, no_door_penalty, door_open_seconds, test_room}, mode?, test_room?, fast?: seconds}}. */
 	private static Settings settingsOf(Map<String, Object> in) {
 		Settings s = new Settings();
 		Object fast = in.get("fast");
@@ -243,6 +273,9 @@ public class TrahisonWsHandler implements WsMessageHandler {
 			}
 			if (m.get("no_door_penalty") instanceof Number n) {
 				s.noDoorPenalty = Math.min(0, n.intValue());
+			}
+			if (m.get("door_open_seconds") instanceof Number n) {
+				s.doorOpenSeconds = Math.max(1, Math.min(60, n.intValue()));
 			}
 			if (m.get("durations") instanceof Map<?, ?> d) {
 				for (Map.Entry<?, ?> e : d.entrySet()) {
@@ -313,6 +346,13 @@ public class TrahisonWsHandler implements WsMessageHandler {
 			throw new TrahisonException(TrahisonException.BAD_ARGUMENT, key + " required");
 		}
 		return s.trim().toLowerCase(Locale.ROOT);
+	}
+
+	private static String doorId(Map<String, Object> in) {
+		if (!(in.get("door") instanceof String id) || id.isBlank()) {
+			throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "door required");
+		}
+		return id.trim();
 	}
 
 	private static int intArg(Map<String, Object> in, String key) {

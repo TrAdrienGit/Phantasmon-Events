@@ -109,6 +109,9 @@ Champs (la colonne « Null » dit quand la valeur est `null`) :
 | `doors` | liste de 3 | Les trois portes : `{ "index": 0..2, "colors": ["RED","GREEN"] }`. Constantes : 0 = `RED`-`GREEN`, 1 = `RED`-`BLUE`, 2 = `GREEN`-`BLUE` |
 | `groups` | liste de 3 ou `null` | `null` tant que la répartition de la manche n'est pas connue (jusqu'à la fermeture des portes) ; sinon un élément par porte (voir ci-dessous) |
 | `doors_passed` | liste de 9 entiers ou `null` | `null` avant la première manche. Pour chaque bracelet, l'index de la porte (0 à 2) qu'il a passée dans la manche en cours, ou -1 |
+| `layout_version` | entier | Version du plan du hub que la partie utilise, fixée au démarrage (`start`) ; 0 si le hub n'avait pas de plan. Le client la lit pour récupérer ce plan (`GET /events/trahison/layout/{hub}?version=n`) |
+| `doors_state` | objet | `{ "<id de porte du plan>": "OPEN" \| "CLOSED" }` : l'état de chaque porte **du plan**, tel que ce destinataire doit le voir (voir « États des portes » ci-dessous). `{}` si la partie n'a pas de plan |
+| `door_hints` | liste | Pendant `DOORS` : un élément par porte de couleur de la manche, ce que dit son seuil (voir « Seuils des portes de couleur » plus bas) ; `[]` dans les autres étapes. Les mêmes pour tous les destinataires |
 | `viewer` | objet | Qui reçoit la vue (voir ci-dessous) |
 | `results` | objet ou `null` | Les résultats de la dernière manche **dont les votes sont comptés** (voir ci-dessous) ; `null` avant les premiers résultats |
 | `winners` | liste d'entiers ou `null` | `null` tant que la partie n'est pas finie ; en `ENDED`, les index des joueurs qui ont passé la porte finale (liste vide si le maître du jeu a terminé la partie) |
@@ -158,6 +161,7 @@ Champs (la colonne « Null » dit quand la valeur est `null`) :
 | `door_passed` | entier ou `null` | La porte qu'il a passée dans la manche en cours |
 | `side_voted` | booléen | Son camp (paire ou solo) a déjà voté. Il ne dit **rien** du vote de l'autre camp |
 | `own_vote` | texte ou `null` | `ALLY` ou `BETRAY` : le vote qu'**il a lui-même** déposé. `null` s'il n'a pas voté, ou si son partenaire de paire a voté pour la paire (il n'apprend pas le sens du vote) |
+| `can_open_final_door` | booléen | Vrai si son bracelet de poignet ouvre la porte finale : calculé par `rules.Outcome.canOpenFinalDoor` (bracelet à 9 points ou plus, joueur vivant). Faux pour qui ne joue pas. Il ne dit rien de l'étape : le client regarde aussi `phase` (`FINAL`). Aucun client ne connaît le seuil |
 
 `results` : la dernière manche comptée. Elle reste affichée pendant les étapes suivantes, jusqu'aux résultats suivants.
 
@@ -178,10 +182,79 @@ défaut), `pair_voter` (index du membre dont le vote a engagé la paire, `null` 
 | Champ | Type | Notes |
 |---|---|---|
 | `votes` | liste de 3 ou `[]` | Votes déposés dans la manche en cours, un élément par porte : `{ door, pair_vote, pair_voter, solo_vote }`. `pair_vote` et `solo_vote` valent `ALLY`, `BETRAY` ou `null` (pas encore). Liste vide tant que la répartition n'est pas connue |
-| `settings` | objet | `{ mode, durations: { "PROLOGUE": 600, ... }, no_door_penalty }` : durées en secondes de chaque étape chronométrée |
+| `settings` | objet | `{ mode, durations: { "PROLOGUE": 600, ... }, no_door_penalty, door_open_seconds }` : durées en secondes de chaque étape chronométrée ; `door_open_seconds` : le temps qu'une porte de couleur reste ouverte (défaut 6) |
 | `bot_policy` | texte | `ALLY`, `BETRAY` ou `RANDOM` |
 | `seed` | entier 64 bits | Graine de la partie |
 | `game_masters` | liste de textes (UUID) | Les admins qui dirigent la partie |
+| `zones` | liste de 9 | Où est chaque joueur d'après son client : `{ index, zone, x, y, z }` (`zone` : identifiant de zone du plan, ou `null` ; `x`, `y`, `z` : coordonnées de hub, `null` tant qu'il n'a rien envoyé). Les zones ne sont dans **aucune autre vue** |
+
+#### États des portes (`doors_state`)
+
+Le backend décide quelle porte du plan est ouverte (une fonction pure de l'étape et de l'avancement des salles, `DoorStates`)
+et le client n'affiche que cela : une porte `CLOSED` est remplie de faux blocs, une porte `OPEN` est laissée vide. Valeurs par
+défaut, d'après le type de la porte du plan :
+
+| Type | Par défaut |
+|---|---|
+| `color` | `CLOSED` ; pendant `DOORS`, `OPEN` quelques secondes quand les bracelets de son seuil la satisfont (voir « Seuils des portes de couleur ») |
+| `room_exit` | `CLOSED` pendant `ROOMS` tant que la salle de son groupe n'est pas résolue, `OPEN` ensuite et dans toutes les autres étapes |
+| `cabin` | `OPEN` (T2.4 en ferme une à la demande) |
+| `final` | `CLOSED` (T2.5 l'ouvre) |
+| `plain` | `OPEN` |
+
+Après la partie (`ENDED`), tout est `OPEN`. Le maître du jeu peut forcer une porte avec l'action `set_door` : cela tient jusqu'au
+changement d'étape, puis les valeurs par défaut reviennent. **À quel groupe appartient une porte `room_exit`** : le plan ne
+le dit pas encore (le tirage des salles, étape T4, ne place pas encore les salles sur les places). Le groupe est celui dont la
+porte de couleur mène à la même zone `room_slot` que la sortie (la manche et la paire de couleurs de cette porte de couleur
+donnent la manche et le groupe, qui porte l'index de la porte dans `doors`). Sans ce lien (la sortie ne touche aucune zone
+`room_slot` d'une porte de couleur), on prend l'ordre du plan : la i-ème porte `room_exit` est la place `i % 3` de la manche
+`i / 3 + 1`. En interne, une porte peut aussi n'être ouverte que pour certains joueurs (`DoorState.openFor`, pour la porte
+finale en T2.5) : la vue de chaque destinataire donne alors `OPEN` à ceux-là.
+
+#### Seuils des portes de couleur (`door_hints`, étape T2.3)
+
+Chaque porte de couleur a, devant elle (côté hall), une zone « seuil » : le champ `threshold` de la porte dans le plan, ou
+à défaut sa `zone_a`. La porte se traverse de la zone de seuil vers la `zone_b` (côté salle). Pendant `DOORS`, le backend
+connaît la zone de chaque joueur (`EventsTrahisonZone`) et décide seul :
+
+1. **Ouverture.** Les joueurs vivants qui n'ont pas encore passé de porte et qui se tiennent sur le seuil présentent leurs
+   bracelets : celui du poignet et, plus tard (T6), ceux qu'ils portent (`PlayerState.carried`). Si, pour une répartition
+   encore possible (compatible avec les portes déjà passées), ils réunissent une **paire** de la couleur de paire du groupe
+   et le **solo** de sa couleur de solo (c'est `rules.Doors.canOpen`, restreint aux répartitions possibles), la porte passe
+   `OPEN` pendant `door_open_seconds` (réglage de la partie, 6 par défaut, 1 à 60). Une paire et un solo suffisent : le
+   second de la paire peut encore arriver pendant la fenêtre.
+2. **Passage.** Un joueur vivant qui entre dans la `zone_b` d'une porte ouverte est enregistré comme ayant passé cette porte
+   (même effet que l'action `pass_door`, mêmes contrôles : couleur de son bracelet, compatibilité avec les portes déjà
+   passées). Un refus est **silencieux** : aucune erreur n'est envoyée, seul le panneau au-dessus de la porte explique. L'action
+   `pass_door` reste, pour les factices et le débogage, avec ses codes d'erreur.
+3. **Fermeture.** La porte se referme à la fin de la fenêtre, ou dès que tous les membres vivants du groupe l'ont passée. Si le
+   seuil est encore satisfait ensuite, elle se rouvre au message de zone suivant (au plus 2 s). À la fin de `DOORS`, toutes se
+   ferment ; un vivant qui n'a passé aucune porte subit `no_door_penalty` (défaut −1, réglable : question ouverte pour la
+   propriétaire).
+
+Une vue est envoyée à chaque changement de ce que disent les seuils (un joueur qui monte sur un seuil ou en part, une porte
+qui s'ouvre ou se referme).
+
+`door_hints[]` :
+
+| Champ | Type | Notes |
+|---|---|---|
+| `door` | texte | Identifiant de la porte du plan |
+| `index` | entier | Index de la paire de couleurs dans `doors` (0 à 2) |
+| `colors` | liste de 2 textes | Les deux couleurs de la porte |
+| `present` | entier | Joueurs vivants qui se tiennent sur le seuil et n'ont pas passé de porte |
+| `open_until` | entier (ms epoch serveur) ou `null` | Fin de la fenêtre d'ouverture ; `null` tant que la porte est fermée |
+| `ready` | booléen | Les bracelets du seuil satisfont la porte (elle est ou vient d'être ouverte) |
+| `incompatible` | booléen | Ils satisferaient `Doors.canOpen`, mais pas avec les portes déjà passées : la porte reste fermée |
+| `missing` | liste | Ce qu'il manque pour la façon la plus proche d'ouvrir : `{ "color": "GREEN", "status": "SOLO" }` (`PAIR` ou `SOLO`) ; vide si `ready` |
+| `alt_missing` | liste ou `null` | Une autre façon, aussi proche que `missing` (les deux répartitions sont encore possibles) ; `null` sinon |
+
+```json
+"door_hints": [
+  { "door": "door_1_rg", "index": 0, "colors": ["RED", "GREEN"], "present": 1, "open_until": null, "ready": false,
+    "incompatible": false, "missing": [ { "color": "RED", "status": "PAIR" } ], "alt_missing": null }
+]
+```
 
 Exemple (vue d'un joueur pendant le vote de la manche 2 ; deux joueurs et trois bracelets seulement, pour la place) :
 
@@ -212,7 +285,10 @@ Exemple (vue d'un joueur pendant le vote de la manche 2 ; deux joueurs et trois 
       { "door": 2, "pair_color": "GREEN", "solo_color": "BLUE", "pair": [2, 5], "solo": 7, "room_solved": true }
     ],
     "doors_passed": [0, 0, 2, 1, 0, 2, 1, 2, 1],
-    "viewer": { "kind": "PLAYER", "index": 0, "group": 0, "side": "PAIR", "door_passed": 0, "side_voted": true, "own_vote": "ALLY" },
+    "door_hints": [],
+    "layout_version": 3,
+    "doors_state": { "door_1_rg": "CLOSED", "exit_1_rg": "OPEN", "cabin_door_rg_pair": "OPEN", "door_final": "CLOSED" },
+    "viewer": { "kind": "PLAYER", "index": 0, "group": 0, "side": "PAIR", "door_passed": 0, "side_voted": true, "own_vote": "ALLY", "can_open_final_door": false },
     "results": {
       "round": 1, "final_loop": false,
       "votes": [
@@ -238,7 +314,7 @@ La vue du maître du jeu ajoute, à la place de `"gm": null` :
     { "door": 1, "pair_vote": null, "pair_voter": null, "solo_vote": "BETRAY" },
     { "door": 2, "pair_vote": null, "pair_voter": null, "solo_vote": null }
   ],
-  "settings": { "mode": "AUTO", "durations": { "PROLOGUE": 600, "DOORS": 300, "ROOMS": 1800, "FREE_TIME": 600, "VOTE": 300, "RESULTS": 180, "FINAL": 600 }, "no_door_penalty": -1 },
+  "settings": { "mode": "AUTO", "durations": { "PROLOGUE": 600, "DOORS": 300, "ROOMS": 1800, "FREE_TIME": 600, "VOTE": 300, "RESULTS": 180, "FINAL": 600 }, "no_door_penalty": -1, "door_open_seconds": 6 },
   "bot_policy": "RANDOM",
   "seed": 7,
   "game_masters": ["0d5c7a52-1b7e-4c76-8d02-3f6b1a9e4c11"]
@@ -403,10 +479,54 @@ le maître du jeu reçoit en plus `target`). Événements : `debug_button` `{ "t
 
 - Erreurs : aucune (message d'état).
 
-### Messages prévus (à détailler par l'étape qui les crée)
+#### Vue du mécanisme `ring_dial` (cadran à anneaux)
 
-`EventsTrahisonZone` (C2S). Contenu esquissé dans
-`architecture.md` section 5.
+Anneaux concentriques de symboles ; il faut amener sur le rayon marqué (le haut de l'écran) la suite cible, un symbole par
+anneau, de l'extérieur vers le centre. Tourner un anneau peut en tourner d'autres (une **liaison** `a -> b, k` : quand
+l'anneau `a` tourne d'un cran, `b` tourne de `k` crans, signé ; pas de chaîne). Les liaisons sont cachées par défaut :
+les joueurs les découvrent en tournant.
+
+- Paramètres (`params` de l'étape) : `rings` 3 à 5 (défaut 3), `symbols` 6 à 12 (défaut 8 : les symboles de l'anneau
+  extérieur, chaque anneau intérieur en a un de moins, jamais moins de 6), `links` 0 à 3 (défaut 2), `showLinks`
+  (défaut `false`).
+- Symboles : identifiants de `SymbolSet` (backend) = `Glyphs.IDS` (client) : `eye`, `spiral`, `trident`, `crescent`,
+  `hourglass`, `key`, `dot_triangle`, `cross_circle`, `wave`, `fork`, `star`, `diamond`, `gear`, `bolt`, `hexagon`,
+  `loop_arrow`, `ladder`, `trio`, `arch`, `chevrons`. Distincts à l'intérieur d'un anneau.
+- Vue : `{ "symbols": [[id...]...], "offsets": [n...], "showLinks": false, "links": [...], "solved": false }`. `symbols[i]`
+  = les symboles de l'anneau `i` (0 = extérieur) dans le sens des aiguilles d'une montre. `offsets[i]` = nombre de crans
+  tournés dans le sens des aiguilles depuis la position où `symbols[i][0]` est en haut : le symbole sur le rayon marqué est
+  `symbols[i][(-offsets[i]) mod n]`. `links` (`[{ "from", "to", "steps" }]`) n'est présent que si `showLinks`. **Jamais la cible**
+  dans la vue d'un joueur ni d'un spectateur ; le maître du jeu reçoit en plus `target` (`[id...]`) et `links`.
+- Geste (`puzzle_input`) : `{ "ring": 0..rings-1, "delta": 1 | -1 }` (+1 = un cran dans le sens des aiguilles). Un geste
+  mal formé : `ERROR_TRAHISON_BAD_INPUT`. Une étape résolue ignore les gestes.
+- Événement : `{ "type": "turn", "ring": 1, "delta": -1 }` ; les anneaux entraînés se lisent dans la vue (`offsets`).
+- Indice : rôle `symbols`, type `symbols`, valeur `[id...]` = la cible, de l'extérieur vers le centre ; la définition de la
+  salle le pose ailleurs (mur, document).
+- Génération : voir `RingDial` (javadoc). L'énigme est résoluble par construction (brouillage par des coups légaux depuis
+  l'état résolu) et ne commence jamais résolue ; les tests le vérifient par parcours en largeur sur tout l'espace d'états.
+
+### `EventsTrahisonZone`
+
+- Sens : C2S.
+- Qui l'envoie : le client d'un joueur de la partie (vivant ou mort : le corps d'un mort reste où il est tombé). Rien d'un
+  spectateur ni du maître du jeu qui ne joue pas : le backend les ignore.
+- Quand : à chaque changement de zone, et au moins toutes les 2 secondes pendant la partie (de `LOBBY` à `FINAL`).
+- Champs :
+
+| Champ | Type | Notes |
+|---|---|---|
+| `zone` | texte | Identifiant de la zone du plan où se tient le joueur (calculée par le client d'après le plan, solution S2) ; `""` : dans aucune zone |
+| `x`, `y`, `z` | nombres | Sa position en coordonnées de hub : `x` et `z` du hub (le bloc du plan `(hx, hz)` est le bloc du monde `floor(origine) + (hx, hz)`, voir `architecture.md` section 6), `y` du monde, fractionnaires |
+
+```json
+{ "type": "EventsTrahisonZone", "data": { "zone": "hall", "x": 3.52, "y": 65.0, "z": -7.1 } }
+```
+
+- Le backend garde la zone et la position dans `PlayerState` **sans écrire en base** (ce n'est pas un changement d'état de
+  la partie : cela tombe toutes les 2 s par joueur). La zone ne se voit que dans la vue du maître du jeu (`gm.zones`) ; un
+  changement de zone renvoie la vue **aux maîtres du jeu seulement**, au plus une fois par seconde et par partie.
+- Erreurs : aucune, pas de réponse. Un message d'un non-joueur, ou aux nombres absents ou non finis, est ignoré.
+  Comme tout message d'un joueur, il le marque connecté s'il était tombé.
 
 ## 3. Actions
 
@@ -422,7 +542,7 @@ voyagent dans `EventsTrahisonGm`. Dans les deux cas, `hub` suit les conventions 
 | `leave` | | Un inscrit, en `LOBBY` | Se retire |
 | `pass_door` | `door` : 0 à 2 | Un joueur vivant, en `DOORS`, qui n'a pas encore passé de porte | Passe cette porte avec son bracelet de poignet. Elle doit porter la couleur du bracelet et ne pas contredire les portes déjà prises (une seule porte suffit à décider de la répartition) |
 | `vote` | `vote` : `ally` ou `betray` | Un joueur vivant, en `VOTE`, dont le groupe est connu | Vote pour son camp. **Une paire n'a qu'un vote** : le premier de ses membres qui vote engage les deux, le second reçoit `ERROR_TRAHISON_ALREADY_VOTED`. Le solo vote une fois. L'expéditeur voit son vote dans `viewer.own_vote` ; les autres n'apprennent que `side_voted` |
-| `open_final_door` | | Un joueur vivant, en `FINAL`, dont le bracelet de poignet lit 9 points ou plus | Ouvre la porte finale : la partie passe à `ENDED`, `winners` = tous les vivants dont le bracelet lit 9 ou plus |
+| `open_final_door` | | Un joueur vivant, en `FINAL`, dont le bracelet de poignet lit 9 points ou plus (`viewer.can_open_final_door`) | Ouvre la porte finale : la partie passe à `ENDED`, `winners` = tous les vivants dont le bracelet lit 9 ou plus |
 | `debug_solve` | | Un joueur vivant, en `ROOMS` | Pour les essais et les factices : la salle du groupe de l'expéditeur est résolue d'un coup (toutes ses étapes, sortie ouverte, `EventsTrahisonRoom` et `EventsTrahisonPuzzle` envoyés) et le groupe est marqué résolu, comme si les joueurs l'avaient fait |
 | `use_slot`, `puzzle_input`, `pick_up` | voir « Actions de salle » ci-dessous | Un joueur vivant, en `ROOMS`, membre du groupe de la salle | Actions dans la salle du groupe de l'expéditeur |
 
@@ -433,12 +553,13 @@ joue pas (`ERROR_TRAHISON_NOT_A_PLAYER`), hors de l'étape prévue (`ERROR_TRAHI
 
 | `action` | Champs | Effet |
 |---|---|---|
-| `create` | `hub` ; facultatifs : `seed` (entier), `mode` (`AUTO` ou `GAME_MASTER`), `fast` (entier : toutes les étapes durent ce nombre de secondes ; `true` = 10), `test_room` (identifiant d'une salle de la banque, voir ci-dessous), `settings` (`{ mode, durations: { "VOTE": 120, ... }, no_door_penalty, test_room }`, durées en secondes par étape, `no_door_penalty` ≤ 0) | Crée la partie du hub en `LOBBY` et en fait le maître du jeu. Refusée si le hub a une partie non finie. Graine tirée au hasard si absente. Une partie finie ne bloque pas une nouvelle |
+| `create` | `hub` ; facultatifs : `seed` (entier), `mode` (`AUTO` ou `GAME_MASTER`), `fast` (entier : toutes les étapes durent ce nombre de secondes ; `true` = 10), `test_room` (identifiant d'une salle de la banque, voir ci-dessous), `settings` (`{ mode, durations: { "VOTE": 120, ... }, no_door_penalty, door_open_seconds, test_room }`, durées en secondes par étape, `no_door_penalty` ≤ 0) | Crée la partie du hub en `LOBBY` et en fait le maître du jeu. Refusée si le hub a une partie non finie. Graine tirée au hasard si absente. Une partie finie ne bloque pas une nouvelle |
 | `start` | | `LOBBY` → `PROLOGUE`. Exactement 9 inscrits (les factices comptent) |
 | `pause` / `resume` | | Gèle / relance le chrono. `pause` sur une pause automatique la reprend à son compte (seul `resume` la lève ensuite) |
 | `next` | | Force l'étape suivante tout de suite |
 | `end` | | Termine la partie sur-le-champ (`winners` vide) |
 | `extend` | `seconds` (entier, négatif pour raccourcir) | Ajoute du temps à l'étape en cours |
+| `set_door` | `door` : identifiant d'une porte du plan de la partie, `open` : booléen | Ouvre ou ferme cette porte tout de suite (`doors_state`, vues renvoyées). Tient jusqu'au changement d'étape ; enregistrée avec la partie. Hors `ENDED` ; `ERROR_TRAHISON_BAD_ARGUMENT` si la porte n'existe pas dans le plan que la partie utilise (ou si `open` n'est pas un booléen) |
 | `set_points` | `bracelet` : 0 à 8, `points` ≥ 0 | Corrige les points d'un bracelet (la mort n'est vérifiée qu'aux prochains résultats) |
 | `add_bots` | `count` (entier ; absent ou ≤ 0 : remplit toutes les places libres), `policy` (facultatif) | En `LOBBY` seulement : ajoute des joueurs factices « Bot n » avec de faux UUID ; refusé s'il n'y a pas assez de places (`ERROR_TRAHISON_GAME_FULL`) |
 | `set_bot_policy` | `policy` : `ally`, `betray` ou `random` | Règle le vote de tous les factices (défaut `random`) |
@@ -486,7 +607,7 @@ Dans `EventsTrahisonAction` (`hub` comme pour les autres actions). Seuls les jou
 | Action | Champs | Effet | Réponse |
 |---|---|---|---|
 | `use_slot` | `slot` (texte) | Utiliser un emplacement actif. Si une étape ouverte et non résolue y est liée, son écran s'ouvre : `EventsTrahisonPuzzle` (`reason: open`) à ce joueur seul ; un mécanisme qui réagit à l'usage direct (levier, bouton) est actionné | Aucune réponse propre : `EventsTrahisonPuzzle` et `EventsTrahisonRoom` |
-| `puzzle_input` | `step` (texte), `input` (objet propre au mécanisme) | Un geste sur l'écran du mini-jeu : `three_dials` attend `{ "dial": 0..2, "delta": -9..9 }`. Appliqué dans l'ordre d'arrivée | `EventsTrahisonPuzzle` (`input`, puis `solved` si résolu) à tous ceux qui regardent ; `EventsTrahisonRoom` si une étape est résolue |
+| `puzzle_input` | `step` (texte), `input` (objet propre au mécanisme) | Un geste sur l'écran du mini-jeu : `three_dials` attend `{ "dial": 0..2, "delta": -9..9 }`, `ring_dial` `{ "ring": 0..4, "delta": 1 | -1 }`. Appliqué dans l'ordre d'arrivée | `EventsTrahisonPuzzle` (`input`, puis `solved` si résolu) à tous ceux qui regardent ; `EventsTrahisonRoom` si une étape est résolue |
 | `pick_up` | `slot` (texte) | Ramasser les objets (`type: item`) visibles dans l'emplacement : ils vont dans l'inventaire commun du groupe | `EventsTrahisonRoom` |
 
 ```json
@@ -506,7 +627,7 @@ dans [`../backend-reference.md`](../backend-reference.md). Les champs sont en `s
 
 | Méthode | Route | Accès | Effet |
 |---|---|---|---|
-| `GET` | `/events/trahison/layout/{hub}` | Tout joueur connecté | Dernière version du plan du hub. Un hub sans plan donne `version: 0` et des listes vides (pas de 404). Le plan n'a pas de secret : les clients s'en servent pour connaître leur zone |
+| `GET` | `/events/trahison/layout/{hub}` | Tout joueur connecté | Dernière version du plan du hub (ou, avec `?version=n`, cette version : le client d'une partie lit celle de `layout_version` ; version inconnue : la dernière). Un hub sans plan donne `version: 0` et des listes vides (pas de 404). Le plan n'a pas de secret : les clients s'en servent pour connaître leur zone |
 | `PUT` | `/events/trahison/layout/{hub}` | Admin | Enregistre une **nouvelle version** (le numéro monte de 1 à chaque enregistrement ; l'historique est gardé) |
 | `POST` | `/events/trahison/layout/{hub}` | Admin | Identique au `PUT`, parce que l'aide HTTP de Phantasmon (`PhantasmonApi`) n'a ni `put` ni `patch` : le client de l'éditeur utilise ce `POST` |
 
@@ -538,6 +659,7 @@ Corps du `PUT` / `POST` (et réponse du `GET`, qui ajoute `hub`, `version` et `u
 | `draft` | booléen | Brouillon : saute les contrôles de complétude (voir ci-dessous). Un plan non brouillon est celui que le jeu utilisera |
 | `zones[].type` | texte | `hall`, `corridor`, `doors`, `room_slot`, `vote`, `cabin`, `final`, `alcove`. Plusieurs boîtes permises par zone |
 | `doors[].type` | texte | `color`, `room_exit`, `cabin`, `final`, `plain`. `block` : la boîte des faux blocs. `zone_a`, `zone_b` : les deux zones reliées |
+| `doors[].threshold` | texte ou absent | Portes `color` seulement, facultatif : la zone devant la porte (côté hall) où les joueurs présentent leurs bracelets (T2.3). Doit exister (`BAD_REFERENCE`, `field=threshold`) ; sans elle, c'est `zone_a`. Une zone par porte : si trois portes partagent la même `zone_a`, il faut un seuil propre à chacune |
 | `doors[].round`, `doors[].colors` | entier, deux textes | Portes `color` seulement : manche 1 à 3 ; deux noms de couleur de `GameColor` en minuscules (`red`, `green`, `blue`), dans n'importe quel ordre |
 | `room_slots[]` | | `round` 1 à 3 ; `origin` : le coin minimum de la place (48 x 48 x 24) ; `orientation` : `north`, `east`, `south`, `west` |
 | `cabins[]` | | `serves` : la paire de couleurs dont elle sert le vote (`red_green`, `red_blue`, `green_blue`) ; `side` : `pair` ou `solo` ; `zone` : une zone de type `cabin` ; `door` : une porte de type `cabin` |
@@ -569,12 +691,25 @@ simultanés donnent un `409 ERROR_TRAHISON_LAYOUT_CONFLICT` au second.
 - Clic gauche : coin A ; clic droit : coin B (le bloc visé, ou en étant accroupi le bloc devant la face visée, pour
   une ouverture). Ces clics n'atteignent pas le serveur tant que l'éditeur est actif.
 
+### 4.2 ter Éditeur de salle (client, étape T3.2)
+
+- `/phantasmon event trahison room new <id>` : active l'éditeur de salle (admins, monde **solo** en créatif). Le gabarit de 48 x 48 x 24
+  est posé là où se tient le joueur, tourné dans le sens de son regard. `room load <id>` colle une salle enregistrée au même endroit (la
+  boîte du gabarit est vidée d'abord) et ramène emplacements et chaîne. `room list` liste les salles du backend. `room off` quitte.
+- Touche **K** : le panneau (emplacements, salle) et, de là, l'écran de la chaîne. Les clics de sélection (A gauche, B droit) ne sont pris
+  que **bâton en main** : sans bâton, le joueur construit normalement.
+- Enregistrer : `POST /events/trahison/rooms/{id}` (la définition) puis `POST /events/trahison/rooms/{id}/schematic.json` (les blocs, Sponge v2
+  en repère canonique : voir `guide-editeur-salle.md`, en base64 dans un corps JSON). `PhantasmonApi.get` et `post` suffisent : plus de réflexion.
+  La liste des mécanismes vient de `GET /events/trahison/mechanisms` (lue à l'ouverture de l'éditeur ; liste intégrée seulement en cas d'échec).
+
 ### 4.2 bis Commandes et touche du client provisoire (étape T1.4)
 
 - `/phantasmon event trahison menu` : l'écran du joueur (liste des 9, étape, chrono, boutons de l'étape). Touche réglable
   `key.phantasmon_events.trahison_menu` (catégorie « Phantasmon Events »), **non assignée** par défaut.
 - `/phantasmon event trahison gm` (admins) : l'écran du maître du jeu (créer, factices, démarrer, pause, suivant, prolonger,
   terminer, points d'un bracelet, votes en cours).
+- `/phantasmon event trahison door <id> open|close` (admins) : l'action `set_door` du maître du jeu, pour ouvrir ou fermer une
+  porte du plan à la main (essais, secours un soir de partie).
 - À l'entrée dans un hub, le client envoie `view` (avec `hub`), la renvoie tant que le WebSocket n'est pas prêt, puis toutes
   les 30 s (une reconnexion du WebSocket n'est pas signalée au module). Le HUD (bracelet, étape, chrono) et les répliques
   (`Say`) sont dessinés par `hud/BraceletHud` et `hud/Announcer`.
@@ -594,6 +729,9 @@ pour un non-admin).
 | `DELETE` | `/events/trahison/rooms/{id}` | Admin | Supprime la définition et le fichier des blocs |
 | `GET` | `/events/trahison/rooms/{id}/schematic` | Admin | Les blocs (`application/octet-stream`, format libre du client) ; 404 `ERROR_TRAHISON_ROOM_SCHEMATIC_MISSING` s'il n'y en a pas |
 | `POST` / `PUT` | `/events/trahison/rooms/{id}/schematic` | Admin | Remplace les blocs (corps binaire, 16 Mio au plus, non vide ; la définition doit exister). `{ id, size }` |
+| `GET` | `/events/trahison/rooms/{id}/schematic.json` | Admin | Les mêmes blocs en JSON : `{ id, version, data }`, `data` en base64 (404 comme la route binaire) |
+| `POST` | `/events/trahison/rooms/{id}/schematic.json` | Admin | Corps `{ "data": base64 }` ; mêmes limites (16 Mio **décodés**) et mêmes erreurs (`400 ERROR_TRAHISON_ROOM_SCHEMATIC_INVALID` aussi pour un base64 invalide ou une donnée absente). `{ id, size }` |
+| `GET` | `/events/trahison/mechanisms` | Admin | Les mécanismes du backend, triés par id : `[{ id, clue_roles, params: [{ name, type, min, max, def, description }], difficulty, expected_seconds }]` (difficulté et durée pour les paramètres par défaut ; `type` : `int`, `bool` ou `text`). Les rôles d'emplacement ne sont pas fournis (table intégrée au client) |
 
 Les blocs sont un fichier `<phantasmon.hub.schematics-dir>/trahison_rooms/<id>/room.bin` (écrit dans un fichier temporaire
 puis déplacé), la définition est dans `trahison_rooms.data`. L'`id` est `[A-Za-z0-9_-]{1,40}` (`400 ERROR_TRAHISON_ROOM_BAD_ID`).
@@ -617,7 +755,7 @@ avant ; `gives[].clue` : un rôle d'indice du mécanisme, `slot` : où il s'affi
 
 **Validation** (400 `ERROR_TRAHISON_ROOM_INVALID`, `details.errors` : `[{ code, ids, info }]`, toutes les erreurs d'un coup) : voir
 section 5. Mécanismes connus à ce jour : `debug_button` (un appui résout), `three_dials` (trois molettes de 0 à 9 ; indice
-`code` de type `digits`).
+`code` de type `digits`), `ring_dial` (anneaux de symboles liés ; indice `symbols` de type `symbols`, voir la vue plus haut).
 
 ## 5. Codes d'erreur
 

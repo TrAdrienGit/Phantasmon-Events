@@ -399,6 +399,7 @@ public final class EditorScreen extends Screen {
 					} else {
 						door.round = null;
 						door.colors = new ArrayList<>();
+						door.threshold = null;
 					}
 					TrahisonEditor.changed();
 				});
@@ -411,6 +412,10 @@ public final class EditorScreen extends Screen {
 					TrahisonEditor.changed();
 				});
 				if ("color".equals(door.type)) {
+					y = cycleRow(g, x, y, w, "threshold", refName(door.threshold), dir -> {
+						door.threshold = step(withNone(TrahisonEditor.ids(Kind.ZONE)), door.threshold, dir);
+						TrahisonEditor.changed();
+					});
 					y = cycleRow(g, x, y, w, "round", Component.literal(door.round == null ? "-" : Integer.toString(door.round)), dir -> {
 						int next = ((door.round == null ? 1 : door.round) - 1 + dir + 3) % 3 + 1;
 						door.round = next;

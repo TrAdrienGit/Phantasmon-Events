@@ -27,6 +27,11 @@ public class ThreeDials implements Mechanism {
 	}
 
 	@Override
+	public List<MechanismParam> params() {
+		return List.of();
+	}
+
+	@Override
 	public int difficulty(JsonNode params) {
 		return 1;
 	}

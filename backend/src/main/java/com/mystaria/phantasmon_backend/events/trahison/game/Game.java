@@ -15,9 +15,25 @@ import com.mystaria.phantasmon_backend.events.trahison.rules.History;
 public class Game {
 	public UUID id;
 	public String hub;
-	public int layoutVersion = 1;
 	public long seed;
 	public Settings settings = new Settings();
+	/** Version of the hub's plan this game uses, fixed when it starts (0: the hub had no plan). */
+	public int layoutVersion;
+	/**
+	 * State of each door of the plan (door id), derived by {@link GameService} from the stage and the room progress
+	 * ({@link DoorStates}) and refreshed before every notification; sent in the views as {@code doors_state}.
+	 */
+	public java.util.Map<String, DoorState> doors = new java.util.LinkedHashMap<>();
+	/** The game master's {@code set_door} decisions (door id to open); they win over the defaults until the stage changes. */
+	public java.util.Map<String, Boolean> doorOverrides = new java.util.LinkedHashMap<>();
+	/**
+	 * The colour doors open right now because the bracelets at their threshold satisfy them (door id to its window), during
+	 * DOORS only (T2.3). Kept with the game so a restart brings them back.
+	 */
+	public java.util.Map<String, DoorWindow> doorWindows = new java.util.LinkedHashMap<>();
+	/** The threshold hints of the colour doors, derived like {@link #doors} and sent as {@code door_hints}; not stored. */
+	@com.fasterxml.jackson.annotation.JsonIgnore
+	public java.util.List<DoorHint> doorHints = new java.util.ArrayList<>();
 
 	public Phase phase = Phase.LOBBY;
 	/** 1..3, stays 3 during the final. */

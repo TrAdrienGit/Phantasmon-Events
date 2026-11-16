@@ -75,6 +75,8 @@ class TrahisonGameIntegrationTest {
 	private RoomCatalog catalog;
 	@Autowired
 	private ObjectMapper mapper;
+	@Autowired
+	private com.mystaria.phantasmon_backend.events.trahison.layout.LayoutService layouts;
 
 	private String hub;
 	private Client a;
@@ -432,6 +434,56 @@ class TrahisonGameIntegrationTest {
 		assertThat(admin.errors()).doesNotContain("ERROR_TRAHISON_NO_GAME");
 		// The game is persisted: the row exists.
 		assertThat(this.<Integer>game(g -> g.settings.durations.size())).isGreaterThan(0);
+	}
+
+	@Test
+	void doorsAndZonesGoThroughTheHandler() throws Exception {
+		var box = new com.mystaria.phantasmon_backend.events.trahison.layout.Box(0, 64, 0, 0, 66, 2);
+		var door = new com.mystaria.phantasmon_backend.events.trahison.layout.LayoutDoor("d_plain", "plain", box, "hall", "hall", null, null);
+		var color = new com.mystaria.phantasmon_backend.events.trahison.layout.LayoutDoor("d_color", "color", box, "hall", "hall", 1,
+			List.of("red", "green"));
+		var zone = new com.mystaria.phantasmon_backend.events.trahison.layout.LayoutZone("hall", "hall", List.of(box));
+		int version = layouts.save(admin.uuid, hub, new com.mystaria.phantasmon_backend.events.trahison.layout.LayoutRequest(null, true,
+			List.of(zone), List.of(door, color), List.of(), List.of(), List.of())).version();
+		gm("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":60}");
+		act(a, "{\"action\":\"join\"}");
+		act(b, "{\"action\":\"join\"}");
+		gm("{\"action\":\"add_bots\",\"count\":0}");
+		gm("{\"action\":\"start\"}");
+		await("the started view", () -> a.view() != null && "PROLOGUE".equals(a.view().get("phase").asString()));
+		assertThat(a.view().get("layout_version").asInt()).isEqualTo(version);
+		assertThat(a.view().get("doors_state").get("d_plain").asString()).isEqualTo("OPEN");
+		assertThat(a.view().get("doors_state").get("d_color").asString()).isEqualTo("CLOSED");
+		assertThat(a.view().get("viewer").get("can_open_final_door").asBoolean()).isFalse();
+
+		// The game master opens a colour door by hand; every player sees it.
+		gm("{\"action\":\"set_door\",\"door\":\"d_color\",\"open\":true}");
+		await("the door open", () -> "OPEN".equals(b.view().get("doors_state").get("d_color").asString()));
+		gm("{\"action\":\"set_door\",\"door\":\"nope\",\"open\":true}");
+		gm("{\"action\":\"set_door\",\"door\":\"d_color\"}");
+		assertThat(admin.errors()).containsExactly("ERROR_TRAHISON_BAD_ARGUMENT", "ERROR_TRAHISON_BAD_ARGUMENT");
+		b.gm("{\"action\":\"set_door\",\"door\":\"d_color\",\"open\":false}");
+		assertThat(b.errors()).containsExactly("ERROR_TRAHISON_ADMIN_REQUIRED");
+
+		// A player's zone: kept for the game master's view, nothing answered, nobody else told.
+		int me = a.index();
+		int others = b.views().size();
+		a.send("EventsTrahisonZone", "{\"zone\":\"hall\",\"x\":1.5,\"y\":65,\"z\":-2}");
+		await("the zone in the game master view", () -> {
+			JsonNode gmBlock = admin.view().get("gm");
+			return gmBlock != null && "hall".equals(gmBlock.get("zones").get(me).get("zone").asString());
+		});
+		assertThat(admin.view().get("gm").get("zones").get(me).get("x").asDouble()).isEqualTo(1.5);
+		assertThat(a.errors()).isEmpty();
+		assertThat(b.views().size()).isEqualTo(others);
+		assertThat(a.view().has("zones")).isFalse();
+		assertThat(a.view().get("gm").isNull()).isTrue();
+		// Garbage and strangers are dropped without a word.
+		nobody.send("EventsTrahisonZone", "{\"zone\":\"hall\",\"x\":0,\"y\":0,\"z\":0}");
+		a.send("EventsTrahisonZone", "{\"zone\":\"hall\",\"x\":\"left\",\"y\":0,\"z\":0}");
+		assertThat(nobody.errors()).isEmpty();
+		assertThat(a.errors()).isEmpty();
+		gm("{\"action\":\"end\"}");
 	}
 
 	/** press -> three dials (clue on the wall) -> exit; every step carries a hint text that must never leave the bank. */

@@ -265,7 +265,7 @@ en 9 s, vignette sur les bords. Rien ne clignote. Ne pas ajouter de couche sans 
 | Élément | Usage | Gestes |
 |---|---|---|
 | `DetentKnob(n)` | Molette à `n` crans, valeur au centre en échelle 2 (`bigText`) | Glisser autour du centre, molette de souris, deux chevrons ; clic de cran à chaque valeur ; `setValue` anime par le plus court chemin |
-| `RotaryRing(R, r, n)` | Anneau qui tourne (anneaux concentriques) | Glisser ; suit le pointeur puis se cale sur le cran le plus proche (son de verrou) |
+| `RotaryRing(R, r, n)` | Anneau qui tourne (anneaux concentriques) | Glisser, molette de souris, `turn(±1)` (clavier) ; suit le pointeur puis se cale sur le cran le plus proche (son de verrou). `painter(...)` dessine ce que porte l'anneau (glyphes, chiffres) avec l'angle courant ; `radii` le redimensionne ; `dragging()` dit qu'un recalage du backend doit le laisser tranquille |
 | `SlidingPiece(horizontal, crans, longueur)` | Pièce qu'on glisse dans une glissière | Glisser ou cliquer dans la glissière ; se cale sur un cran |
 | `PushButton` | Bouton-poussoir (`TrahisonUi.button`) | Enfoncé tant que la souris est tenue, agit au relâchement dessus ; `flash` montre l'appui d'un autre |
 | `PullWire` | Fil qu'on tire (bézier qui pend plus ou moins) | Glisser la prise ; elle revient en ressort ou reste (`sticky`) ; `onDrop` donne la position |
@@ -274,6 +274,24 @@ en 9 s, vignette sur les bords. Rien ne clignote. Ne pas ajouter de couche sans 
 Chacun dessine ses quatre états (normal, survol, pressé, inactif) avec les jetons de la palette. Un widget inactif
 (écran verrouillé) ignore les gestes. Pour ajouter une forme ronde ou tournée à un élément : `TrahisonUi.disc`,
 `TrahisonUi.ring`, `TrahisonUi.rotatedFill` (ajoutés avec ce chapitre).
+
+### Les glyphes (`Glyphs`)
+
+Vingt marques abstraites, à nous (aucun dessin repris), dessinées en code avec des rectangles : elles prennent n'importe
+quelle couleur de la palette et tournent sans texture. Pour tout mécanisme qui montre des symboles (cadran à anneaux,
+serrures à symboles, indices muraux de type `symbols`).
+
+- `Glyphs.draw(g, id, cx, cy, taille, degrés, couleur)` : centré sur `cx, cy`, dans une boîte de `taille` pixels (9
+  minimum : en dessous, les traits deviennent plus fins qu'un pixel), tourné dans le sens des aiguilles (0 = le haut du
+  glyphe en haut). Un identifiant inconnu dessine une boîte creuse avec un point : visible plutôt que silencieux.
+- Les identifiants (`Glyphs.IDS`) sont ceux de `SymbolSet.IDS` côté backend, dans le même ordre ; les deux listes doivent
+  rester égales (un indice `symbols` est un tableau de ces identifiants). Ajouter un glyphe = l'ajouter aux deux endroits,
+  à la fin de la liste (changer l'ordre change tous les tirages déjà faits).
+- Chaque glyphe est dessiné sur une grille 32 x 32 centrée sur l'origine, traits de 3,4 unités, rien au-delà du rayon 14.
+  Une couleur par glyphe : l'appelant décide ce qui est allumé (le symbole sur le rayon marqué en `ACCENT_HOT`, une
+  réussite en `SUCCESS`).
+- Le « pinceau » interne (`rect`, `line`, `disc`, `ring`, `arc`, `outline`, `fill` pour un polygone convexe) suffit à
+  en créer d'autres.
 
 ### Sons (`MiniGameSounds`)
 

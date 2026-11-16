@@ -58,7 +58,9 @@ public final class GameView {
 	public record Group(int door, GameColor pairColor, GameColor soloColor, List<Integer> pair, int solo, boolean roomSolved) {
 	}
 
-	public record Viewer(ViewerKind kind, Integer index, Integer group, Boolean pairSide, Integer doorPassed, boolean sideVoted, Vote ownVote) {
+	/** {@code canOpenFinalDoor}: the backend's answer (rules.Outcome) whether this viewer's bracelet opens the final door. */
+	public record Viewer(ViewerKind kind, Integer index, Integer group, Boolean pairSide, Integer doorPassed, boolean sideVoted, Vote ownVote,
+			boolean canOpenFinalDoor) {
 	}
 
 	public record VoteResult(int door, GameColor pairColor, GameColor soloColor, List<Integer> pair, int solo, Vote pairVote,
@@ -71,11 +73,33 @@ public final class GameView {
 	public record GmVote(int door, Vote pairVote, Integer pairVoter, Vote soloVote) {
 	}
 
-	public record Gm(List<GmVote> votes, String mode, Map<String, Integer> durations, int noDoorPenalty, String botPolicy, long seed,
-			List<String> gameMasters) {
+	/** Where a player is, as his client last said (zone id or null, hub coordinates), for the game master. */
+	public record GmZone(int index, String zone, Double x, Double y, Double z) {
 	}
 
-	public record View(String hub, String gameId, Phase phase, int round, boolean finalLoop, int finalLoops, String mode, Long deadline,
+	public record Gm(List<GmVote> votes, String mode, Map<String, Integer> durations, int noDoorPenalty, String botPolicy, long seed,
+			List<String> gameMasters, List<GmZone> zones) {
+	}
+
+	/** One bracelet kind a door's threshold lacks: a game colour, as a pair or as a solo. */
+	public record Need(GameColor color, boolean pair) {
+	}
+
+	/**
+	 * What a colour door of the plan says about its threshold during DOORS (the backend's {@code door_hints}): {@code present}
+	 * players stand there, {@code openUntil} (server epoch ms) is set while the door is open, {@code missing} is what
+	 * lacks to open it and {@code altMissing} another way of the same length (null if none).
+	 */
+	public record DoorHint(String door, int index, List<GameColor> colors, int present, Long openUntil, boolean ready,
+			boolean incompatible, List<Need> missing, List<Need> altMissing) {
+	}
+
+	/**
+	 * {@code layoutVersion}: the version of the plan the game uses (0: none). {@code doorsOpen}: door id of the plan to
+	 * whether it is open for this viewer (the backend's {@code doors_state}). {@code doorHints}: the colour doors'
+	 * thresholds, empty outside DOORS.
+	 */
+	public record View(String hub, String gameId, int layoutVersion, Map<String, Boolean> doorsOpen, List<DoorHint> doorHints, Phase phase, int round, boolean finalLoop, int finalLoops, String mode, Long deadline,
 			boolean paused, boolean autoPaused, Long remainingMs, long serverTime, List<Player> players, List<Bracelet> bracelets,
 			List<Door> doors, List<Group> groups, List<Integer> doorsPassed, Viewer viewer, Results results, List<Integer> winners, Gm gm) {
 
@@ -107,8 +131,8 @@ public final class GameView {
 		}
 	}
 
-	private static final View EMPTY = new View("", "", Phase.NONE, 0, false, 0, "AUTO", null, false, false, null, 0, List.of(), List.of(),
-			List.of(), null, null, new Viewer(ViewerKind.SPECTATOR, null, null, null, null, false, null), null, null, null);
+	private static final View EMPTY = new View("", "", 0, Map.of(), List.of(), Phase.NONE, 0, false, 0, "AUTO", null, false, false, null, 0, List.of(), List.of(),
+			List.of(), null, null, new Viewer(ViewerKind.SPECTATOR, null, null, null, null, false, null, false), null, null, null);
 
 	private static View current;
 	/** {@code server time - local time} when the last view arrived. */
@@ -231,7 +255,7 @@ public final class GameView {
 	private static View parse(Map<String, Object> d) {
 		Phase phase = Phase.of(str(d, "phase"));
 		if (phase == Phase.NONE) {
-			return new View(str(d, "hub") == null ? "" : str(d, "hub"), "", Phase.NONE, 0, false, 0, "AUTO", null, false, false, null,
+			return new View(str(d, "hub") == null ? "" : str(d, "hub"), "", 0, Map.of(), List.of(), Phase.NONE, 0, false, 0, "AUTO", null, false, false, null,
 					lng(d, "server_time", 0), List.of(), List.of(), List.of(), null, null, EMPTY.viewer(), null, null, null);
 		}
 		List<Player> players = new ArrayList<>();
@@ -280,7 +304,7 @@ public final class GameView {
 		}
 		String side = str(v, "side");
 		Viewer viewer = new Viewer(kind, nullableInt(v, "index"), nullableInt(v, "group"), side == null ? null : "PAIR".equalsIgnoreCase(side),
-				nullableInt(v, "door_passed"), bool(v, "side_voted"), Vote.of(v.get("own_vote")));
+				nullableInt(v, "door_passed"), bool(v, "side_voted"), Vote.of(v.get("own_vote")), bool(v, "can_open_final_door"));
 		Results results = null;
 		if (d.get("results") instanceof Map<?, ?> rm) {
 			@SuppressWarnings("unchecked")
@@ -309,14 +333,60 @@ public final class GameView {
 			if (g.get("game_masters") instanceof List<?> list) {
 				list.forEach(o -> masters.add(String.valueOf(o)));
 			}
+			List<GmZone> zones = new ArrayList<>();
+			for (Map<String, Object> gz : maps(g, "zones")) {
+				zones.add(new GmZone(integer(gz, "index", zones.size()), str(gz, "zone"),
+						gz.get("x") instanceof Number n ? n.doubleValue() : null, gz.get("y") instanceof Number n ? n.doubleValue() : null,
+						gz.get("z") instanceof Number n ? n.doubleValue() : null));
+			}
 			gm = new Gm(votes, str(settings, "mode") == null ? "AUTO" : str(settings, "mode"), durations, integer(settings, "no_door_penalty", 0),
-					str(g, "bot_policy") == null ? "RANDOM" : str(g, "bot_policy"), lng(g, "seed", 0), masters);
+					str(g, "bot_policy") == null ? "RANDOM" : str(g, "bot_policy"), lng(g, "seed", 0), masters,
+					Collections.unmodifiableList(zones));
 		}
-		return new View(str(d, "hub") == null ? "" : str(d, "hub"), str(d, "game_id") == null ? "" : str(d, "game_id"), phase, integer(d, "round", 0),
+		Map<String, Boolean> doorsOpen = new java.util.LinkedHashMap<>();
+		map(d, "doors_state").forEach((id, state) -> doorsOpen.put(id, "OPEN".equalsIgnoreCase(String.valueOf(state))));
+		return new View(str(d, "hub") == null ? "" : str(d, "hub"), str(d, "game_id") == null ? "" : str(d, "game_id"),
+				integer(d, "layout_version", 0), Collections.unmodifiableMap(doorsOpen), doorHints(d), phase, integer(d, "round", 0),
 				bool(d, "final_loop"), integer(d, "final_loops", 0), str(d, "mode") == null ? "AUTO" : str(d, "mode"),
 				d.get("deadline") instanceof Number n ? n.longValue() : null, bool(d, "paused"), bool(d, "auto_paused"),
 				d.get("remaining_ms") instanceof Number n2 ? n2.longValue() : null, lng(d, "server_time", 0), Collections.unmodifiableList(players),
 				Collections.unmodifiableList(bracelets), Collections.unmodifiableList(doors), groups, passed, viewer, results, winners, gm);
+	}
+
+	private static List<DoorHint> doorHints(Map<String, Object> d) {
+		List<DoorHint> out = new ArrayList<>();
+		for (Map<String, Object> h : maps(d, "door_hints")) {
+			List<GameColor> colors = new ArrayList<>();
+			if (h.get("colors") instanceof List<?> list) {
+				list.forEach(c -> {
+					GameColor color = color(String.valueOf(c));
+					if (color != null) {
+						colors.add(color);
+					}
+				});
+			}
+			String id = str(h, "door");
+			if (id != null) {
+				out.add(new DoorHint(id, integer(h, "index", -1), colors, integer(h, "present", 0), h.get("open_until") instanceof Number n ? n.longValue() : null,
+						bool(h, "ready"), bool(h, "incompatible"), needs(h.get("missing")), h.get("alt_missing") == null ? null : needs(h.get("alt_missing"))));
+			}
+		}
+		return Collections.unmodifiableList(out);
+	}
+
+	private static List<Need> needs(Object raw) {
+		List<Need> out = new ArrayList<>();
+		if (raw instanceof List<?> list) {
+			for (Object o : list) {
+				if (o instanceof Map<?, ?> m) {
+					GameColor color = color(String.valueOf(m.get("color")));
+					if (color != null) {
+						out.add(new Need(color, "PAIR".equalsIgnoreCase(String.valueOf(m.get("status")))));
+					}
+				}
+			}
+		}
+		return List.copyOf(out);
 	}
 
 	// ---------------------------------------------------------------- small typed accessors

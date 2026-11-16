@@ -69,6 +69,8 @@ public final class LayoutDto {
 		public Box block;
 		public String zoneA;
 		public String zoneB;
+		/** Colour doors only: the zone in front of the door where the bracelets are presented (optional; none: zone A). */
+		public String threshold;
 		/** Colour doors only. */
 		public Integer round;
 		public List<String> colors = new ArrayList<>();

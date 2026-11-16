@@ -29,6 +29,11 @@ public interface Mechanism {
 		return List.of();
 	}
 
+	/** The parameters this mechanism reads (for the room editor); none by default. */
+	default List<MechanismParam> params() {
+		return List.of();
+	}
+
 	/** Problems with the parameters of a definition (empty when fine); each a short machine-readable text. */
 	default List<String> validateParams(JsonNode params) {
 		return List.of();

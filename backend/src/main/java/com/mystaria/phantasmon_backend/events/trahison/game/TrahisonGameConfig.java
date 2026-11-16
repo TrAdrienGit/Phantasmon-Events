@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import com.mystaria.phantasmon_backend.events.trahison.layout.LayoutService;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomCatalog;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomService;
 
@@ -26,9 +27,10 @@ public class TrahisonGameConfig {
 	}
 
 	@Bean
-	GameService trahisonGameService(GameStore store, GameScheduler scheduler, GameRooms rooms) {
+	GameService trahisonGameService(GameStore store, GameScheduler scheduler, GameRooms rooms, LayoutService layouts) {
 		GameService service = new GameService(store, Clock.systemUTC(), scheduler);
 		service.useRooms(rooms);
+		service.useLayouts(layouts::version);
 		return service;
 	}
 

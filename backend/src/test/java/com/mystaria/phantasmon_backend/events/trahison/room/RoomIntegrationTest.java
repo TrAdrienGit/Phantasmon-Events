@@ -130,6 +130,63 @@ class RoomIntegrationTest {
 	}
 
 	@Test
+	void schematicJsonRoundTripsBase64AndSharesTheBinaryRoute() throws Exception {
+		byte[] blocks = new byte[5000];
+		new java.util.Random(7).nextBytes(blocks);
+		String body = "{\"data\":\"" + java.util.Base64.getEncoder().encodeToString(blocks) + "\"}";
+		String url = "/events/trahison/rooms/" + id + "/schematic.json";
+		mockMvc.perform(post(url).header("Authorization", adminToken).contentType(MediaType.APPLICATION_JSON).content(body))
+				.andExpect(status().isNotFound());
+		save(adminToken, true, RoomFixtures.chain()).andExpect(status().isOk());
+		mockMvc.perform(get(url).header("Authorization", adminToken)).andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.error_code").value(RoomCatalog.SCHEMATIC_MISSING));
+		mockMvc.perform(post(url).header("Authorization", playerToken).contentType(MediaType.APPLICATION_JSON).content(body))
+				.andExpect(status().isForbidden());
+		mockMvc.perform(get(url).header("Authorization", playerToken)).andExpect(status().isForbidden());
+		mockMvc.perform(post(url).header("Authorization", adminToken).contentType(MediaType.APPLICATION_JSON).content(body))
+				.andExpect(status().isOk()).andExpect(jsonPath("$.size").value(blocks.length));
+		String json = mockMvc.perform(get(url).header("Authorization", adminToken)).andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(id)).andExpect(jsonPath("$.version").value(1))
+				.andReturn().getResponse().getContentAsString();
+		assertArrayEquals(blocks, java.util.Base64.getDecoder().decode(mapper.readTree(json).get("data").asString()));
+		// Same file as the binary route.
+		byte[] binary = mockMvc.perform(get("/events/trahison/rooms/" + id + "/schematic").header("Authorization", adminToken))
+				.andReturn().getResponse().getContentAsByteArray();
+		assertArrayEquals(blocks, binary);
+		// Bad base64, empty and missing data are refused with the schematic error.
+		for (String bad : List.of("{\"data\":\"@@@\"}", "{\"data\":\"\"}", "{}")) {
+			mockMvc.perform(post(url).header("Authorization", adminToken).contentType(MediaType.APPLICATION_JSON).content(bad))
+					.andExpect(status().isBadRequest()).andExpect(jsonPath("$.error_code").value(RoomCatalog.SCHEMATIC_INVALID));
+		}
+	}
+
+	@Test
+	void schematicJsonAcceptsTheLimitAndRefusesAboveIt() throws Exception {
+		save(adminToken, true, RoomFixtures.chain()).andExpect(status().isOk());
+		String url = "/events/trahison/rooms/" + id + "/schematic.json";
+		byte[] max = new byte[RoomCatalog.MAX_SCHEMATIC_BYTES];
+		java.util.Arrays.fill(max, (byte) 7);
+		mockMvc.perform(post(url).header("Authorization", adminToken).contentType(MediaType.APPLICATION_JSON)
+				.content("{\"data\":\"" + java.util.Base64.getEncoder().encodeToString(max) + "\"}"))
+				.andExpect(status().isOk()).andExpect(jsonPath("$.size").value(max.length));
+		byte[] over = new byte[RoomCatalog.MAX_SCHEMATIC_BYTES + 1];
+		mockMvc.perform(post(url).header("Authorization", adminToken).contentType(MediaType.APPLICATION_JSON)
+				.content("{\"data\":\"" + java.util.Base64.getEncoder().encodeToString(over) + "\"}"))
+				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.error_code").value(RoomCatalog.SCHEMATIC_INVALID));
+	}
+
+	@Test
+	void mechanismsAreListedForAdminsOnly() throws Exception {
+		mockMvc.perform(get("/events/trahison/mechanisms").header("Authorization", playerToken)).andExpect(status().isForbidden());
+		mockMvc.perform(get("/events/trahison/mechanisms").header("Authorization", adminToken)).andExpect(status().isOk())
+				.andExpect(jsonPath("$[?(@.id == 'debug_button')].difficulty").value(hasItem(1)))
+				.andExpect(jsonPath("$[?(@.id == 'debug_button')].expected_seconds").value(hasItem(10)))
+				.andExpect(jsonPath("$[?(@.id == 'three_dials')].clue_roles[0]").value(hasItem("code")))
+				.andExpect(jsonPath("$[?(@.id == 'three_dials')].expected_seconds").value(hasItem(60)))
+				.andExpect(jsonPath("$[0].params").isArray());
+	}
+
+	@Test
 	void deleteIsForAdminsAndRemovesBlocksToo() throws Exception {
 		save(adminToken, true, RoomFixtures.chain()).andExpect(status().isOk());
 		mockMvc.perform(post("/events/trahison/rooms/" + id + "/schematic").header("Authorization", adminToken)

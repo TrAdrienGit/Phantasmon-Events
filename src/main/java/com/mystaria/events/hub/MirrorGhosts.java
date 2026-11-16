@@ -66,14 +66,13 @@ public final class MirrorGhosts {
 
 	public static void tick() {
 		Minecraft mc = Minecraft.getInstance();
-		if (mc.level != level) {
-			reset();
-			level = mc.level;
-		}
-		if (level == null || mc.hasSingleplayerServer() || !PhantasmonApi.isAuthenticated()) {
+		syncLevel(mc);
+		if (level == null) {
 			return;
 		}
-		follow(PhantasmonApi.anchorsHere());
+		if (!mc.hasSingleplayerServer() && PhantasmonApi.isAuthenticated()) {
+			follow(PhantasmonApi.anchorsHere());
+		}
 		for (Long chunk : List.copyOf(DIRTY_CHUNKS)) {
 			if (level.getChunkSource().hasChunk(ChunkPos.getX(chunk), ChunkPos.getZ(chunk))) {
 				DIRTY_CHUNKS.remove(chunk);
@@ -82,6 +81,65 @@ public final class MirrorGhosts {
 				}
 			}
 		}
+	}
+
+	/** A new world: the ghosts of the old one are gone. */
+	private static void syncLevel(Minecraft mc) {
+		if (mc.level != level) {
+			reset();
+			level = mc.level;
+		}
+	}
+
+	// ---- Client-only blocks of another feature (no hub, no backend stream) ----
+
+	/** What a local owner's ghosts are filed under: never the name of a hub (those hold no colon). */
+	private static String localTag(String owner) {
+		return "local:" + owner;
+	}
+
+	/**
+	 * Client-only blocks of another feature (the betrayal game's doors): shown and kept exactly like a mirror hub's ghosts
+	 * (they collide, survive the server's block updates and chunk reloads, and can't be broken), but not tied to a hub.
+	 * Shown at the next tick if the chunk is loaded, else when it loads. They go with the world ({@link #reset}): the
+	 * owner puts them again when it notices a new level.
+	 */
+	public static void putLocal(String owner, BlockPos pos, BlockState state) {
+		Minecraft mc = Minecraft.getInstance();
+		syncLevel(mc);
+		if (level == null) {
+			return;
+		}
+		if (state.isAir()) {
+			removeLocal(owner, pos);
+			return;
+		}
+		set(pos.asLong(), new Ghost(localTag(owner), new MirrorTerrain.Block(state, null)));
+	}
+
+	/** Takes one of the owner's blocks away: what the server says stands there comes back. Other owners' ghosts stay. */
+	public static void removeLocal(String owner, BlockPos pos) {
+		long key = pos.asLong();
+		Ghost ghost = GHOSTS.get(key);
+		if (ghost != null && ghost.hub().equals(localTag(owner))) {
+			remove(key);
+		}
+	}
+
+	/** Takes all of the owner's blocks away. */
+	public static void clearLocal(String owner) {
+		String tag = localTag(owner);
+		for (Map.Entry<Long, Ghost> entry : List.copyOf(GHOSTS.entrySet())) {
+			if (entry.getValue().hub().equals(tag)) {
+				remove(entry.getKey());
+			}
+		}
+	}
+
+	/** Whether the owner has a ghost block at this position. */
+	public static boolean hasLocal(String owner, BlockPos pos) {
+		Ghost ghost = GHOSTS.get(pos.asLong());
+		return ghost != null && ghost.hub().equals(localTag(owner));
 	}
 
 	/** World left: the ghosts went with it. */

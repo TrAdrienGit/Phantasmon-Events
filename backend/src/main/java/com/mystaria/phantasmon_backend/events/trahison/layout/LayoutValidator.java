@@ -196,6 +196,9 @@ public final class LayoutValidator {
 			}
 			link(door, door.zoneA(), "zone_a", zones, issues);
 			link(door, door.zoneB(), "zone_b", zones, issues);
+			if (door.threshold() != null && !door.threshold().isBlank() && !zones.containsKey(door.threshold())) {
+				issues.add(new Issue(BAD_REFERENCE, l(door.id(), door.threshold()), "field=threshold"));
+			}
 			if ("color".equals(door.type())) {
 				if (door.round() == null) {
 					issues.add(new Issue(MISSING_FIELD, l(door.id()), "field=round"));

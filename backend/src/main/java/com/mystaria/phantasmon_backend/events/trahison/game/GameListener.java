@@ -18,4 +18,8 @@ public interface GameListener {
 	 */
 	default void changed(Game game, String patch) {
 	}
+
+	/** A player's zone changed (at most once per second per game): only the game masters' views show zones. */
+	default void zonesChanged(Game game) {
+	}
 }

@@ -12,7 +12,7 @@ import com.mystaria.events.hub.MirrorHubCommands;
  * <ul>
  * <li>{@code tournament}: opens the tournaments menu, where players register and check in, and admins create and run
  * the tournaments;</li>
- * <li>{@code trahison}: the betrayal game: bare or {@code ping} checks the link with its backend module, {@code edit} (admins) toggles the plan editor, {@code minigame <mechanism>} (admins) opens a puzzle screen offline;</li>
+ * <li>{@code trahison}: the betrayal game: bare or {@code ping} checks the link with its backend module, {@code edit} (admins) toggles the plan editor, {@code door <id> open|close} (admins) opens or closes a door of the plan, {@code room new|load|list|off} (admins) the room editor, {@code minigame <mechanism>} (admins) opens a puzzle screen offline;</li>
  * <li>{@code hub ...}: the mirror hubs, admins only ({@link MirrorHubCommands});</li>
  * <li>{@code npc ...}, {@code open}, {@code close}, {@code list}: events and their trainer NPCs, admins only
  * ({@link com.mystaria.events.npc.NpcCommands}).</li>
@@ -50,12 +50,43 @@ public final class EventsCommands {
 									Minecraft.getInstance().tell(com.mystaria.events.trahison.screen.GmScreen::open);
 									return 1;
 								}))
+							// Opens or closes a door of the plan by hand (T2.2): the game master's set_door, the backend refuses non-admins.
+							.then(ClientCommandManager.literal("door").requires(source -> com.mystaria.phantasmon.client.api.PhantasmonApi.isAdmin())
+								.then(ClientCommandManager.argument("door", com.mojang.brigadier.arguments.StringArgumentType.word())
+									.then(ClientCommandManager.literal("open").executes(context -> {
+										com.mystaria.events.trahison.net.Messages.setDoor(com.mojang.brigadier.arguments.StringArgumentType.getString(context, "door"), true);
+										return 1;
+									}))
+									.then(ClientCommandManager.literal("close").executes(context -> {
+										com.mystaria.events.trahison.net.Messages.setDoor(com.mojang.brigadier.arguments.StringArgumentType.getString(context, "door"), false);
+										return 1;
+									}))))
 							// The plan editor (T2.1): shown to Phantasmon's admins only, which the editor checks again.
 							.then(ClientCommandManager.literal("edit").requires(source -> com.mystaria.phantasmon.client.api.PhantasmonApi.isAdmin())
 								.executes(context -> {
 									com.mystaria.events.trahison.edit.TrahisonEditor.toggle();
 									return 1;
 								}))
+							// The room editor (T3.2): admins, in a singleplayer creative world (checked again by the editor).
+							.then(ClientCommandManager.literal("room").requires(source -> com.mystaria.phantasmon.client.api.PhantasmonApi.isAdmin())
+								.then(ClientCommandManager.literal("new")
+									.then(ClientCommandManager.argument("id", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(context -> {
+										com.mystaria.events.trahison.edit.RoomEditor.start(com.mojang.brigadier.arguments.StringArgumentType.getString(context, "id"));
+										return 1;
+									})))
+								.then(ClientCommandManager.literal("load")
+									.then(ClientCommandManager.argument("id", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(context -> {
+										com.mystaria.events.trahison.edit.RoomEditor.load(com.mojang.brigadier.arguments.StringArgumentType.getString(context, "id"));
+										return 1;
+									})))
+								.then(ClientCommandManager.literal("list").executes(context -> {
+									com.mystaria.events.trahison.edit.RoomEditor.list();
+									return 1;
+								}))
+								.then(ClientCommandManager.literal("off").executes(context -> {
+									com.mystaria.events.trahison.edit.RoomEditor.stop();
+									return 1;
+								})))
 							// A puzzle screen opened locally with no backend (T3.4), to judge its look and feel.
 							.then(ClientCommandManager.literal("minigame").requires(source -> com.mystaria.phantasmon.client.api.PhantasmonApi.isAdmin())
 								.then(ClientCommandManager.argument("mechanism", com.mojang.brigadier.arguments.StringArgumentType.word())

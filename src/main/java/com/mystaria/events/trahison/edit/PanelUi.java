@@ -26,16 +26,25 @@ final class PanelUi {
 	private record Zone(int x, int y, int w, int h, int clipTop, int clipBottom, IntConsumer action, Field focus) {
 	}
 
-	/** A single-line text field of ids: letters, digits, {@code _} and {@code -}. */
+	/** A single-line text field: ids by default (letters, digits, {@code _} and {@code -}), or free text. */
 	static final class Field {
 		final int max;
+		final boolean free;
 		String value = "";
 
 		Field(int max) {
+			this(max, false);
+		}
+
+		Field(int max, boolean free) {
 			this.max = max;
+			this.free = free;
 		}
 
 		private boolean accepts(char c) {
+			if (free) {
+				return c >= 32 && c != 127;
+			}
 			return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c == '_' || c == '-';
 		}
 	}
@@ -115,7 +124,17 @@ final class PanelUi {
 			MenuUi.outline(g, x, y, x + w, y + h, invalid ? TrahisonPalette.DANGER : TrahisonPalette.ACCENT);
 		}
 		String shown = field.value + (focus && System.currentTimeMillis() / 500 % 2 == 0 ? "_" : "");
-		MenuUi.text(g, Component.literal(shown), x + 4, y + (h - 8) / 2 + 1, w - 8, invalid ? TrahisonPalette.DANGER : TrahisonPalette.TEXT);
+		int color = invalid ? TrahisonPalette.DANGER : TrahisonPalette.TEXT;
+		if (field.free) {
+			// Long free text: its end (where the player types) stays visible.
+			int width = TrahisonUi.width(Component.literal(shown));
+			int inner = w - 8;
+			g.enableScissor(x + 3, y, x + w - 3, y + h);
+			MenuUi.text(g, Component.literal(shown), x + 4 - Math.max(0, width - inner), y + (h - 8) / 2 + 1, Math.max(width, inner), color);
+			g.disableScissor();
+		} else {
+			MenuUi.text(g, Component.literal(shown), x + 4, y + (h - 8) / 2 + 1, w - 8, color);
+		}
 		zones.add(new Zone(x, y, w, h, clipTop, clipBottom, null, field));
 	}
 

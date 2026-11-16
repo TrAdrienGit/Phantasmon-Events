@@ -152,6 +152,11 @@ public abstract class MiniGameScreen extends Screen {
 		return Component.translatable("phantasmon_events.trahison.minigame." + mechanism + ".help");
 	}
 
+	/** Removes every widget: for a mechanism whose pieces depend on data that arrives later (the view). */
+	protected final void clearWidgets() {
+		widgets.clear();
+	}
+
 	protected final <T extends Widget> T add(T widget) {
 		widgets.add(widget);
 		return widget;
