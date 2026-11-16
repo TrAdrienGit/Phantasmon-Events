@@ -32,6 +32,8 @@ public class TrahisonException extends RuntimeException {
 	public static final String NO_GAME_MASTER = "ERROR_TRAHISON_NO_GAME_MASTER";
 	public static final String GAME_MASTER_PLAYS = "ERROR_TRAHISON_GAME_MASTER_PLAYS";
 	public static final String NO_DRAW = "ERROR_TRAHISON_NO_DRAW";
+	public static final String NO_BODY = "ERROR_TRAHISON_NO_BODY";
+	public static final String BODY_TOO_FAR = "ERROR_TRAHISON_BODY_TOO_FAR";
 	public static final String UNKNOWN_ACTION = "ERROR_TRAHISON_UNKNOWN_ACTION";
 
 	private final String code;

@@ -76,6 +76,10 @@ public final class Views {
 		v.put("remaining_ms", remaining(g, now));
 		v.put("server_time", now.toEpochMilli());
 
+		// T6.1: a living player (or an outsider) learns of a death only when it was announced or he saw the body; the
+		// ghosts and the game masters know everything. A hidden death looks like a living player in every field.
+		int me = g.indexOf(viewer);
+		boolean sees = kind == Kind.GM || kind == Kind.GHOST;
 		List<Object> players = new ArrayList<>();
 		for (int i = 0; i < g.players.size(); i++) {
 			PlayerState p = g.players.get(i);
@@ -84,7 +88,7 @@ public final class Views {
 			m.put("name", p.name);
 			m.put("uuid", p.uuid.toString());
 			m.put("connected", p.connected);
-			m.put("alive", p.alive);
+			m.put("alive", p.alive || hidden(g, i, me, sees));
 			m.put("is_bot", p.bot);
 			players.add(m);
 		}
@@ -98,11 +102,14 @@ public final class Views {
 			Placement pl = b.placement;
 			m.put("color", pl == null ? null : pl.color().name());
 			m.put("status", pl == null ? null : pl.status().name());
-			m.put("holder", b.holder);
-			m.put("owner_alive", b.ownerAlive);
+			boolean cloak = hidden(g, b.index, me, sees);
+			m.put("holder", cloak ? Integer.valueOf(b.index) : b.holder);
+			m.put("owner_alive", b.ownerAlive || cloak);
 			bracelets.add(m);
 		}
 		v.put("bracelets", bracelets);
+		v.put("bodies", bodies(g, kind, me, sees));
+		v.put("disconnected", disconnected(g, me));
 
 		List<Object> doors = new ArrayList<>();
 		for (int k = 0; k < Door.ALL.size(); k++) {
@@ -127,6 +134,48 @@ public final class Views {
 		// D12: a game master who plays keeps his player view and gets the game master block on top of it.
 		v.put("gm", kind == Kind.GM || g.gameMasters.contains(viewer) ? gmBlock(g, r) : null);
 		return v;
+	}
+
+	/**
+	 * T6.4: the living players whose connection dropped, with their last position, so the others' clients leave a standing
+	 * mannequin there. Bots, ghosts (their body shows instead), players with no known position and the viewer himself are left
+	 * out. Nothing else about the players is added: a mannequin shows what a standing player would.
+	 */
+	private static List<Object> disconnected(Game g, int me) {
+		List<Object> out = new ArrayList<>();
+		for (int i = 0; i < g.players.size(); i++) {
+			PlayerState p = g.players.get(i);
+			if (p.connected || p.bot || !p.alive || i == me || p.x == null || p.z == null) {
+				continue;
+			}
+			out.add(orderedMap("player", i, "zone", p.zone, "x", p.x, "y", p.y, "z", p.z));
+		}
+		return out;
+	}
+
+	/** True when player {@code i} is dead but the viewer must not know it yet. */
+	private static boolean hidden(Game g, int i, int me, boolean sees) {
+		if (sees || g.players.get(i).alive) {
+			return false;
+		}
+		Body body = g.bodyOf(i);
+		return body != null && !body.knownTo(me);
+	}
+
+	/**
+	 * The bodies this viewer may know of (T6.1): all of them for a ghost or a game master, else the announced ones and the
+	 * ones he saw. The cause is for the game masters only.
+	 */
+	private static List<Object> bodies(Game g, Kind kind, int me, boolean sees) {
+		List<Object> out = new ArrayList<>();
+		for (Body b : g.bodies) {
+			if (!sees && !b.knownTo(me)) {
+				continue;
+			}
+			out.add(orderedMap("player", b.player, "zone", b.zone, "x", b.x, "y", b.y, "z", b.z,
+				"bracelet_on_body", b.braceletOnBody, "cause", kind == Kind.GM ? b.cause : null));
+		}
+		return out;
 	}
 
 	/**
@@ -269,7 +318,8 @@ public final class Views {
 		return orderedMap("kind", kind.name(), "index", index >= 0 ? index : null, "group", group, "side", side,
 			"door_passed", passed, "side_voted", sideVoted, "own_vote", ownVote, "my_cabin", myCabin, "can_open_final_door", canOpenFinal,
 			"can_roam", index >= 0 && kind == Kind.PLAYER && GameService.canRoam(g, index),
-			"is_game_master", g.gameMasters.contains(uuid));
+			"is_game_master", g.gameMasters.contains(uuid),
+			"carried", index >= 0 ? new ArrayList<>(g.players.get(index).carried) : new ArrayList<>());
 	}
 
 	/**

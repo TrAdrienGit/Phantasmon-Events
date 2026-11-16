@@ -323,4 +323,17 @@ class FinalDoorTest {
 	void theWindowLastsOneMinuteByDefault() {
 		assertThat(new Settings().finalDoorSeconds).isEqualTo(60);
 	}
+
+	@Test
+	void aCarriedBraceletAtNineDoesNotOpenTheFinalDoorForAWristUnderNine() {
+		toFinal();
+		stand(1, "pupitre");
+		service.kill(HUB, 1, "test"); // a body at the pupitre, its bracelet reads 9
+		service.setPoints(HUB, 0, 5); // the wrist of player 0 reads 5
+		stand(0, "pupitre");
+		service.takeBracelet(HUB, ids[0], 1);
+		assertThat(service.find(HUB).players.get(0).carried).containsExactly(1);
+		assertCode(() -> service.openFinalDoor(HUB, ids[0]), TrahisonException.CANNOT_OPEN_FINAL);
+		assertThat(finalDoorFor(ids[0])).isEqualTo("CLOSED");
+	}
 }

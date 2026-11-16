@@ -291,3 +291,14 @@
 - Ne pas coller une place : elle est « pas collée ». Coller une place avec un décalage d'un bloc ou la mauvaise rotation : « mal collée ».
 - S'éloigner de plusieurs places (chunks non chargés) : « chunks non chargés », jamais « bien collée ».
 - Le tirage avec un plan dont les places ne sont pas dans l'ordre alphabétique de leurs identifiants : chaque fichier exporté va bien à la place de sa salle (la fiche de collage et la vérification sont d'accord).
+
+## T6.1, T6.2 et T6.4 : corps, bracelet ramassé, déconnexion (à deux comptes)
+- Tuer un joueur (commande ou outil de test appelant `GameService.kill`) pendant `ROOMS` : son corps apparaît couché, à son skin, là où il se tenait chez le compte qui est dans la zone ; rien chez un joueur loin, tant qu'il n'a pas vu le corps.
+- Un second joueur approche (moins de 8 blocs, sans mur entre) : il apprend la mort (`players[].alive` à faux pour lui seul), le corps apparaît chez lui.
+- Viser le corps à moins de 3 blocs : l'invite « Clic droit : prendre le bracelet » apparaît ; clic droit : le bracelet s'affiche, plus petit, à côté du sien ; le corps n'a plus d'invite.
+- Viser à plus de 3 blocs ou depuis une autre zone : message d'erreur « trop loin du corps ».
+- En `DOORS`, avec le bracelet pris dans un groupe, la porte de ce groupe s'ouvre avec lui ; à la porte finale, un bracelet pris à 9 ne suffit pas si le poignet est plus bas.
+- Un mort aux portes ou à 0 point : le corps est visible de tous dès l'annonce ; son bracelet vote « Allier » seul.
+- Réglage `announceDeaths` vrai : tous apprennent un meurtre tout de suite.
+- Couper la connexion d'un joueur vivant : chez les autres, un mannequin debout « (déconnecté) » à sa dernière position ; en mode automatique l'horloge attend 5 minutes au plus ; au retour le mannequin disparaît, la vue complète revient, la salle et l'inventaire sont intacts.
+- Tuer un maître du jeu qui joue : la partie finit, les huit autres gagnent.

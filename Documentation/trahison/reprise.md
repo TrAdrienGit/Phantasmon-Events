@@ -1,23 +1,19 @@
-# Reprise du chantier (pause du 2026-11-16, fin d'après-midi)
+# Reprise du chantier (pause du 2026-11-16, soir)
 
-> **État :** tout est sur `main`, poussé, sans branche wip. Dernier contrôle de l'orchestrateur : build client vert,
-> 284 tests backend verts, 970 clés de langue identiques EN/FR. **Rien n'a encore tourné en jeu.**
+> **État :** tout est sur `main`, poussé. Dernier contrôle de l'orchestrateur : client compilé avec ses tests,
+> 342 tests backend verts, 1 028 clés de langue identiques. **Rien n'a encore tourné en jeu.**
 >
-> Fait depuis la pause précédente :
-> - T2.4 cabines et vote, avec les décisions D4 et D5 (fermeture selon les zones, fenêtre de 30 s pour une paire, sortie après le vote) ;
-> - T2.5 porte finale ;
-> - T3.3 objets du monde, inventaire, documents ;
-> - T3.5 : les six mécanismes (`ring_dial`, `keypad`, `pickup_set`, `code_breaker`, `wiring`, `three_levers`), avec
->   `Mechanism.slotRoles()` ;
-> - les décisions D1 à D8 appliquées, et D9 (la carte) prévue comme étape T11 ([`etapes/T11-carte.md`](etapes/T11-carte.md)).
->
-> Questions ouvertes pour la propriétaire dans [`decisions.md`](decisions.md) : D10 à D22 et D30 à D43.
+> - **Fait :** T0 à T4 entiers, T6.1, T6.2 et T6.4 (mort, corps et bracelets, déconnexions), et les décisions
+>   jusqu'à D43 appliquées.
+> - **Agents :** ils lisent d'abord [`contexte-agent.md`](contexte-agent.md). Les tests humains sont dans
+>   [`tests-humains.md`](tests-humains.md), les décisions réglées dans [`decisions-tranchees.md`](decisions-tranchees.md).
+> - **Questions ouvertes** dans [`decisions.md`](decisions.md) : D10, D11, D13, D44 à D84, D90, D91 et D96 à D101.
 >
 > **Suite, dans l'ordre :**
 > 1. relire `decisions.md` et appliquer les réponses ;
-> 2. T3.6 : indices automatiques, mesure des temps, pénalité des 30 minutes (V9) ;
-> 3. T4 tirage et collage, puis T11 carte, T5, T6, T7, T8, T9, T10 ;
-> 4. préparer la check-list cochable des tests humains au premier déploiement (la liste complète est plus bas).
+> 2. T6.3 fantômes et spectateurs ;
+> 3. T5 vocal, T7 rôles et objets, T11 carte, T8 Cobblemon, T9 contenu, T10 ;
+> 4. la check-list cochable des tests humains au premier déploiement.
 
 > Point d'arrêt de l'orchestration du développement. À lire en premier à la reprise, avec
 > [`etapes/README.md`](etapes/README.md).

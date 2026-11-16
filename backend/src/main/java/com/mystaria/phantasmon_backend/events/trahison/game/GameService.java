@@ -379,7 +379,7 @@ public class GameService {
 					// A living player dropped: the clock stops for at most AUTO_PAUSE_MAX (plan, section 3).
 					doPause(g);
 					g.autoPaused = true;
-					g.autoPauseUntil = clock.instant().plus(AUTO_PAUSE_MAX);
+					g.autoPauseUntil = clock.instant().plusSeconds(Math.max(1, g.settings.autoPauseSeconds));
 					scheduleAutoResume(g);
 					event(g, "auto_pause", Map.of("player", i, "until", g.autoPauseUntil.toString()));
 					pauseChanged = true;
@@ -823,6 +823,150 @@ public class GameService {
 		}
 	}
 
+	// ------------------------------------------------------------------ death and bodies (T6.1)
+
+	/** How close, in blocks, a living player must be to a body to take its bracelet. */
+	public static final double TAKE_BRACELET_RANGE = 3.0;
+	/** How close, in blocks, a living player must be to a body to have seen it. */
+	public static final double SEE_BODY_RANGE = 8.0;
+
+	/**
+	 * THE ONE WAY TO KILL: the player becomes a ghost, keeps his points and his place in his group (D13), his bracelet votes
+	 * ALLY from now on and lies on a body where his client last said he stood. {@code announced}: every living player learns
+	 * of it now; otherwise only those who see the body. Does nothing for a player already dead. The caller must then call
+	 * {@link #endIfGameMasterKilled} (D12), persist and notify.
+	 */
+	private void markDead(Game g, int i, String cause, boolean announced) {
+		PlayerState p = g.players.get(i);
+		if (!p.alive) {
+			return;
+		}
+		p.alive = false;
+		BraceletState b = g.bracelets.get(i);
+		b.ownerAlive = false;
+		b.holder = null; // on the body
+		Body body = new Body();
+		body.player = i;
+		body.zone = p.zone;
+		body.x = p.x;
+		body.y = p.y;
+		body.z = p.z;
+		body.cause = cause;
+		body.announced = announced;
+		g.bodies.add(body);
+	}
+
+	/**
+	 * A kill from outside the stage machine (the knife of T7, the game master): {@code victim} dies of {@code cause}, his
+	 * body appears where he last stood. Announced to all when {@link Settings#announceDeaths}. A playing game master killed
+	 * ends the game (D12). Refuses a ghost.
+	 */
+	public Game kill(String hub, int victim, String cause) {
+		Game g = require(hub);
+		synchronized (g) {
+			if (g.phase == Phase.LOBBY || g.phase == Phase.ENDED) {
+				throw new TrahisonException(TrahisonException.WRONG_PHASE, "no running game");
+			}
+			if (victim < 0 || victim >= g.players.size()) {
+				throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "no such player");
+			}
+			if (!g.players.get(victim).alive) {
+				throw new TrahisonException(TrahisonException.DEAD, "already dead");
+			}
+			markDead(g, victim, cause == null || cause.isBlank() ? "kill" : cause, g.settings.announceDeaths);
+			event(g, "killed", Map.of("player", victim, "cause", cause == null ? "kill" : cause));
+			endIfGameMasterKilled(g); // D12: the hook of every death path
+			persist(g);
+			notifyChanged(g, "death");
+			return g;
+		}
+	}
+
+	/**
+	 * A living player takes the bracelet off a body: he must stand in the zone of the body, at most
+	 * {@link #TAKE_BRACELET_RANGE} blocks from it. The bracelet then counts at the doors he presents it to ({@code carried});
+	 * it keeps its colour, its points and its vote. Taking a body's bracelet shows him the body.
+	 */
+	public Game takeBracelet(String hub, UUID uuid, int dead) {
+		Game g = require(hub);
+		synchronized (g) {
+			int p = playerActionAnyPhase(g, uuid);
+			Body body = g.bodyOf(dead);
+			if (body == null || !body.braceletOnBody) {
+				throw new TrahisonException(TrahisonException.NO_BODY, "no bracelet to take there");
+			}
+			if (!near(g.players.get(p), body, TAKE_BRACELET_RANGE)) {
+				throw new TrahisonException(TrahisonException.BODY_TOO_FAR, "too far from the body");
+			}
+			body.braceletOnBody = false;
+			if (!body.seenBy.contains(p)) {
+				body.seenBy.add(p);
+			}
+			g.players.get(p).carried.add(dead);
+			g.bracelets.get(dead).holder = p;
+			event(g, "bracelet_taken", Map.of("by", p, "from", dead));
+			boolean opened = g.phase == Phase.DOORS && !g.paused && updateWindows(g); // one more bracelet at the threshold
+			persist(g);
+			notifyChanged(g, opened ? "door" : "body");
+			return g;
+		}
+	}
+
+	/**
+	 * A living player's client saw a body (in its zone, within {@link #SEE_BODY_RANGE} blocks, with a line of sight that only
+	 * the client can tell): the backend checks the distance and from then on this player knows about the death.
+	 */
+	public Game bodySeen(String hub, UUID uuid, int dead) {
+		Game g = require(hub);
+		synchronized (g) {
+			int p = playerActionAnyPhase(g, uuid);
+			Body body = g.bodyOf(dead);
+			if (body == null) {
+				throw new TrahisonException(TrahisonException.NO_BODY, "no body there");
+			}
+			if (body.knownTo(p)) {
+				return g;
+			}
+			if (!near(g.players.get(p), body, SEE_BODY_RANGE)) {
+				throw new TrahisonException(TrahisonException.BODY_TOO_FAR, "too far from the body");
+			}
+			body.seenBy.add(p);
+			event(g, "body_seen", Map.of("by", p, "of", dead));
+			persist(g);
+			notifyChanged(g, "body");
+			return g;
+		}
+	}
+
+	/** Same zone as the body and within {@code range} blocks; a player with no known position is never near. */
+	private static boolean near(PlayerState p, Body body, double range) {
+		if (p.zone == null || !p.zone.equals(body.zone) || p.x == null || body.x == null) {
+			return false;
+		}
+		double dx = p.x - body.x;
+		double dy = (p.y == null || body.y == null) ? 0 : p.y - body.y;
+		double dz = p.z - body.z;
+		return dx * dx + dy * dy + dz * dz <= range * range;
+	}
+
+	/** A living, connected-or-not player of a running (not paused) game, whatever the stage. */
+	private int playerActionAnyPhase(Game g, UUID uuid) {
+		if (g.phase == Phase.LOBBY || g.phase == Phase.ENDED) {
+			throw new TrahisonException(TrahisonException.WRONG_PHASE, "no running game");
+		}
+		int p = g.indexOf(uuid);
+		if (p < 0) {
+			throw new TrahisonException(TrahisonException.NOT_A_PLAYER, "not in the game");
+		}
+		if (g.paused) {
+			throw new TrahisonException(TrahisonException.PAUSED, "the game is paused");
+		}
+		if (!g.players.get(p).alive) {
+			throw new TrahisonException(TrahisonException.DEAD, "ghosts do not act");
+		}
+		return p;
+	}
+
 	// ------------------------------------------------------------------ player actions
 
 	/** The player takes door {@code door} (an index in {@link Door#ALL}) with his wrist bracelet. */
@@ -1011,8 +1155,7 @@ public class GameService {
 			g.bracelets.get(i).points = after[i];
 		}
 		for (int i : Outcome.newlyDead(after, g.aliveFlags())) {
-			g.players.get(i).alive = false;
-			g.bracelets.get(i).ownerAlive = false;
+			markDead(g, i, "points", true);
 		}
 		event(g, "rooms_timeout", Map.of("groups", opened, "points", toList(after)));
 		return endIfGameMasterKilled(g);
@@ -1616,8 +1759,7 @@ public class GameService {
 		r.splitIndex = anyPass && chosen >= 0 ? chosen : seedSplit(r.seed);
 		for (int i = 0; i < PLAYERS; i++) {
 			if (g.players.get(i).alive && r.passedDoor[i] < 0) {
-				g.players.get(i).alive = false;
-				g.bracelets.get(i).ownerAlive = false;
+				markDead(g, i, "doors", true);
 				r.diedAtDoors.add(i);
 			}
 		}
@@ -1646,8 +1788,7 @@ public class GameService {
 		g.storeHistory(g.history().after(r.assignment(), split));
 		List<Integer> dead = Outcome.newlyDead(after, g.aliveFlags());
 		for (int i : dead) {
-			g.players.get(i).alive = false;
-			g.bracelets.get(i).ownerAlive = false;
+			markDead(g, i, "points", true);
 		}
 		r.newlyDead = new ArrayList<>(dead);
 		List<String> votes = new ArrayList<>();

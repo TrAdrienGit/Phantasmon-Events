@@ -34,6 +34,14 @@ public class Settings {
 	 */
 	public boolean roomTimeout = true;
 	/**
+	 * T6: whether a kill (not the doors, not the points: those are public, D2) is announced to every living player. False
+	 * (the plan's default): the death is discovered by seeing the body.
+	 */
+	public boolean announceDeaths = false;
+	/** T6.4: how long the clock waits for a disconnected living player in AUTO mode (seconds). */
+	public int autoPauseSeconds = DEFAULT_AUTO_PAUSE_SECONDS;
+	public static final int DEFAULT_AUTO_PAUSE_SECONDS = 300;
+	/**
 	 * Id of a room of the bank that every group plays in every round (trials, until the draw of T4); null or unknown: the
 	 * built-in fallback room (one button).
 	 */

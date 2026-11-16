@@ -142,8 +142,16 @@ Champs (la colonne « Null » dit quand la valeur est `null`) :
 | `points` | entier | |
 | `color` | texte ou `null` | `RED`, `GREEN` ou `BLUE` pour la manche en cours ; `null` avant la première manche |
 | `status` | texte ou `null` | `PAIR` ou `SOLO` ; `null` avant la première manche |
-| `holder` | entier ou `null` | Index du joueur qui le porte ; `null` s'il traîne sur un corps (étape T6, jamais en T1) |
-| `owner_alive` | booléen | Faux quand son porteur d'origine est mort : il vote alors toujours `ALLY` |
+| `holder` | entier ou `null` | Index du joueur qui le porte ; `null` s'il traîne sur un corps (T6.1 : dès la mort de son porteur, tant que personne ne l'a pris ; sinon l'index de celui qui l'a pris). Pour qui ne connaît pas encore une mort, le champ montre le porteur d'origine (T1) |
+| `owner_alive` | booléen | Faux quand son porteur d'origine est mort : il vote alors toujours `ALLY`. T6.1 : tant qu'un vivant ne connaît pas la mort (ni annoncée, ni corps vu), il lit `true`, comme `players[].alive` |
+
+**Morts et corps (T6.1, T6.4)** : trois champs de plus dans la vue.
+
+- `bodies` : les corps que ce destinataire peut connaître, `{player, zone, x, y, z, bracelet_on_body, cause}` (coordonnées du plan ; `cause` seulement pour le maître du jeu). Un fantôme et un maître du jeu les voient tous ; un vivant seulement les morts annoncées (portes, points : toujours, D2 ; un meurtre : si `announceDeaths`) et ceux dont il a vu le corps (`body_seen`, ou en ayant pris le bracelet).
+- `viewer.carried` : les index des bracelets que ce joueur a pris sur des corps.
+- `disconnected` : les joueurs vivants dont la connexion est coupée, `{player, zone, x, y, z}` (dernière position) ; ni bots, ni fantômes, ni le destinataire. Le client y pose un mannequin « déconnecté ».
+
+Une mort (`GameService.kill` ou fin de manche) garde les points et la place dans le groupe (D13), fait voter le bracelet « Allier » par défaut, et rappelle `endIfGameMasterKilled` (D12).
 
 `groups[]` (une fois la répartition connue) : le groupe qui passe la porte `door`.
 
@@ -769,6 +777,8 @@ voyagent dans `EventsTrahisonGm`. Dans les deux cas, `hub` suit les conventions 
 | `pass_door` | `door` : 0 à 2 | Un joueur vivant, en `DOORS`, qui n'a pas encore passé de porte | Passe cette porte avec son bracelet de poignet. Elle doit porter la couleur du bracelet et ne pas contredire les portes déjà prises (une seule porte suffit à décider de la répartition) |
 | `vote` | `vote` : `ally` ou `betray` | Un joueur vivant, en `VOTE`, dont le groupe est connu ; avec `cabins_required` (T2.4), depuis sa cabine verrouillée (sinon `NOT_IN_CABIN`, `WRONG_CABIN` ou `CABIN_NOT_CLOSED`) | Vote pour son camp. **Une paire n'a qu'un vote** : le premier de ses membres qui vote engage les deux, le second reçoit `ERROR_TRAHISON_ALREADY_VOTED`. Le solo vote une fois. L'expéditeur voit son vote dans `viewer.own_vote` ; les autres n'apprennent que `side_voted` |
 | `close_cabin` | | Un joueur vivant, en `VOTE`, dans **sa** cabine (T2.4, D4) | Verrouille tout de suite sa cabine, sans attendre le partenaire d'une paire (qui est alors enfermé dehors). Sans effet si elle est déjà verrouillée ou si son groupe a voté. La simple entrée dans sa cabine la tient déjà (voir « Cabines et vote ») : cette action n'est qu'un raccourci. Refusée : `NOT_IN_CABIN` (aucune cabine à sa position), `WRONG_CABIN` (ce n'est pas la sienne, ou le plan n'en a pas pour lui) |
+| `take_bracelet` | `body` : index du mort | Un joueur vivant, partie en cours, hors pause (T6.1) | Prend le bracelet du corps de `body` : même zone et à 3 blocs au plus de la dernière position du mort (`NO_BODY` si pas de corps ou plus de bracelet, `BODY_TOO_FAR`). Le bracelet passe dans `viewer.carried` ; il compte aux seuils des portes (`DoorThresholds`) mais jamais à la porte finale, qui ne lit que le poignet. Montre aussi le corps à celui qui le prend |
+| `body_seen` | `body` | Un joueur vivant (T6.1) | Le client a vu le corps (zone, 8 blocs au plus, ligne de vue) ; le backend vérifie zone et distance, puis révèle la mort à cet expéditeur seul |
 | `open_final_door` | | Un joueur vivant, en `FINAL`, dont le bracelet de poignet lit 9 points ou plus (`viewer.can_open_final_door`) et, si le plan a un pupitre devant sa porte finale, qui s'y tient (T2.5) | Ouvre la porte finale `final_door_seconds` pour les vivants à 9 points ou plus, puis la ferme pour toujours : la partie passe alors à `ENDED`, `winners` = ceux qui sont passés (voir « La porte finale »). Refusée : `CANNOT_OPEN_FINAL`, `NOT_AT_FINAL_DOOR`, `WRONG_PHASE` |
 | `debug_solve` | | Un joueur vivant, en `ROOMS` | Pour les essais et les factices : la salle du groupe de l'expéditeur est résolue d'un coup (toutes ses étapes, sortie ouverte, `EventsTrahisonRoom` et `EventsTrahisonPuzzle` envoyés) et le groupe est marqué résolu, comme si les joueurs l'avaient fait |
 | `use_slot`, `puzzle_input`, `pick_up`, `give_item`, `use_item`, `combine` | voir « Actions de salle » ci-dessous | Un joueur vivant, en `ROOMS`, membre du groupe de la salle ; **en `FREE_TIME`, tout joueur vivant, dans toute salle ouverte jusqu'ici, celles des manches précédentes comprises** (D8) ; **en `ROOMS` et `VOTE` aussi, pour un joueur dont le groupe a terminé sa propre salle de la manche en cours** (D22, `viewer.can_roam`) | Actions dans la salle du groupe de l'expéditeur, ou, en temps libre, dans celle que disent `group` et `round` |
@@ -1116,6 +1126,8 @@ Préfixe `ERROR_TRAHISON_`. Tous sont envoyés par `EventsTrahisonSay` (genre `e
 | `ERROR_TRAHISON_PAUSED` | WS | Action de jeu pendant une pause, ou `pause` sur une pause du maître du jeu | `phantasmon_events.error.error_trahison_paused` |
 | `ERROR_TRAHISON_NOT_PAUSED` | WS | `resume` alors que la partie n'est pas en pause | `phantasmon_events.error.error_trahison_not_paused` |
 | `ERROR_TRAHISON_DEAD` | WS | Action de jeu d'un fantôme | `phantasmon_events.error.error_trahison_dead` |
+| `ERROR_TRAHISON_NO_BODY` | WS | `take_bracelet` ou `body_seen` sans corps, ou bracelet déjà pris | `phantasmon_events.error.error_trahison_no_body` |
+| `ERROR_TRAHISON_BODY_TOO_FAR` | WS | `take_bracelet` à plus de 3 blocs, `body_seen` à plus de 8, ou hors de la zone du corps | `phantasmon_events.error.error_trahison_body_too_far` |
 | `ERROR_TRAHISON_WRONG_DOOR` | WS | `pass_door` : la couleur du bracelet n'est pas sur cette porte | `phantasmon_events.error.error_trahison_wrong_door` |
 | `ERROR_TRAHISON_DOOR_INCOMPATIBLE` | WS | `pass_door` : cette porte contredit les portes déjà prises | `phantasmon_events.error.error_trahison_door_incompatible` |
 | `ERROR_TRAHISON_ALREADY_PASSED` | WS | `pass_door` : une porte a déjà été passée dans cette manche | `phantasmon_events.error.error_trahison_already_passed` |

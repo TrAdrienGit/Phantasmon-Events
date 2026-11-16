@@ -74,6 +74,8 @@ public class Game {
 	public List<PlayerState> players = new ArrayList<>();
 	public List<BraceletState> bracelets = new ArrayList<>();
 	public List<RoundState> rounds = new ArrayList<>();
+	/** The bodies of the dead players (T6.1), in order of death. */
+	public List<Body> bodies = new ArrayList<>();
 	/** Couples of bracelet indices {lo, hi} (see {@link History}). */
 	public List<int[]> pairedHistory = new ArrayList<>();
 	public List<int[]> facedHistory = new ArrayList<>();
@@ -107,6 +109,16 @@ public class Game {
 			}
 		}
 		return out;
+	}
+
+	/** The body of this dead player, or null. */
+	public Body bodyOf(int player) {
+		for (Body b : bodies) {
+			if (b.player == player) {
+				return b;
+			}
+		}
+		return null;
 	}
 
 	/** Index of the player with this account, or -1. */

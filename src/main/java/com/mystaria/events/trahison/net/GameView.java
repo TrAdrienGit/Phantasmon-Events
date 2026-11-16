@@ -52,6 +52,17 @@ public final class GameView {
 	public record Bracelet(int index, int points, GameColor color, Boolean pair, Integer holder, boolean ownerAlive) {
 	}
 
+	/**
+	 * A body the backend told this viewer about (T6.1): the dead player's seat, where he fell (hub coordinates; {@code zone}
+	 * may be empty) and whether his bracelet still lies on it.
+	 */
+	public record Body(int player, String zone, double x, double y, double z, boolean braceletOnBody) {
+	}
+
+	/** A living player whose connection dropped (T6.4): where he stood, hub coordinates. */
+	public record Away(int player, double x, double y, double z) {
+	}
+
 	public record Door(int index, List<GameColor> colors) {
 	}
 
@@ -222,6 +233,9 @@ public final class GameView {
 	private static Cabins cabinsState = Cabins.NONE;
 	private static FinalDoor finalDoorState;
 	private static Lobby lobbyState = Lobby.NONE;
+	private static List<Body> bodiesState = List.of();
+	private static List<Integer> carriedState = List.of();
+	private static List<Away> awayState = List.of();
 	/** {@code server time - local time} when the last view arrived. */
 	private static long clockOffset;
 	private static long phaseTotalMs;
@@ -243,6 +257,21 @@ public final class GameView {
 	/** The latest view, or an empty NONE view: never null. */
 	public static View orEmpty() {
 		return current == null ? EMPTY : current;
+	}
+
+	/** The bodies the backend lets this viewer know of (T6.1); empty when he knows none. */
+	public static List<Body> bodies() {
+		return bodiesState;
+	}
+
+	/** The players whose connection dropped (T6.4), each to be shown as a mannequin where he stood. */
+	public static List<Away> away() {
+		return awayState;
+	}
+
+	/** The seats of the bracelets this viewer picked up from bodies (T6.1), in the order he took them. */
+	public static List<Integer> carried() {
+		return carriedState;
 	}
 
 	/** The game masters and the lobby's candidates of the latest view (D7); {@link Lobby#NONE} without a game. */
@@ -314,6 +343,9 @@ public final class GameView {
 		cabinsState = Cabins.NONE;
 		finalDoorState = null;
 		lobbyState = Lobby.NONE;
+		bodiesState = List.of();
+		carriedState = List.of();
+		awayState = List.of();
 		phaseKey = "";
 		phaseTotalMs = 0;
 		pointsChangedAt = new long[9];
@@ -337,6 +369,9 @@ public final class GameView {
 		finalDoorState = next.hasGame() && data.get("final_door") instanceof Map<?, ?> fd && fd.get("open_until") instanceof Number until
 				? new FinalDoor(until.longValue(), fd.get("openers") instanceof Number n ? n.intValue() : 0) : null;
 		lobbyState = next.hasGame() ? parseLobby(data) : Lobby.NONE;
+		bodiesState = next.hasGame() ? parseBodies(data) : List.of();
+		awayState = next.hasGame() ? parseAway(data) : List.of();
+		carriedState = next.hasGame() ? ints(map(data, "viewer"), "carried") : List.of();
 		String key = next.gameId() + "/" + next.phase() + "/" + next.round() + "/" + next.finalLoop() + "/" + next.finalLoops();
 		long remaining = next.remainingMs() == null ? -1 : next.remainingMs();
 		if (!key.equals(phaseKey)) {
@@ -461,6 +496,27 @@ public final class GameView {
 				d.get("deadline") instanceof Number n ? n.longValue() : null, bool(d, "paused"), bool(d, "auto_paused"),
 				d.get("remaining_ms") instanceof Number n2 ? n2.longValue() : null, lng(d, "server_time", 0), Collections.unmodifiableList(players),
 				Collections.unmodifiableList(bracelets), Collections.unmodifiableList(doors), groups, passed, viewer, results, winners, gm);
+	}
+
+	private static List<Away> parseAway(Map<String, Object> d) {
+		List<Away> out = new ArrayList<>();
+		for (Map<String, Object> a : maps(d, "disconnected")) {
+			if (a.get("x") instanceof Number x && a.get("z") instanceof Number z) {
+				out.add(new Away(integer(a, "player", -1), x.doubleValue(), a.get("y") instanceof Number y ? y.doubleValue() : 0, z.doubleValue()));
+			}
+		}
+		return Collections.unmodifiableList(out);
+	}
+
+	private static List<Body> parseBodies(Map<String, Object> d) {
+		List<Body> out = new ArrayList<>();
+		for (Map<String, Object> b : maps(d, "bodies")) {
+			if (b.get("x") instanceof Number x && b.get("z") instanceof Number z) {
+				out.add(new Body(integer(b, "player", -1), str(b, "zone") == null ? "" : str(b, "zone"), x.doubleValue(),
+						b.get("y") instanceof Number y ? y.doubleValue() : 0, z.doubleValue(), bool(b, "bracelet_on_body")));
+			}
+		}
+		return Collections.unmodifiableList(out);
 	}
 
 	private static Cabins parseCabins(Map<String, Object> d) {

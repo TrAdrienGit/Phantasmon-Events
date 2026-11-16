@@ -76,6 +76,16 @@ public final class Messages {
 		send(ACTION, "vote", Map.of("vote", ally ? "ally" : "betray"), true);
 	}
 
+	/** T6: takes the bracelet off the body of player {@code body}; the backend checks the zone and the 3 blocks. */
+	public static void takeBracelet(int body) {
+		send(ACTION, "take_bracelet", Map.of("body", body), true);
+	}
+
+	/** T6: this client saw the body of player {@code body} (zone, under 8 blocks, line of sight); the backend then tells us of the death. */
+	public static void bodySeen(int body) {
+		send(ACTION, "body_seen", Map.of("body", body), false);
+	}
+
 	public static void openFinalDoor() {
 		send(ACTION, "open_final_door", null, true);
 	}

@@ -31,6 +31,8 @@ public final class BraceletHud {
 	private static final int STRIP_H = 24;
 	private static final int STRIP_W = 172;
 	private static final int INFO_W = 124;
+	private static final float SMALL_SCALE = 0.6f;
+	private static final int SMALL_W = Math.round(TrahisonUi.BRACELET_W * SMALL_SCALE);
 	private static final long FLASH_MS = 400;
 	private static final long DELTA_MS = 600;
 
@@ -64,7 +66,9 @@ public final class BraceletHud {
 		boolean strip = view.viewer().kind() == ViewerKind.SPECTATOR || view.viewer().kind() == ViewerKind.GM;
 		Bracelet own = strip ? null : view.ownBracelet();
 		boolean ghost = view.viewer().kind() == ViewerKind.GHOST;
-		int w = strip ? Math.min(STRIP_W, sw - 2 * TrahisonUi.SAFE_MARGIN) : 8 + INFO_W + (own != null ? TrahisonUi.BRACELET_W + 8 : 0);
+		java.util.List<Bracelet> carried = strip || ghost ? java.util.List.of() : carriedBracelets(view);
+		int carriedW = carried.size() * (SMALL_W + 2);
+		int w = strip ? Math.min(STRIP_W, sw - 2 * TrahisonUi.SAFE_MARGIN) : 8 + INFO_W + carriedW + (own != null ? TrahisonUi.BRACELET_W + 8 : 0);
 		int h = strip ? STRIP_H : FULL_H;
 		int x = (sw - w) / 2;
 		int y = sh - BOTTOM - h;
@@ -97,6 +101,17 @@ public final class BraceletHud {
 			TrahisonUi.bracelet(g, ix, y + (h - TrahisonUi.BRACELET_H) / 2, own.color(), own.points(), Boolean.TRUE.equals(own.pair()), ghost);
 			pointsAnimation(g, own, ix, y + (h - TrahisonUi.BRACELET_H) / 2);
 			ix += TrahisonUi.BRACELET_W + 8;
+			// T6.2: the bracelets picked up from bodies, smaller, beside his own, with their colour and points.
+			float scale = SMALL_SCALE;
+			int cy = y + (h - Math.round(TrahisonUi.BRACELET_H * scale)) / 2;
+			for (Bracelet c : carried) {
+				g.pose().pushPose();
+				g.pose().translate(ix, cy, 0);
+				g.pose().scale(scale, scale, 1f);
+				TrahisonUi.bracelet(g, 0, 0, c.color(), c.points(), Boolean.TRUE.equals(c.pair()), false);
+				g.pose().popPose();
+				ix += SMALL_W + 2;
+			}
 		}
 		int right = x + w - 6;
 		int pillW = 0;
@@ -116,6 +131,18 @@ public final class BraceletHud {
 			MenuUi.text(g, Component.translatable(T + "hud.registered", view.players().size()), ix, y + 20, right - ix, TrahisonPalette.TEXT_SECONDARY);
 		}
 		return y;
+	}
+
+	/** The bracelets this player carries from bodies, as the view's list of them. */
+	private static java.util.List<Bracelet> carriedBracelets(View view) {
+		java.util.List<Bracelet> out = new java.util.ArrayList<>();
+		for (int index : GameView.carried()) {
+			Bracelet b = view.bracelet(index);
+			if (b != null) {
+				out.add(b);
+			}
+		}
+		return out;
 	}
 
 	private static int barColor(long remaining) {

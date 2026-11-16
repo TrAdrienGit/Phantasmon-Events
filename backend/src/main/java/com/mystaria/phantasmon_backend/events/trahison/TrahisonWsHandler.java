@@ -162,6 +162,8 @@ public class TrahisonWsHandler implements WsMessageHandler {
 			}
 			case "close_cabin" -> games.closeCabin(hubOf(who, in, false), who);
 			case "open_final_door" -> games.openFinalDoor(hubOf(who, in, false), who);
+			case "take_bracelet" -> games.takeBracelet(hubOf(who, in, false), who, intArg(in, "body"));
+			case "body_seen" -> games.bodySeen(hubOf(who, in, false), who, intArg(in, "body"));
 			case "debug_solve" -> games.debugSolve(hubOf(who, in, false), who);
 			case "use_slot", "puzzle_input", "pick_up", "give_item", "use_item", "combine", "replay" -> {
 				ObjectNode data = MAPPER.valueToTree(in);
