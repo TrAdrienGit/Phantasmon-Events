@@ -89,13 +89,14 @@ levier ou vrai bouton pour « faire vrai ».
 Bouton **Chaîne** du panneau (ou un clic sur un problème qui nomme une étape). À gauche, les étapes dans l'ordre (Ajout, Supp, Haut,
 Bas) ; à droite, l'étape choisie :
 
-- **Id** de l'étape (renommable) ; **Mécanisme** (liste). Le backend n'a aujourd'hui que `debug_button` et `three_dials` ; les
-  autres de la liste (`keypad`, `pickup_set`, `ring_dial`, `wiring`, `code_breaker`, `three_levers`) sont **prévus** (T3.5) : on peut
+- **Id** de l'étape (renommable) ; **Mécanisme** (liste, lue sur le backend à l'ouverture de l'éditeur). Le backend a aujourd'hui `debug_button`,
+  `three_dials`, `ring_dial`, `keypad` et `pickup_set` ; les autres de la liste (`wiring`, `code_breaker`, `three_levers`) sont **prévus** (T3.5) : on peut
   les poser, mais le backend refusera l'enregistrement tant qu'il ne les a pas.
 - **Paramètres** : des lignes clé / valeur (entier, `true` ou `false`, ou texte). Une valeur hors de l'intervalle connu s'affiche
   en rouge. Changer de mécanisme remet les paramètres à leurs valeurs par défaut.
-- **Emplacements des rôles** : chaque rôle du mécanisme est lié à un emplacement. Le rôle `exit` ouvre la sortie de la salle : son
-  emplacement doit être de genre `exit`.
+- **Emplacements des rôles** : chaque rôle du mécanisme est lié à un emplacement. Les rôles et les genres d'emplacement que chacun accepte viennent du
+  backend (`slot_roles`) : la liste ne propose que les emplacements d'un genre accepté (`keypad` : un `keypad` ou un `terminal` ; `deposit` de `pickup_set` : un
+  `pedestal`, `terminal`, `plate`, `secret` ou `inner_door`...). Le rôle `exit` ouvre la sortie de la salle : son emplacement doit être de genre `exit`.
 - **Prérequis** : les étapes à finir avant celle-ci (cliquer pour cocher). Ce sont les prérequis qui décident de l'ordre d'ouverture ; l'ordre
   de la liste ne sert qu'à la lecture. Une nouvelle étape demande par défaut la précédente.
 - **Indices donnés** : un indice du mécanisme (son rôle d'indice), l'emplacement où il s'affiche, et quand (« dès que l'étape est
@@ -103,6 +104,17 @@ Bas) ; à droite, l'étape choisie :
 - **Aides** : trois textes au plus, du plus vague au plus direct.
 - En haut à droite : difficulté et durée **estimées** (somme des estimations du catalogue du mod ; le serveur recalcule les vraies
   à l'enregistrement).
+
+### Deux recettes (T3.5)
+
+- **Digicode** : un emplacement `keypad` au mur, une étape `keypad` (paramètre `length`, 3 à 6) liée à lui par le rôle `keypad`, et un **indice donné** `code`
+  « dès que l'étape est ouverte » sur un emplacement `wall_clue` ou `document` : sans lui le code n'est montré nulle part et le backend refuse l'enregistrement.
+  Les joueurs trouvent le code, reviennent au digicode et le tapent.
+- **Objets cachés** : autant d'emplacements `pickup` que de rôles d'indice `spot_1`..`spot_n` (réglez `spots` sur ce nombre : **chaque** `spot_n` doit être donné à un
+  emplacement, dès l'ouverture), un emplacement de dépôt (un `pedestal` par exemple) lié au rôle `deposit`, et les paramètres `filled` (combien de cases garnies, tirées
+  par la graine à chaque partie) et `items` (la réserve d'objets). Pour joindre un document, remplissez le paramètre `document` (pages séparées par une ligne `---`) et
+  donnez l'indice `document` à un emplacement `document`. Les joueurs ramassent les objets là où la graine les a mis, puis les utilisent sur le dépôt : l'étape est
+  résolue quand ils sont tous revenus.
 
 Règles que la salle doit tenir : une étape qui ouvre la sortie, toutes les autres mènent à elle (rien ne mène nulle part), pas de
 cycle de prérequis, rien ne dépasse de la boîte, un emplacement ne sert qu'une seule énigme.

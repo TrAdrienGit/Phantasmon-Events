@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import com.mystaria.phantasmon_backend.events.trahison.layout.Cabin;
 import com.mystaria.phantasmon_backend.events.trahison.layout.Layout;
 import com.mystaria.phantasmon_backend.events.trahison.layout.LayoutContent;
+import com.mystaria.phantasmon_backend.events.trahison.layout.LayoutDoor;
 import com.mystaria.phantasmon_backend.events.trahison.room.ActionResult;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomAction;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomException;
@@ -65,6 +66,8 @@ public class GameService {
 	private final Map<UUID, Game> byId = new ConcurrentHashMap<>();
 	private final Map<UUID, GameScheduler.Handle> timers = new ConcurrentHashMap<>();
 	private final Map<UUID, GameScheduler.Handle> autoTimers = new ConcurrentHashMap<>();
+	/** The end of the final door's window (T2.5), by game. */
+	private final Map<UUID, GameScheduler.Handle> finalTimers = new ConcurrentHashMap<>();
 	private final List<GameListener> listeners = new CopyOnWriteArrayList<>();
 	/** The room engine link; null in tests that play the game alone (then {@code debug_solve} is the only way). */
 	private volatile GameRooms rooms;
@@ -498,6 +501,9 @@ public class GameService {
 					persist(g);
 				}
 			}
+			if (g.phase == Phase.FINAL && g.finalDoor != null && changed && finalCrossing(g, i, next)) {
+				persist(g); // the last of them going through ends the game (everybody is told by finish)
+			}
 			boolean cabinsMoved = false;
 			if (g.phase == Phase.VOTE && !g.paused) {
 				cabinsMoved = updateCabins(g) || changed && !g.cabinLocks.isEmpty(); // who is inside moves a door's openFor
@@ -514,6 +520,26 @@ public class GameService {
 				zoneChanged(g);
 			}
 		}
+	}
+
+	/**
+	 * A player entered a zone while the final door is open (T2.5): if it is the zone beyond the door and he is one of those it
+	 * lets through, he has crossed; when all of them have, the door closes at once. True if he was counted.
+	 */
+	private boolean finalCrossing(Game g, int player, String zone) {
+		FinalDoorWindow window = g.finalDoor;
+		LayoutDoor door = finalDoorOf(planOf(g));
+		if (zone == null || door == null || !zone.equals(door.zoneB()) || !window.openers().contains(player)
+				|| window.crossed().contains(player)) {
+			return false;
+		}
+		window = window.withCrossed(player);
+		g.finalDoor = window;
+		event(g, "final_cross", Map.of("player", player));
+		if (window.crossed().containsAll(window.openers())) {
+			closeFinalDoor(g, "all_crossed");
+		}
+		return true;
 	}
 
 	// ------------------------------------------------------------------ colour doors (T2.3)
@@ -669,7 +695,8 @@ public class GameService {
 		LayoutContent plan = planOf(g);
 		long now = clock.millis();
 		g.doors = new java.util.LinkedHashMap<>(DoorStates.compute(plan, g.phase, g.round, r == null ? null : r.roomSolved,
-			g.doorOverrides, openWindows(g, now), heldCabins(g, plan, r)));
+			g.doorOverrides, openWindows(g, now), heldCabins(g, plan, r),
+			g.finalDoor == null ? java.util.Set.of() : new java.util.TreeSet<>(g.finalDoor.openers())));
 		g.doorHints = DoorThresholds.hints(g, plan);
 		g.cabinIds = plan.cabins().stream().map(Cabin::id).toList();
 		g.myCabins = new java.util.LinkedHashMap<>();
@@ -826,6 +853,15 @@ public class GameService {
 
 	/** As {@link #roomAction(String, UUID, RoomAction)}, aimed at room {@code group} (null: the sender's own). */
 	public ActionResult roomAction(String hub, UUID uuid, RoomAction action, Integer group) {
+		return roomAction(hub, uuid, action, group, null);
+	}
+
+	/**
+	 * As above, aimed at the room of group {@code group} in round {@code round} (null: the current round). A room of an
+	 * earlier round is only reachable in the free time, which lets every living player visit every room opened so far (D8);
+	 * without a {@code group} the sender's own group of that round is meant.
+	 */
+	public ActionResult roomAction(String hub, UUID uuid, RoomAction action, Integer group, Integer round) {
 		Game g = require(hub);
 		synchronized (g) {
 			boolean free = g.phase == Phase.FREE_TIME;
@@ -833,7 +869,22 @@ public class GameService {
 			if (rooms == null) {
 				throw new TrahisonException(RoomException.NO_ROOM, "no room engine");
 			}
-			RoundState r = g.currentRound();
+			RoundState current = g.currentRound();
+			RoundState r = current;
+			if (round != null && round != current.number) {
+				if (!free) {
+					throw new TrahisonException(RoomException.NOT_IN_ROOM, "the rooms of round " + round + " are closed now");
+				}
+				r = null;
+				for (RoundState earlier : g.rounds) {
+					if (earlier.number == round && !earlier.finalLoop && earlier.splitIndex != null) {
+						r = earlier;
+					}
+				}
+				if (r == null) {
+					throw new TrahisonException(RoomException.NO_ROOM, "no room in round " + round);
+				}
+			}
 			int k = r.groupOf(p);
 			if (group != null && group != k) {
 				if (!free) {
@@ -855,7 +906,7 @@ public class GameService {
 			}
 			ActionResult result = rooms.apply(g, r, k, p, action, free);
 			if (result.roomFinished() && !free) {
-				markRoomSolved(g, r, k, p);
+				markRoomSolved(g, r, k, p); // (not free: r is the current round)
 			}
 			persist(g);
 			return result;
@@ -1144,7 +1195,14 @@ public class GameService {
 		}
 	}
 
-	/** In FINAL only; the wrist bracelet must read 9 or more and the player be alive. The game ends. */
+	/**
+	 * In FINAL only; the wrist bracelet must read 9 or more and the player be alive (T2.5). When the plan has a final door
+	 * with a pupitre zone (its {@code threshold}), he must stand in it (bots excepted). The door then opens for
+	 * {@code final_door_seconds} for every living player who reads 9 (it stays closed for the others); when the time is up,
+	 * or when all of them have crossed, it closes for ever and the game ends, {@code winners} being the ones who walked
+	 * through. A plan without a final door has nothing to wait for: the game ends at once, every opener winning. Pressing the
+	 * pupitre again while the door is open does nothing.
+	 */
 	public Game openFinalDoor(String hub, UUID uuid) {
 		Game g = require(hub);
 		synchronized (g) {
@@ -1152,12 +1210,97 @@ public class GameService {
 			if (!Outcome.canOpenFinalDoor(g.bracelets.get(p).points, g.players.get(p).alive)) {
 				throw new TrahisonException(TrahisonException.CANNOT_OPEN_FINAL, "the bracelet does not read 9");
 			}
-			g.winners = new ArrayList<>(Outcome.finalDoorOpeners(g.points(), g.aliveFlags()));
-			event(g, "final_door", Map.of("opener", p, "winners", g.winners));
-			finish(g, "final_door");
+			if (g.finalDoor != null) {
+				return g; // already open
+			}
+			LayoutDoor door = finalDoorOf(planOf(g));
+			String pupitre = door == null || door.threshold() == null || door.threshold().isBlank() ? null : door.threshold();
+			if (pupitre != null && !g.players.get(p).bot && !pupitre.equals(g.players.get(p).zone)) {
+				throw new TrahisonException(TrahisonException.NOT_AT_FINAL_DOOR, "the final door opens from its pupitre");
+			}
+			List<Integer> openers = Outcome.finalDoorOpeners(g.points(), g.aliveFlags());
+			if (door == null) {
+				g.winners = new ArrayList<>(openers);
+				event(g, "final_door", Map.of("opener", p, "winners", g.winners));
+				finish(g, "final_door");
+				persist(g);
+				return g;
+			}
+			long until = clock.millis() + Math.max(1, g.settings.finalDoorSeconds) * 1000L;
+			List<Integer> crossed = new ArrayList<>();
+			for (int o : openers) {
+				if (g.players.get(o).bot) {
+					crossed.add(o); // a bot has no body to walk: he goes through with the door
+				}
+			}
+			FinalDoorWindow window = new FinalDoorWindow(until, openers, p, crossed);
+			g.finalDoor = window;
+			g.deadline = Instant.ofEpochMilli(until); // the clock of the stage now counts the door's time
+			g.remainingMs = until - clock.millis();
+			scheduleTimer(g);
+			scheduleFinalEnd(g, window);
+			event(g, "final_door", Map.of("opener", p, "openers", openers, "until", until));
 			persist(g);
+			notifyChanged(g, "final_door");
 			return g;
 		}
+	}
+
+	/** The plan's final door, or null. */
+	private static LayoutDoor finalDoorOf(LayoutContent plan) {
+		for (LayoutDoor d : plan.doors()) {
+			if ("final".equals(d.type())) {
+				return d;
+			}
+		}
+		return null;
+	}
+
+	private void scheduleFinalEnd(Game g, FinalDoorWindow window) {
+		GameScheduler.Handle old = finalTimers.remove(g.id);
+		if (old != null) {
+			old.cancel();
+		}
+		UUID id = g.id;
+		finalTimers.put(id, scheduler.schedule(Instant.ofEpochMilli(window.untilMs()), () -> onFinalEnd(id, window)));
+	}
+
+	private void onFinalEnd(UUID id, FinalDoorWindow window) {
+		Game g = byId.get(id);
+		if (g == null) {
+			return;
+		}
+		try {
+			synchronized (g) {
+				if (g.finalDoor == null || g.phase != Phase.FINAL) {
+					return; // closed or ended since
+				}
+				closeFinalDoor(g, "timeout");
+				persist(g);
+			}
+		} catch (RuntimeException ex) {
+			log.error("Trahison game {}: final door end failed", id, ex);
+		}
+	}
+
+	/**
+	 * The final door closes for ever and the game ends. The winners are the openers who walked through it (standing in the
+	 * zone beyond it, {@code zone_b} of the door) and the bots among them; with no zone beyond the door in the plan, every
+	 * opener.
+	 */
+	private void closeFinalDoor(Game g, String cause) {
+		FinalDoorWindow window = g.finalDoor;
+		LayoutDoor door = finalDoorOf(planOf(g));
+		java.util.TreeSet<Integer> through = new java.util.TreeSet<>();
+		for (int o : window.openers()) {
+			boolean beyond = door != null && door.zoneB() != null && door.zoneB().equals(g.players.get(o).zone);
+			if (door == null || door.zoneB() == null || beyond || window.crossed().contains(o)) {
+				through.add(o);
+			}
+		}
+		g.winners = new ArrayList<>(through);
+		event(g, "final_door_closed", Map.of("cause", cause, "winners", g.winners));
+		finish(g, "final_door");
 	}
 
 	// ------------------------------------------------------------------ startup
@@ -1183,6 +1326,9 @@ public class GameService {
 					scheduleAutoResume(g);
 				}
 				g.doorWindows.forEach((door, window) -> scheduleWindowEnd(g, door, window));
+				if (g.finalDoor != null) {
+					scheduleFinalEnd(g, g.finalDoor);
+				}
 				g.cabinLocks.forEach((cabin, lock) -> {
 					if (lock.waiting()) {
 						scheduleCabinWindow(g, cabin, lock);
@@ -1255,6 +1401,10 @@ public class GameService {
 				}
 			}
 			case FINAL -> {
+				if (g.finalDoor != null) { // the door was open: its time is over (or the game master closes it)
+					closeFinalDoor(g, cause);
+					break;
+				}
 				// DESIGN DEFAULT (the owner may change it): each final loop starts a fresh assignment, and there is
 				// no doors stage, so the split is picked by the seed instead of by the players.
 				g.finalLoops++;
@@ -1268,9 +1418,7 @@ public class GameService {
 
 	/** Draws the assignment of a new round (or final loop) from the game seed and the history. */
 	private void startRound(Game g, boolean finalLoop) {
-		if (rooms != null) {
-			rooms.clear(g.hub); // the rooms of the previous round are gone with it
-		}
+		// The rooms of the previous rounds stay (D8: the free time visits every room opened so far).
 		RoundState r = new RoundState();
 		r.finalLoop = finalLoop;
 		r.number = finalLoop ? 3 + g.finalLoops : g.round;
@@ -1397,6 +1545,11 @@ public class GameService {
 			rooms.clear(g.hub);
 		}
 		g.phase = Phase.ENDED;
+		g.finalDoor = null;
+		GameScheduler.Handle finalEnd = finalTimers.remove(g.id);
+		if (finalEnd != null) {
+			finalEnd.cancel();
+		}
 		g.doorOverrides.clear();
 		g.doorWindows.clear();
 		g.cabinLocks.clear();

@@ -189,11 +189,20 @@ public final class GameView {
 		}
 	}
 
+	/**
+	 * The final door while it is open (T2.5, the backend's {@code final_door}), kept beside the view like {@link Cabins}:
+	 * {@code openUntil} is the server epoch ms at which it closes for ever, {@code openers} how many bracelets it lets through.
+	 * Whether it is open <em>for this viewer</em> is the view's {@code doorsOpen}.
+	 */
+	public record FinalDoor(long openUntil, int openers) {
+	}
+
 	private static final View EMPTY = new View("", "", 0, Map.of(), List.of(), Phase.NONE, 0, false, 0, "AUTO", null, false, false, null, 0, List.of(), List.of(),
 			List.of(), null, null, new Viewer(ViewerKind.SPECTATOR, null, null, null, null, false, null, false), null, null, null);
 
 	private static View current;
 	private static Cabins cabinsState = Cabins.NONE;
+	private static FinalDoor finalDoorState;
 	private static Lobby lobbyState = Lobby.NONE;
 	/** {@code server time - local time} when the last view arrived. */
 	private static long clockOffset;
@@ -226,6 +235,16 @@ public final class GameView {
 	/** The cabins of the latest view (T2.4); {@link Cabins#NONE} without a game. */
 	public static Cabins cabins() {
 		return cabinsState;
+	}
+
+	/** The final door's window (T2.5) while it is open, else null. */
+	public static FinalDoor finalDoor() {
+		return finalDoorState;
+	}
+
+	/** Seconds the final door stays open, rounded up; 0 when it is shut. */
+	public static int finalDoorSeconds() {
+		return finalDoorState == null ? 0 : (int) Math.max(0, (finalDoorState.openUntil() - serverNow() + 999) / 1000);
 	}
 
 	public static boolean hasGame() {
@@ -275,6 +294,7 @@ public final class GameView {
 	public static void clear() {
 		current = null;
 		cabinsState = Cabins.NONE;
+		finalDoorState = null;
 		lobbyState = Lobby.NONE;
 		phaseKey = "";
 		phaseTotalMs = 0;
@@ -296,6 +316,8 @@ public final class GameView {
 		clockOffset = next.serverTime() > 0 ? next.serverTime() - now : clockOffset;
 		current = next;
 		cabinsState = next.hasGame() ? parseCabins(data) : Cabins.NONE;
+		finalDoorState = next.hasGame() && data.get("final_door") instanceof Map<?, ?> fd && fd.get("open_until") instanceof Number until
+				? new FinalDoor(until.longValue(), fd.get("openers") instanceof Number n ? n.intValue() : 0) : null;
 		lobbyState = next.hasGame() ? parseLobby(data) : Lobby.NONE;
 		String key = next.gameId() + "/" + next.phase() + "/" + next.round() + "/" + next.finalLoop() + "/" + next.finalLoops();
 		long remaining = next.remainingMs() == null ? -1 : next.remainingMs();

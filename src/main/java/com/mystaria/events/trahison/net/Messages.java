@@ -23,15 +23,25 @@ public final class Messages {
 
 	/** The room the next room actions are aimed at, when it is not the one the player stands in (see {@link #inRoom}). */
 	private static Integer forcedGroup;
+	/** The round of the forced room (0: the current one, nothing to say). */
+	private static int forcedRound;
 
 	/** Runs {@code actions}, every room action of which goes to room {@code group} (the object clicked, not the room the player stands in). */
 	public static void inRoom(int group, Runnable actions) {
+		inRoom(0, group, actions);
+	}
+
+	/** As above, for the room of group {@code group} in round {@code round} (D8: rooms of earlier rounds; 0: the current round). */
+	public static void inRoom(int round, int group, Runnable actions) {
 		Integer before = forcedGroup;
+		int roundBefore = forcedRound;
 		forcedGroup = group;
+		forcedRound = round;
 		try {
 			actions.run();
 		} finally {
 			forcedGroup = before;
+			forcedRound = roundBefore;
 		}
 	}
 
@@ -200,8 +210,14 @@ public final class Messages {
 			com.mystaria.events.trahison.room.RoomView room = com.mystaria.events.trahison.room.Rooms.current();
 			if (forcedGroup != null) {
 				data.put("group", forcedGroup);
+				if (forcedRound > 0) {
+					data.put("round", forcedRound);
+				}
 			} else if (room != null) {
 				data.put("group", room.group());
+				if (room.round() > 0) {
+					data.put("round", room.round());
+				}
 			}
 		}
 		String hub = Link.hub();

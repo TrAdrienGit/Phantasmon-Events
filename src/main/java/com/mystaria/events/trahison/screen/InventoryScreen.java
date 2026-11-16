@@ -184,7 +184,7 @@ public final class InventoryScreen extends TrahisonScreen {
 				}
 			}
 			case USE -> {
-				List<Interactables.Item> near = Interactables.nearby(room.group());
+				List<Interactables.Item> near = Interactables.nearby(room.round(), room.group());
 				if (near.isEmpty()) {
 					MenuUi.paragraph(g, Component.translatable(T + "inventory.use_none"), x, ly, w, TrahisonPalette.TEXT_MUTED);
 				}
@@ -195,8 +195,9 @@ public final class InventoryScreen extends TrahisonScreen {
 					TrahisonUi.textEllipsis(g, slotName(it.slot().kind(), it.slot().id()), x + 6, ry + 5, w - 12, TrahisonPalette.TEXT);
 					String slot = it.slot().id();
 					int group = it.group();
+					int round = it.round();
 					ui.zone(x, ry, w, ROW - 2, b -> {
-						Messages.inRoom(group, () -> Inventory.useOn(id, slot));
+						Messages.inRoom(round, group, () -> Inventory.useOn(id, slot));
 						mode = Mode.NONE;
 					});
 				}

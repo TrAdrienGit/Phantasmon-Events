@@ -10,8 +10,16 @@ import java.util.Set;
  * room: the active slots with what each shows, and the bag. Nothing here is a rule; the backend never sends a solution.
  * Pure: no Minecraft class.
  */
-public record RoomView(String hub, int group, String room, String name, List<Integer> members, boolean exitOpen, boolean finished,
+public record RoomView(String hub, int round, int group, String room, String name, List<Integer> members, boolean exitOpen, boolean finished,
 		List<SlotView> slots, List<ItemView> items, Place place) {
+
+	/**
+	 * The key of the room among all those known: rooms of earlier rounds stay in the hub (D8: the free time visits every room
+	 * opened so far), so a room is (round, group). A room whose message carried no round has round 0 and key = its group.
+	 */
+	public int key() {
+		return round * 10 + group;
+	}
 
 	/** Where the room stands in the hub: the plan's place, its minimum corner (hub x and z, world y) and its orientation. */
 	public record Place(String id, int x, int y, int z, String orientation) {
@@ -172,7 +180,7 @@ public record RoomView(String hub, int group, String room, String name, List<Int
 			Map<String, Object> origin = map(p.get("origin"));
 			place = new Place(str(p.get("id"), ""), num(origin.get("x")), num(origin.get("y")), num(origin.get("z")), str(p.get("orientation"), "north"));
 		}
-		return new RoomView(str(data.get("hub"), ""), group.intValue(), room, str(data.get("name"), room), List.copyOf(members),
+		return new RoomView(str(data.get("hub"), ""), data.get("round") instanceof Number round ? Math.max(0, round.intValue()) : 0, group.intValue(), room, str(data.get("name"), room), List.copyOf(members),
 				Boolean.TRUE.equals(data.get("exit_open")), data.get("finished_at") != null, List.copyOf(slots), List.copyOf(items), place);
 	}
 

@@ -325,7 +325,7 @@ class GameRoomsTest {
 	}
 
 	@Test
-	void roomsLiveThroughTheirRoundAndGoAtTheNextRoundAndAtTheEnd() {
+	void roomsStayWhenTheNextRoundStartsAndGoAtTheEnd() {
 		toRooms(null);
 		clock.advanceSeconds(SECONDS);
 		assertThat(phase(service)).isEqualTo(Phase.FREE_TIME);
@@ -338,9 +338,152 @@ class GameRoomsTest {
 		assertThat(roomService.rooms(HUB)).hasSize(3);
 		clock.advanceSeconds(SECONDS);
 		assertThat(phase(service)).isEqualTo(Phase.DOORS);
-		assertThat(roomService.rooms(HUB)).isEmpty();
+		// D8: the rooms of round 1 are kept for the free time of the later rounds.
+		assertThat(roomService.rooms(HUB)).hasSize(3).allSatisfy(r -> assertThat(r.round).isEqualTo(1));
 		service.end(HUB);
 		assertThat(roomService.rooms(HUB)).isEmpty();
+	}
+
+	// ------------------------------------------------------------------ D8: the rooms of earlier rounds
+
+	/** Everybody takes the doors of the split 0 of the current round. */
+	private void passAllDoors() {
+		Split s = Doors.validSplits(service.read(HUB, g -> g.currentRound().assignment())).get(0);
+		for (int k = 0; k < 3; k++) {
+			for (int b : s.groups().get(k).members()) {
+				service.passDoor(HUB, ids[b], Door.ALL.indexOf(s.groups().get(k).door()));
+			}
+		}
+	}
+
+	/** Plays round 1 up to its free time, then through the vote to the ROOMS of round 2. */
+	private void toRoundTwoRooms(String testRoom) {
+		toRooms(testRoom);
+		for (int i = 0; i < 4; i++) {
+			clock.advanceSeconds(SECONDS); // FREE_TIME, VOTE, RESULTS, DOORS (round 2)
+		}
+		assertThat(phase(service)).isEqualTo(Phase.DOORS);
+		assertThat(service.find(HUB).round).isEqualTo(2);
+		passAllDoors();
+		clock.advanceSeconds(SECONDS);
+		assertThat(phase(service)).isEqualTo(Phase.ROOMS);
+	}
+
+	private int roundTwoGroupOf(int player) {
+		return service.read(HUB, g -> g.rounds.get(1).groupOf(player));
+	}
+
+	private int roundOneGroupOf(int player) {
+		return service.read(HUB, g -> g.rounds.get(0).groupOf(player));
+	}
+
+	/** Round 1 and round 2 both have their three rooms, round 1's are closed in ROOMS and open in the free time. */
+	@Test
+	void freeTimeVisitsTheRoomsOfEveryRoundSoFar() {
+		toRoundTwoRooms("chain");
+		assertThat(roomService.rooms(HUB)).extracting(r -> r.round).containsExactly(1, 1, 1, 2, 2, 2);
+		int visitor = 4;
+		int oneGroup = roundOneGroupOf(1);
+		int twoGroup = roundTwoGroupOf(visitor);
+		// In the ROOMS stage of round 2 a round-1 room is shut, even to the players who were in it.
+		assertCode(() -> service.roomAction(HUB, ids[1], use("btn"), oneGroup, 1), RoomException.NOT_IN_ROOM);
+		assertCode(() -> service.roomAction(HUB, ids[1], new RoomAction.Replay(), oneGroup, 1), RoomException.NOT_IN_ROOM);
+		// ... while the round's own room (no round given) still works, and says round 2.
+		assertThat(service.roomAction(HUB, ids[visitor], use("btn")).stepSolved()).isTrue();
+		assertThat(roomService.find(HUB, 2, twoGroup).orElseThrow().stepsDone()).isEqualTo(1);
+		assertThat(roomService.find(HUB, 1, twoGroup).orElseThrow().stepsDone()).isZero();
+
+		clock.advanceSeconds(SECONDS);
+		assertThat(phase(service)).isEqualTo(Phase.FREE_TIME);
+		boolean[] solvedBefore = solved(service);
+		long events = roomSolvedEvents();
+		int other = roundOneGroupOf(1);
+		assertThat(service.roomAction(HUB, ids[visitor], use("btn"), other, 1).stepSolved()).isTrue();
+		assertThat(roomService.find(HUB, 1, other).orElseThrow().stepsDone()).isEqualTo(1);
+		assertThat(roomService.find(HUB, 2, other).orElseThrow().stepsDone()).isEqualTo(other == twoGroup ? 1 : 0);
+		// Played to the end: no point, nothing marked solved, nothing opens.
+		JsonNode view = roomService.puzzleView(HUB, 1, other, "s2", ViewerKind.GAME_MASTER).get("view");
+		for (int d = 0; d < 3; d++) {
+			int delta = Math.floorMod(view.get("target").get(d).asInt() - view.get("dials").get(d).asInt(), 10);
+			if (delta != 0) {
+				service.roomAction(HUB, ids[visitor], turn(d, delta), other, 1);
+			}
+		}
+		assertThat(service.roomAction(HUB, ids[visitor], use("exit"), other, 1).roomFinished()).isTrue();
+		assertThat(roomService.find(HUB, 1, other).orElseThrow().exitOpen).isTrue();
+		assertThat(solved(service)).containsExactly(solvedBefore);
+		assertThat(roomSolvedEvents()).isEqualTo(events);
+		// The saved state of round 1 follows (it is the round's own).
+		assertThat(service.<Boolean>read(HUB, g -> g.rounds.get(0).rooms.get(other).get("exitOpen").asBoolean())).isTrue();
+		assertThat(service.<Boolean>read(HUB, g -> g.rounds.get(0).roomSolved[other])).isFalse();
+		// A replay of the old room is a fresh state with another seed, in its own round only.
+		long seed = roomService.find(HUB, 1, other).orElseThrow().seed;
+		service.roomAction(HUB, ids[visitor], new RoomAction.Replay(), other, 1);
+		RoomInstance again = roomService.find(HUB, 1, other).orElseThrow();
+		assertThat(again.exitOpen).isFalse();
+		assertThat(again.stepsDone()).isZero();
+		assertThat(again.seed).isNotEqualTo(seed);
+		assertThat(again.replays).isEqualTo(1);
+		assertThat(roomService.find(HUB, 2, other).orElseThrow().replays).isZero();
+		assertThat(service.<Integer>read(HUB, g -> g.rounds.get(0).rooms.get(other).get("replays").asInt())).isEqualTo(1);
+		// Without a group, the sender's own group of that round; without a round, the current one.
+		assertThat(service.roomAction(HUB, ids[1], use("btn"), null, 1).stepSolved()).isTrue();
+		assertThat(roomService.find(HUB, 1, roundOneGroupOf(1)).orElseThrow().stepsDone()).isGreaterThanOrEqualTo(1);
+		// Rounds that have no room: refused. (Round 3 is not played yet, 0 is no round.)
+		assertCode(() -> service.roomAction(HUB, ids[1], use("btn"), 0, 3), RoomException.NO_ROOM);
+		assertCode(() -> service.roomAction(HUB, ids[1], use("btn"), 0, 0), RoomException.NO_ROOM);
+		assertCode(() -> service.roomAction(HUB, ids[1], use("btn"), 5, 1), RoomException.NO_ROOM);
+	}
+
+	@Test
+	void everyRoomOfEveryRoundKeepsWorkingAfterARestart() {
+		toRoundTwoRooms("chain");
+		clock.advanceSeconds(SECONDS);
+		assertThat(phase(service)).isEqualTo(Phase.FREE_TIME);
+		int visitor = 4;
+		int oneGroup = roundOneGroupOf(1);
+		service.roomAction(HUB, ids[visitor], use("btn"), oneGroup, 1); // progress in an old room
+		String before = roomService.roomView(HUB, 1, oneGroup, ViewerKind.PLAYER).toString();
+
+		ManualClock clock2 = new ManualClock();
+		RoomService rooms2 = new RoomService(registry(), clock2);
+		GameService service2 = newService(clock2, store, rooms2);
+		service2.loadActiveGames();
+		assertThat(rooms2.rooms(HUB)).extracting(r -> r.round).containsExactly(1, 1, 1, 2, 2, 2);
+		assertThat(rooms2.roomView(HUB, 1, oneGroup, ViewerKind.PLAYER).toString()).isEqualTo(before);
+		assertThat(rooms2.find(HUB, 1, oneGroup).orElseThrow().stepsDone()).isEqualTo(1);
+		// ... and the restored old room plays on through the new game (free time, round addressing).
+		JsonNode view = rooms2.puzzleView(HUB, 1, oneGroup, "s2", ViewerKind.GAME_MASTER).get("view");
+		for (int d = 0; d < 3; d++) {
+			int delta = Math.floorMod(view.get("target").get(d).asInt() - view.get("dials").get(d).asInt(), 10);
+			if (delta != 0) {
+				service2.roomAction(HUB, ids[visitor], turn(d, delta), oneGroup, 1);
+			}
+		}
+		assertThat(rooms2.find(HUB, 1, oneGroup).orElseThrow().steps.get("s2").solved).isTrue();
+	}
+
+	/** A game saved before rooms knew their round gets it from the round that holds the snapshot. */
+	@Test
+	void roomsSavedWithoutARoundTakeTheRoundOfTheirOwnRoundState() {
+		toRoundTwoRooms(null);
+		Game saved = GameJson.read(store.rows.get(service.read(HUB, g -> g.id)));
+		for (RoundState r : saved.rounds) {
+			for (JsonNode room : r.rooms) {
+				((ObjectNode) room).remove("round");
+			}
+		}
+		store.rows.put(saved.id, GameJson.write(saved));
+		ManualClock clock2 = new ManualClock();
+		RoomService rooms2 = new RoomService(registry(), clock2);
+		GameService service2 = newService(clock2, store, rooms2);
+		service2.loadActiveGames();
+		assertThat(rooms2.rooms(HUB)).extracting(r -> r.round).containsExactly(1, 1, 1, 2, 2, 2);
+		for (int k = 0; k < 3; k++) {
+			final int group = k;
+			List<Integer> expected = service.read(HUB, g -> List.copyOf(g.rounds.get(1).split().group(Door.ALL.get(group)).members()));
+			assertThat(rooms2.find(HUB, 2, k).orElseThrow().members).containsExactlyInAnyOrderElementsOf(expected);
+		}
 	}
 
 	@Test

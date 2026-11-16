@@ -31,6 +31,7 @@ final class RoomSnapshot {
 	static ObjectNode write(RoomInstance room) {
 		ObjectNode out = MAPPER.createObjectNode();
 		out.put("hub", room.hub);
+		out.put("round", room.round);
 		out.put("group", room.group);
 		out.put("seed", room.seed);
 		ArrayNode members = out.putArray("members");
@@ -65,11 +66,12 @@ final class RoomSnapshot {
 		return out;
 	}
 
-	static RoomInstance read(JsonNode in, MechanismRegistry registry) {
+	/** {@code defaultRound}: the round of a snapshot saved before rooms knew theirs. */
+	static RoomInstance read(JsonNode in, MechanismRegistry registry, int defaultRound) {
 		RoomDefinition definition = MAPPER.treeToValue(in.get("definition"), RoomDefinition.class);
 		List<Integer> members = new ArrayList<>();
 		in.get("members").forEach(m -> members.add(m.asInt()));
-		RoomInstance room = new RoomInstance(in.get("hub").asString(), in.get("group").asInt(), definition,
+		RoomInstance room = new RoomInstance(in.get("hub").asString(), in.path("round").asInt(defaultRound), in.get("group").asInt(), definition,
 				in.get("seed").asLong(), members);
 		room.startedAt = time(in, "startedAt");
 		room.lastProgressAt = time(in, "lastProgressAt");

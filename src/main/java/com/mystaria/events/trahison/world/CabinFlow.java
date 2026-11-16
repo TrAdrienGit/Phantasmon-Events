@@ -142,6 +142,9 @@ public final class CabinFlow {
 			if (mc.screen != null || mc.player == null) {
 				continue;
 			}
+			if (FinalDoorFlow.onKey(mc)) {
+				continue; // the same key opens the final door's pupitre (T2.5)
+			}
 			switch (prompt) {
 				case WAIT -> Messages.closeCabin();
 				case VOTE, VOTED -> VoteScreen.open();

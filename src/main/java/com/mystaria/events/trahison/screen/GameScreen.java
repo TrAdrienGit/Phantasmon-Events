@@ -484,6 +484,11 @@ public final class GameScreen extends TrahisonScreen {
 
 	private int drawFinal(GuiGraphics g, View v, int x, int y, int w) {
 		int used = hint(g, T + "hint.final", x, y, w) + 8;
+		if (GameView.finalDoor() != null) { // T2.5: the door is open for a few seconds, for the bracelets that read enough
+			boolean forMe = v.viewer().canOpenFinalDoor();
+			used += MenuUi.paragraph(g, Component.translatable(T + (forMe ? "final_pupitre.open_for_me" : "final_pupitre.open_not_me"), GameView.finalDoorSeconds()), x, y + used, w,
+					forMe ? TrahisonPalette.SUCCESS : TrahisonPalette.TEXT_MUTED) + 8;
+		}
 		// The backend says whether this bracelet opens the door (rules.Outcome): no threshold is known here.
 		boolean can = v.viewer().kind() == ViewerKind.PLAYER && v.viewer().canOpenFinalDoor() && !v.paused();
 		ui.button(g, x, y + used, w, TrahisonUi.BUTTON_H, Component.translatable(T + "final.open"), ButtonKind.PRIMARY,

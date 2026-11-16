@@ -27,6 +27,11 @@ public class ThreeDials implements Mechanism {
 	}
 
 	@Override
+	public List<SlotRole> slotRoles() {
+		return List.of(SlotRole.of("dials", "terminal", "pedestal"));
+	}
+
+	@Override
 	public List<MechanismParam> params() {
 		return List.of();
 	}

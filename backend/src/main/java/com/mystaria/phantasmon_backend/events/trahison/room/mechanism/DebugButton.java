@@ -20,6 +20,11 @@ public class DebugButton implements Mechanism {
 	}
 
 	@Override
+	public List<SlotRole> slotRoles() {
+		return List.of(SlotRole.of("press", "terminal", "keypad", "lever", "plate", "pedestal", "secret", "inner_door"));
+	}
+
+	@Override
 	public List<MechanismParam> params() {
 		return List.of();
 	}

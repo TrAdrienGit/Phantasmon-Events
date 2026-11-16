@@ -119,6 +119,9 @@ final class RoomChecks {
 					out.add(new Issue("ERROR_TRAHISON_ROOM_UNKNOWN_SLOT", List.of(st.id, String.valueOf(role.getValue())), "role=" + role.getKey()));
 				} else if (MechanismCatalog.EXIT_ROLE.equals(role.getKey()) && !"exit".equals(slot.kind)) {
 					out.add(new Issue("ERROR_TRAHISON_ROOM_BAD_KIND", List.of(st.id, slot.id), "role=exit;needs=exit"));
+				} else if (!MechanismCatalog.accepts(st.mechanism, role.getKey(), slot.kind)) {
+					out.add(new Issue("ERROR_TRAHISON_ROOM_BAD_KIND", List.of(st.id, slot.id),
+							"role=" + role.getKey() + ";needs=" + String.join("|", MechanismCatalog.kinds(st.mechanism, role.getKey()))));
 				}
 			}
 			for (String need : st.needs) {
@@ -133,7 +136,8 @@ final class RoomChecks {
 				if (!"open".equals(g.when) && !"solved".equals(g.when)) {
 					out.add(new Issue("ERROR_TRAHISON_ROOM_BAD_GIVE", List.of(st.id), "when=" + g.when));
 				}
-				if (MechanismCatalog.find(st.mechanism).isPresent() && !MechanismCatalog.clues(st.mechanism).contains(g.clue)) {
+				if (MechanismCatalog.find(st.mechanism).filter(info -> info.known() && !MechanismCatalog.usingFallback()).isPresent()
+						&& !MechanismCatalog.clues(st.mechanism).contains(g.clue)) {
 					out.add(new Issue("ERROR_TRAHISON_ROOM_BAD_GIVE", List.of(st.id), "clue=" + g.clue));
 				}
 			}

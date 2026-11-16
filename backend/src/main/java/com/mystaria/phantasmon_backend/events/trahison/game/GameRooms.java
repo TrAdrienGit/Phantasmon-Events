@@ -95,10 +95,10 @@ public final class GameRooms {
 		for (int k = 0; k < 3; k++) {
 			List<Integer> members = List.copyOf(r.split().group(Door.ALL.get(k)).members());
 			RoomSlot place = k < places.size() ? places.get(k) : null;
-			rooms.start(g.hub, k, members, definition, roomSeed(r.seed, k),
+			rooms.start(g.hub, r.number, k, members, definition, roomSeed(r.seed, k),
 					place == null || place.origin() == null ? null
 							: new RoomPlace(place.id(), place.origin(), place.orientation() == null ? "north" : place.orientation()));
-			r.rooms.add(rooms.snapshot(g.hub, k));
+			r.rooms.add(rooms.snapshot(g.hub, r.number, k));
 		}
 	}
 
@@ -114,7 +114,7 @@ public final class GameRooms {
 		return out;
 	}
 
-	/** Forgets the hub's rooms (a new round starts, or the game ended). */
+	/** Forgets all the hub's rooms, those of earlier rounds too (the game ended). A new round keeps them (D8). */
 	void clear(String hub) {
 		rooms.removeAll(hub);
 	}
@@ -124,19 +124,22 @@ public final class GameRooms {
 		return apply(g, r, group, player, action, false);
 	}
 
-	/** As above; {@code free}: the free time (D8), any player in any room of the round, replays allowed. */
+	/**
+	 * As above, in the room of group {@code group} of round {@code r} (not necessarily the current one); {@code free}: the free
+	 * time (D8), any player in any room opened so far, replays allowed.
+	 */
 	ActionResult apply(Game g, RoundState r, int group, int player, RoomAction action, boolean free) {
-		ActionResult result = rooms.apply(g.hub, group, player, action, free);
+		ActionResult result = rooms.apply(g.hub, r.number, group, player, action, free);
 		save(g, r, group);
 		return result;
 	}
 
 	/** Solves the group's room at once (the provisional {@code debug_solve}, bots); no room: nothing happens. */
 	void forceSolve(Game g, RoundState r, int group) {
-		if (rooms.find(g.hub, group).isEmpty()) {
+		if (rooms.find(g.hub, r.number, group).isEmpty()) {
 			return;
 		}
-		rooms.forceSolve(g.hub, group);
+		rooms.forceSolve(g.hub, r.number, group);
 		save(g, r, group);
 	}
 
@@ -144,23 +147,24 @@ public final class GameRooms {
 		while (r.rooms.size() <= group) {
 			r.rooms.add(null);
 		}
-		r.rooms.set(group, rooms.snapshot(g.hub, group));
+		r.rooms.set(group, rooms.snapshot(g.hub, r.number, group));
 	}
 
-	/** After a restart: brings back the rooms saved in the current round (nobody is told; clients ask for a view). */
+	/**
+	 * After a restart: brings back the rooms saved in every round so far, the earlier rounds' too (D8: the free time visits
+	 * them). Nobody is told; clients ask for a view.
+	 */
 	void restore(Game g) {
-		RoundState r = g.currentRound();
-		if (r == null) {
-			return;
-		}
-		for (JsonNode saved : r.rooms) {
-			if (saved == null || saved.isNull()) {
-				continue;
-			}
-			try {
-				rooms.restore(saved);
-			} catch (RuntimeException ex) {
-				log.error("Trahison game {}: could not restore a room", g.id, ex);
+		for (RoundState r : g.rounds) {
+			for (JsonNode saved : r.rooms) {
+				if (saved == null || saved.isNull()) {
+					continue;
+				}
+				try {
+					rooms.restore(saved, r.number);
+				} catch (RuntimeException ex) {
+					log.error("Trahison game {}: could not restore a room of round {}", g.id, r.number, ex);
+				}
 			}
 		}
 	}

@@ -44,7 +44,7 @@ public class RoomController {
 	public List<MechanismInfo> mechanisms(Authentication authentication) {
 		adminService.requireAdmin((UUID) authentication.getPrincipal());
 		JsonNode defaults = Json.object();
-		return mechanisms.all().stream().map(m -> new MechanismInfo(m.id(), m.clueRoles(defaults), m.params(),
+		return mechanisms.all().stream().map(m -> new MechanismInfo(m.id(), m.clueRoles(defaults), m.slotRoles(), m.params(),
 				m.difficulty(defaults), m.expectedSeconds(defaults))).toList();
 	}
 

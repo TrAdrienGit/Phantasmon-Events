@@ -585,6 +585,7 @@ class TrahisonGameIntegrationTest {
 			int group = this.<Integer>game(g -> g.currentRound().groupOf(me));
 			await("the rooms reach the spectator", () -> roomGroups(spectator).size() == 3);
 			assertThat(roomGroups(a)).contains(group);
+			assertThat(a.ofType("EventsTrahisonRoom").stream().allMatch(r -> r.get("round").asInt() == 1)).isTrue(); // D8: rooms say their round
 
 			// A group-mate of another room cannot act in it; the actions are refused outside the stage.
 			act(a, "{\"action\":\"use_slot\",\"slot\":\"nowhere\"}");
@@ -641,6 +642,11 @@ class TrahisonGameIntegrationTest {
 			// D8: the free time takes room actions (any room); the stage after it does not.
 			act(a, "{\"action\":\"use_slot\",\"slot\":\"exit\"}");
 			assertThat(a.errors()).doesNotContain("ERROR_TRAHISON_WRONG_PHASE");
+			// D8: a round with no room is refused, the current round named explicitly is fine.
+			act(a, "{\"action\":\"use_slot\",\"slot\":\"exit\",\"round\":3}");
+			assertThat(a.errors()).contains("ERROR_TRAHISON_NO_ROOM");
+			act(a, "{\"action\":\"use_slot\",\"slot\":\"exit\",\"round\":0}");
+			assertThat(a.errors()).contains("ERROR_TRAHISON_BAD_ACTION");
 			toNextStage(Phase.VOTE);
 			act(a, "{\"action\":\"use_slot\",\"slot\":\"exit\"}");
 			assertThat(a.errors()).contains("ERROR_TRAHISON_WRONG_PHASE");

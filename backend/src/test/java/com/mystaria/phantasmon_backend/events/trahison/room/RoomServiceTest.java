@@ -442,6 +442,48 @@ class RoomServiceTest {
 		assertEquals(2, RoomAction.targetGroup(mapper.readTree("{\"group\":2}")));
 		assertEquals(null, RoomAction.targetGroup(mapper.readTree("{\"x\":1}")));
 		assertThrows(RoomException.class, () -> RoomAction.targetGroup(mapper.readTree("{\"group\":\"a\"}")));
+		assertEquals(2, RoomAction.targetRound(mapper.readTree("{\"round\":2}")));
+		assertEquals(null, RoomAction.targetRound(mapper.readTree("{\"group\":1}")));
+		assertThrows(RoomException.class, () -> RoomAction.targetRound(mapper.readTree("{\"round\":0}")));
+		assertThrows(RoomException.class, () -> RoomAction.targetRound(mapper.readTree("{\"round\":\"x\"}")));
+	}
+
+	/** D8: the rooms of earlier rounds stay, addressed by (round, group); the short calls mean the latest round. */
+	@Test
+	void roomsOfSeveralRoundsLiveSideBySide() {
+		rooms.start(HUB, 1, 0, MEMBERS, RoomFixtures.chain(), 1L, null);
+		rooms.start(HUB, 1, 1, List.of(1, 2, 4), RoomFixtures.chain(), 2L, null);
+		rooms.start(HUB, 2, 0, List.of(6, 7, 8), RoomFixtures.chain(), 3L, null);
+		assertEquals(List.of("1/0", "1/1", "2/0"), rooms.rooms(HUB).stream().map(r -> r.round + "/" + r.group).toList());
+		// without a round: the latest room of the group
+		assertEquals(2, rooms.find(HUB, 0).get().round);
+		assertEquals(1, rooms.find(HUB, 1).get().round);
+		assertEquals(1L, rooms.find(HUB, 1, 0).get().seed);
+		assertEquals(3L, rooms.find(HUB, 2, 0).get().seed);
+		// the views say their round
+		assertEquals(1, rooms.roomView(HUB, 1, 0, ViewerKind.PLAYER).get("round").asInt());
+		assertEquals(2, rooms.roomView(HUB, 0, ViewerKind.PLAYER).get("round").asInt());
+		assertEquals(1, rooms.puzzleView(HUB, 1, 0, "s1", ViewerKind.PLAYER).get("round").asInt());
+		// an action goes to the room of its round only, and an unknown round is refused
+		rooms.apply(HUB, 1, 0, 3, new RoomAction.UseSlot("btn"), false);
+		assertEquals(1, rooms.find(HUB, 1, 0).get().stepsDone());
+		assertEquals(0, rooms.find(HUB, 2, 0).get().stepsDone());
+		assertEquals(RoomException.NO_ROOM, assertThrows(RoomException.class,
+				() -> rooms.apply(HUB, 3, 0, 3, new RoomAction.UseSlot("btn"), false)).code());
+		// the snapshot keeps the round; a snapshot without one takes the given default
+		ObjectNode snapshot = rooms.snapshot(HUB, 1, 0);
+		assertEquals(1, snapshot.get("round").asInt());
+		RoomService other = new RoomService(RoomFixtures.registry(), clock);
+		assertEquals(1, other.restore(snapshot, 9).round);
+		snapshot.remove("round");
+		assertEquals(2, other.restore(snapshot, 2).round);
+		assertEquals(List.of("1/0", "2/0"), other.rooms(HUB).stream().map(r -> r.round + "/" + r.group).toList());
+		// a reset or a forced solve keeps the round
+		rooms.forceSolve(HUB, 1, 1);
+		assertTrue(rooms.find(HUB, 1, 1).get().exitOpen);
+		assertFalse(rooms.find(HUB, 1, 0).get().exitOpen);
+		rooms.removeAll(HUB);
+		assertTrue(rooms.rooms(HUB).isEmpty());
 	}
 
 	private static void assertNull(Object o) {

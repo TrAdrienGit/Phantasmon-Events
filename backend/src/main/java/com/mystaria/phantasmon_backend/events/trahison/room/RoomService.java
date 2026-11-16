@@ -25,7 +25,9 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * The rooms being played: one {@link RoomInstance} per (hub, group). Started with a definition and a seed (same seed,
+ * The rooms being played: one {@link RoomInstance} per (hub, round, group). A game keeps the rooms of its earlier rounds
+ * (D8: the free time visits every room opened so far); the methods without a round address the <b>latest</b> room of the
+ * group (the current round's, or the only one outside a game). Started with a definition and a seed (same seed,
  * same solutions), it applies the players' actions, opens the steps whose {@code needs} are done, detects the end and
  * tells the {@link RoomListener}s. Memory only (the game keeps a {@link #snapshot} of each room in its own state and
  * {@link #restore}s them after a restart); independent of {@code GameService} (it does not know the game: the caller
@@ -52,8 +54,8 @@ public class RoomService {
 		listeners.add(listener);
 	}
 
-	private static String key(String hub, int group) {
-		return hub + "#" + group;
+	private static String key(String hub, int round, int group) {
+		return hub + "#" + round + "#" + group;
 	}
 
 	/** The generator of one step: stable for (seed, step id), independent of the other steps. */
@@ -75,9 +77,15 @@ public class RoomService {
 	/** As {@link #start(String, int, Collection, RoomDefinition, long)}, with the place of the hub the room stands in. */
 	public RoomInstance start(String hub, int group, Collection<Integer> members, RoomDefinition definition, long seed,
 			RoomPlace place) {
-		RoomInstance room = build(hub, group, members, definition, seed);
+		return start(hub, 0, group, members, definition, seed, place);
+	}
+
+	/** Starts (or replaces) the room of {@code group} in round {@code round} of the hub's game. */
+	public RoomInstance start(String hub, int round, int group, Collection<Integer> members, RoomDefinition definition,
+			long seed, RoomPlace place) {
+		RoomInstance room = build(hub, round, group, members, definition, seed);
 		room.place = place;
-		rooms.put(key(hub, group), room);
+		rooms.put(key(hub, round, group), room);
 		synchronized (room) {
 			notifyRoom(room);
 		}
@@ -89,9 +97,9 @@ public class RoomService {
 		RoomInstance old = require(hub, group);
 		RoomInstance room;
 		synchronized (old) {
-			room = build(hub, group, old.members, old.definition, newSeed);
+			room = build(hub, old.round, group, old.members, old.definition, newSeed);
 			room.place = old.place;
-			rooms.put(key(hub, group), room);
+			rooms.put(key(hub, old.round, group), room);
 		}
 		synchronized (room) {
 			for (StepRuntime s : room.steps.values()) {
@@ -103,7 +111,10 @@ public class RoomService {
 	}
 
 	public void remove(String hub, int group) {
-		rooms.remove(key(hub, group));
+		RoomInstance latest = latest(hub, group);
+		if (latest != null) {
+			rooms.remove(key(hub, latest.round, group));
+		}
 	}
 
 	/** Drops every room of a hub (a new round starts, or the game ended). Nobody is told. */
@@ -113,7 +124,7 @@ public class RoomService {
 
 	/** True when the group's room exists and its exit is open. */
 	public boolean isFinished(String hub, int group) {
-		RoomInstance room = rooms.get(key(hub, group));
+		RoomInstance room = latest(hub, group);
 		if (room == null) {
 			return false;
 		}
@@ -127,7 +138,15 @@ public class RoomService {
 	 * when the room is already finished. Tells the listeners like a real finish would.
 	 */
 	public RoomInstance forceSolve(String hub, int group) {
-		RoomInstance room = require(hub, group);
+		return forceSolve(require(hub, group));
+	}
+
+	/** As {@link #forceSolve(String, int)}, for the room of an explicit round. */
+	public RoomInstance forceSolve(String hub, int round, int group) {
+		return forceSolve(require(hub, round, group));
+	}
+
+	private RoomInstance forceSolve(RoomInstance room) {
 		synchronized (room) {
 			if (room.exitOpen) {
 				return room;
@@ -157,7 +176,15 @@ public class RoomService {
 
 	/** The JSON form of a room (everything needed to resume it, solution included: it never leaves the backend). */
 	public ObjectNode snapshot(String hub, int group) {
-		RoomInstance room = require(hub, group);
+		return snapshot(require(hub, group));
+	}
+
+	/** As {@link #snapshot(String, int)}, for the room of an explicit round. */
+	public ObjectNode snapshot(String hub, int round, int group) {
+		return snapshot(require(hub, round, group));
+	}
+
+	private static ObjectNode snapshot(RoomInstance room) {
 		synchronized (room) {
 			return RoomSnapshot.write(room);
 		}
@@ -165,15 +192,26 @@ public class RoomService {
 
 	/** Puts back a room saved by {@link #snapshot} (replacing the group's room). Nobody is told. */
 	public RoomInstance restore(JsonNode snapshot) {
-		RoomInstance room = RoomSnapshot.read(snapshot, registry);
-		rooms.put(key(room.hub, room.group), room);
+		return restore(snapshot, 0);
+	}
+
+	/** As {@link #restore(JsonNode)}; {@code defaultRound}: the round of a snapshot saved before rooms knew theirs. */
+	public RoomInstance restore(JsonNode snapshot, int defaultRound) {
+		RoomInstance room = RoomSnapshot.read(snapshot, registry, defaultRound);
+		rooms.put(key(room.hub, room.round, room.group), room);
 		return room;
 	}
 
+	/** The latest room of the group (highest round), if any. */
 	public Optional<RoomInstance> find(String hub, int group) {
-		return Optional.ofNullable(rooms.get(key(hub, group)));
+		return Optional.ofNullable(latest(hub, group));
 	}
 
+	public Optional<RoomInstance> find(String hub, int round, int group) {
+		return Optional.ofNullable(rooms.get(key(hub, round, group)));
+	}
+
+	/** Every room of the hub, rounds in order, then groups. */
 	public List<RoomInstance> rooms(String hub) {
 		List<RoomInstance> out = new ArrayList<>();
 		rooms.forEach((k, r) -> {
@@ -181,13 +219,24 @@ public class RoomService {
 				out.add(r);
 			}
 		});
-		out.sort(java.util.Comparator.comparingInt(r -> r.group));
+		out.sort(java.util.Comparator.<RoomInstance>comparingInt(r -> r.round).thenComparingInt(r -> r.group));
 		return out;
 	}
 
-	private RoomInstance build(String hub, int group, Collection<Integer> members, RoomDefinition definition, long seed) {
+	/** The room of this group in the latest round that has one, or null. */
+	private RoomInstance latest(String hub, int group) {
+		RoomInstance best = null;
+		for (RoomInstance r : rooms.values()) {
+			if (r.hub.equals(hub) && r.group == group && (best == null || r.round > best.round)) {
+				best = r;
+			}
+		}
+		return best;
+	}
+
+	private RoomInstance build(String hub, int round, int group, Collection<Integer> members, RoomDefinition definition, long seed) {
 		Instant now = clock.instant();
-		RoomInstance room = new RoomInstance(hub, group, definition, seed, List.copyOf(members));
+		RoomInstance room = new RoomInstance(hub, round, group, definition, seed, List.copyOf(members));
 		for (Step step : definition.steps()) {
 			Mechanism m = registry.get(step.mechanism());
 			room.steps.put(step.id(), new StepRuntime(step, m, m.generate(rngFor(seed, step.id()), step.params())));
@@ -211,14 +260,30 @@ public class RoomService {
 	// ---------------------------------------------------------------- views
 
 	public ObjectNode roomView(String hub, int group, ViewerKind viewer) {
-		RoomInstance room = require(hub, group);
+		return roomView(require(hub, group), viewer);
+	}
+
+	/** As {@link #roomView(String, int, ViewerKind)}, for the room of an explicit round. */
+	public ObjectNode roomView(String hub, int round, int group, ViewerKind viewer) {
+		return roomView(require(hub, round, group), viewer);
+	}
+
+	private static ObjectNode roomView(RoomInstance room, ViewerKind viewer) {
 		synchronized (room) {
 			return RoomViews.room(room, viewer);
 		}
 	}
 
 	public ObjectNode puzzleView(String hub, int group, String stepId, ViewerKind viewer) {
-		RoomInstance room = require(hub, group);
+		return puzzleView(require(hub, group), stepId, viewer);
+	}
+
+	/** As {@link #puzzleView(String, int, String, ViewerKind)}, for the room of an explicit round. */
+	public ObjectNode puzzleView(String hub, int round, int group, String stepId, ViewerKind viewer) {
+		return puzzleView(require(hub, round, group), stepId, viewer);
+	}
+
+	private static ObjectNode puzzleView(RoomInstance room, String stepId, ViewerKind viewer) {
 		synchronized (room) {
 			if (!room.steps.containsKey(stepId)) {
 				throw new RoomException(RoomException.BAD_ACTION, "unknown step " + stepId);
@@ -240,7 +305,15 @@ public class RoomService {
 	 * fresh state. The caller (the game) checks the stage and that the player lives.
 	 */
 	public ActionResult apply(String hub, int group, int player, RoomAction action, boolean free) {
-		RoomInstance room = require(hub, group);
+		return apply(require(hub, group), group, player, action, free);
+	}
+
+	/** As {@link #apply(String, int, int, RoomAction, boolean)}, in the room of an explicit round. */
+	public ActionResult apply(String hub, int round, int group, int player, RoomAction action, boolean free) {
+		return apply(require(hub, round, group), group, player, action, free);
+	}
+
+	private ActionResult apply(RoomInstance room, int group, int player, RoomAction action, boolean free) {
 		synchronized (room) {
 			if (!free && !room.members.contains(player)) {
 				throw new RoomException(RoomException.NOT_IN_ROOM, "player " + player + " is not in group " + group);
@@ -281,10 +354,10 @@ public class RoomService {
 	 * nothing: that is the game's business and it does not look at a replayed room. Called with the room locked.
 	 */
 	private void replay(RoomInstance old) {
-		RoomInstance room = build(old.hub, old.group, old.members, old.definition, replaySeed(old.seed, old.replays + 1));
+		RoomInstance room = build(old.hub, old.round, old.group, old.members, old.definition, replaySeed(old.seed, old.replays + 1));
 		room.place = old.place;
 		room.replays = old.replays + 1;
-		rooms.put(key(old.hub, old.group), room);
+		rooms.put(key(old.hub, old.round, old.group), room);
 		synchronized (room) {
 			for (StepRuntime s : room.steps.values()) {
 				notifyPuzzle(room, new PuzzleUpdate(s.step.id(), "reset", null, List.of(), null));
@@ -482,10 +555,19 @@ public class RoomService {
 		}
 	}
 
+	/** The latest room of the group. */
 	private RoomInstance require(String hub, int group) {
-		RoomInstance room = rooms.get(key(hub, group));
+		RoomInstance room = latest(hub, group);
 		if (room == null) {
 			throw new RoomException(RoomException.NO_ROOM, "no room for group " + group + " in hub " + hub);
+		}
+		return room;
+	}
+
+	private RoomInstance require(String hub, int round, int group) {
+		RoomInstance room = rooms.get(key(hub, round, group));
+		if (room == null) {
+			throw new RoomException(RoomException.NO_ROOM, "no room for group " + group + " of round " + round + " in hub " + hub);
 		}
 		return room;
 	}

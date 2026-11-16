@@ -58,6 +58,8 @@ public abstract class MiniGameScreen extends Screen {
 	private final boolean offline;
 	/** The group whose room this puzzle is in (-1: the player's own, no need to say); set by the router, free time visits (D8) need it. */
 	private int group = -1;
+	/** The round of that room (0: the current one, nothing to say); free time visits of earlier rounds' rooms (D8) need it. */
+	private int round;
 	private final List<Widget> widgets = new ArrayList<>();
 	private final Map<Integer, Remote> remotes = new HashMap<>();
 	private final long openedAt = System.currentTimeMillis();
@@ -110,7 +112,17 @@ public abstract class MiniGameScreen extends Screen {
 
 	/** Says which room's puzzle this is, so the gestures go to that room. */
 	void aimAt(int group) {
+		aimAt(0, group);
+	}
+
+	/** As above, for the room of group {@code group} in round {@code round} (an earlier round's room, visited in the free time). */
+	void aimAt(int round, int group) {
+		this.round = round;
 		this.group = group;
+	}
+
+	public int round() {
+		return round;
 	}
 
 	public String step() {
@@ -195,6 +207,9 @@ public abstract class MiniGameScreen extends Screen {
 		message.put("input", input);
 		if (group >= 0) {
 			message.put("group", group);
+			if (round > 0) {
+				message.put("round", round);
+			}
 		}
 		if (!PhantasmonApi.send("EventsTrahisonAction", message)) {
 			fail();

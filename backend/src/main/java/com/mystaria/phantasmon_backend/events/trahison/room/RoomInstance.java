@@ -15,6 +15,11 @@ import java.util.Set;
  */
 public final class RoomInstance {
 	public final String hub;
+	/**
+	 * The round the room belongs to (1 to 3), 0 for a room played outside a game's rounds. Rooms of earlier rounds stay in the
+	 * hub (D8: the free time visits every room opened so far), so a room is addressed by (round, group).
+	 */
+	public final int round;
 	/** Group index of the round (0..2, as the doors). */
 	public final int group;
 	public final RoomDefinition definition;
@@ -45,8 +50,9 @@ public final class RoomInstance {
 	/** How many times the room was put back to a fresh state in the free time (D8); 0 for the round's own play. */
 	public int replays;
 
-	RoomInstance(String hub, int group, RoomDefinition definition, long seed, List<Integer> members) {
+	RoomInstance(String hub, int round, int group, RoomDefinition definition, long seed, List<Integer> members) {
 		this.hub = hub;
+		this.round = round;
 		this.group = group;
 		this.definition = definition;
 		this.seed = seed;

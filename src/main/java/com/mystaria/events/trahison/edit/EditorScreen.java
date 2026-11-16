@@ -405,7 +405,9 @@ public final class EditorScreen extends Screen {
 					} else {
 						door.round = null;
 						door.colors = new ArrayList<>();
-						door.threshold = null;
+						if (!"final".equals(door.type)) {
+							door.threshold = null; // only colour doors and the final door (its pupitre) have one
+						}
 					}
 					TrahisonEditor.changed();
 				});
@@ -417,6 +419,13 @@ public final class EditorScreen extends Screen {
 					door.zoneB = step(withNone(TrahisonEditor.ids(Kind.ZONE)), door.zoneB, dir);
 					TrahisonEditor.changed();
 				});
+				if ("final".equals(door.type)) {
+					// T2.5: the pupitre stands in this zone, in front of the door; without one the door opens from anywhere.
+					y = cycleRow(g, x, y, w, "pupitre", refName(door.threshold), dir -> {
+						door.threshold = step(withNone(TrahisonEditor.ids(Kind.ZONE)), door.threshold, dir);
+						TrahisonEditor.changed();
+					});
+				}
 				if ("color".equals(door.type)) {
 					y = cycleRow(g, x, y, w, "threshold", refName(door.threshold), dir -> {
 						door.threshold = step(withNone(TrahisonEditor.ids(Kind.ZONE)), door.threshold, dir);

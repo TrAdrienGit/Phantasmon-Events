@@ -166,4 +166,23 @@ class LayoutValidatorTest {
 		assertThat(LayoutValidator.validate(LayoutFixtures.with(base, null, doors, null, null), false))
 				.anyMatch(i -> i.code().equals(LayoutValidator.BAD_REFERENCE) && i.info().equals("field=threshold"));
 	}
+
+	/** T2.5: the final door's pupitre is its threshold zone, checked like the colour doors' (a zone of the plan). */
+	@Test
+	void theFinalDoorMayNameItsPupitreZone() {
+		LayoutContent base = LayoutFixtures.complete();
+		List<LayoutDoor> doors = new ArrayList<>(base.doors());
+		int at = -1;
+		for (int i = 0; i < doors.size(); i++) {
+			if ("final".equals(doors.get(i).type())) {
+				at = i;
+			}
+		}
+		LayoutDoor door = doors.get(at);
+		doors.set(at, new LayoutDoor(door.id(), door.type(), door.block(), door.zoneA(), door.zoneB(), null, null, "vote"));
+		assertThat(LayoutValidator.validate(LayoutFixtures.with(base, null, doors, null, null), false)).isEmpty();
+		doors.set(at, new LayoutDoor(door.id(), door.type(), door.block(), door.zoneA(), door.zoneB(), null, null, "nowhere"));
+		assertThat(LayoutValidator.validate(LayoutFixtures.with(base, null, doors, null, null), false))
+				.anyMatch(i -> i.code().equals(LayoutValidator.BAD_REFERENCE) && i.info().equals("field=threshold"));
+	}
 }

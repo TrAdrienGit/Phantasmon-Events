@@ -36,6 +36,11 @@ public class Game {
 	 * reopens when VOTE ends. Kept with the game so a restart brings them back.
 	 */
 	public java.util.Map<String, CabinLock> cabinLocks = new java.util.LinkedHashMap<>();
+	/**
+	 * The final door while it is open (FINAL only, T2.5): who may pass and until when; null the rest of the time. Kept with
+	 * the game so a restart brings it back (and closes it if its time has passed).
+	 */
+	public FinalDoorWindow finalDoor;
 	/** The ids of the plan's cabins, derived like {@link #doors} and sent as {@code cabins}; not stored. */
 	@com.fasterxml.jackson.annotation.JsonIgnore
 	public java.util.List<String> cabinIds = new java.util.ArrayList<>();

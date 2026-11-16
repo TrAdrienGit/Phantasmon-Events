@@ -19,7 +19,7 @@ import com.mystaria.phantasmon_backend.events.trahison.rules.GameColor;
  *   <li>{@code color}: closed, except during DOORS while the bracelets at its threshold open it for a few seconds (T2.3);</li>
  *   <li>{@code room_exit}: during ROOMS, closed until the room of its group is solved; open in any other stage;</li>
  *   <li>{@code cabin}: open, closed (but open for the players its group lets through) while a group holds its cabin (D4, D5);</li>
- *   <li>{@code final}: closed (T2.5 opens it for the players who read 9);</li>
+ *   <li>{@code final}: closed, except for the players who read 9 while its window is open (T2.5: closed for everybody else);</li>
  *   <li>{@code plain}: open;</li>
  *   <li>after the game, every door is open.</li>
  * </ul>
@@ -71,6 +71,15 @@ public final class DoorStates {
 	 */
 	public static Map<String, DoorState> compute(LayoutContent layout, Phase phase, int round, boolean[] roomSolved,
 			Map<String, Boolean> overrides, Set<String> thresholdOpen, Map<String, Set<Integer>> heldCabins) {
+		return compute(layout, phase, round, roomSolved, overrides, thresholdOpen, heldCabins, Set.of());
+	}
+
+	/**
+	 * @param finalOpenFor the players the final door is open for right now (T2.5): it stays closed for everybody else, each
+	 *                     client removes its own fake wall according to the view it gets
+	 */
+	public static Map<String, DoorState> compute(LayoutContent layout, Phase phase, int round, boolean[] roomSolved,
+			Map<String, Boolean> overrides, Set<String> thresholdOpen, Map<String, Set<Integer>> heldCabins, Set<Integer> finalOpenFor) {
 		Map<String, Set<Integer>> closedDoors = new HashMap<>();
 		for (var cabin : layout.cabins()) {
 			if (heldCabins.containsKey(cabin.id()) && cabin.door() != null) {
@@ -94,6 +103,9 @@ public final class DoorStates {
 			};
 			Boolean forced = overrides == null ? null : overrides.get(door.id());
 			Set<Integer> openFor = forced == null && !ended && "cabin".equals(door.type()) ? closedDoors.get(door.id()) : null;
+			if (forced == null && !ended && "final".equals(door.type()) && !finalOpenFor.isEmpty()) {
+				openFor = finalOpenFor;
+			}
 			out.put(door.id(), openFor != null && !open ? new DoorState(false, openFor) : DoorState.of(forced != null ? forced : open));
 		}
 		return out;

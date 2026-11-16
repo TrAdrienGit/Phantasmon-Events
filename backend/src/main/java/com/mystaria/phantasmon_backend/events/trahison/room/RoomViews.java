@@ -24,6 +24,7 @@ public final class RoomViews {
 	public static ObjectNode room(RoomInstance room, ViewerKind viewer) {
 		ObjectNode out = Json.object();
 		out.put("hub", room.hub);
+		out.put("round", room.round);
 		out.put("group", room.group);
 		out.put("room", room.definition.id());
 		out.put("name", room.definition.name());
@@ -146,6 +147,7 @@ public final class RoomViews {
 		StepRuntime s = room.steps.get(update.step());
 		ObjectNode out = Json.object();
 		out.put("hub", room.hub);
+		out.put("round", room.round);
 		out.put("group", room.group);
 		out.put("step", s.step.id());
 		out.put("mechanism", s.step.mechanism());

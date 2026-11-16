@@ -51,7 +51,12 @@ public final class Interactables {
 	private static final int REFRESH_TICKS = 40;
 
 	/** One object of the world: where it stands, what it shows (the latest message) and its hitbox entity. */
-	public record Item(String key, int group, SlotView slot, AABB box, double faceX, double faceZ, InteractableEntity entity) {
+	public record Item(String key, int round, int group, SlotView slot, AABB box, double faceX, double faceZ, InteractableEntity entity) {
+
+		/** The key of the item's room in {@link Rooms#all()}. */
+		public int roomKey() {
+			return round * 10 + group;
+		}
 
 		/** What a click does now: {@code use_item}, {@code use}, {@code pickup}, {@code examine}, or null (nothing to do). */
 		public String action(String held) {
@@ -165,7 +170,7 @@ public final class Interactables {
 				double[] b = RoomFrame.box(place.x(), place.y(), place.z(), k, slot.x(), slot.y(), slot.z(), slot.sx(), slot.sy(), slot.sz());
 				AABB box = new AABB(blocks.originX() + b[0], b[1], blocks.originZ() + b[2], blocks.originX() + b[3], b[4], blocks.originZ() + b[5]);
 				int[] face = RoomFrame.direction(RoomFrame.facing(slot.orientation(), k));
-				String key = room.group() + "#" + slot.id();
+				String key = room.key() + "#" + slot.id();
 				Item old = ITEMS.get(key);
 				InteractableEntity entity = old != null && old.box().equals(box) && !old.entity().isRemoved() ? old.entity() : null;
 				if (entity == null) {
@@ -175,7 +180,7 @@ public final class Interactables {
 					entity = new InteractableEntity(level, key, box);
 					level.addEntity(entity);
 				}
-				wanted.put(key, new Item(key, room.group(), slot, box, face[0], face[1], entity));
+				wanted.put(key, new Item(key, room.round(), room.group(), slot, box, face[0], face[1], entity));
 			}
 		}
 		for (Map.Entry<String, Item> e : ITEMS.entrySet()) {
@@ -201,7 +206,7 @@ public final class Interactables {
 		Vec3 bestPoint = null;
 		Map<Integer, RoomView> rooms = new HashMap<>(Rooms.all());
 		for (Item item : ITEMS.values()) {
-			if (!Rooms.canAct(rooms.get(item.group())) || item.action(Inventory.held()) == null) {
+			if (!Rooms.canAct(rooms.get(item.roomKey())) || item.action(Inventory.held()) == null) {
 				continue;
 			}
 			AABB box = item.box().inflate(0.05);
@@ -233,7 +238,7 @@ public final class Interactables {
 
 	/** What a click on the object does: always a message to the backend, or a reading screen. */
 	static void activate(Item item) {
-		RoomView room = Rooms.all().get(item.group());
+		RoomView room = Rooms.all().get(item.roomKey());
 		if (!Rooms.canAct(room)) {
 			return;
 		}
@@ -242,7 +247,7 @@ public final class Interactables {
 			return;
 		}
 		SlotView slot = item.slot();
-		Messages.inRoom(item.group(), () -> {
+		Messages.inRoom(item.round(), item.group(), () -> {
 			switch (action) {
 				case "use_item" -> Inventory.useOn(Inventory.held(), slot.id());
 				case "use" -> Messages.useSlot(slot.id());
@@ -253,7 +258,7 @@ public final class Interactables {
 	}
 
 	/** The slots of {@code room} that stand within reach of the player, nearest first (for the inventory screen's "use on"). */
-	public static List<Item> nearby(int group) {
+	public static List<Item> nearby(int round, int group) {
 		Minecraft mc = Minecraft.getInstance();
 		List<Item> out = new ArrayList<>();
 		if (mc.player == null) {
@@ -261,7 +266,7 @@ public final class Interactables {
 		}
 		Vec3 at = mc.player.position();
 		for (Item item : ITEMS.values()) {
-			if (item.group() == group && item.slot().openPuzzle() != null && item.box().getCenter().distanceTo(at) <= 8) {
+			if (item.round() == round && item.group() == group && item.slot().openPuzzle() != null && item.box().getCenter().distanceTo(at) <= 8) {
 				out.add(item);
 			}
 		}

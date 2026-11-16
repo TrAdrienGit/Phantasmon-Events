@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 
 import com.mystaria.phantasmon_backend.events.trahison.layout.Pos;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.Mechanism;
+import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.SlotRole;
 
 /**
  * Checks a room definition. Pure, no Spring; every problem is reported at once as an {@link Issue} with an
@@ -139,6 +140,32 @@ public final class RoomValidator {
 		return slots;
 	}
 
+	/**
+	 * Roles bound to slots against what the mechanism declares ({@link Mechanism#slotRoles}): a role it does not know, or a
+	 * slot of a kind the role does not accept. Skipped when the mechanism declares none. The {@code exit} role is checked
+	 * with the slots (kind {@code exit}).
+	 */
+	private static void checkRoles(Step st, Map<String, Slot> slots, Mechanism mechanism, List<Issue> out) {
+		List<SlotRole> declared = mechanism.slotRoles();
+		if (declared.isEmpty()) {
+			return;
+		}
+		for (Map.Entry<String, String> bound : st.slots().entrySet()) {
+			String role = bound.getKey();
+			Slot slot = slots.get(bound.getValue());
+			if (Step.EXIT_ROLE.equals(role) || slot == null) {
+				continue;
+			}
+			SlotRole known = declared.stream().filter(r -> r.role().equals(role)).findFirst().orElse(null);
+			if (known == null) {
+				out.add(new Issue(BAD_KIND, List.of(st.id(), slot.id()), "role=" + role + ";unknown"));
+			} else if (!known.kinds().contains(slot.kind())) {
+				out.add(new Issue(BAD_KIND, List.of(st.id(), slot.id()),
+						"role=" + role + ";needs=" + String.join("|", known.kinds())));
+			}
+		}
+	}
+
 	private static Map<String, Step> checkSteps(RoomDefinition room, Map<String, Slot> slots,
 			Function<String, Optional<Mechanism>> mechanisms, List<Issue> out) {
 		Map<String, Step> steps = new HashMap<>();
@@ -174,6 +201,9 @@ public final class RoomValidator {
 					out.add(new Issue(BAD_KIND, List.of(st.id(), slot.id()), "role=exit;needs=exit"));
 				}
 			}
+			if (mechanism != null) {
+				checkRoles(st, slots, mechanism, out);
+			}
 			for (String need : st.needs()) {
 				if (!steps.containsKey(need) || need.equals(st.id())) {
 					out.add(new Issue(UNKNOWN_STEP, List.of(st.id(), String.valueOf(need)), "needs"));
@@ -188,6 +218,11 @@ public final class RoomValidator {
 				}
 				if (mechanism != null && !mechanism.clueRoles(st.params()).contains(g.clue())) {
 					out.add(new Issue(BAD_GIVE, List.of(st.id()), "clue=" + g.clue()));
+				}
+			}
+			if (mechanism != null && mechanism.validateParams(st.params()).isEmpty()) {
+				for (String problem : mechanism.validateStep(st)) {
+					out.add(new Issue(BAD_GIVE, List.of(st.id()), problem));
 				}
 			}
 			if (st.hints().size() > Step.MAX_HINTS || st.hints().stream().anyMatch(h -> h == null || h.isBlank())) {

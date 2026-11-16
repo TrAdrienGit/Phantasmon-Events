@@ -166,7 +166,7 @@ public class TrahisonWsHandler implements WsMessageHandler {
 			case "use_slot", "puzzle_input", "pick_up", "give_item", "use_item", "combine", "replay" -> {
 				ObjectNode data = MAPPER.valueToTree(in);
 				data.put("action", action);
-				games.roomAction(hubOf(who, in, false), who, RoomAction.parse(data), RoomAction.targetGroup(data));
+				games.roomAction(hubOf(who, in, false), who, RoomAction.parse(data), RoomAction.targetGroup(data), RoomAction.targetRound(data));
 			}
 			default -> throw new TrahisonException(TrahisonException.UNKNOWN_ACTION, String.valueOf(action));
 		}
@@ -285,7 +285,7 @@ public class TrahisonWsHandler implements WsMessageHandler {
 		throw new TrahisonException(TrahisonException.NO_HUB, "hub required");
 	}
 
-	/** {@code {settings?: {mode, durations: {PHASE: seconds}, door_open_seconds, cabin_partner_seconds, cabins_required, test_room}, mode?, test_room?, fast?: seconds}}. */
+	/** {@code {settings?: {mode, durations: {PHASE: seconds}, door_open_seconds, final_door_seconds, cabin_partner_seconds, cabins_required, test_room}, mode?, test_room?, fast?: seconds}}. */
 	private static Settings settingsOf(Map<String, Object> in) {
 		Settings s = new Settings();
 		Object fast = in.get("fast");
@@ -310,6 +310,9 @@ public class TrahisonWsHandler implements WsMessageHandler {
 			}
 			if (m.get("door_open_seconds") instanceof Number n) {
 				s.doorOpenSeconds = Math.max(1, Math.min(60, n.intValue()));
+			}
+			if (m.get("final_door_seconds") instanceof Number n) {
+				s.finalDoorSeconds = Math.max(1, Math.min(120, n.intValue()));
 			}
 			if (m.get("durations") instanceof Map<?, ?> d) {
 				for (Map.Entry<?, ?> e : d.entrySet()) {

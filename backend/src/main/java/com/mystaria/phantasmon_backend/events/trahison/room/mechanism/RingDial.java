@@ -50,6 +50,7 @@ public class RingDial implements Mechanism {
 
 	public static final String ID = "ring_dial";
 	public static final String SYMBOLS_ROLE = "symbols";
+	public static final String TERMINAL_ROLE = "terminal";
 
 	static final int MIN_RINGS = 3;
 	static final int MAX_RINGS = 5;
@@ -91,6 +92,11 @@ public class RingDial implements Mechanism {
 	public int expectedSeconds(JsonNode params) {
 		Config c = config(params);
 		return 60 + 25 * c.rings() + 45 * c.links() + 3 * c.symbols();
+	}
+
+	@Override
+	public List<SlotRole> slotRoles() {
+		return List.of(SlotRole.of(TERMINAL_ROLE, "terminal", "pedestal"));
 	}
 
 	@Override

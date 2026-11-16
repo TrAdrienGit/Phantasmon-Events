@@ -108,6 +108,18 @@ nez de son partenaire, et la porte finale ne laisse passer que les bracelets à 
 - Tant qu'elle n'est pas ouverte : un vote recommence toutes les 10 minutes (déjà dans le moteur).
 - **Fini quand :** en jeu, une sortie à plusieurs, une sortie solitaire, et une montée collective par la boucle
   de votes.
+- **Fait le 2026-11-16** (à valider en jeu ; réponses par défaut D17 à D21) : **le pupitre** est le champ `threshold` de la porte `final` du plan
+  (zone devant la porte ; l'éditeur propose la ligne « Pupitre » pour ce type de porte) ; `open_final_door` n'est accepté qu'en `FINAL`, pour un
+  bracelet de poignet à 9 points ou plus (`viewer.can_open_final_door`) et, si le plan nomme un pupitre, depuis sa zone
+  (`ERROR_TRAHISON_NOT_AT_FINAL_DOOR`). La porte s'ouvre alors `final_door_seconds` (réglage, 10 par défaut) **seulement pour les vivants à 9** : le backend
+  met la porte `CLOSED` pour tous sauf eux dans `doors_state` (`DoorState.openFor`), et chaque client retire ou garde son faux mur d'après sa vue
+  (`world/FakeBlocks` inchangé). `Game.finalDoor` (`FinalDoorWindow`) est gardé avec la partie ; qui entre dans la `zone_b` de la porte est compté ;
+  quand tous sont passés, ou à la fin du délai, la porte se ferme pour toujours et la partie passe à `ENDED` avec `winners` = ceux qui sont passés. La boucle
+  de votes de `FINAL` continue tant que la porte n'a pas été ouverte (et ne démarre pas pendant la fenêtre). Client : `world/FinalDoorFlow`,
+  `screen/FinalDoorScreen` (pupitre, touche V, confirmation), `hud/FinalDoorPrompt`, lignes de l'animatrice (`say.final_door_open`, `say.final_door_escaped`,
+  `say.final_door_nobody`), ligne dans l'écran du jeu. Tests : `FinalDoorTest` (sortie à plusieurs, sortie solitaire, refus sous 9, refus hors `FINAL`, refus hors pupitre,
+  état par destinataire, passage à `ENDED`, boucle de votes, redémarrage, maître du jeu). Détails : `protocole.md`, « La porte finale ». **Pas de panneau flottant sur la porte finale** (non fait).
+  Corrigé en passant : la clé de l'annonce `doors_dead` (D2) était fausse côté backend.
 
 ## Hors périmètre
 

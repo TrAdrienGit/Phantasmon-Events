@@ -121,9 +121,20 @@ public final class Views {
 		v.put("game_masters", gameMasters(g));
 		v.put("viewer", viewer(g, r, kind, viewer));
 		v.put("results", results(g));
+		v.put("final_door", finalDoor(g));
 		v.put("winners", g.phase == Phase.ENDED ? new ArrayList<>(g.winners) : null);
 		v.put("gm", kind == Kind.GM ? gmBlock(g, r) : null);
 		return v;
+	}
+
+	/**
+	 * The final door while it is open (T2.5), the same for every recipient: when it closes ({@code open_until}, server epoch
+	 * ms) and how many it lets through ({@code openers}); who they are is not given (a bracelet's points are private). Null
+	 * when it is shut. Whether it is open <em>for this viewer</em> is in {@code doors_state}.
+	 */
+	private static Map<String, Object> finalDoor(Game g) {
+		FinalDoorWindow w = g.finalDoor;
+		return w == null || g.phase != Phase.FINAL ? null : orderedMap("open_until", w.untilMs(), "openers", w.openers().size());
 	}
 
 	/** The game masters (account and name), public: the lobby shows who runs the game. Possibly none. */
@@ -301,7 +312,8 @@ public final class Views {
 		}
 		return orderedMap("votes", votes, "zones", zones,
 			"settings", orderedMap("mode", g.settings.mode.name(), "durations", durations,
-				"door_open_seconds", g.settings.doorOpenSeconds, "cabin_partner_seconds", g.settings.cabinPartnerSeconds,
+				"door_open_seconds", g.settings.doorOpenSeconds, "final_door_seconds", g.settings.finalDoorSeconds,
+				"cabin_partner_seconds", g.settings.cabinPartnerSeconds,
 				"cabins_required", g.settings.cabinsRequired),
 			"bot_policy", g.botPolicy.name(), "seed", g.seed);
 	}

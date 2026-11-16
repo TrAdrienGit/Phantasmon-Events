@@ -366,7 +366,7 @@ final class ChainScreen extends Screen {
 			List<String> slotOptions = new ArrayList<>();
 			slotOptions.add(null);
 			for (SlotDto slot : RoomEditor.room.slots) {
-				if (!exitRole || "exit".equals(slot.kind)) {
+				if (MechanismCatalog.accepts(step.mechanism, role, slot.kind)) {
 					slotOptions.add(slot.id);
 				}
 			}

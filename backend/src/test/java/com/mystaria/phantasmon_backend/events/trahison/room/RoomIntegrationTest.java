@@ -183,6 +183,13 @@ class RoomIntegrationTest {
 				.andExpect(jsonPath("$[?(@.id == 'debug_button')].expected_seconds").value(hasItem(10)))
 				.andExpect(jsonPath("$[?(@.id == 'three_dials')].clue_roles[0]").value(hasItem("code")))
 				.andExpect(jsonPath("$[?(@.id == 'three_dials')].expected_seconds").value(hasItem(60)))
+				.andExpect(jsonPath("$[?(@.id == 'three_dials')].slot_roles[0].role").value(hasItem("dials")))
+				.andExpect(jsonPath("$[?(@.id == 'keypad')].slot_roles[0].role").value(hasItem("keypad")))
+				.andExpect(jsonPath("$[?(@.id == 'keypad')].slot_roles[0].kinds[0]").value(hasItem("keypad")))
+				.andExpect(jsonPath("$[?(@.id == 'keypad')].clue_roles[0]").value(hasItem("code")))
+				.andExpect(jsonPath("$[?(@.id == 'pickup_set')].slot_roles[0].role").value(hasItem("deposit")))
+				.andExpect(jsonPath("$[?(@.id == 'pickup_set')].clue_roles[0]").value(hasItem("spot_1")))
+				.andExpect(jsonPath("$[?(@.id == 'ring_dial')].slot_roles[0].role").value(hasItem("terminal")))
 				.andExpect(jsonPath("$[0].params").isArray());
 	}
 

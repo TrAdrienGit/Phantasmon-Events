@@ -20,6 +20,7 @@ public class TrahisonException extends RuntimeException {
 	public static final String ALREADY_PASSED = "ERROR_TRAHISON_ALREADY_PASSED";
 	public static final String ALREADY_VOTED = "ERROR_TRAHISON_ALREADY_VOTED";
 	public static final String CANNOT_OPEN_FINAL = "ERROR_TRAHISON_CANNOT_OPEN_FINAL";
+	public static final String NOT_AT_FINAL_DOOR = "ERROR_TRAHISON_NOT_AT_FINAL_DOOR";
 	public static final String GAME_ENDED = "ERROR_TRAHISON_GAME_ENDED";
 	public static final String ADMIN_REQUIRED = "ERROR_TRAHISON_ADMIN_REQUIRED";
 	public static final String NO_HUB = "ERROR_TRAHISON_NO_HUB";

@@ -8,7 +8,8 @@ import tools.jackson.databind.JsonNode;
  * An action a player sends from inside a room ({@code EventsTrahisonAction}, protocole.md section 3):
  * {@code use_slot {slot}}, {@code puzzle_input {step, input}}, {@code pick_up {slot}}, the inventory's
  * {@code give_item {item, to}}, {@code use_item {item, slot}}, {@code combine {a, b}}, and the free time's {@code replay}.
- * Every one may carry a {@code group} (see {@link #targetGroup}): the room it concerns, own group when absent.
+ * Every one may carry a {@code group} (see {@link #targetGroup}) and a {@code round} (see {@link #targetRound}): the room it
+ * concerns, own group of the current round when absent.
  */
 public sealed interface RoomAction {
 
@@ -53,6 +54,21 @@ public sealed interface RoomAction {
 			throw new RoomException(RoomException.BAD_ACTION, "group must be a group index");
 		}
 		return g.asInt();
+	}
+
+	/**
+	 * The round of the room an action is aimed at ({@code round} of the message: 1 to 3), or null for the current round. Only
+	 * the free time accepts a round other than the current one (D8: the rooms opened in earlier rounds stay visitable).
+	 */
+	static Integer targetRound(JsonNode data) {
+		JsonNode r = data == null ? null : data.get("round");
+		if (r == null || r.isNull()) {
+			return null;
+		}
+		if (!r.isNumber() || r.asInt() < 1) {
+			throw new RoomException(RoomException.BAD_ACTION, "round must be a round number");
+		}
+		return r.asInt();
 	}
 
 	/** Reads the {@code data} of an {@code EventsTrahisonAction}; a malformed one raises {@code ERROR_TRAHISON_BAD_ACTION}. */

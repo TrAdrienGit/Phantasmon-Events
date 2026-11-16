@@ -31,7 +31,7 @@ public final class PuzzleScreens {
 	}
 
 	/** A parsed {@code EventsTrahisonPuzzle}. {@code lastPlayer} is -1 when {@code last} is null. */
-	public record Msg(String hub, int group, String step, String mechanism, String reason, boolean solved,
+	public record Msg(String hub, int round, int group, String step, String mechanism, String reason, boolean solved,
 			Map<String, Object> view, int lastPlayer, List<Map<String, Object>> lastEvents) {
 	}
 
@@ -51,6 +51,9 @@ public final class PuzzleScreens {
 	static {
 		register("three_dials", ThreeDialsScreen::new);
 		register("debug_button", DebugButtonScreen::new);
+		register("ring_dial", RingDialScreen::new);
+		register("keypad", KeypadScreen::new);
+		register("pickup_set", PickupSetScreen::new);
 	}
 
 	private PuzzleScreens() {
@@ -159,9 +162,9 @@ public final class PuzzleScreens {
 		if (m == null || (group >= 0 && m.group() != group && !freeTime) || (!hub.isEmpty() && !m.hub().isEmpty() && !hub.equals(m.hub()))) {
 			return;
 		}
-		STATES.put(key(m.hub(), m.group(), m.step()), m);
+		STATES.put(key(m.hub(), m.round(), m.group(), m.step()), m);
 		Minecraft mc = Minecraft.getInstance();
-		if (mc.screen instanceof MiniGameScreen open && open.step().equals(m.step()) && (open.group() < 0 || open.group() == m.group())) {
+		if (mc.screen instanceof MiniGameScreen open && open.step().equals(m.step()) && (open.group() < 0 || open.group() == m.group() && open.round() == m.round())) {
 			open.onPuzzle(m);
 			return;
 		}
@@ -169,7 +172,7 @@ public final class PuzzleScreens {
 			Factory factory = FACTORIES.get(m.mechanism());
 			if (factory != null) {
 				MiniGameScreen screen = factory.create(m.step(), false);
-				screen.aimAt(m.group());
+				screen.aimAt(m.round(), m.group());
 				screen.onPuzzle(m);
 				mc.setScreen(screen);
 			}
@@ -186,8 +189,8 @@ public final class PuzzleScreens {
 		return null;
 	}
 
-	private static String key(String hub, int group, String step) {
-		return hub + "|" + group + "|" + step;
+	private static String key(String hub, int round, int group, String step) {
+		return hub + "|" + round + "|" + group + "|" + step;
 	}
 
 	private static Msg parse(Map<String, Object> data) {
@@ -201,7 +204,7 @@ public final class PuzzleScreens {
 		for (Object e : asList(last.get("events"))) {
 			events.add(asMap(e));
 		}
-		return new Msg(asString(data.get("hub"), ""), asInt(data.get("group"), -1), step, mechanism,
+		return new Msg(asString(data.get("hub"), ""), Math.max(0, asInt(data.get("round"), 0)), asInt(data.get("group"), -1), step, mechanism,
 				asString(data.get("reason"), "input"), Boolean.TRUE.equals(data.get("solved")), asMap(data.get("view")),
 				data.get("last") == null ? -1 : asInt(last.get("player"), -1), events);
 	}

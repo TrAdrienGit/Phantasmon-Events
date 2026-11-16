@@ -17,10 +17,11 @@ import com.mystaria.events.trahison.world.RoomFrame;
 import com.mystaria.phantasmon.client.api.PhantasmonApi;
 
 /**
- * The rooms the backend tells this client about ({@code EventsTrahisonRoom}), kept by group: only the latest message of each.
+ * The rooms the backend tells this client about ({@code EventsTrahisonRoom}), kept by (round, group) as {@link RoomView#key}:
+ * only the latest message of each. The rooms of earlier rounds stay (D8: the free time visits every room opened so far).
  * A player sees his own group's room as his; a spectator or a ghost receives every room and plays none. Everything the world
  * objects, the item bar, the inventory and the reading screen show comes from here, never from a guess. The rooms are
- * forgotten when a round starts (the backend sends no end message), when the game ends, and when the view is lost.
+ * forgotten when the game ends or restarts and when the view is lost, not when a round starts.
  * Client thread.
  */
 public final class Rooms {
@@ -50,7 +51,7 @@ public final class Rooms {
 		if (room == null || hub != null && !room.hub().isEmpty() && !room.hub().equals(hub)) {
 			return;
 		}
-		ROOMS.put(room.group(), room);
+		ROOMS.put(room.key(), room);
 		changed();
 	}
 
@@ -61,7 +62,7 @@ public final class Rooms {
 			return;
 		}
 		switch (v.phase()) {
-			case NONE, LOBBY, PROLOGUE, DOORS, ENDED -> clear();
+			case NONE, LOBBY, PROLOGUE, ENDED -> clear();
 			default -> {
 			}
 		}
@@ -108,11 +109,17 @@ public final class Rooms {
 			return null;
 		}
 		for (RoomView room : ROOMS.values()) {
-			if (room.members().contains(own)) {
+			if (room.members().contains(own) && currentRound(room)) {
 				return room;
 			}
 		}
 		return null;
+	}
+
+	/** Whether {@code room} belongs to the round the game is in (a room with no round, from an older backend, always does). */
+	public static boolean currentRound(RoomView room) {
+		View v = GameView.current();
+		return room.round() == 0 || v == null || room.round() == v.round();
 	}
 
 	/**
@@ -158,7 +165,7 @@ public final class Rooms {
 			return false;
 		}
 		return switch (v.phase()) {
-			case ROOMS -> room.members().contains(own) && !room.finished();
+			case ROOMS -> room.members().contains(own) && !room.finished() && currentRound(room);
 			case FREE_TIME -> true;
 			default -> false;
 		};

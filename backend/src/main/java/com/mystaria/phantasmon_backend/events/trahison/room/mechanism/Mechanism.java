@@ -29,6 +29,24 @@ public interface Mechanism {
 		return List.of();
 	}
 
+	/**
+	 * The roles a step of this mechanism binds to slots, with the kinds of slot each accepts (the room editor offers them
+	 * and {@code RoomValidator} checks them). The {@code exit} role is implicit (any mechanism can open the exit, on a slot
+	 * of kind {@code exit}) and is not listed. Empty (the default): the mechanism does not say, nothing is checked.
+	 */
+	default List<SlotRole> slotRoles() {
+		return List.of();
+	}
+
+	/**
+	 * Problems that only show once the step is wired into its room: a clue the players need that no slot shows, a role left
+	 * unbound... Empty when fine; each a short machine-readable text ({@code missing=code}). Called with a step whose
+	 * mechanism is this one and whose params are valid.
+	 */
+	default List<String> validateStep(com.mystaria.phantasmon_backend.events.trahison.room.Step step) {
+		return List.of();
+	}
+
 	/** The parameters this mechanism reads (for the room editor); none by default. */
 	default List<MechanismParam> params() {
 		return List.of();

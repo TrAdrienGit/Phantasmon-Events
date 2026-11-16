@@ -49,6 +49,8 @@ class Broadcaster implements GameListener, RoomListener {
 	static final String ROOM = "EventsTrahisonRoom";
 	static final String PUZZLE = "EventsTrahisonPuzzle";
 	static final String SAY_KEY_PREFIX = "phantasmon_events.trahison.say.phase.";
+	/** The hostess's one-off lines (not tied to a stage): {@code say.<name>}. */
+	static final String SAY_KEY = "phantasmon_events.trahison.say.";
 
 	private final SessionRegistry sessions;
 	private final Clock clock;
@@ -59,6 +61,8 @@ class Broadcaster implements GameListener, RoomListener {
 	private final Map<String, Set<UUID>> watchers = new ConcurrentHashMap<>();
 	/** Game id to the last announced stage, so a pause or a point correction does not announce again. */
 	private final Map<UUID, String> announced = new ConcurrentHashMap<>();
+	/** Game id to the final door window already announced, so a later change does not announce it again. */
+	private final Map<UUID, com.mystaria.phantasmon_backend.events.trahison.game.FinalDoorWindow> openDoors = new ConcurrentHashMap<>();
 
 	private static final JsonMapper MAPPER = JsonMapper.builder().build();
 
@@ -66,7 +70,8 @@ class Broadcaster implements GameListener, RoomListener {
 	 * Who is who in a game, copied while the game was locked: the account of each player index, who is dead, which
 	 * accounts are bots, the game masters.
 	 */
-	private record Audience(List<UUID> accounts, boolean[] alive, Set<UUID> bots, Set<UUID> gameMasters, boolean freeTime) {
+	private record Audience(List<UUID> accounts, boolean[] alive, Set<UUID> bots, Set<UUID> gameMasters, boolean freeTime,
+			int round) {
 
 		static Audience of(Game g) {
 			List<UUID> accounts = new java.util.ArrayList<>();
@@ -80,14 +85,17 @@ class Broadcaster implements GameListener, RoomListener {
 					bots.add(p.uuid);
 				}
 			}
+			var current = g.currentRound();
 			return new Audience(List.copyOf(accounts), alive, Set.copyOf(bots), Set.copyOf(g.gameMasters),
-					g.phase == com.mystaria.phantasmon_backend.events.trahison.game.Phase.FREE_TIME);
+					g.phase == com.mystaria.phantasmon_backend.events.trahison.game.Phase.FREE_TIME,
+					current == null ? 0 : current.number);
 		}
 
 		/**
 		 * What this account sees of a room: a living member of the group, the player view; a living player of another
-		 * group, nothing (except in the free time, D8: every living player visits and plays every room, so he gets the player
-		 * view of all of them); a ghost or anyone not playing, the spectator view; a game master who does not play, the game
+		 * group, nothing (except in the free time, D8: every living player visits and plays every room opened so far, those
+		 * of earlier rounds too, so he gets the player view of all of them; outside it, the rooms of earlier rounds are closed
+		 * to everybody who plays); a ghost or anyone not playing, the spectator view; a game master who does not play, the game
 		 * master view (as {@link Views#kindOf}, a game master who plays is a player).
 		 */
 		ViewerKind viewerOf(UUID account, RoomInstance room) {
@@ -96,7 +104,7 @@ class Broadcaster implements GameListener, RoomListener {
 				if (!alive[i]) {
 					return ViewerKind.SPECTATOR;
 				}
-				return room.members.contains(i) || freeTime ? ViewerKind.PLAYER : null;
+				return freeTime || room.round == round && room.members.contains(i) ? ViewerKind.PLAYER : null;
 			}
 			return gameMasters.contains(account) ? ViewerKind.GAME_MASTER : ViewerKind.SPECTATOR;
 		}
@@ -139,6 +147,10 @@ class Broadcaster implements GameListener, RoomListener {
 		if (!stage.equals(announced.put(g.id, stage))) {
 			announce(g);
 			announceDoorDeaths(g);
+			if (g.phase == com.mystaria.phantasmon_backend.events.trahison.game.Phase.ENDED
+					&& g.log.stream().anyMatch(e -> e.type.equals("final_door"))) {
+				announceEscape(g);
+			}
 		}
 	}
 
@@ -146,6 +158,9 @@ class Broadcaster implements GameListener, RoomListener {
 	public void changed(Game g, String patch) {
 		audiences.put(g.hub, Audience.of(g));
 		sendViews(g);
+		if ("final_door".equals(patch) && g.finalDoor != null && !g.finalDoor.equals(openDoors.put(g.id, g.finalDoor))) {
+			announceFinalDoor(g);
+		}
 	}
 
 	/** Zones only show in the game master's view: nobody else gets anything when a player changes zone. */
@@ -209,7 +224,7 @@ class Broadcaster implements GameListener, RoomListener {
 				continue;
 			}
 			try {
-				sessions.send(account, WsMessage.of(ROOM, data(rooms.roomView(g.hub, room.group, kind))));
+				sessions.send(account, WsMessage.of(ROOM, data(rooms.roomView(g.hub, room.round, room.group, kind))));
 			} catch (RoomException ex) {
 				// the room went away meanwhile: nothing to show
 			}
@@ -272,8 +287,39 @@ class Broadcaster implements GameListener, RoomListener {
 		}
 		Map<String, Object> say = new java.util.LinkedHashMap<>();
 		say.put("kind", "announce");
-		say.put("key", SAY_KEY_PREFIX + "doors_dead");
+		say.put("key", SAY_KEY + "doors_dead");
 		say.put("args", List.of(String.join(", ", who)));
+		say.put("phase", g.phase.name());
+		say.put("round", g.round);
+		for (UUID account : recipients(g)) {
+			sessions.send(account, WsMessage.of(SAY, say));
+		}
+	}
+
+	/** T2.5: the hostess says that the final door is open, who opened it, and for how long. */
+	private void announceFinalDoor(Game g) {
+		Map<String, Object> say = new java.util.LinkedHashMap<>();
+		say.put("kind", "announce");
+		say.put("key", SAY_KEY + "final_door_open");
+		say.put("args", List.of(g.players.get(g.finalDoor.openedBy()).name, String.valueOf(g.settings.finalDoorSeconds)));
+		say.put("phase", g.phase.name());
+		say.put("round", g.round);
+		for (UUID account : recipients(g)) {
+			sessions.send(account, WsMessage.of(SAY, say));
+		}
+	}
+
+	/** T2.5: once the game has ended through the final door, who walked out (or that nobody did). */
+	private void announceEscape(Game g) {
+		boolean any = !g.winners.isEmpty();
+		List<String> who = new java.util.ArrayList<>();
+		for (int i : g.winners) {
+			who.add(g.players.get(i).name);
+		}
+		Map<String, Object> say = new java.util.LinkedHashMap<>();
+		say.put("kind", "announce");
+		say.put("key", SAY_KEY + (any ? "final_door_escaped" : "final_door_nobody"));
+		say.put("args", any ? List.of(String.join(", ", who)) : List.of());
 		say.put("phase", g.phase.name());
 		say.put("round", g.round);
 		for (UUID account : recipients(g)) {

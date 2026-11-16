@@ -38,7 +38,7 @@ Rien n'a encore tourné **en jeu** : aucun déploiement n'a été fait (ni mod, 
 
 ## Reste à faire, dans l'ordre
 
-1. T2.4 cabines et vote, T2.5 porte finale (T2.3 portes de couleur faite le 2026-11-16, non déployée).
+1. ~~T2.4 cabines et vote, T2.5 porte finale~~ (faites le 2026-11-16 : T2.5 avec pupitre, fenêtre `final_door_seconds`, `winners` = ceux qui passent ; à valider en jeu, non déployées).
 2. T3.2 (finir), ~~T3.3 objets du monde, inventaire, documents~~ (faite le 2026-11-16, à valider en jeu), T3.5 six mécanismes (`ring_dial` d'abord), T3.6 indices automatiques, mesure des temps,
    pénalité des 30 minutes (V9).
 3. T4, T5, T6, T7, T8, T9, puis T10 avec des humains.
@@ -211,8 +211,55 @@ Rien n'a encore tourné **en jeu** : aucun déploiement n'a été fait (ni mod, 
     y jouer, y ramasser un objet, ouvrir ses mini-jeux et y faire des gestes qui bougent chez ceux qui y sont ; « Rejouer cette salle »
     (inventaire, confirmation) remet la salle à zéro avec **d'autres solutions** (l'ancien code ne marche plus) ; aucun point ne change, aucune
     porte ne s'ouvre, `roomSolved` ne bouge pas (voir la vue MJ) même si on finit la salle rejouée ; en `VOTE` plus rien n'est accepté.
+  - **D8, ajout : les salles des manches précédentes** (une partie à 9, au moins deux manches ; garder les salles de la manche 1 jusqu'à la manche 2) :
+    - au temps libre de la manche 2, les **six** salles sont dessinées (les trois places de la manche 1 et celles de la manche 2), et l'on peut viser et
+      y jouer dans celles de la manche 1 : ramasser, ouvrir un mini-jeu, faire un geste (il bouge chez ceux qui sont dans la même salle) ;
+    - pendant `ROOMS` de la manche 2, les salles de la manche 1 ne sont **pas** jouables (aucune visée, aucun message d'erreur parasite) ; elles le redeviennent à `FREE_TIME` ;
+    - « Rejouer cette salle » dans une salle de la manche 1 : nouvelles solutions, `roomSolved` de la manche 1 et de la manche 2 inchangé, aucune porte ne bouge, aucun point ;
+    - au temps libre de la manche 3 : neuf salles ; un mini-jeu ouvert dans une salle de la manche 1 envoie ses gestes à **cette** salle (pas à celle de la manche 3 du même groupe) ;
+    - un redémarrage du backend entre la manche 2 et son temps libre : les salles des deux manches reviennent avec leur avancement, leur sac, leur nombre de rejeux ;
+    - un joueur qui arrive en cours de route (`view`) reçoit toutes les salles qu'il a le droit de voir, des deux manches.
   - **Backend** : le message `EventsTrahisonRoom` d'un joueur ne contient jamais de solution (`target`, etc.) ; un redémarrage du backend en
     pleine salle garde le sac, les porteurs et le nombre de rejeux.
+
+- **Tests humains T2.5** (la porte finale ; une partie à 9 avec des factices, un plan avec une porte `final` dont `zone_b` est la zone de type `final` après elle et dont le champ
+  **Pupitre** de l'éditeur est une zone devant la porte ; régler `final_door_seconds` à 10 à la création, passer en `FINAL` avec `next`, donner 9 points avec `set_points`) :
+  - **Éditeur** : une porte de type `final` montre la ligne « Pupitre » (liste des zones, « aucun » permis) ; elle s'enregistre, se recharge à l'identique, et la zone du pupitre est
+    éclairée avec la porte ; changer le type d'une porte `final` en autre chose efface le pupitre ; une zone inexistante est refusée à l'enregistrement (`BAD_REFERENCE`).
+  - **Pupitre** : en `FINAL`, un joueur à 9 points qui se tient dans la zone du pupitre voit la ligne « Appuie sur V pour ouvrir le pupitre de la porte finale » ; hors de la zone, « Va au
+    pupitre devant la porte finale » ; un joueur sous 9 points n'a rien loin du pupitre et « Ton bracelet ne lit pas assez... » sur le pupitre. V ouvre l'écran (couleurs bleu nuit et
+    accent turquoise, bracelet, texte, bouton « Ouvrir la porte finale ») ; le bouton demande une confirmation (la partie se termine) ; Entrée la confirme ; « Fermer » cache l'écran
+    sans rien perdre ; s'éloigner du pupitre le ferme tout seul ; sous 9 points le bouton est grisé avec son infobulle ; en pause aussi.
+  - **Ouverture** : l'animatrice annonce qui a ouvert et pour combien de secondes ; **chez les joueurs à 9 points** le faux mur d'obsidienne disparaît et ils passent ; **chez un joueur sous 9**
+    et chez un spectateur le mur reste (essayer de le traverser) ; le HUD du joueur à 9 dit « La porte finale est ouverte pour toi : N s. Passe ! », celui d'un autre « ouverte, mais pas
+    pour toi » ; le compte à rebours de l'étape est celui de la porte ; un second appui sur le pupitre ne change rien.
+  - **Fermeture** : à la fin du délai la partie passe à `ENDED` et la porte ne se rouvre pas dans cette partie ; la liste des gagnants (écran de partie, onglet « Terminée ») ne contient
+    que ceux qui **sont passés** ; l'animatrice les nomme (ou dit que personne n'est passé) ; si tous les joueurs à 9 passent avant le délai, la partie se termine tout de suite.
+  - **Sortie solitaire** : un seul joueur à 9 (les autres corrigés avec `set_points`) : seul lui voit la porte s'ouvrir, il passe seul, gagnant unique.
+  - **Boucle de votes** : si personne n'actionne le pupitre, au bout de la durée de `FINAL` un nouveau vote recommence (`VOTE`, `RESULTS`, retour à `FINAL`) ; si la porte est ouverte, aucun
+    vote ne démarre pendant qu'elle l'est.
+  - **Refus** : à 9 points mais hors de la zone du pupitre, le message « va au pupitre devant la porte finale » ; sous 9 points depuis le pupitre, « ton bracelet ne lit pas assez » ; le bouton
+    du menu du jeu (touche libre, `/phantasmon event trahison menu`) suit les mêmes règles.
+  - **Au passage** : un fantôme et un spectateur traversent la porte finale sans rien faire (comme les autres portes) ; un redémarrage du backend pendant que la porte est ouverte la referme à l'heure.
+  - **Annonces de la phase `doors_dead`** (corrigée en même temps : sa clé de langue était fausse) : « Mystaria : X n'a passé aucune porte. La maison le garde. » apparaît bien à l'entrée en `ROOMS`.
+
+- **Tests humains T3.5 keypad/pickup_set** (backend déployé avec le mod ; hors ligne : `/phantasmon event trahison minigame keypad` et `... pickup_set`, puis une partie
+  avec une salle d'essai qui a un emplacement `keypad`, un `wall_clue`, trois `pickup`, un `pedestal` et un `document` ; **la définition doit se laisser enregistrer** : chaque
+  `spot_n` donné, l'indice `code` donné dès l'ouverture) :
+  - **Éditeur** : le choix de mécanisme liste `keypad` et `pickup_set` sans « prévu » ; les rôles viennent du backend (`keypad`, `deposit`...) ; la liste des emplacements d'un
+    rôle ne propose que les genres acceptés ; lier `keypad` à un `lever` est refusé ; un digicode dont le code n'est donné nulle part est refusé à l'enregistrement
+    (« indice dont les joueurs ont besoin... »), un `pickup_set` dont un `spot_n` n'est pas donné aussi ; la liste de mécanismes reste utilisable si le backend ne répond pas.
+  - **`keypad` hors ligne** : fenêtre 400 x 240 lisible ; les 12 touches à la souris et au clavier (chiffres du clavier et du pavé numérique, Retour arrière, Suppr, Entrée) ;
+    le clic des touches ; le curseur des autres joueurs qui s'allume sur leur touche ; un mauvais code (secousse, flash rouge, son sourd, afficheur vidé, compteur « Essais ratés ») ;
+    le code d'essai (affiché en orange) ouvre le cadenas ; l'aide (H).
+  - **`keypad` en jeu** : cliquer le digicode ouvre l'écran ; deux joueurs voient le même afficheur et les touches de l'autre ; un mauvais code montre l'erreur aux deux ; le code
+    trouvé sur le panneau mural ouvre le pas et la suite de la chaîne ; le digicode mural est dessiné comme avant ; la longueur du code (3, 4, 6) change l'afficheur ; rien dans la
+    vue réseau ne contient le code avant la résolution (le panneau mural le montre, c'est voulu).
+  - **`pickup_set` en jeu** : seules les cases tirées montrent un objet (les autres emplacements `pickup` sont invisibles et non cliquables) ; d'une partie à l'autre, ou après « Rejouer »,
+    ce ne sont pas les mêmes cases ni les mêmes objets ; ramasser un objet le met dans le sac (nom lisible : « Fusible », « Engrenage »...) ; l'utiliser sur le dépôt le consomme et fait
+    avancer le compteur « 1 / 3 » ; un objet qui n'est pas attendu est refusé et reste dans le sac ; cliquer le dépôt les mains vides ouvre le compteur ; le dernier objet déposé
+    résout l'étape ; le document (paramètre `document`) se lit sur son emplacement dès le début.
+  - **`ring_dial` en jeu** : l'écran s'ouvre maintenant par un clic sur son emplacement (il n'était pas enregistré dans le routeur des écrans avant ce lot).
 
 ## Notes de contrôle de l'orchestrateur (2026-11-16, après 27b1d8c)
 

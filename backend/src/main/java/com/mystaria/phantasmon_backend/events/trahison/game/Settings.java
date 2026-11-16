@@ -18,6 +18,9 @@ public class Settings {
 	/** How long a colour door stays open once the bracelets at its threshold satisfy it (seconds). */
 	public int doorOpenSeconds = DEFAULT_DOOR_OPEN_SECONDS;
 	public static final int DEFAULT_DOOR_OPEN_SECONDS = 6;
+	/** How long the final door stays open once a 9-point bracelet uses the pupitre (T2.5, seconds); then it closes for ever. */
+	public int finalDoorSeconds = DEFAULT_FINAL_DOOR_SECONDS;
+	public static final int DEFAULT_FINAL_DOOR_SECONDS = 10;
 	/**
 	 * Whether a human must close his cabin and vote from inside it (T2.4). False: the old free vote, anywhere, for games
 	 * played without a built map. Bots are exempt either way.
