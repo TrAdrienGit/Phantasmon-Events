@@ -12,6 +12,7 @@ import com.mystaria.events.hub.MirrorHubCommands;
  * <ul>
  * <li>{@code tournament}: opens the tournaments menu, where players register and check in, and admins create and run
  * the tournaments;</li>
+ * <li>{@code trahison}: checks the link with the betrayal game's backend module (more later);</li>
  * <li>{@code hub ...}: the mirror hubs, admins only ({@link MirrorHubCommands});</li>
  * <li>{@code npc ...}, {@code open}, {@code close}, {@code list}: events and their trainer NPCs, admins only
  * ({@link com.mystaria.events.npc.NpcCommands}).</li>
@@ -30,7 +31,11 @@ public final class EventsCommands {
 							Minecraft.getInstance().tell(() -> com.mystaria.phantasmon.client.api.PhantasmonApi.openMenu(com.mystaria.events.tournament.TournamentsPage.ID));
 							return 1;
 						}))
-						.then(MirrorHubCommands.node())
+						.then(ClientCommandManager.literal("trahison").executes(context -> {
+								com.mystaria.events.trahison.Trahison.ping();
+								return 1;
+							}))
+							.then(MirrorHubCommands.node())
 						.then(com.mystaria.events.npc.NpcCommands.nodes().get(0))
 						.then(com.mystaria.events.npc.NpcCommands.nodes().get(1))
 						.then(com.mystaria.events.npc.NpcCommands.nodes().get(2))

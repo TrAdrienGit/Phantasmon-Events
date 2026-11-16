@@ -299,5 +299,7 @@
   "phantasmon_events.tp.form.create": "Create the tournament",
   "phantasmon_events.tp.form.save": "Save",
   "phantasmon_events.error.error_tournament_invalid_dates": "The dates are out of order (a closing before its opening, or the check-in before the registration).",
-  "phantasmon_events.tp.form.id": "Id: %s"
+  "phantasmon_events.tp.form.id": "Id: %s",
+  "phantasmon_events.trahison.pong": "Trahison: the backend module answers.",
+  "phantasmon_events.trahison.not_connected": "Trahison: not connected to the Phantasmon backend."
 }

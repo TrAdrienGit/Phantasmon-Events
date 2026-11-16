@@ -22,6 +22,7 @@ public final class PhantasmonEvents implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		EventsCommands.register();
+			com.mystaria.events.trahison.Trahison.register();
 		com.mystaria.events.tournament.TournamentsPage.register();
 		com.mystaria.events.tournament.TournamentAnnouncer.register();
 		com.mystaria.events.tournament.TournamentOpponent.register();

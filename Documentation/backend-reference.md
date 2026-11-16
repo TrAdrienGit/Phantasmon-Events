@@ -111,6 +111,8 @@ Reçus par le cœur et confiés au module (`EventsWsHandler`), ou envoyés par l
 | `EventsMirrorTileChanged`, `EventsMirrorReset` | S2C | Une tuile a changé ; la copie est à refaire (redimensionnement) |
 | `EventsTournamentChanged`, `EventsTournamentAnnounce` | S2C | Un tournoi a changé ; annonce dans le chat |
 | `EventsNpcsChanged` | S2C | **Tous les clients connectés** : un dresseur PNJ ou un événement a changé ; le client relit `GET /events/npcs` |
+| `EventsTrahisonPing` | C2S | Jeu de trahison (`TrahisonWsHandler`, tous les types `EventsTrahison*`) : vérifie la liaison avec le module |
+| `EventsTrahisonPong` | S2C | Réponse au Ping, au seul joueur qui l'a envoyé. Tous les messages du jeu : [`trahison/protocole.md`](trahison/protocole.md) |
 
 `BattleNpcStart` (défier un PNJ) est un message du cœur : il demande le PNJ au module (`NpcOpponentProvider`).
 
@@ -146,6 +148,7 @@ en V18-V19 et V22-V24), la ligne de base `0` puis les `IF NOT EXISTS` ne changen
 |---|---|---|
 | 1 | `V1__tournaments.sql` | Ancien V18 + V19 : `tournaments`, `tournament_players`, `tournament_matches` (§5.2) |
 | 2 | `V2__event_npcs.sql` | Ancien V22 à V24 : `event_groups`, `event_npcs` (§5.3) |
+| 6 | `V6__trahison_games.sql` | `trahison_games` (2026-11-16) : une ligne par partie du jeu de trahison (§5.5) |
 | 5 | `V5__tournament_display_name.sql` | `tournaments.display_name` (2026-11-12) : le nom lisible, l'identifiant en est tiré |
 | 4 | `V4__tournament_check_in_dates.sql` | `tournaments.check_in_opens_at`, `check_in_closes_at` (2026-11-11) : le check-in s'ouvre et le tournoi démarre à ces dates |
 | 3 | `V3__mirror_anchor_roles.sql` | Règles des Anchors miroirs : `uq_events_mirror_source` (une `SOURCE` par hub), `uq_events_mirror_copy` (une `COPY` par admin et par hub) |
@@ -198,3 +201,17 @@ Pas de table propre : un hub miroir est une ligne de `hubs` avec `kind = 'MIRROR
 `size_x = 2 * rayon + 1` sur toute la hauteur (`size_y = 384`) ; ses Anchors ont le rôle `SOURCE` ou `COPY`
 (`uq_events_mirror_source`, `uq_events_mirror_copy`, V3 du module). Le terrain est hors base
 (`hub_schematics/hub_<nom>/mirror.bin`), les blocs fantômes en mémoire.
+
+### 5.5 `trahison_games` (V6 du module)
+
+Une ligne par partie du jeu de trahison ([`trahison/architecture.md`](trahison/architecture.md) section 4) ; l'état
+complet est en JSON, réécrit à chaque changement d'étape pour qu'un redémarrage reprenne la partie. Pas encore
+utilisée par du code (étape T0 : la table seule).
+
+| Colonne | Type | Contraintes | Notes |
+|---|---|---|---|
+| `id` | UUID | PK | |
+| `hub` | TEXT | NOT NULL | Nom du hub miroir où se joue la partie (index partiel `trahison_games_hub` sur les parties non terminées) |
+| `state` | JSONB | NOT NULL | L'objet `Game` |
+| `created_at`, `updated_at` | TIMESTAMPTZ | NOT NULL, défaut `now()` | |
+| `ended_at` | TIMESTAMPTZ | | Null tant que la partie n'est pas terminée |
