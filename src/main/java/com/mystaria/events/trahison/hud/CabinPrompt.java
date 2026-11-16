@@ -16,8 +16,8 @@ import com.mystaria.events.trahison.world.CabinFlow.Prompt;
 import com.mystaria.phantasmon.client.gui.menu.MenuUi;
 
 /**
- * The one-line prompt of the vote cabins (T2.4), just above the bracelet widget (charter, section 8: nothing at the centre
- * of the screen): go to your cabin, close it, open the pupitre, or why you cannot. Nothing is clickable. Hidden with F1,
+ * The one-line prompt of the vote cabins (T2.4, D4, D5), just above the bracelet widget (charter, section 8: nothing at the
+ * centre of the screen): go to your cabin, wait for your partner, open the pupitre, leave, or why you cannot. Nothing is clickable. Hidden with F1,
  * under the debug screen and while a game screen is open. Client thread.
  */
 public final class CabinPrompt {
@@ -48,14 +48,16 @@ public final class CabinPrompt {
 		Component text = switch (prompt) {
 			case GO -> Component.translatable(T + "cabin.prompt.go", mine == null ? "?" : CabinFlow.cabinName(mine));
 			case WRONG -> Component.translatable(T + "cabin.prompt.wrong", mine == null ? "?" : CabinFlow.cabinName(mine));
-			case CLOSE -> Component.translatable(T + "cabin.prompt.close", key);
+			case WAIT -> CabinFlow.partnerSeconds() > 0 ? Component.translatable(T + "cabin.prompt.wait", CabinFlow.partnerSeconds(), key)
+				: Component.translatable(T + "cabin.prompt.entering");
+			case JOIN -> Component.translatable(T + "cabin.prompt.join", CabinFlow.partnerSeconds(), mine == null ? "?" : CabinFlow.cabinName(mine));
 			case VOTE -> Component.translatable(T + "cabin.prompt.vote", key);
 			case VOTED -> Component.translatable(T + "cabin.prompt.voted", key);
-			case TAKEN -> Component.translatable(T + "cabin.prompt.taken");
+			case LOCKED_OUT -> Component.translatable(T + "cabin.prompt.locked_out");
 			default -> Component.empty();
 		};
 		int color = switch (prompt) {
-			case CLOSE, VOTE -> TrahisonPalette.ACCENT;
+			case WAIT, JOIN, VOTE -> TrahisonPalette.ACCENT;
 			case WRONG -> TrahisonPalette.DANGER;
 			case VOTED -> TrahisonPalette.SUCCESS;
 			default -> TrahisonPalette.TEXT_SECONDARY;
@@ -64,7 +66,7 @@ public final class CabinPrompt {
 		int x = (g.guiWidth() - w) / 2;
 		int y = g.guiHeight() - BOTTOM - H;
 		TrahisonUi.panel(g, x, y, w, H);
-		if (prompt == Prompt.CLOSE || prompt == Prompt.VOTE) {
+		if (prompt == Prompt.WAIT || prompt == Prompt.JOIN || prompt == Prompt.VOTE) {
 			g.fill(x + 1, y + 2, x + 3, y + H - 2, TrahisonPalette.ACCENT);
 		}
 		MenuUi.text(g, text, x + 10, y + 4, w - 14, color);

@@ -95,3 +95,12 @@ Les portes et cabines dans le monde (T2), les salles (T3), les rôles et objets 
 - Les noms des couleurs sont des identifiants neutres (`RED`, `GREEN`, `BLUE`) dans le code ; l'habillage en types
   n'est qu'un texte de langue.
 - Ne pas mettre de logique de règles dans le client provisoire : il sera jeté.
+
+## Révisions d'après les décisions du 2026-11-16
+
+- **D7, maîtres du jeu** : plus d'« admin qui devient maître du jeu en envoyant une action ». Un admin crée la partie, la prépare
+  dans son lobby (joueurs factices, démarrage) et y **nomme les maîtres du jeu** (`set_game_master`, aucun, un ou plusieurs, en plus des
+  9 joueurs et des spectateurs). Ensuite seuls les maîtres nommés peuvent envoyer des actions MJ (`ERROR_TRAHISON_NOT_GAME_MASTER`
+  sinon). Sans maître du jeu la partie se joue seule (mode `AUTO`) ; le mode `GAME_MASTER` en exige un au démarrage.
+  Le lobby de l'écran MJ du client liste les comptes autour du lobby (`lobby_members`) avec un bouton Nommer / Retirer pour les admins.
+- **D2** : la pénalité de points d'un absent aux portes est remplacée par la mort (voir `T2-plan-portes.md`, T2.3).

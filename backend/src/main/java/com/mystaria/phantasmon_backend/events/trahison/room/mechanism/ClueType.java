@@ -14,6 +14,11 @@ public enum ClueType {
 	COLORS,
 	/** An image id the client knows; value is a string. */
 	IMAGE,
+	/**
+	 * A document to read: value is an array of pages, each a string (the lines of a page; a line {@code @image:<id>} shows the
+	 * picture {@code textures/trahison/docs/<id>.png}).
+	 */
+	DOCUMENT,
 	/** An item the players can pick up; value is the item id (a string). */
 	ITEM;
 

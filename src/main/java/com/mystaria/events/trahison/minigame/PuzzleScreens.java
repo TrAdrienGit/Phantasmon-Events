@@ -45,6 +45,8 @@ public final class PuzzleScreens {
 	private static String hub = "";
 	private static int ownIndex = -1;
 	private static int group = -1;
+	/** Free time (D8): every room can be visited, so a puzzle message of another group is for us too. */
+	private static boolean freeTime;
 
 	static {
 		register("three_dials", ThreeDialsScreen::new);
@@ -102,6 +104,7 @@ public final class PuzzleScreens {
 
 	private static void onView(Map<String, Object> data) {
 		String phase = asString(data.get("phase"), "");
+		freeTime = "FREE_TIME".equals(phase);
 		hub = asString(data.get("hub"), hub);
 		if (phase.isEmpty() || "NONE".equals(phase) || "ENDED".equals(phase)) {
 			STATES.clear();
@@ -153,12 +156,12 @@ public final class PuzzleScreens {
 
 	private static void onPuzzle(Map<String, Object> data) {
 		Msg m = parse(data);
-		if (m == null || (group >= 0 && m.group() != group) || (!hub.isEmpty() && !m.hub().isEmpty() && !hub.equals(m.hub()))) {
+		if (m == null || (group >= 0 && m.group() != group && !freeTime) || (!hub.isEmpty() && !m.hub().isEmpty() && !hub.equals(m.hub()))) {
 			return;
 		}
 		STATES.put(key(m.hub(), m.group(), m.step()), m);
 		Minecraft mc = Minecraft.getInstance();
-		if (mc.screen instanceof MiniGameScreen open && open.step().equals(m.step())) {
+		if (mc.screen instanceof MiniGameScreen open && open.step().equals(m.step()) && (open.group() < 0 || open.group() == m.group())) {
 			open.onPuzzle(m);
 			return;
 		}
@@ -166,6 +169,7 @@ public final class PuzzleScreens {
 			Factory factory = FACTORIES.get(m.mechanism());
 			if (factory != null) {
 				MiniGameScreen screen = factory.create(m.step(), false);
+				screen.aimAt(m.group());
 				screen.onPuzzle(m);
 				mc.setScreen(screen);
 			}

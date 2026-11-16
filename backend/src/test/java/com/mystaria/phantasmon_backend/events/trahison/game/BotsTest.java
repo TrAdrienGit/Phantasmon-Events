@@ -56,7 +56,7 @@ class BotsTest {
 		assertThat(g.log).extracting(e -> e.type).contains("pass_door", "room_solved", "vote", "final_door");
 		assertThat(g.rounds).hasSize(3);
 		assertThat(g.rounds.get(0).roomSolved).containsOnly(true);
-		assertThat(g.rounds.get(0).penalized).isEmpty();
+		assertThat(g.rounds.get(0).diedAtDoors).isEmpty();
 		assertThat(g.rounds.get(0).pairVote).doesNotContainNull();
 	}
 
@@ -109,7 +109,7 @@ class BotsTest {
 		for (int i = 2; i < 9; i++) {
 			assertThat(r.passedDoor[i]).isGreaterThanOrEqualTo(0);
 		}
-		assertThat(r.penalized).containsExactly(1); // only the other human did not pass
+		assertThat(r.diedAtDoors).containsExactly(1); // only the other human did not pass
 	}
 
 	@Test

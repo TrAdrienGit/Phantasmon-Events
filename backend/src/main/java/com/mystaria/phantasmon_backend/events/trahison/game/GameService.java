@@ -179,6 +179,9 @@ public class GameService {
 			if (g.indexOf(uuid) >= 0) {
 				throw new TrahisonException(TrahisonException.ALREADY_JOINED, "already in the game");
 			}
+			if (g.gameMasters.contains(uuid)) {
+				throw new TrahisonException(TrahisonException.GAME_MASTER_PLAYS, "a game master does not play");
+			}
 			if (g.players.size() >= PLAYERS) {
 				throw new TrahisonException(TrahisonException.GAME_FULL, "nine players already");
 			}
@@ -220,6 +223,9 @@ public class GameService {
 			if (g.players.size() != PLAYERS) {
 				throw new TrahisonException(TrahisonException.NOT_ENOUGH_PLAYERS,
 					"need exactly " + PLAYERS + " players, have " + g.players.size());
+			}
+			if (g.settings.mode == Mode.GAME_MASTER && g.gameMasters.isEmpty()) {
+				throw new TrahisonException(TrahisonException.NO_GAME_MASTER, "game master mode needs a game master");
 			}
 			g.bracelets = new ArrayList<>();
 			for (int i = 0; i < PLAYERS; i++) {
@@ -379,11 +385,43 @@ public class GameService {
 		}
 	}
 
-	/** Adds an admin to the game masters (they get the game master view). */
+	/**
+	 * D7: an admin gives or takes back the game master role of an account, in the lobby only. A game can have none, one or
+	 * several; an account that plays cannot be one.
+	 */
+	public Game setGameMaster(String hub, UUID account, String name, boolean on) {
+		Game g = require(hub);
+		synchronized (g) {
+			if (g.phase != Phase.LOBBY) {
+				throw new TrahisonException(TrahisonException.NOT_IN_LOBBY, "game masters are assigned in the lobby");
+			}
+			if (on) {
+				if (g.indexOf(account) >= 0) {
+					throw new TrahisonException(TrahisonException.GAME_MASTER_PLAYS, "a player cannot be a game master");
+				}
+				if (!g.gameMasters.add(account)) {
+					return g;
+				}
+				g.gameMasterNames.put(account, name == null ? account.toString() : name);
+			} else {
+				if (!g.gameMasters.remove(account)) {
+					return g;
+				}
+				g.gameMasterNames.remove(account);
+			}
+			event(g, on ? "game_master" : "game_master_removed", Map.of("account", account.toString()));
+			persist(g);
+			notifyChanged(g, "gm");
+			return g;
+		}
+	}
+
+	/** Makes an account a game master whatever the stage (no lobby rule): for tests and for restoring a game. */
 	public Game addGameMaster(String hub, UUID uuid) {
 		Game g = require(hub);
 		synchronized (g) {
 			if (g.gameMasters.add(uuid)) {
+				g.gameMasterNames.putIfAbsent(uuid, uuid.toString());
 				event(g, "game_master", Map.of("account", uuid.toString()));
 				persist(g);
 				notifyChanged(g, "gm");
@@ -460,8 +498,17 @@ public class GameService {
 					persist(g);
 				}
 			}
+			boolean cabinsMoved = false;
+			if (g.phase == Phase.VOTE && !g.paused) {
+				cabinsMoved = updateCabins(g) || changed && !g.cabinLocks.isEmpty(); // who is inside moves a door's openFor
+				if (cabinsMoved) {
+					persist(g);
+				}
+			}
 			if (doorsMoved) {
 				notifyChanged(g, "door"); // everyone's door_hints (and maybe a door) changed
+			} else if (cabinsMoved) {
+				notifyChanged(g, "cabin");
 			}
 			if (changed) {
 				zoneChanged(g);
@@ -622,7 +669,7 @@ public class GameService {
 		LayoutContent plan = planOf(g);
 		long now = clock.millis();
 		g.doors = new java.util.LinkedHashMap<>(DoorStates.compute(plan, g.phase, g.round, r == null ? null : r.roomSolved,
-			g.doorOverrides, openWindows(g, now), g.closedCabins.keySet()));
+			g.doorOverrides, openWindows(g, now), heldCabins(g, plan, r)));
 		g.doorHints = DoorThresholds.hints(g, plan);
 		g.cabinIds = plan.cabins().stream().map(Cabin::id).toList();
 		g.myCabins = new java.util.LinkedHashMap<>();
@@ -764,20 +811,39 @@ public class GameService {
 	}
 
 	/**
-	 * A room action of a player ({@code use_slot}, {@code puzzle_input}, {@code pick_up}): in {@code ROOMS} only, not
-	 * paused, by a living player, in the room of his group. When it finishes the room, the group's room is solved (as with
-	 * {@link #debugSolve}). The room engine is called with the game locked (game, then room), so the room's saved state
-	 * stays consistent with the game's, and a room failure leaves both untouched.
+	 * A room action of a player ({@code use_slot}, {@code puzzle_input}, {@code pick_up}, the inventory's actions): in
+	 * {@code ROOMS}, not paused, by a living player, in the room of his group. When it finishes the room, the group's room is
+	 * solved (as with {@link #debugSolve}). The room engine is called with the game locked (game, then room), so the room's
+	 * saved state stays consistent with the game's, and a room failure leaves both untouched.
+	 * <p>
+	 * Free time (D8): {@code FREE_TIME} also takes room actions, from any living player, in any room of the round
+	 * ({@code group}: which one, own group when null), and a finished room can be replayed. It gives no points and opens
+	 * nothing: a room finished there is never marked solved.
 	 */
 	public ActionResult roomAction(String hub, UUID uuid, RoomAction action) {
+		return roomAction(hub, uuid, action, null);
+	}
+
+	/** As {@link #roomAction(String, UUID, RoomAction)}, aimed at room {@code group} (null: the sender's own). */
+	public ActionResult roomAction(String hub, UUID uuid, RoomAction action, Integer group) {
 		Game g = require(hub);
 		synchronized (g) {
-			int p = playerAction(g, uuid, Phase.ROOMS);
+			boolean free = g.phase == Phase.FREE_TIME;
+			int p = playerAction(g, uuid, free ? Phase.FREE_TIME : Phase.ROOMS);
 			if (rooms == null) {
 				throw new TrahisonException(RoomException.NO_ROOM, "no room engine");
 			}
 			RoundState r = g.currentRound();
 			int k = r.groupOf(p);
+			if (group != null && group != k) {
+				if (!free) {
+					throw new TrahisonException(RoomException.NOT_IN_ROOM, "player " + p + " is not in group " + group);
+				}
+				if (group >= r.rooms.size()) {
+					throw new TrahisonException(RoomException.NO_ROOM, "no room for group " + group);
+				}
+				k = group;
+			}
 			if (action instanceof RoomAction.GiveItem give) {
 				// The room only knows indices; where the players stand is the game's (EventsTrahisonZone).
 				if (give.to() < 0 || give.to() >= g.players.size() || !g.players.get(give.to()).alive) {
@@ -787,8 +853,8 @@ public class GameService {
 					throw new TrahisonException(RoomException.TOO_FAR, "player " + give.to() + " is too far");
 				}
 			}
-			ActionResult result = rooms.apply(g, r, k, p, action);
-			if (result.roomFinished()) {
+			ActionResult result = rooms.apply(g, r, k, p, action, free);
+			if (result.roomFinished() && !free) {
 				markRoomSolved(g, r, k, p);
 			}
 			persist(g);
@@ -819,10 +885,168 @@ public class GameService {
 		return Cabins.of(plan, Door.ALL.get(k), pair);
 	}
 
+	// ------------------------------------------------------------------ vote cabins (D4, D5)
+
+	/** The side of a group (pair or solo) a cabin serves in the round, and who is on it. */
+	private record Side(int group, boolean pair, List<Integer> members) {
+	}
+
+	private static Side sideOf(LayoutContent plan, RoundState r, Cabin cabin) {
+		if (r == null || r.splitIndex == null) {
+			return null;
+		}
+		Split split = r.split();
+		for (int k = 0; k < Door.ALL.size(); k++) {
+			Door d = Door.ALL.get(k);
+			DoorGroup group = split.group(d);
+			for (boolean pair : new boolean[] { true, false }) {
+				if (Cabins.of(plan, d, pair).map(c -> c.id().equals(cabin.id())).orElse(false)) {
+					return new Side(k, pair, pair ? new ArrayList<>(group.pair()) : List.of(group.solo()));
+				}
+			}
+		}
+		return null;
+	}
+
+	private static boolean voted(RoundState r, Side side) {
+		return (side.pair() ? r.pairVote[side.group()] : r.soloVote[side.group()]) != null;
+	}
+
+	private static boolean inside(Game g, int player, Cabin cabin) {
+		return cabin.zone() != null && cabin.zone().equals(g.players.get(player).zone);
+	}
+
+	/** The living humans of a side: the ones who go through the cabin (bots vote without it). */
+	private static List<Integer> humansOf(Game g, Side side) {
+		List<Integer> out = new ArrayList<>();
+		for (int p : side.members()) {
+			PlayerState ps = g.players.get(p);
+			if (ps.alive && !ps.bot) {
+				out.add(p);
+			}
+		}
+		return out;
+	}
+
 	/**
-	 * VOTE: the player closes his cabin from inside (T2.4). It must be the cabin of his group's door and side; its door then
-	 * closes for everyone until the stage ends, and only he may vote from it. Closing again his own cabin does nothing; a
-	 * cabin closed by somebody else (his partner, for a pair) is taken.
+	 * The cabins a group holds, with who each door stays open for (D4, D5): while the group waits for the partner, its
+	 * living humans; once it voted, the group and whoever is inside; locked, only the strangers who got in (they may walk out).
+	 */
+	private Map<String, Set<Integer>> heldCabins(Game g, LayoutContent plan, RoundState r) {
+		Map<String, Set<Integer>> out = new LinkedHashMap<>();
+		for (Cabin cabin : plan.cabins()) {
+			CabinLock lock = g.cabinLocks.get(cabin.id());
+			if (lock == null) {
+				continue;
+			}
+			Side side = sideOf(plan, r, cabin);
+			Set<Integer> openFor = new java.util.TreeSet<>();
+			for (int p = 0; p < g.players.size(); p++) {
+				boolean mine = side != null && side.members().contains(p);
+				if (g.players.get(p).alive && (inside(g, p, cabin) && (!mine || lock.released())
+						|| mine && (lock.released() || lock.waiting()))) {
+					openFor.add(p);
+				}
+			}
+			out.put(cabin.id(), openFor);
+		}
+		return out;
+	}
+
+	/**
+	 * Brings the cabins up to date with where the players stand (VOTE, not paused; the caller persists and notifies when this
+	 * returns true). A living human who enters the cabin of his group, before it voted, opens its lock: a solo locks at once,
+	 * a pair waits {@code cabin_partner_seconds} for the partner (and locks at once when both are in); a waiting cabin whose
+	 * occupants left disappears again; a released cabin frees itself when the group has left.
+	 */
+	private boolean updateCabins(Game g) {
+		if (!g.settings.cabinsRequired) {
+			return false;
+		}
+		LayoutContent plan = planOf(g);
+		RoundState r = g.currentRound();
+		boolean changed = false;
+		long now = clock.millis();
+		for (Cabin cabin : plan.cabins()) {
+			Side side = sideOf(plan, r, cabin);
+			if (side == null) {
+				continue;
+			}
+			CabinLock lock = g.cabinLocks.get(cabin.id());
+			List<Integer> expected = lock == null ? humansOf(g, side) : lock.expected();
+			List<Integer> here = expected.stream().filter(p -> g.players.get(p).alive && inside(g, p, cabin)).toList();
+			if (lock == null) {
+				if (voted(r, side) || here.isEmpty()) {
+					continue;
+				}
+				boolean all = here.size() == expected.size();
+				CabinLock born = new CabinLock(here.get(0), all ? 0 : now + Math.max(1, g.settings.cabinPartnerSeconds) * 1000L, all,
+					false, expected);
+				g.cabinLocks.put(cabin.id(), born);
+				event(g, "cabin_enter", Map.of("player", here.get(0), "cabin", cabin.id(), "locked", all));
+				if (!all) {
+					scheduleCabinWindow(g, cabin.id(), born);
+				}
+				changed = true;
+			} else if (lock.waiting()) {
+				if (here.isEmpty()) {
+					g.cabinLocks.remove(cabin.id()); // everybody left before the lock: it is free again
+					changed = true;
+				} else if (here.size() == expected.stream().filter(p -> g.players.get(p).alive).count()) {
+					g.cabinLocks.put(cabin.id(), lock.lockedNow());
+					event(g, "cabin_locked", Map.of("cabin", cabin.id(), "cause", "all_in"));
+					changed = true;
+				}
+			} else if (lock.released() && here.isEmpty()) {
+				g.cabinLocks.remove(cabin.id());
+				event(g, "cabin_free", Map.of("cabin", cabin.id()));
+				changed = true;
+			}
+		}
+		return changed;
+	}
+
+	private void scheduleCabinWindow(Game g, String cabinId, CabinLock lock) {
+		UUID id = g.id;
+		scheduler.schedule(Instant.ofEpochMilli(lock.windowUntilMs()), () -> onCabinWindowEnd(id, cabinId, lock));
+	}
+
+	/** The partner did not come in time: the cabin locks with the ones inside (or frees itself if nobody is). */
+	private void onCabinWindowEnd(UUID id, String cabinId, CabinLock lock) {
+		Game g = byId.get(id);
+		if (g == null) {
+			return;
+		}
+		try {
+			synchronized (g) {
+				if (!lock.equals(g.cabinLocks.get(cabinId)) || !lock.waiting()) {
+					return; // locked, released or freed since
+				}
+				boolean anyone = false;
+				for (Cabin cabin : planOf(g).cabins()) {
+					if (cabin.id().equals(cabinId)) {
+						for (int p : lock.expected()) {
+							anyone |= g.players.get(p).alive && inside(g, p, cabin);
+						}
+					}
+				}
+				if (anyone) {
+					g.cabinLocks.put(cabinId, lock.lockedNow());
+					event(g, "cabin_locked", Map.of("cabin", cabinId, "cause", "window_over"));
+				} else {
+					g.cabinLocks.remove(cabinId);
+				}
+				persist(g);
+				notifyChanged(g, "cabin");
+			}
+		} catch (RuntimeException ex) {
+			log.error("Trahison game {}: cabin window failed", id, ex);
+		}
+	}
+
+	/**
+	 * VOTE: a player of the group inside his own cabin closes it at once ({@code close_cabin}), without waiting for the
+	 * partner of a pair: the partner is then locked out. Nothing to do when it is already locked or his group voted.
 	 */
 	public Game closeCabin(String hub, UUID uuid) {
 		Game g = require(hub);
@@ -837,14 +1061,16 @@ public class GameService {
 			if (!inside.id().equals(mine.id())) {
 				throw new TrahisonException(TrahisonException.WRONG_CABIN, "that is not his cabin");
 			}
-			Integer by = g.closedCabins.get(mine.id());
-			if (by != null) {
-				if (by == p) {
-					return g;
-				}
-				throw new TrahisonException(TrahisonException.CABIN_TAKEN, "the cabin is already closed");
+			Side side = sideOf(plan, r, mine);
+			if (side == null || voted(r, side)) {
+				return g;
 			}
-			g.closedCabins.put(mine.id(), p);
+			CabinLock lock = g.cabinLocks.get(mine.id());
+			if (lock != null && !lock.waiting()) {
+				return g;
+			}
+			List<Integer> expected = lock == null ? humansOf(g, side) : lock.expected();
+			g.cabinLocks.put(mine.id(), new CabinLock(lock == null ? p : lock.first(), 0, true, false, expected));
 			event(g, "close_cabin", Map.of("player", p, "cabin", mine.id()));
 			persist(g);
 			notifyChanged(g, "cabin");
@@ -852,7 +1078,7 @@ public class GameService {
 		}
 	}
 
-	/** Refuses a vote from outside his own closed cabin (humans only; bots and {@code cabins_required=false} are exempt). */
+	/** Refuses a vote from outside his own locked cabin (humans only; bots and {@code cabins_required=false} are exempt). */
 	private void requireOwnClosedCabin(Game g, RoundState r, int p) {
 		if (!g.settings.cabinsRequired || g.players.get(p).bot) {
 			return;
@@ -868,13 +1094,22 @@ public class GameService {
 		if (!inside.id().equals(mine.id())) {
 			throw new TrahisonException(TrahisonException.WRONG_CABIN, "that is not his cabin");
 		}
-		Integer by = g.closedCabins.get(mine.id());
-		if (by == null) {
-			throw new TrahisonException(TrahisonException.CABIN_NOT_CLOSED, "close the cabin first");
+		CabinLock lock = g.cabinLocks.get(mine.id());
+		if (lock == null || !lock.locked()) {
+			throw new TrahisonException(TrahisonException.CABIN_NOT_CLOSED, "the cabin is not locked yet");
 		}
-		if (by != p) {
-			throw new TrahisonException(TrahisonException.CABIN_TAKEN, "the cabin was closed by somebody else");
+	}
+
+	/** The group of player {@code p} has voted: its cabin opens for those inside (D5), and frees itself when they left. */
+	private void releaseCabin(Game g, LayoutContent plan, RoundState r, int p) {
+		Cabin mine = myCabin(plan, r, p).orElse(null);
+		CabinLock lock = mine == null ? null : g.cabinLocks.get(mine.id());
+		if (lock == null || lock.released()) {
+			return;
 		}
+		g.cabinLocks.put(mine.id(), lock.releasedNow());
+		event(g, "cabin_released", Map.of("cabin", mine.id()));
+		updateCabins(g); // nobody left inside: free at once
 	}
 
 	/** The player votes for his wrist bracelet's side of his group. A pair has one vote: its first voter's. */
@@ -902,6 +1137,7 @@ public class GameService {
 				r.soloVote[k] = side;
 			}
 			event(g, "vote", Map.of("player", p, "group", k)); // the side stays secret until the results
+			releaseCabin(g, planOf(g), r, p);
 			persist(g);
 			notifyChanged(g, "vote");
 			return g;
@@ -947,6 +1183,11 @@ public class GameService {
 					scheduleAutoResume(g);
 				}
 				g.doorWindows.forEach((door, window) -> scheduleWindowEnd(g, door, window));
+				g.cabinLocks.forEach((cabin, lock) -> {
+					if (lock.waiting()) {
+						scheduleCabinWindow(g, cabin, lock);
+					}
+				});
 				log.info("Trahison game {} reloaded in {} (hub {})", g.id, g.phase, g.hub);
 				notifyPhase(g);
 			}
@@ -1075,8 +1316,9 @@ public class GameService {
 
 	/**
 	 * The doors close: the round's split is the one the passes agree with (one pass is enough to decide, since a
-	 * bracelet goes through a different door in each split); with no pass at all the seed picks. Living players who
-	 * passed nothing lose the penalty. The split then defines the groups of rooms and votes, absentees included.
+	 * bracelet goes through a different door in each split); with no pass at all the seed picks. A living player who passed
+	 * no door dies (D2: he becomes a ghost, as at 0 points). The split then defines the groups of rooms and votes, the dead
+	 * included.
 	 */
 	private void closeDoors(Game g) {
 		RoundState r = g.currentRound();
@@ -1095,12 +1337,12 @@ public class GameService {
 		r.splitIndex = anyPass && chosen >= 0 ? chosen : seedSplit(r.seed);
 		for (int i = 0; i < PLAYERS; i++) {
 			if (g.players.get(i).alive && r.passedDoor[i] < 0) {
-				BraceletState b = g.bracelets.get(i);
-				b.points = Scoring.apply(b.points, g.settings.noDoorPenalty);
-				r.penalized.add(i);
+				g.players.get(i).alive = false;
+				g.bracelets.get(i).ownerAlive = false;
+				r.diedAtDoors.add(i);
 			}
 		}
-		event(g, "doors_closed", Map.of("split", r.splitIndex, "penalized", r.penalized));
+		event(g, "doors_closed", Map.of("split", r.splitIndex, "died", r.diedAtDoors));
 	}
 
 	/**
@@ -1157,7 +1399,7 @@ public class GameService {
 		g.phase = Phase.ENDED;
 		g.doorOverrides.clear();
 		g.doorWindows.clear();
-		g.closedCabins.clear();
+		g.cabinLocks.clear();
 		g.endedAt = clock.instant();
 		g.deadline = null;
 		g.paused = false;
@@ -1172,7 +1414,7 @@ public class GameService {
 		g.phase = phase;
 		g.doorOverrides.clear(); // a manual door holds for the stage only
 		g.doorWindows.clear();
-		g.closedCabins.clear(); // every cabin reopens when VOTE ends (and starts closed)
+		g.cabinLocks.clear(); // every cabin reopens when VOTE ends (and starts free)
 		g.remainingMs = g.settings.durationSeconds(phase) * 1000L;
 		if (g.paused) {
 			g.deadline = null;

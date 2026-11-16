@@ -22,7 +22,7 @@ import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.ViewerKind
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
-final class RoomFixtures {
+public final class RoomFixtures {
 
 	static final class TestClock extends Clock {
 		Instant now = Instant.parse("2026-11-16T20:00:00Z");
@@ -44,7 +44,7 @@ final class RoomFixtures {
 	}
 
 	/** Using its slot solves it and it produces an item clue {@code brass_key} (role {@code key}). */
-	static final class KeyBox implements Mechanism {
+	public static final class KeyBox implements Mechanism {
 		@Override
 		public String id() {
 			return "key_box";
@@ -82,7 +82,7 @@ final class RoomFixtures {
 	}
 
 	/** Solved by using the item {@code brass_key} on its {@code lock} role; any other item is not taken. */
-	static final class KeyLock implements Mechanism {
+	public static final class KeyLock implements Mechanism {
 		@Override
 		public String id() {
 			return "key_lock";

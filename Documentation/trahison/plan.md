@@ -34,7 +34,7 @@ Priorité : d'abord le jeu de trahison, ensuite l'habillage Cobblemon.
 | Fin collective | Possible : tant que personne n'ouvre la porte finale, les votes reprennent en boucle, et un groupe qui se fait confiance peut faire monter tout le monde à 9. Aux joueurs de le découvrir |
 | Rôles secrets | Oui, 1 à 3 par partie, dont un infiltré qui doit trahir à la première manche. Tous les rôles sont secrets |
 | Information | Points et votes de tous révélés après chaque vote |
-| Vote d'une paire | En cabine : celui qui entre et ferme la cabine vote. On peut donc doubler son partenaire en l'enfermant dehors |
+| Vote d'une paire | En cabine : les deux entrent ensemble (le second a 30 s après le premier), puis la cabine se verrouille et la paire a une seule voix ; celui qui entre seul et verrouille vote seul, ce qui permet de doubler son partenaire en le laissant dehors |
 | Construction | Salles construites à la main dans Minecraft, à un format standard, enregistrées en schématiques |
 | Le complexe | Son plan ne change jamais (hall, salle de vote, couloirs, places des salles). Seul le contenu des 9 places change d'une soirée à l'autre. Un admin du serveur colle les salles avant chaque soirée |
 | Taille des salles | Une place de 48 × 48 blocs au sol sur 24 de haut, avec couloirs, embranchements et recoins, pour qu'on s'y disperse et qu'on s'y perde un peu |

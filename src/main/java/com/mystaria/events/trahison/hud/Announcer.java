@@ -88,7 +88,8 @@ public final class Announcer {
 	public static void onSay(Map<String, Object> data) {
 		String kind = String.valueOf(data.get("kind"));
 		if ("announce".equals(kind) && data.get("key") != null) {
-			say(Component.translatable(String.valueOf(data.get("key"))));
+			Object[] args = data.get("args") instanceof java.util.List<?> list ? list.stream().map(String::valueOf).toArray() : new Object[0];
+			say(Component.translatable(String.valueOf(data.get("key")), args));
 		} else if ("error".equals(kind) && data.get("code") != null) {
 			String code = String.valueOf(data.get("code"));
 			error(Component.translatableWithFallback("phantasmon_events.error." + code.toLowerCase(Locale.ROOT), code));

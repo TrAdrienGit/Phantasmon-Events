@@ -56,6 +56,8 @@ public abstract class MiniGameScreen extends Screen {
 	private final String mechanism;
 	private final String step;
 	private final boolean offline;
+	/** The group whose room this puzzle is in (-1: the player's own, no need to say); set by the router, free time visits (D8) need it. */
+	private int group = -1;
 	private final List<Widget> widgets = new ArrayList<>();
 	private final Map<Integer, Remote> remotes = new HashMap<>();
 	private final long openedAt = System.currentTimeMillis();
@@ -100,6 +102,15 @@ public abstract class MiniGameScreen extends Screen {
 	/** Whether a mini-game screen is open: the game HUD hides itself meanwhile. */
 	public static boolean isOpen() {
 		return current != null;
+	}
+
+	public int group() {
+		return group;
+	}
+
+	/** Says which room's puzzle this is, so the gestures go to that room. */
+	void aimAt(int group) {
+		this.group = group;
 	}
 
 	public String step() {
@@ -178,7 +189,14 @@ public abstract class MiniGameScreen extends Screen {
 		if (offline) {
 			return;
 		}
-		if (!PhantasmonApi.send("EventsTrahisonAction", Map.of("action", "puzzle_input", "step", step, "input", input))) {
+		Map<String, Object> message = new java.util.LinkedHashMap<>();
+		message.put("action", "puzzle_input");
+		message.put("step", step);
+		message.put("input", input);
+		if (group >= 0) {
+			message.put("group", group);
+		}
+		if (!PhantasmonApi.send("EventsTrahisonAction", message)) {
 			fail();
 		}
 	}

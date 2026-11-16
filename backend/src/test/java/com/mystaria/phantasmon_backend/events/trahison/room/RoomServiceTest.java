@@ -346,6 +346,83 @@ class RoomServiceTest {
 		assertEquals(3, view.get("items").get(0).get("holder").asInt());
 	}
 
+	// ---------------------------------------------------------------- D8: free time
+
+	private JsonNode target(RoomService service) {
+		return service.puzzleView(HUB, 0, "s2", ViewerKind.GAME_MASTER).get("view").get("target");
+	}
+
+	@Test
+	void freeTimeLetsNonMembersActAndReceiveButTheRoundDoesNot() {
+		rooms.start(HUB, 0, MEMBERS, keyRoom(), 1L);
+		assertEquals(RoomException.NOT_IN_ROOM,
+				assertThrows(RoomException.class, () -> rooms.apply(HUB, 0, 7, new RoomAction.PickUp("box"))).code());
+		rooms.apply(HUB, 0, 3, new RoomAction.PickUp("box"));
+		assertEquals(RoomException.BAD_ACTION,
+				assertThrows(RoomException.class, () -> rooms.apply(HUB, 0, 3, new RoomAction.GiveItem("brass_key", 7))).code());
+		rooms.apply(HUB, 0, 3, new RoomAction.GiveItem("brass_key", 7), true);
+		assertEquals(List.of("brass_key"), carried(7));
+		// The visitor uses it on the lock, in the free time: the step is solved, nobody else is asked.
+		assertTrue(rooms.apply(HUB, 0, 7, new RoomAction.UseItem("brass_key", "lock"), true).stepSolved());
+		assertEquals(List.of(), carried(7));
+	}
+
+	@Test
+	void aFinishedRoomRefusesTheRoundsActionsButTakesFreeTimeOnesAndReplays() {
+		rooms.start(HUB, 0, MEMBERS, RoomFixtures.chain(), 5L);
+		rooms.forceSolve(HUB, 0);
+		assertEquals(RoomException.ROOM_FINISHED,
+				assertThrows(RoomException.class, () -> rooms.apply(HUB, 0, 0, new RoomAction.UseSlot("btn"))).code());
+		rooms.apply(HUB, 0, 8, new RoomAction.UseSlot("btn"), true); // a visitor looks around: nothing to refuse
+		assertEquals(RoomException.ROOM_FINISHED,
+				assertThrows(RoomException.class, () -> rooms.apply(HUB, 0, 0, new RoomAction.Replay())).code(),
+				"a replay is for the free time (and a finished room refuses the round's actions)");
+		int notifications = roomNotifications;
+		rooms.apply(HUB, 0, 8, new RoomAction.Replay(), true);
+		RoomInstance again = rooms.find(HUB, 0).orElseThrow();
+		assertFalse(again.exitOpen);
+		assertEquals(0, again.stepsDone());
+		assertEquals(1, again.replays);
+		assertNotEquals(5L, again.seed);
+		assertEquals(MEMBERS, again.members);
+		assertTrue(roomNotifications > notifications, "the watchers are told");
+		assertTrue(puzzles.stream().anyMatch(p -> p.reason().equals("reset")));
+		// It plays again from the start.
+		assertTrue(rooms.apply(HUB, 0, 8, new RoomAction.UseSlot("btn"), true).stepSolved());
+	}
+
+	@Test
+	void replaysGiveNewSolutionsEachTimeButTheSameOnesForTheSameHistory() {
+		RoomService other = new RoomService(RoomFixtures.registry(), clock);
+		rooms.start(HUB, 0, MEMBERS, RoomFixtures.chain(), 5L);
+		other.start(HUB, 0, MEMBERS, RoomFixtures.chain(), 5L);
+		rooms.apply(HUB, 0, 0, new RoomAction.UseSlot("btn")); // s2 opens
+		other.apply(HUB, 0, 0, new RoomAction.UseSlot("btn"));
+		JsonNode first = target(rooms).deepCopy();
+		assertEquals(first, target(other));
+		rooms.apply(HUB, 0, 1, new RoomAction.Replay(), true);
+		other.apply(HUB, 0, 1, new RoomAction.Replay(), true);
+		rooms.apply(HUB, 0, 0, new RoomAction.UseSlot("btn"), true);
+		other.apply(HUB, 0, 0, new RoomAction.UseSlot("btn"), true);
+		assertEquals(target(rooms), target(other), "same replay number, same solutions");
+		assertEquals(RoomService.replaySeed(5L, 1), rooms.find(HUB, 0).orElseThrow().seed);
+		assertNotEquals(RoomService.replaySeed(5L, 1), RoomService.replaySeed(5L, 2));
+		rooms.apply(HUB, 0, 1, new RoomAction.Replay(), true);
+		assertEquals(2, rooms.find(HUB, 0).orElseThrow().replays);
+		assertEquals(RoomService.replaySeed(RoomService.replaySeed(5L, 1), 2), rooms.find(HUB, 0).orElseThrow().seed,
+				"each replay's seed comes from the previous seed and the count");
+		// The replay count survives a save and a reload.
+		RoomInstance restored = rooms.restore(rooms.snapshot(HUB, 0));
+		assertEquals(2, restored.replays);
+	}
+
+	@Test
+	void documentCluesShowTheirPagesAndNeverTheSolution() {
+		var clue = com.mystaria.phantasmon_backend.events.trahison.room.mechanism.Clue.document("memo", List.of("page one", "@image:plan\nsecond"));
+		assertEquals("document", clue.toJson().get("type").asString());
+		assertEquals(2, clue.toJson().get("value").size());
+	}
+
 	@Test
 	void actionsParse() {
 		var mapper = tools.jackson.databind.json.JsonMapper.builder().build();
@@ -358,6 +435,13 @@ class RoomServiceTest {
 		assertThrows(RoomException.class, () -> RoomAction.parse(mapper.readTree("{\"action\":\"use_slot\"}")));
 		assertThrows(RoomException.class, () -> RoomAction.parse(mapper.readTree("{\"action\":\"vote\"}")));
 		assertNotEquals(0, RoomAction.NAMES.size());
+		assertEquals(new RoomAction.Replay(), RoomAction.parse(mapper.readTree("{\"action\":\"replay\"}")));
+		assertEquals(new RoomAction.GiveItem("k", 4), RoomAction.parse(mapper.readTree("{\"action\":\"give_item\",\"item\":\"k\",\"to\":4}")));
+		assertEquals(new RoomAction.UseItem("k", "s"), RoomAction.parse(mapper.readTree("{\"action\":\"use_item\",\"item\":\"k\",\"slot\":\"s\"}")));
+		assertEquals(new RoomAction.CombineItems("a", "b"), RoomAction.parse(mapper.readTree("{\"action\":\"combine\",\"a\":\"a\",\"b\":\"b\"}")));
+		assertEquals(2, RoomAction.targetGroup(mapper.readTree("{\"group\":2}")));
+		assertEquals(null, RoomAction.targetGroup(mapper.readTree("{\"x\":1}")));
+		assertThrows(RoomException.class, () -> RoomAction.targetGroup(mapper.readTree("{\"group\":\"a\"}")));
 	}
 
 	private static void assertNull(Object o) {

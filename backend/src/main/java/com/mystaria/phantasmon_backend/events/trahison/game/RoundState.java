@@ -27,7 +27,8 @@ public class RoundState {
 	public Integer splitIndex;
 	/** Door index (0..2) each player passed, -1 when none. */
 	public int[] passedDoor = new int[9];
-	public List<Integer> penalized = new ArrayList<>();
+	/** Players who died when the doors closed because they had passed no colour door (D2). */
+	public List<Integer> diedAtDoors = new ArrayList<>();
 	public boolean[] roomSolved = new boolean[3];
 	/**
 	 * The saved state of the room of each group (index as {@link Door#ALL}), written by {@link GameRooms}: this is what

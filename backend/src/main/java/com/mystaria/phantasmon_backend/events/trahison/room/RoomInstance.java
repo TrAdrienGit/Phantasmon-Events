@@ -42,6 +42,8 @@ public final class RoomInstance {
 	public Instant finishedAt;
 	/** The exit is open (every step solved). */
 	public boolean exitOpen;
+	/** How many times the room was put back to a fresh state in the free time (D8); 0 for the round's own play. */
+	public int replays;
 
 	RoomInstance(String hub, int group, RoomDefinition definition, long seed, List<Integer> members) {
 		this.hub = hub;

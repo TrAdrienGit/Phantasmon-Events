@@ -121,7 +121,12 @@ public final class GameRooms {
 
 	/** Applies a room action of player {@code player} in the room of his group, and saves the room in the round. */
 	ActionResult apply(Game g, RoundState r, int group, int player, RoomAction action) {
-		ActionResult result = rooms.apply(g.hub, group, player, action);
+		return apply(g, r, group, player, action, false);
+	}
+
+	/** As above; {@code free}: the free time (D8), any player in any room of the round, replays allowed. */
+	ActionResult apply(Game g, RoundState r, int group, int player, RoomAction action, boolean free) {
+		ActionResult result = rooms.apply(g.hub, group, player, action, free);
 		save(g, r, group);
 		return result;
 	}

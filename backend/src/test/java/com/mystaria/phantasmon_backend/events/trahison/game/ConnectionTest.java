@@ -30,6 +30,9 @@ class ConnectionTest {
 		Settings s = Settings.fast(600);
 		s.mode = mode;
 		service.create(HUB, s, 3L);
+		if (mode == Mode.GAME_MASTER) {
+			service.setGameMaster(HUB, UUID.randomUUID(), "gm", true);
+		}
 		for (int i = 0; i < 9; i++) {
 			service.join(HUB, ids[i], "p" + i);
 		}

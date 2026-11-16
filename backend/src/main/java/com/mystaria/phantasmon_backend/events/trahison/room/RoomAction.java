@@ -6,13 +6,14 @@ import tools.jackson.databind.JsonNode;
 
 /**
  * An action a player sends from inside a room ({@code EventsTrahisonAction}, protocole.md section 3):
- * {@code use_slot {slot}}, {@code puzzle_input {step, input}}, {@code pick_up {slot}}, and the inventory's
- * {@code give_item {item, to}}, {@code use_item {item, slot}}, {@code combine {a, b}}.
+ * {@code use_slot {slot}}, {@code puzzle_input {step, input}}, {@code pick_up {slot}}, the inventory's
+ * {@code give_item {item, to}}, {@code use_item {item, slot}}, {@code combine {a, b}}, and the free time's {@code replay}.
+ * Every one may carry a {@code group} (see {@link #targetGroup}): the room it concerns, own group when absent.
  */
 public sealed interface RoomAction {
 
 	/** The action names {@link #parse} understands, so a handler can route them to the room service. */
-	Set<String> NAMES = Set.of("use_slot", "puzzle_input", "pick_up", "give_item", "use_item", "combine");
+	Set<String> NAMES = Set.of("use_slot", "puzzle_input", "pick_up", "give_item", "use_item", "combine", "replay");
 
 	record UseSlot(String slot) implements RoomAction {
 	}
@@ -35,6 +36,25 @@ public sealed interface RoomAction {
 	record CombineItems(String a, String b) implements RoomAction {
 	}
 
+	/** Puts the room back to a fresh puzzle state (free time only, D8): new solutions, no points, nothing new opens. */
+	record Replay() implements RoomAction {
+	}
+
+	/**
+	 * The room an action is aimed at ({@code group} of the message: 0..2), or null for the sender's own. Only the free time
+	 * accepts a group other than the sender's (D8: players visit the other rooms).
+	 */
+	static Integer targetGroup(JsonNode data) {
+		JsonNode g = data == null ? null : data.get("group");
+		if (g == null || g.isNull()) {
+			return null;
+		}
+		if (!g.isNumber() || g.asInt() < 0) {
+			throw new RoomException(RoomException.BAD_ACTION, "group must be a group index");
+		}
+		return g.asInt();
+	}
+
 	/** Reads the {@code data} of an {@code EventsTrahisonAction}; a malformed one raises {@code ERROR_TRAHISON_BAD_ACTION}. */
 	static RoomAction parse(JsonNode data) {
 		String action = data == null ? "" : data.path("action").asString("");
@@ -48,6 +68,7 @@ public sealed interface RoomAction {
 				}
 				yield new GiveItem(text(data, "item"), to.asInt());
 			}
+			case "replay" -> new Replay();
 			case "use_item" -> new UseItem(text(data, "item"), text(data, "slot"));
 			case "combine" -> new CombineItems(text(data, "a"), text(data, "b"));
 			case "puzzle_input" -> {

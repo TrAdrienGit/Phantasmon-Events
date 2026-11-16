@@ -229,24 +229,67 @@ public class RoomService {
 
 	// ---------------------------------------------------------------- actions
 
-	/** Applies an action of the player with this index; refused ones raise a {@link RoomException}. */
+	/** Applies an action of a member of the group in the round's play; refused ones raise a {@link RoomException}. */
 	public ActionResult apply(String hub, int group, int player, RoomAction action) {
+		return apply(hub, group, player, action, false);
+	}
+
+	/**
+	 * Applies an action of the player with this index. {@code free}: the free time (D8): any player may act in any room, not
+	 * only the group's members, a finished room keeps taking actions, and {@link RoomAction.Replay} puts the room back to a
+	 * fresh state. The caller (the game) checks the stage and that the player lives.
+	 */
+	public ActionResult apply(String hub, int group, int player, RoomAction action, boolean free) {
 		RoomInstance room = require(hub, group);
 		synchronized (room) {
-			if (!room.members.contains(player)) {
+			if (!free && !room.members.contains(player)) {
 				throw new RoomException(RoomException.NOT_IN_ROOM, "player " + player + " is not in group " + group);
 			}
-			if (room.exitOpen) {
+			if (room.exitOpen && !free) {
 				throw new RoomException(RoomException.ROOM_FINISHED, "the room is finished");
 			}
 			return switch (action) {
 				case RoomAction.UseSlot a -> useSlot(room, player, a.slot());
 				case RoomAction.PuzzleInput a -> puzzleInput(room, player, a.step(), a.input());
 				case RoomAction.PickUp a -> pickUp(room, player, a.slot());
-				case RoomAction.GiveItem a -> giveItem(room, player, a.item(), a.to());
+				case RoomAction.GiveItem a -> giveItem(room, player, a.item(), a.to(), free);
 				case RoomAction.UseItem a -> useItem(room, player, a.item(), a.slot());
 				case RoomAction.CombineItems a -> combine(room, player, a.a(), a.b());
+				case RoomAction.Replay a -> {
+					if (!free) {
+						throw new RoomException(RoomException.BAD_ACTION, "a room is replayed in the free time only");
+					}
+					replay(room);
+					yield new ActionResult(null, false, false, List.of());
+				}
 			};
+		}
+	}
+
+	/** The seed of replay number {@code n} of a room started with {@code seed}: stable, and never the one before. */
+	static long replaySeed(long seed, int n) {
+		long h = seed ^ (n * 0x9E3779B97F4A7C15L);
+		h = (h ^ (h >>> 30)) * 0xBF58476D1CE4E5B9L;
+		h = (h ^ (h >>> 27)) * 0x94D049BB133111EBL;
+		return h ^ (h >>> 31);
+	}
+
+	/**
+	 * D8: puts the room back to a fresh puzzle state with a <b>new seed</b> derived from the first one and the replay count
+	 * (new solutions, so a replay is a real puzzle again and not a recital of what the group remembers; the same replay
+	 * number always gives the same seed). Same members and place, empty bags, times restarted. It gives no points and opens
+	 * nothing: that is the game's business and it does not look at a replayed room. Called with the room locked.
+	 */
+	private void replay(RoomInstance old) {
+		RoomInstance room = build(old.hub, old.group, old.members, old.definition, replaySeed(old.seed, old.replays + 1));
+		room.place = old.place;
+		room.replays = old.replays + 1;
+		rooms.put(key(old.hub, old.group), room);
+		synchronized (room) {
+			for (StepRuntime s : room.steps.values()) {
+				notifyPuzzle(room, new PuzzleUpdate(s.step.id(), "reset", null, List.of(), null));
+			}
+			notifyRoom(room);
 		}
 	}
 
@@ -347,8 +390,8 @@ public class RoomService {
 	}
 
 	/** Hands an item over to another member of the group: only the holder gives. (Distance is the game's to check.) */
-	private ActionResult giveItem(RoomInstance room, int player, String item, int to) {
-		if (!room.members.contains(to) || to == player) {
+	private ActionResult giveItem(RoomInstance room, int player, String item, int to, boolean free) {
+		if (!free && !room.members.contains(to) || to == player) {
 			throw new RoomException(RoomException.BAD_ACTION, "player " + to + " cannot receive the item");
 		}
 		int at = room.indexOfHeld(item, player);

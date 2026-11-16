@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.mystaria.phantasmon_backend.events.trahison.game.Game;
@@ -65,7 +66,7 @@ class Broadcaster implements GameListener, RoomListener {
 	 * Who is who in a game, copied while the game was locked: the account of each player index, who is dead, which
 	 * accounts are bots, the game masters.
 	 */
-	private record Audience(List<UUID> accounts, boolean[] alive, Set<UUID> bots, Set<UUID> gameMasters) {
+	private record Audience(List<UUID> accounts, boolean[] alive, Set<UUID> bots, Set<UUID> gameMasters, boolean freeTime) {
 
 		static Audience of(Game g) {
 			List<UUID> accounts = new java.util.ArrayList<>();
@@ -79,12 +80,14 @@ class Broadcaster implements GameListener, RoomListener {
 					bots.add(p.uuid);
 				}
 			}
-			return new Audience(List.copyOf(accounts), alive, Set.copyOf(bots), Set.copyOf(g.gameMasters));
+			return new Audience(List.copyOf(accounts), alive, Set.copyOf(bots), Set.copyOf(g.gameMasters),
+					g.phase == com.mystaria.phantasmon_backend.events.trahison.game.Phase.FREE_TIME);
 		}
 
 		/**
 		 * What this account sees of a room: a living member of the group, the player view; a living player of another
-		 * group, nothing; a ghost or anyone not playing, the spectator view; a game master who does not play, the game
+		 * group, nothing (except in the free time, D8: every living player visits and plays every room, so he gets the player
+		 * view of all of them); a ghost or anyone not playing, the spectator view; a game master who does not play, the game
 		 * master view (as {@link Views#kindOf}, a game master who plays is a player).
 		 */
 		ViewerKind viewerOf(UUID account, RoomInstance room) {
@@ -93,13 +96,21 @@ class Broadcaster implements GameListener, RoomListener {
 				if (!alive[i]) {
 					return ViewerKind.SPECTATOR;
 				}
-				return room.members.contains(i) ? ViewerKind.PLAYER : null;
+				return room.members.contains(i) || freeTime ? ViewerKind.PLAYER : null;
 			}
 			return gameMasters.contains(account) ? ViewerKind.GAME_MASTER : ViewerKind.SPECTATOR;
 		}
 	}
 
+	/** The name of an account, for the lobby's list of who may be given the game master role (D7). */
+	private final Function<UUID, String> names;
+
 	Broadcaster(SessionRegistry sessions, Clock clock, Supplier<HubGate> hubs, RoomService rooms) {
+		this(sessions, clock, hubs, rooms, UUID::toString);
+	}
+
+	Broadcaster(SessionRegistry sessions, Clock clock, Supplier<HubGate> hubs, RoomService rooms, Function<UUID, String> names) {
+		this.names = names;
 		this.sessions = sessions;
 		this.clock = clock;
 		this.hubs = hubs;
@@ -118,9 +129,16 @@ class Broadcaster implements GameListener, RoomListener {
 	public void phaseChanged(Game g) {
 		audiences.put(g.hub, Audience.of(g));
 		sendViews(g);
+		if (g.phase == com.mystaria.phantasmon_backend.events.trahison.game.Phase.FREE_TIME) {
+			// D8: every living player may now visit every room, so each one gets the rooms he did not see until now.
+			for (UUID account : recipients(g)) {
+				sendRooms(g, account);
+			}
+		}
 		String stage = g.phase + ":" + g.round + ":" + g.finalLoops;
 		if (!stage.equals(announced.put(g.id, stage))) {
 			announce(g);
+			announceDoorDeaths(g);
 		}
 	}
 
@@ -205,12 +223,61 @@ class Broadcaster implements GameListener, RoomListener {
 
 	/** One view for one account (the game must be locked by the caller). */
 	void sendView(Game g, UUID account) {
-		sessions.send(account, WsMessage.of(VIEW, Views.build(g, account, clock.instant())));
+		sendView(g, account, g.phase == com.mystaria.phantasmon_backend.events.trahison.game.Phase.LOBBY ? lobbyMembers(g) : null);
+	}
+
+	private void sendView(Game g, UUID account, List<Object> lobbyMembers) {
+		Map<String, Object> view = Views.build(g, account, clock.instant());
+		if (lobbyMembers != null) {
+			view.put("lobby_members", lobbyMembers);
+		}
+		sessions.send(account, WsMessage.of(VIEW, view));
 	}
 
 	private void sendViews(Game g) {
+		List<Object> members = g.phase == com.mystaria.phantasmon_backend.events.trahison.game.Phase.LOBBY ? lobbyMembers(g) : null;
 		for (UUID account : recipients(g)) {
-			sendView(g, account);
+			sendView(g, account, members);
+		}
+	}
+
+	/**
+	 * The accounts around the lobby who are not in the game (D7): the people an admin may give the game master role to,
+	 * with whether they already have it. Sent to everyone while the game is in its lobby.
+	 */
+	private List<Object> lobbyMembers(Game g) {
+		List<Object> out = new java.util.ArrayList<>();
+		for (UUID account : recipients(g)) {
+			if (g.indexOf(account) >= 0) {
+				continue;
+			}
+			Map<String, Object> m = new java.util.LinkedHashMap<>();
+			m.put("uuid", account.toString());
+			m.put("name", g.gameMasterNames.getOrDefault(account, names.apply(account)));
+			m.put("game_master", g.gameMasters.contains(account));
+			out.add(m);
+		}
+		return out;
+	}
+
+	/** D2: the hostess says who did not pass any colour door and died of it (once, when the doors have closed). */
+	private void announceDoorDeaths(Game g) {
+		var r = g.currentRound();
+		if (g.phase != com.mystaria.phantasmon_backend.events.trahison.game.Phase.ROOMS || r == null || r.diedAtDoors.isEmpty()) {
+			return;
+		}
+		List<String> who = new java.util.ArrayList<>();
+		for (int i : r.diedAtDoors) {
+			who.add(g.players.get(i).name);
+		}
+		Map<String, Object> say = new java.util.LinkedHashMap<>();
+		say.put("kind", "announce");
+		say.put("key", SAY_KEY_PREFIX + "doors_dead");
+		say.put("args", List.of(String.join(", ", who)));
+		say.put("phase", g.phase.name());
+		say.put("round", g.round);
+		for (UUID account : recipients(g)) {
+			sessions.send(account, WsMessage.of(SAY, say));
 		}
 	}
 

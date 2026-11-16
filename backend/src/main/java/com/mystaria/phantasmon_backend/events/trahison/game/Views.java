@@ -116,12 +116,23 @@ public final class Views {
 		v.put("doors_state", doorsState(g, kind == Kind.PLAYER || kind == Kind.GHOST ? g.indexOf(viewer) : -1));
 		v.put("door_hints", doorHints(g));
 		v.put("cabins_required", g.settings.cabinsRequired && !g.cabinIds.isEmpty());
-		v.put("cabins", cabins(g, kind == Kind.PLAYER || kind == Kind.GHOST ? g.indexOf(viewer) : -1));
+		v.put("cabins", cabins(g));
+		v.put("doors_dead", r == null ? new ArrayList<>() : new ArrayList<>(r.diedAtDoors));
+		v.put("game_masters", gameMasters(g));
 		v.put("viewer", viewer(g, r, kind, viewer));
 		v.put("results", results(g));
 		v.put("winners", g.phase == Phase.ENDED ? new ArrayList<>(g.winners) : null);
 		v.put("gm", kind == Kind.GM ? gmBlock(g, r) : null);
 		return v;
+	}
+
+	/** The game masters (account and name), public: the lobby shows who runs the game. Possibly none. */
+	private static List<Object> gameMasters(Game g) {
+		List<Object> out = new ArrayList<>();
+		for (UUID u : g.gameMasters) {
+			out.add(orderedMap("uuid", u.toString(), "name", g.gameMasterNames.getOrDefault(u, u.toString())));
+		}
+		return out;
 	}
 
 	/** {@code door id -> "OPEN" | "CLOSED"} as this viewer sees it (a door closed for all may be open for him). */
@@ -156,14 +167,18 @@ public final class Views {
 	}
 
 	/**
-	 * The cabins of the plan and whether each is closed, the same for every recipient (a closed cabin door is visible to all);
-	 * {@code closed_by_me}: the viewer is the one who closed it. Who is inside is never given.
+	 * The cabins of the plan and their state, the same for every recipient (a closed cabin door is visible to all):
+	 * {@code state} is {@code FREE}, {@code WAITING} (a member of the group is in, the door is shut to the others until
+	 * {@code window_until}, server epoch ms, so the partner of a pair can join), {@code LOCKED} (nobody leaves before the
+	 * group has voted) or {@code RELEASED} (the group voted and walks out); {@code closed}: its door is shut for those who are
+	 * not of the group. Who is inside is never given.
 	 */
-	private static List<Object> cabins(Game g, int viewerIndex) {
+	private static List<Object> cabins(Game g) {
 		List<Object> out = new ArrayList<>();
 		for (String id : g.cabinIds) {
-			Integer by = g.closedCabins.get(id);
-			out.add(orderedMap("id", id, "closed", by != null, "closed_by_me", by != null && by == viewerIndex));
+			CabinLock lock = g.cabinLocks.get(id);
+			out.add(orderedMap("id", id, "closed", lock != null, "state", lock == null ? "FREE" : lock.state(),
+				"window_until", lock != null && lock.waiting() && lock.windowUntilMs() > 0 ? lock.windowUntilMs() : null));
 		}
 		return out;
 	}
@@ -279,8 +294,6 @@ public final class Views {
 				durations.put(p.name(), g.settings.durationSeconds(p));
 			}
 		}
-		List<Object> masters = new ArrayList<>();
-		g.gameMasters.forEach(u -> masters.add(u.toString()));
 		List<Object> zones = new ArrayList<>();
 		for (int i = 0; i < g.players.size(); i++) {
 			PlayerState p = g.players.get(i);
@@ -288,9 +301,9 @@ public final class Views {
 		}
 		return orderedMap("votes", votes, "zones", zones,
 			"settings", orderedMap("mode", g.settings.mode.name(), "durations", durations,
-				"no_door_penalty", g.settings.noDoorPenalty, "door_open_seconds", g.settings.doorOpenSeconds,
+				"door_open_seconds", g.settings.doorOpenSeconds, "cabin_partner_seconds", g.settings.cabinPartnerSeconds,
 				"cabins_required", g.settings.cabinsRequired),
-			"bot_policy", g.botPolicy.name(), "seed", g.seed, "game_masters", masters);
+			"bot_policy", g.botPolicy.name(), "seed", g.seed);
 	}
 
 	private static String name(Vote v) {

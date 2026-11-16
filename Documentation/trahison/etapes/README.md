@@ -6,7 +6,7 @@
 ## Ordre et dépendances
 
 ```
-T0 socle ─► T1 moteur ─► T2 plan, portes, cabines ─► T3 salles ─► T4 tirage et collage ─► T9 contenu ─► T10 répétition
+T0 socle ─► T1 moteur ─► T2 plan, portes, cabines ─► T3 salles ─► T4 tirage et collage ─► T11 carte ─► T9 contenu ─► T10 répétition
                               │                          │
                               ├─► T5 vocal               └─► T8 Cobblemon
                               └─► T6 mort, fantômes ─► T7 rôles, objets, maître du jeu
@@ -17,13 +17,14 @@ T0 socle ─► T1 moteur ─► T2 plan, portes, cabines ─► T3 salles ─�
 | T0 | [Le socle dans Events](T0-socle.md) | — | — | À faire |
 | T1 | [Le moteur de partie](T1-moteur.md) | T0 | — | Backend fait (partie, vues, factices, tests) ; client à faire |
 | T2 | [Le plan, les portes, les cabines](T2-plan-portes.md) | T1 | — | En cours : T2.1 écrite, à valider en jeu ; T2.2 faite (faux blocs `MirrorGhosts.putLocal`, états des portes par le backend, zones), à valider en jeu ; T2.3 faite le 2026-11-16 (portes de couleur ouvertes par le seuil, `door_hints`, panneau flottant `world/DoorPanels`), à valider en jeu ; T2.4 faite le 2026-11-16 (cabines : `close_cabin`, vote seulement depuis sa cabine fermée, pupitre `screen/VoteScreen`, invite `hud/CabinPrompt`, tableau des résultats `world/ResultsBoardWorld` avec repli `hud/ResultsHud`, onglet Tableau de l'éditeur), à valider en jeu ; T2.5 à faire |
-| T3 | [Le cadre des salles](T3-salles.md) | T2 | T5, T6 | En cours : T3.1 faite et branchée sur le moteur de partie (une salle par groupe, actions, diffusion, reprise après redémarrage) ; T3.2 (éditeur de salle) écrite et compilée, pas encore essayée en jeu ; T3.3 à faire ; T3.5 : `ring_dial` fait (backend, écran, glyphes, tests), les cinq autres à faire sur son modèle |
+| T3 | [Le cadre des salles](T3-salles.md) | T2 | T5, T6 | En cours : T3.1 faite et branchée sur le moteur de partie (une salle par groupe, actions, diffusion, reprise après redémarrage) ; T3.2 (éditeur de salle) écrite et compilée, pas encore essayée en jeu ; T3.3 faite le 2026-11-16 (objets du monde `world/Interactables` et leurs rendus, inventaire virtuel `room/Inventory` avec barre d'objets et écran, lecture `room/Documents`, donner / utiliser / combiner par le backend, temps libre D8 : visiter et rejouer les salles), à valider en jeu ; T3.5 : `ring_dial` fait (backend, écran, glyphes, tests), les cinq autres à faire sur son modèle |
 | T4 | [Le tirage et le collage](T4-tirage-collage.md) | T3 | T5, T6, T7 | À faire |
 | T5 | [Le vocal par zones](T5-vocal.md) | T2 | T3, T4, T6 | À faire |
 | T6 | [La mort, les bracelets, les fantômes](T6-mort-fantomes.md) | T2 | T3, T4, T5 | À faire |
 | T7 | [Les rôles, les objets, le maître du jeu](T7-roles-objets.md) | T6, T3 (sous-tâche 3) | T4, T8 | À faire |
 | T8 | [Cobblemon](T8-cobblemon.md) | T3 | T4, T7 | À faire |
 | T9 | [Le contenu de la première soirée](T9-contenu.md) | T3 (sous-tâche 5), puis tout | En continu | À faire |
+| T11 | [La carte du lieu](T11-carte.md) (décision D9) | T2, T4 | T5, T6, T7, T8 | À faire |
 | T10 | [La répétition générale](T10-repetition.md) | Tout | — | À faire |
 
 Deux étapes ne se font en même temps que si elles ne touchent pas les mêmes fichiers. Les sous-tâches d'une même
@@ -74,7 +75,7 @@ Reprises du plan (section 12). À poser au moment où une étape en a besoin, pa
 
 | Question | Étape qui en a besoin |
 |---|---|
-| Pénalité d'un joueur resté devant les portes | T2 |
+| ~~Pénalité d'un joueur resté devant les portes~~ (tranché : la mort, D2) | T2 |
 | Habillage Feu / Plante / Eau des couleurs | T1 (noms), T2 (affichage) |
 | La mort est-elle annoncée ou découverte | T6 |
 | Durées des liens et du verrou | T7 |

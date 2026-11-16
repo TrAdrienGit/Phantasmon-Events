@@ -39,8 +39,7 @@ Rien n'a encore tourné **en jeu** : aucun déploiement n'a été fait (ni mod, 
 ## Reste à faire, dans l'ordre
 
 1. T2.4 cabines et vote, T2.5 porte finale (T2.3 portes de couleur faite le 2026-11-16, non déployée).
-2. T3.2 (finir), T3.3 objets du monde, inventaire, documents (demande des actions backend : donner, combiner,
-   utiliser un objet), T3.5 six mécanismes (`ring_dial` d'abord), T3.6 indices automatiques, mesure des temps,
+2. T3.2 (finir), ~~T3.3 objets du monde, inventaire, documents~~ (faite le 2026-11-16, à valider en jeu), T3.5 six mécanismes (`ring_dial` d'abord), T3.6 indices automatiques, mesure des temps,
    pénalité des 30 minutes (V9).
 3. T4, T5, T6, T7, T8, T9, puis T10 avec des humains.
 
@@ -64,12 +63,11 @@ Rien n'a encore tourné **en jeu** : aucun déploiement n'a été fait (ni mod, 
 
 ## Décisions prises par défaut (à trancher dans [`decisions.md`](decisions.md))
 
+> D1 à D7 ont été tranchées par la propriétaire et appliquées le 2026-11-16 (voir « Tranché » dans `decisions.md`) ; restent D8 et D9
+> (autre chantier) et les questions D10 à D13 ouvertes par cette application.
+
 | Sujet | Choix par défaut | Autres possibilités |
 |---|---|---|
-| Votes de la boucle finale | Nouvelle répartition tirée, groupes choisis par la graine, sans étape des portes | A : garder les groupes de la manche 3 ; B : une vraie étape des portes à chaque boucle |
-| Joueur resté devant les portes | −1 point (proposition du plan), et il reste lié au groupe de la répartition pour le vote (« Allier » s'il ne vote pas) | Autre valeur, ou exclu du vote |
-| Cabines | La salle de vote sert les 3 manches : une cabine sert une paire de couleurs (3 paires × 2 côtés = 6) | — |
-| Maître du jeu | Tout admin qui envoie une action MJ devient maître du jeu de la partie | Désignation explicite |
 | Salles pendant le temps libre | Visibles, mais une salle finie refuse les actions | Rejouables |
 
 ## Tests humains à faire (à transformer en check-list cochable à la reprise)
@@ -117,8 +115,8 @@ Rien n'a encore tourné **en jeu** : aucun déploiement n'a été fait (ni mod, 
     l'autre répartition devant une autre porte ne l'ouvre pas et le panneau l'explique (« ne vont pas avec les portes
     déjà prises ») ;
   - un joueur mort ou fantôme sur le seuil ne compte pas ;
-  - à la fin de `DOORS` toutes les portes se ferment, les absents perdent `no_door_penalty` (−1 : question ouverte à la
-    propriétaire) ;
+  - à la fin de `DOORS` toutes les portes se ferment, **un joueur qui n'a passé aucune porte de couleur meurt** (D2, plus de
+    pénalité de points : voir les tests D1 à D7 plus bas) ;
   - le panneau a-t-il le bon rendu (lisible en 1280 x 720, glyphes nets, rien ne se superpose) ? Les polices et les formes
     sont celles du monde (`Font.drawInBatch`, `RenderType.debugQuads`), pas celles de la charte des écrans.
 - **T2.2 faux blocs et zones** (mod `--events` et module backend déployés, plan complet enregistré) :
@@ -141,20 +139,80 @@ Rien n'a encore tourné **en jeu** : aucun déploiement n'a été fait (ni mod, 
     moins de 4 blocs est refusé ;
   - en `VOTE`, la ligne du HUD dit où aller (cabine, couleurs, côté) ; dans une cabine qui n'est pas la sienne : « Ce n'est pas ta
     cabine » ; dans la sienne : « Appuie sur V pour fermer ta cabine et voter » ;
-  - V ferme la cabine : la porte se ferme (faux blocs) chez tous, **on est enfermé** jusqu'à la fin de `VOTE`, et le pupitre s'ouvre
-    tout seul ;
+  - la mécanique des cabines a été refondue (D4, D5) : voir les tests « Cabines » de la section D1 à D7 plus bas, qui remplacent ceux
+    qui parlaient de fermer la cabine avec V ;
   - le pupitre en 320 x 180 et en 854 x 480 : or pour S'allier, violet pour Trahir, symboles nets, chrono, texte qui ne déborde pas ;
     flèches gauche et droite, Entrée, clic ; le choix validé reste allumé et l'autre s'assombrit ; « Fermer » cache le pupitre sans
-    rouvrir la cabine, V le rouvre ;
-  - paire : l'un ferme et vote, l'autre (dedans ou dehors) ne peut plus rien (message « fermée par quelqu'un d'autre ») ; le vote de
-    la paire compte pour les deux ;
-  - voter sans avoir fermé (par l'écran `menu`) est refusé ; pas de vote : « Allier » ; à la fin de `VOTE` toutes les cabines
-    se rouvrent ; un joueur déconnecté dans une cabine fermée : elle se rouvre à la fin de l'étape ;
+    rien changer, V le rouvre ;
+  - voter sans être dans sa cabine verrouillée (par l'écran `menu`) est refusé ; pas de vote : « Allier » ;
   - `cabins_required` coupé dans `create` : le vote libre de l'écran `menu` revient ;
   - `RESULTS` : le tableau se lit en face, **pas en miroir** (texte de gauche à droite, du bon côté du mur, vu de l'autre côté il est
     simplement derrière le mur), les votes se révèlent porte par porte (« ? » avant), puis les points ; lisible à 10 et 30 blocs, pas
     à travers un mur, pas de scintillement entre le fond et le texte (si oui : augmenter `LAYER` dans `ResultsBoardWorld`) ;
   - sans `results_board` dans le plan : le panneau du HUD en haut à gauche (il peut chevaucher le bracelet en 320 x 180).
+
+- **Décisions D1 à D7 (2026-11-16 ; mod `--events` et module backend déployés ; à faire avec 9 joueurs, ou 2 humains et des factices)** :
+  - **D2, mort aux portes** : en `DOORS`, un joueur ne passe aucune porte de couleur. À la fin de l'étape il devient fantôme (traverse
+    les faux blocs, ne voit plus de faux blocs, n'agit plus), ses points sont **inchangés**, l'animatrice dit à tout le monde
+    « <nom> n'a passé aucune porte. La maison le garde. » (en anglais en `en_us`) ; sa salle et son vote existent quand même (« Allier »
+    par défaut pour lui) ; à la manche suivante il n'a pas de porte à passer et ne « remeurt » pas ; avec tous les autres joueurs
+    qui passent, seul lui est mort. Contrôler que le HUD le montre en fantôme et que l'écran MJ le liste mort.
+  - **Cabines, un solo** : en `VOTE`, entrer dans **sa** cabine solo la verrouille aussitôt (la porte se ferme, on ne peut plus
+    sortir, le pupitre s'ouvre tout seul) ; un autre joueur ne peut pas y entrer ; V ne fait rien de plus. Voter ouvre la porte **pour soi
+    seul** (la porte se rouvre devant soi, un autre qui s'approche la voit fermée) ; en sortir la libère pour tous.
+  - **Cabines, une paire** : le premier entré voit sur la ligne du HUD « Ton partenaire a N s pour te rejoindre » avec un compte à
+    rebours ; son partenaire voit « Ton partenaire attend dans la cabine : N s pour le rejoindre » ; la porte reste ouverte aux deux
+    seulement (un tiers la voit fermée). Si le partenaire entre dans les 30 s : la cabine se verrouille aussitôt pour les deux, les
+    deux peuvent voter (un seul vote compte pour la paire ; le second reçoit « déjà voté »). Si le partenaire n'arrive pas : au bout de
+    30 s elle se verrouille avec le premier, le partenaire arrivé en retard trouve la porte fermée (« Ta cabine est verrouillée : ton
+    partenaire vote pour la paire ») et ne peut pas voter ; V avant les 30 s verrouille tout de suite. Si le premier ressort avant
+    le verrouillage, la cabine redevient libre.
+  - **D5, sortir** : une fois que le groupe a voté, la porte s'ouvre pour ceux qui sont dedans (la pastille du pupitre passe à
+    « Porte ouverte ») et le HUD dit « Vote enregistré » ; sans avoir voté on reste enfermé jusqu'à la fin de `VOTE`, puis toutes les
+    cabines s'ouvrent à `RESULTS`. Un joueur déconnecté dans une cabine : elle s'ouvre à la fin de l'étape.
+  - **Intrus** (voir D10) : se mettre dans la cabine d'un autre groupe ne la verrouille pas et on ne peut pas y voter ; si le bon
+    joueur entre ensuite, l'intrus peut ressortir, lui seul.
+  - **D3, vote absent** : un solo qui ne vote pas compte « Allier » ; une paire dont un membre ne vote pas, l'autre vote seul pour
+    la paire ; une paire où personne ne vote : « Allier » (vérifier les points sur le tableau des résultats).
+  - **Réglage** : `settings.cabin_partner_seconds` dans `create` (1 à 300, 30 par défaut), visible dans la vue MJ.
+  - **D7, maîtres du jeu** (écran `/phantasmon event trahison gm`, avec un compte admin et un compte non admin dans le hub) :
+    l'admin crée la partie : il n'est **pas** maître du jeu ; dans le lobby la colonne de droite liste les comptes autour du lobby
+    avec « Nommer maître du jeu » / « Retirer » (réservé aux admins, un non-admin voit le bouton grisé) ; nommer le compte non admin :
+    il reçoit la vue MJ, peut ouvrir l'écran MJ (`gm`) et envoyer pause, suivant, etc. ; l'admin non nommé ne peut plus rien faire dès que
+    la partie est lancée (« Tu n'es pas maître du jeu de cette partie » dans l'écran, refus côté backend) mais peut encore démarrer et
+    ajouter des factices en lobby ; un joueur inscrit ne peut pas être nommé et un maître du jeu ne peut pas s'inscrire ; plusieurs maîtres
+    du jeu reçoivent tous la vue MJ ; en mode « Maître du jeu » sans personne de nommé le démarrage est refusé (« …demande au moins un
+    maître du jeu ») ; en mode Automatique avec 0 maître du jeu la partie va jusqu'au bout seule.
+  - **D1** : après la manche 3, une boucle de la porte finale tire de nouveaux groupes au hasard sans étape des portes (personne ne meurt
+    faute d'avoir passé une porte).
+- **Tests humains T3.3** (objets du monde, inventaire, documents, temps libre D8 ; une partie à 9 avec des factices, une salle d'essai
+  qui a des emplacements `terminal`, `keypad`, `pickup`, `wall_clue`, `lever`, `pedestal`, un objet à ramasser et une recette `combines` ;
+  `test_room` dans `create`) :
+  - **Rendus** : chaque genre d'emplacement actif est dessiné à sa place et dans le bon sens, pour les 4 orientations de place de la salle
+    (terminal : bloc et écran qui brille, digicode : plaque murale et 12 touches, objet : octaèdre qui tourne et flotte, panneau d'indice :
+    texte, chiffres, symboles des mini-jeux, carrés de couleur avec leur forme, levier : poignée qui tombe quand l'étape est résolue,
+    socle). Le texte n'est pas en miroir ; un mur cache le panneau ; les symboles sont bien cachés derrière un mur ; sans Iris et avec.
+  - **Visée** : contour clair et nom de l'action (Examiner, Ramasser, Utiliser) à 4 blocs, rien au-delà ; un clic droit ou gauche ne
+    déclenche rien d'autre (aucun bloc posé ni cassé, rien dans la console du serveur) à 2, 3 et 4 blocs ; un emplacement logé dans un
+    bloc réel se vise quand même ; un mur ou un bloc devant l'objet empêche de le viser.
+  - **Ramasser** : clic sur l'objet, il disparaît du monde **chez tous les membres du groupe**, apparaît dans la barre d'objets du seul
+    ramasseur et dans son inventaire (touche I) ; le coéquipier le voit dans « Tes coéquipiers portent ».
+  - **Donner** : écran d'inventaire, « Donner à... » : refusé à plus de 4 blocs (message « trop loin » du backend), accepté à moins ; l'objet
+    passe dans la barre de l'autre joueur seulement ; un joueur d'un autre groupe n'est pas proposé pendant `ROOMS`.
+  - **Utiliser** : « Tenir » (ou la touche G) puis clic sur le terminal ou le digicode attendu : l'étape se résout et l'objet disparaît ;
+    sur un mauvais emplacement : « cela ne fait rien ici », l'objet reste. « Utiliser sur... » dans l'écran fait la même chose.
+  - **Combiner** : deux objets d'une recette de la salle donnent le résultat chez celui qui combine ; deux objets sans recette : refus.
+  - **Documents** : « Examiner » sur un panneau ou un document ouvre l'écran de lecture (pages précédente / suivante, flèches, Échap),
+    une image absente montre l'image de remplacement `textures/trahison/docs/placeholder.png` avec son identifiant ; déposer un PNG
+    `textures/trahison/docs/<id>.png` la remplace. Le texte long est coupé proprement en 320 x 180.
+  - **Synchronisation** : un second joueur du groupe voit les mêmes changements (objet ramassé, indice qui apparaît au mur quand l'étape
+    d'avant est résolue, levier tombé) ; un spectateur ou un fantôme voit les objets mais ne peut ni les viser ni cliquer dessus.
+  - **D8, temps libre** : à `FREE_TIME`, aller dans la salle d'un autre groupe (les trois salles sont dessinées pour tous) : on peut viser et
+    y jouer, y ramasser un objet, ouvrir ses mini-jeux et y faire des gestes qui bougent chez ceux qui y sont ; « Rejouer cette salle »
+    (inventaire, confirmation) remet la salle à zéro avec **d'autres solutions** (l'ancien code ne marche plus) ; aucun point ne change, aucune
+    porte ne s'ouvre, `roomSolved` ne bouge pas (voir la vue MJ) même si on finit la salle rejouée ; en `VOTE` plus rien n'est accepté.
+  - **Backend** : le message `EventsTrahisonRoom` d'un joueur ne contient jamais de solution (`target`, etc.) ; un redémarrage du backend en
+    pleine salle garde le sac, les porteurs et le nombre de rejeux.
 
 ## Notes de contrôle de l'orchestrateur (2026-11-16, après 27b1d8c)
 

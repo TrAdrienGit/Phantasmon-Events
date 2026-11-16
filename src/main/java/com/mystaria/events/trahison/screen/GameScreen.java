@@ -395,10 +395,9 @@ public final class GameScreen extends TrahisonScreen {
 	private int drawVoteCabin(GuiGraphics g, View v, int x, int y, int w) {
 		int used = MenuUi.paragraph(g, Component.translatable(T + "hint.vote_cabin", com.mystaria.events.trahison.Trahison.CABIN_KEY.getTranslatedKeyMessage()),
 				x, y, w, TrahisonPalette.TEXT_SECONDARY) + 6;
-		GameView.Cabin mine = GameView.cabins().mine();
-		boolean closedByMe = mine != null && mine.closedByMe();
+		boolean atPupitre = com.mystaria.events.trahison.world.CabinFlow.atPupitre();
 		ui.button(g, x, y + used, w, TrahisonUi.BUTTON_H, Component.translatable(T + "votepad.open"), ButtonKind.PRIMARY,
-				closedByMe ? null : Component.translatable(T + "votepad.open.tip"), closedByMe ? VoteScreen::open : null);
+				atPupitre ? null : Component.translatable(T + "votepad.open.tip"), atPupitre ? VoteScreen::open : null);
 		used += TrahisonUi.BUTTON_H + 6;
 		Vote own = v.viewer().ownVote();
 		if (own != null) {

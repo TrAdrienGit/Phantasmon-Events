@@ -26,6 +26,13 @@ public record Clue(String role, ClueType type, JsonNode value) {
 		return new Clue(role, ClueType.TEXT, Json.text(text));
 	}
 
+	/** A document of several pages (see {@link ClueType#DOCUMENT}). */
+	public static Clue document(String role, java.util.List<String> pages) {
+		tools.jackson.databind.node.ArrayNode array = Json.array();
+		pages.forEach(array::add);
+		return new Clue(role, ClueType.DOCUMENT, array);
+	}
+
 	public static Clue item(String role, String itemId) {
 		return new Clue(role, ClueType.ITEM, Json.text(itemId));
 	}

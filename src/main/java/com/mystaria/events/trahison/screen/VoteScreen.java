@@ -24,10 +24,11 @@ import com.mystaria.phantasmon.client.gui.menu.MenuUi;
  * The voting pupitre inside a closed cabin (T2.4), in the charter's "window" mode: the player's colour and side, two big
  * cards (S'allier in gold, Trahir in violet, each with its symbol), and a confirm button. A card only selects; the vote is
  * sent by "Confirm" (Enter), and the choice stays lit once cast while the other darkens (charter, section 7). It opens when
- * the player closes his cabin (key or automatically, see {@code CabinFlow}) and closes by itself when the step ends or the
- * cabin is no longer his; closing it by hand keeps the cabin closed and loses nothing (the key opens it again). Left and
- * Right pick a side. The pair's behaviour is the backend's: the first of the pair to vote decides for both, and the one who
- * closed the cabin is the one inside. Readable from 320 x 180 GUI pixels up. Client thread.
+ * his cabin locks with him inside (automatically, see {@code CabinFlow}, or with the key) and closes by itself when the step
+ * ends or he leaves the cabin; closing it by hand loses nothing (the key opens it again). Once his group has voted the cabin's
+ * door opens for him. Left and
+ * Right pick a side. The pair's behaviour is the backend's: the first of the pair to vote decides for both, and either of them
+ * may vote from the locked cabin. Readable from 320 x 180 GUI pixels up. Client thread.
  */
 public final class VoteScreen extends TrahisonScreen {
 
@@ -103,10 +104,10 @@ public final class VoteScreen extends TrahisonScreen {
 				can && selected != null ? this::confirm : null);
 	}
 
-	/** Still a living player of a VOTE step whose cabin he closed. */
+	/** Still a living player of a VOTE step, inside his own locked cabin (once his group voted the pupitre stays readable). */
 	private static boolean stillHis(View v) {
-		GameView.Cabin cabin = GameView.cabins().mine();
-		return v.hasGame() && v.phase() == Phase.VOTE && v.viewer().kind() == ViewerKind.PLAYER && cabin != null && cabin.closedByMe();
+		return v.hasGame() && v.phase() == Phase.VOTE && v.viewer().kind() == ViewerKind.PLAYER
+				&& com.mystaria.events.trahison.world.CabinFlow.atPupitre();
 	}
 
 	private void header(GuiGraphics g, View v, int x, int y, int w) {
@@ -119,11 +120,12 @@ public final class VoteScreen extends TrahisonScreen {
 			TrahisonUi.pill(g, right - pw, y + 4, t, TrahisonPalette.PANEL_SUNKEN, color);
 			right -= pw + 4;
 		}
-		Component closed = Component.translatable(T + "votepad.closed");
+		boolean released = v.viewer().ownVote() != null || v.viewer().sideVoted();
+		Component closed = Component.translatable(T + (released ? "votepad.open_door" : "votepad.closed"));
 		int cw = TrahisonUi.width(closed) + 10;
 		if (right - cw > x + 80) {
 			TrahisonUi.pill(g, right - cw, y + 4, closed, TrahisonPalette.PANEL_SUNKEN, TrahisonPalette.TEXT_SECONDARY);
-			ui.tip(right - cw, y + 4, cw, 12, Component.translatable(T + "votepad.closed.tip"));
+			ui.tip(right - cw, y + 4, cw, 12, Component.translatable(T + (released ? "votepad.open_door.tip" : "votepad.closed.tip")));
 		}
 	}
 

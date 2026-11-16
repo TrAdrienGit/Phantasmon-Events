@@ -19,6 +19,22 @@ public final class Messages {
 	public static final String ACTION = "EventsTrahisonAction";
 	public static final String GM = "EventsTrahisonGm";
 
+	private static final java.util.Set<String> ROOM_ACTIONS = java.util.Set.of("use_slot", "pick_up", "give_item", "use_item", "combine", "replay");
+
+	/** The room the next room actions are aimed at, when it is not the one the player stands in (see {@link #inRoom}). */
+	private static Integer forcedGroup;
+
+	/** Runs {@code actions}, every room action of which goes to room {@code group} (the object clicked, not the room the player stands in). */
+	public static void inRoom(int group, Runnable actions) {
+		Integer before = forcedGroup;
+		forcedGroup = group;
+		try {
+			actions.run();
+		} finally {
+			forcedGroup = before;
+		}
+	}
+
 	private Messages() {
 	}
 
@@ -41,7 +57,7 @@ public final class Messages {
 		send(ACTION, "pass_door", Map.of("door", door), true);
 	}
 
-	/** VOTE: closes the cabin the player stands in (his own); the backend refuses otherwise. */
+	/** VOTE: locks the cabin the player stands in (his own) now, without waiting for his partner; the backend refuses otherwise. */
 	public static void closeCabin() {
 		send(ACTION, "close_cabin", null, true);
 	}
@@ -60,6 +76,11 @@ public final class Messages {
 	}
 
 	// ---------------------------------------------------------------- room actions (T3.3)
+
+	/** {@code replay}: free time only (D8), puts the room the player stands in back to a fresh puzzle state, new solutions, no points. */
+	public static void replay() {
+		send(ACTION, "replay", null, true);
+	}
 
 	/** {@code use_slot}: uses an active slot; a puzzle bound to it opens its screen ({@code EventsTrahisonPuzzle}, {@code open}). */
 	public static void useSlot(String slot) {
@@ -153,6 +174,14 @@ public final class Messages {
 		send(GM, "set_door", extra, true);
 	}
 
+	/** D7: an admin gives ({@code on}) or takes back the game master role of an account, in the lobby. */
+	public static void setGameMaster(java.util.UUID account, boolean on) {
+		Map<String, Object> extra = new LinkedHashMap<>();
+		extra.put("account", account.toString());
+		extra.put("on", on);
+		send(GM, "set_game_master", extra, true);
+	}
+
 	public static void setPoints(int bracelet, int points) {
 		send(GM, "set_points", Map.of("bracelet", bracelet, "points", Math.max(0, points)), true);
 	}
@@ -166,6 +195,15 @@ public final class Messages {
 	private static boolean send(String type, String action, Map<String, Object> extra, boolean report) {
 		Map<String, Object> data = new LinkedHashMap<>();
 		data.put("action", action);
+		if (ROOM_ACTIONS.contains(action)) {
+			// Free time (D8): the room acted on may be another trio's; the backend refuses it outside the free time.
+			com.mystaria.events.trahison.room.RoomView room = com.mystaria.events.trahison.room.Rooms.current();
+			if (forcedGroup != null) {
+				data.put("group", forcedGroup);
+			} else if (room != null) {
+				data.put("group", room.group());
+			}
+		}
 		String hub = Link.hub();
 		if (hub != null) {
 			data.put("hub", hub);

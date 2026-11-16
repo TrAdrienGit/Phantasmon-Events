@@ -11,8 +11,10 @@ import com.mystaria.events.trahison.net.GameView;
 import com.mystaria.events.trahison.net.GameView.Bracelet;
 import com.mystaria.events.trahison.net.GameView.Gm;
 import com.mystaria.events.trahison.net.GameView.GmVote;
+import com.mystaria.events.trahison.net.GameView.Member;
 import com.mystaria.events.trahison.net.GameView.Phase;
 import com.mystaria.events.trahison.net.GameView.View;
+import com.mystaria.events.trahison.net.GameView.ViewerKind;
 import com.mystaria.events.trahison.net.Link;
 import com.mystaria.events.trahison.net.Messages;
 import com.mystaria.events.trahison.ui.TrahisonPalette;
@@ -22,10 +24,12 @@ import com.mystaria.phantasmon.client.api.PhantasmonApi;
 import com.mystaria.phantasmon.client.gui.menu.MenuUi;
 
 /**
- * The provisional game master screen (step T1.4), for Phantasmon's admins ({@code /phantasmon event trahison gm}), in the
- * charter's game-master tint: create the game of the hub, add dummy players with a vote policy, start, pause, resume, next
- * step, extend, end, correct a bracelet's points, and read what only the game master sees (the votes cast so far, the
- * seed, the dummy players' policy). The backend decides and refuses non-admins. Client thread.
+ * The provisional game master screen (step T1.4), for Phantasmon's admins and the game's game masters
+ * ({@code /phantasmon event trahison gm}), in the charter's game-master tint: create the game of the hub, in its lobby add
+ * dummy players with a vote policy and give the game master role to people (D7: none, one or several; admins only), start,
+ * pause, resume, next step, extend, end, correct a bracelet's points, and read what only a game master sees (the votes
+ * cast so far, the seed, the dummy players' policy). The backend decides: once the game runs only its assigned game
+ * masters may act, and it refuses the others. Client thread.
  */
 public final class GmScreen extends TrahisonScreen {
 
@@ -48,10 +52,10 @@ public final class GmScreen extends TrahisonScreen {
 		super(Component.translatable(T + "title"), TrahisonPalette.GAME_MASTER);
 	}
 
-	/** Opens the screen; refused (a chat line) for a non-admin. */
+	/** Opens the screen; refused (a chat line) for someone who is neither an admin nor a game master of the game. */
 	public static void open() {
 		Minecraft mc = Minecraft.getInstance();
-		if (!PhantasmonApi.isAdmin()) {
+		if (!PhantasmonApi.isAdmin() && GameView.orEmpty().viewer().kind() != ViewerKind.GM) {
 			mc.player.displayClientMessage(Component.translatable(T + "not_admin"), false);
 			return;
 		}
@@ -142,6 +146,9 @@ public final class GmScreen extends TrahisonScreen {
 					hub ? () -> Messages.create(gameMasterMode ? "GAME_MASTER" : "AUTO", fast) : null);
 			return used + bh;
 		}
+		if (!isGameMaster(v) && phase != Phase.LOBBY) {
+			return MenuUi.paragraph(g, Component.translatable(T + "not_game_master"), x, y, w, TrahisonPalette.TEXT_MUTED);
+		}
 		if (phase == Phase.LOBBY) {
 			ui.button(g, x, y, half, bh, Component.translatable(T + "bot_one"), ButtonKind.DEFAULT, null, () -> Messages.addBots(1, currentPolicy(v)));
 			ui.button(g, x + half + 4, y, half, bh, Component.translatable(T + "bot_fill"), ButtonKind.DEFAULT, Component.translatable(T + "bot_fill.tip"),
@@ -164,6 +171,11 @@ public final class GmScreen extends TrahisonScreen {
 		used += 4;
 		ui.button(g, x, y + used, w, bh, Component.translatable(T + "end"), ButtonKind.DANGER, null, this::askEnd);
 		return used + bh;
+	}
+
+	/** The viewer is one of the game's game masters (the backend lets only them act once the game runs). */
+	private static boolean isGameMaster(View v) {
+		return v.viewer().kind() == ViewerKind.GM;
 	}
 
 	/** The policy of the dummy players: the game's own when the view tells it, else the last chosen here. */
@@ -199,6 +211,10 @@ public final class GmScreen extends TrahisonScreen {
 	// ---------------------------------------------------------------- right: bracelets and votes
 
 	private void drawRight(GuiGraphics g, View v, int x, int y, int w, int h) {
+		if (v.phase() == Phase.LOBBY) {
+			drawLobbyMasters(g, v, x, y, w, h);
+			return;
+		}
 		if (v.bracelets().isEmpty() && (v.gm() == null || v.gm().votes().isEmpty())) {
 			MenuUi.paragraph(g, Component.translatable(T + "nothing"), x, y, w, TrahisonPalette.TEXT_MUTED);
 			return;
@@ -226,6 +242,58 @@ public final class GmScreen extends TrahisonScreen {
 				drawVoteRow(g, v, vote, x + 4, ry + used, rw);
 				used += 30;
 			}
+		}
+		ui.unclip(g);
+		rightContent = used + 8;
+		if (bar) {
+			int[] thumb = MenuUi.thumb(y + 1, h - 2, rightContent + 4, rightScroll);
+			if (thumb != null) {
+				g.fill(x + w - 4, thumb[0], x + w - 2, thumb[0] + thumb[1], TrahisonPalette.EDGE);
+			}
+		}
+	}
+
+	/**
+	 * D7: who runs the game. The game masters first, then the people around who are not playing; an admin gives or takes back
+	 * the role with a click (none is fine: the game then runs on its own).
+	 */
+	private void drawLobbyMasters(GuiGraphics g, View v, int x, int y, int w, int h) {
+		TrahisonUi.well(g, x, y, w, h);
+		rightScroll = clamp(rightScroll, rightContent - (h - 4));
+		ui.clip(g, x + 1, y + 1, x + w - 1, y + h - 1);
+		int ry = y + 4 - rightScroll;
+		int used = 0;
+		boolean bar = rightContent > h - 4;
+		int rw = w - 8 - (bar ? 4 : 0);
+		GameView.Lobby lobby = GameView.lobby();
+		MenuUi.text(g, Component.translatable(T + "masters", lobby.gameMasters().size()), x + 4, ry + used, rw, TrahisonPalette.GAME_MASTER);
+		used += 14;
+		boolean admin = PhantasmonApi.isAdmin();
+		if (lobby.gameMasters().isEmpty()) {
+			used += MenuUi.paragraph(g, Component.translatable(T + (v.mode().equals("GAME_MASTER") ? "masters.none_needed" : "masters.none")), x + 4, ry + used, rw,
+					TrahisonPalette.TEXT_MUTED) + 4;
+		}
+		java.util.List<Member> rows = new java.util.ArrayList<>(lobby.gameMasters());
+		for (Member m : lobby.members()) {
+			if (!lobby.isGameMaster(m.uuid())) {
+				rows.add(m);
+			}
+		}
+		if (rows.isEmpty()) {
+			used += MenuUi.paragraph(g, Component.translatable(T + "masters.nobody"), x + 4, ry + used, rw, TrahisonPalette.TEXT_MUTED) + 4;
+		}
+		for (Member m : rows) {
+			boolean master = lobby.isGameMaster(m.uuid());
+			int rx = x + 4;
+			int rowY = ry + used;
+			TrahisonUi.row(g, rx, rowY, rw, 18, ui.hovered(rx, rowY, rw, 18), false);
+			int bw = 74;
+			TrahisonUi.textEllipsis(g, Component.literal(m.name()), rx + 6, rowY + 5, rw - bw - 14, master ? TrahisonPalette.GAME_MASTER : TrahisonPalette.TEXT);
+			Component label = Component.translatable(T + (master ? "master_remove" : "master_add"));
+			ui.button(g, rx + rw - bw - 2, rowY + 1, bw, 16, label, master ? ButtonKind.DANGER : ButtonKind.DEFAULT,
+					admin ? Component.translatable(T + (master ? "master_remove.tip" : "master_add.tip")) : Component.translatable(T + "master_admin_only"),
+					admin ? () -> Messages.setGameMaster(m.uuid(), !master) : null);
+			used += ROW_PITCH;
 		}
 		ui.unclip(g);
 		rightContent = used + 8;

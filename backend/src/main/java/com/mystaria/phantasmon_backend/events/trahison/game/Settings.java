@@ -3,16 +3,18 @@ package com.mystaria.phantasmon_backend.events.trahison.game;
 import java.util.EnumMap;
 import java.util.Map;
 
-import com.mystaria.phantasmon_backend.events.trahison.rules.Scoring;
-
 /** What the organiser can tune before a game. Plain data, serialized with the game. */
 public class Settings {
 
 	/** Seconds per stage; a stage missing from the map uses its default. */
 	public Map<Phase, Integer> durations = new EnumMap<>(Phase.class);
 	public Mode mode = Mode.AUTO;
-	/** Points added (a negative number) to a living player who passed no door when the doors close. */
-	public int noDoorPenalty = Scoring.NO_DOOR_PENALTY;
+	/**
+	 * How long the partner of a pair has to join the first member who entered the pair's vote cabin before it locks (D4,
+	 * seconds).
+	 */
+	public int cabinPartnerSeconds = DEFAULT_CABIN_PARTNER_SECONDS;
+	public static final int DEFAULT_CABIN_PARTNER_SECONDS = 30;
 	/** How long a colour door stays open once the bracelets at its threshold satisfy it (seconds). */
 	public int doorOpenSeconds = DEFAULT_DOOR_OPEN_SECONDS;
 	public static final int DEFAULT_DOOR_OPEN_SECONDS = 6;

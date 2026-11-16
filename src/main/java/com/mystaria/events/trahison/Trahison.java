@@ -43,6 +43,9 @@ public final class Trahison {
 		com.mystaria.events.trahison.world.DoorPanels.register();
 		com.mystaria.events.trahison.world.CabinFlow.register();
 		com.mystaria.events.trahison.world.ResultsBoardWorld.register();
+		com.mystaria.events.trahison.room.Rooms.register();
+		com.mystaria.events.trahison.room.Inventory.register();
+		com.mystaria.events.trahison.world.Interactables.register();
 		com.mystaria.events.trahison.hud.CabinPrompt.register();
 		com.mystaria.events.trahison.hud.ResultsHud.register();
 		KeyBindingHelper.registerKeyBinding(MENU_KEY);

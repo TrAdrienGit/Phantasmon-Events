@@ -18,7 +18,7 @@ import com.mystaria.phantasmon_backend.events.trahison.rules.GameColor;
  * <ul>
  *   <li>{@code color}: closed, except during DOORS while the bracelets at its threshold open it for a few seconds (T2.3);</li>
  *   <li>{@code room_exit}: during ROOMS, closed until the room of its group is solved; open in any other stage;</li>
- *   <li>{@code cabin}: open, closed for everyone while a player holds its cabin closed (T2.4);</li>
+ *   <li>{@code cabin}: open, closed (but open for the players its group lets through) while a group holds its cabin (D4, D5);</li>
  *   <li>{@code final}: closed (T2.5 opens it for the players who read 9);</li>
  *   <li>{@code plain}: open;</li>
  *   <li>after the game, every door is open.</li>
@@ -55,32 +55,46 @@ public final class DoorStates {
 	}
 
 	/**
-	 * @param closedCabins the ids of the cabins a player closed (T2.4): their {@code cabin} door is closed for everyone
+	 * @param closedCabins the ids of the cabins a group holds (T2.4): their {@code cabin} door is closed for everyone
 	 */
 	public static Map<String, DoorState> compute(LayoutContent layout, Phase phase, int round, boolean[] roomSolved,
 			Map<String, Boolean> overrides, Set<String> thresholdOpen, Set<String> closedCabins) {
-		Set<String> closedDoors = new java.util.HashSet<>();
+		Map<String, Set<Integer>> held = new LinkedHashMap<>();
+		closedCabins.forEach(id -> held.put(id, Set.of()));
+		return compute(layout, phase, round, roomSolved, overrides, thresholdOpen, held);
+	}
+
+	/**
+	 * @param heldCabins the cabins a group holds (D4, D5), each with the players it is still open for: the door of a held
+	 *                   cabin is closed for everybody else (a cabin that is waiting for the partner of a pair, or whose
+	 *                   group has voted and walks out)
+	 */
+	public static Map<String, DoorState> compute(LayoutContent layout, Phase phase, int round, boolean[] roomSolved,
+			Map<String, Boolean> overrides, Set<String> thresholdOpen, Map<String, Set<Integer>> heldCabins) {
+		Map<String, Set<Integer>> closedDoors = new HashMap<>();
 		for (var cabin : layout.cabins()) {
-			if (closedCabins.contains(cabin.id()) && cabin.door() != null) {
-				closedDoors.add(cabin.door());
+			if (heldCabins.containsKey(cabin.id()) && cabin.door() != null) {
+				closedDoors.put(cabin.door(), heldCabins.get(cabin.id()));
 			}
 		}
 		Map<String, DoorState> out = new LinkedHashMap<>();
 		Map<String, ExitOf> exits = exitsOf(layout);
 		for (LayoutDoor door : layout.doors()) {
-			boolean open = phase == Phase.ENDED || switch (door.type() == null ? "" : door.type()) {
+			boolean ended = phase == Phase.ENDED;
+			boolean open = ended || switch (door.type() == null ? "" : door.type()) {
 				case "room_exit" -> {
 					ExitOf exit = exits.get(door.id());
 					yield phase != Phase.ROOMS || exit == null || exit.round() != round
 						|| roomSolved != null && exit.group() < roomSolved.length && roomSolved[exit.group()];
 				}
-				case "cabin" -> !closedDoors.contains(door.id());
+				case "cabin" -> !closedDoors.containsKey(door.id());
 				case "plain" -> true;
 				case "color" -> phase == Phase.DOORS && thresholdOpen.contains(door.id());
 				default -> false; // final
 			};
 			Boolean forced = overrides == null ? null : overrides.get(door.id());
-			out.put(door.id(), DoorState.of(forced != null ? forced : open));
+			Set<Integer> openFor = forced == null && !ended && "cabin".equals(door.type()) ? closedDoors.get(door.id()) : null;
+			out.put(door.id(), openFor != null && !open ? new DoorState(false, openFor) : DoorState.of(forced != null ? forced : open));
 		}
 		return out;
 	}

@@ -218,6 +218,12 @@ class TrahisonGameIntegrationTest {
 		admin.gm("{\"hub\":\"" + hub + "\"," + json.substring(1));
 	}
 
+	/** The admin creates the game and, as most tests need a game master, assigns himself in the lobby (D7). */
+	private void createGame(String json) {
+		gm(json);
+		gm("{\"action\":\"set_game_master\",\"account\":\"" + admin.uuid + "\",\"on\":true}");
+	}
+
 	private void act(Client c, String json) {
 		c.act("{\"hub\":\"" + hub + "\"," + json.substring(1));
 	}
@@ -310,7 +316,7 @@ class TrahisonGameIntegrationTest {
 		spectator.act("{\"action\":\"view\",\"hub\":\"" + hub + "\"}");
 		assertThat(spectator.view().get("phase").asString()).isEqualTo("NONE"); // no game yet
 
-		gm("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":2,\"seed\":7,\"settings\":{\"cabins_required\":false}}");
+		createGame("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":2,\"seed\":7,\"settings\":{\"cabins_required\":false}}");
 		assertThat(admin.view().get("phase").asString()).isEqualTo("LOBBY");
 		assertThat(admin.view().get("viewer").get("kind").asString()).isEqualTo("GM");
 		assertThat(admin.view().get("gm").get("seed").asLong()).isEqualTo(7L);
@@ -325,7 +331,7 @@ class TrahisonGameIntegrationTest {
 
 		// Refusals: not an admin, nobody's hub, wrong stage, unknown action.
 		a.gm("{\"action\":\"start\"}");
-		assertThat(a.errors()).containsExactly("ERROR_TRAHISON_ADMIN_REQUIRED");
+		assertThat(a.errors()).containsExactly("ERROR_TRAHISON_NOT_GAME_MASTER");
 		nobody.act("{\"action\":\"join\",\"hub\":\"" + hub + "\"}");
 		assertThat(nobody.errors()).containsExactly("ERROR_TRAHISON_NOT_IN_HUB");
 		a.act("{\"action\":\"vote\",\"vote\":\"ally\"}");
@@ -411,7 +417,7 @@ class TrahisonGameIntegrationTest {
 
 	@Test
 	void theGameMasterCanPauseExtendAndEndAndOnlyAnAdminMay() throws Exception {
-		gm("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":60}");
+		createGame("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":60}");
 		gm("{\"action\":\"add_bots\",\"count\":0}");
 		assertThat(admin.view().get("players")).hasSize(9);
 		gm("{\"action\":\"create\"}");
@@ -428,12 +434,61 @@ class TrahisonGameIntegrationTest {
 		gm("{\"action\":\"set_bot_policy\",\"policy\":\"sometimes\"}");
 		assertThat(admin.errors()).contains("ERROR_TRAHISON_BAD_ARGUMENT");
 		b.gm("{\"action\":\"end\"}");
-		assertThat(b.errors()).containsExactly("ERROR_TRAHISON_ADMIN_REQUIRED");
+		assertThat(b.errors()).containsExactly("ERROR_TRAHISON_NOT_GAME_MASTER");
 		gm("{\"action\":\"end\"}");
 		assertThat(admin.view().get("phase").asString()).isEqualTo("ENDED");
 		assertThat(admin.errors()).doesNotContain("ERROR_TRAHISON_NO_GAME");
 		// The game is persisted: the row exists.
 		assertThat(this.<Integer>game(g -> g.settings.durations.size())).isGreaterThan(0);
+	}
+
+	@Test
+	void gameMastersAreAssignedInTheLobbyAndOnlyTheyRunTheGame() throws Exception {
+		gm("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":60,\"settings\":{\"cabins_required\":false}}");
+		// nobody is game master by default, not even the admin who created the game: he only sees the lobby
+		assertThat(admin.view().get("viewer").get("kind").asString()).isEqualTo("SPECTATOR");
+		assertThat(admin.view().get("game_masters")).isEmpty();
+		spectator.act("{\"action\":\"view\",\"hub\":\"" + hub + "\"}");
+		assertThat(spectator.view().get("lobby_members").toString()).contains(spectator.uuid.toString(), a.uuid.toString());
+		gm("{\"action\":\"add_bots\",\"count\":0}");
+		// game master mode needs one
+		gm("{\"action\":\"start\"}");
+		assertThat(admin.errors()).containsExactly("ERROR_TRAHISON_NO_GAME_MASTER");
+		// only an admin assigns
+		b.gm("{\"action\":\"set_game_master\",\"account\":\"" + b.uuid + "\",\"on\":true}");
+		assertThat(b.errors()).containsExactly("ERROR_TRAHISON_NOT_GAME_MASTER");
+		gm("{\"action\":\"set_game_master\",\"account\":\"" + b.uuid + "\",\"on\":true}");
+		gm("{\"action\":\"set_game_master\",\"account\":\"" + spectator.uuid + "\",\"on\":true}");
+		await("two game masters", () -> admin.view().get("game_masters").size() == 2 && b.view().get("viewer").get("kind").asString().equals("GM"));
+		assertThat(a.view().get("game_masters").toString()).contains(b.uuid.toString());
+		assertThat(spectator.view().get("viewer").get("kind").asString()).isEqualTo("GM");
+		assertThat(spectator.view().get("gm").isNull()).isFalse();
+		// a game master does not play
+		act(b, "{\"action\":\"join\"}");
+		assertThat(b.errors()).containsExactly("ERROR_TRAHISON_NOT_GAME_MASTER", "ERROR_TRAHISON_GAME_MASTER_PLAYS");
+		gm("{\"action\":\"start\"}"); // an admin sets the lobby up and starts
+		assertThat(phase()).isEqualTo(Phase.PROLOGUE);
+		// the stage moves on for an assigned game master, not for the admin who is none
+		gm("{\"action\":\"next\"}");
+		assertThat(admin.errors()).containsExactly("ERROR_TRAHISON_NO_GAME_MASTER", "ERROR_TRAHISON_NOT_GAME_MASTER");
+		assertThat(phase()).isEqualTo(Phase.PROLOGUE);
+		b.gm("{\"action\":\"next\"}");
+		assertThat(phase()).isEqualTo(Phase.DOORS);
+		spectator.gm("{\"action\":\"pause\"}"); // the second game master, not an admin
+		assertThat(this.<Boolean>game(g -> g.paused)).isTrue();
+		// roles cannot change once the game runs
+		gm("{\"action\":\"set_game_master\",\"account\":\"" + b.uuid + "\",\"on\":false}");
+		assertThat(admin.errors()).hasSize(3);
+	}
+
+	@Test
+	void aGameWithoutAnyGameMasterRunsOnItsOwn() throws Exception {
+		gm("{\"action\":\"create\",\"mode\":\"AUTO\",\"fast\":1,\"settings\":{\"cabins_required\":false}}");
+		gm("{\"action\":\"add_bots\",\"count\":0}");
+		gm("{\"action\":\"start\"}");
+		assertThat(this.<Boolean>game(g -> g.gameMasters.isEmpty())).isTrue();
+		await("the clock moves the game on", () -> phase() == Phase.DOORS);
+		games.end(hub);
 	}
 
 	@Test
@@ -445,7 +500,7 @@ class TrahisonGameIntegrationTest {
 		var zone = new com.mystaria.phantasmon_backend.events.trahison.layout.LayoutZone("hall", "hall", List.of(box));
 		int version = layouts.save(admin.uuid, hub, new com.mystaria.phantasmon_backend.events.trahison.layout.LayoutRequest(null, true,
 			List.of(zone), List.of(door, color), List.of(), List.of(), List.of())).version();
-		gm("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":60}");
+		createGame("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":60}");
 		act(a, "{\"action\":\"join\"}");
 		act(b, "{\"action\":\"join\"}");
 		gm("{\"action\":\"add_bots\",\"count\":0}");
@@ -463,7 +518,7 @@ class TrahisonGameIntegrationTest {
 		gm("{\"action\":\"set_door\",\"door\":\"d_color\"}");
 		assertThat(admin.errors()).containsExactly("ERROR_TRAHISON_BAD_ARGUMENT", "ERROR_TRAHISON_BAD_ARGUMENT");
 		b.gm("{\"action\":\"set_door\",\"door\":\"d_color\",\"open\":false}");
-		assertThat(b.errors()).containsExactly("ERROR_TRAHISON_ADMIN_REQUIRED");
+		assertThat(b.errors()).containsExactly("ERROR_TRAHISON_NOT_GAME_MASTER");
 
 		// A player's zone: kept for the game master's view, nothing answered, nobody else told.
 		int me = a.index();
@@ -507,7 +562,7 @@ class TrahisonGameIntegrationTest {
 		catalog.save(admin.uuid, roomId, chain(roomId));
 		try {
 			// A long ROOMS stage: the bots only "solve" after at least a tenth of it, long after this test is done.
-			gm("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":2,\"seed\":11,\"test_room\":\"" + roomId
+			createGame("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":2,\"seed\":11,\"test_room\":\"" + roomId
 				+ "\",\"settings\":{\"durations\":{\"ROOMS\":600},\"cabins_required\":false}}");
 			assertThat(this.<String>game(g -> g.settings.testRoom)).isEqualTo(roomId);
 			act(a, "{\"action\":\"join\"}");
@@ -583,6 +638,10 @@ class TrahisonGameIntegrationTest {
 			// The rooms stay readable after their stage, and go with the game.
 			toNextStage(Phase.FREE_TIME);
 			assertThat(rooms.rooms(hub)).hasSize(3);
+			// D8: the free time takes room actions (any room); the stage after it does not.
+			act(a, "{\"action\":\"use_slot\",\"slot\":\"exit\"}");
+			assertThat(a.errors()).doesNotContain("ERROR_TRAHISON_WRONG_PHASE");
+			toNextStage(Phase.VOTE);
 			act(a, "{\"action\":\"use_slot\",\"slot\":\"exit\"}");
 			assertThat(a.errors()).contains("ERROR_TRAHISON_WRONG_PHASE");
 			gm("{\"action\":\"end\"}");

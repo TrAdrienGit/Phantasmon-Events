@@ -16,6 +16,7 @@ import com.mystaria.phantasmon_backend.events.trahison.room.RoomAction;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomDefinition;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomException;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomInstance;
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomFixtures;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomService;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomValidator;
 import com.mystaria.phantasmon_backend.events.trahison.room.Slot;
@@ -49,7 +50,17 @@ class GameRoomsTest {
 	private final UUID[] ids = new UUID[9];
 
 	private static MechanismRegistry registry() {
-		return new MechanismRegistry(List.of(new DebugButton(), new ThreeDials()));
+		return new MechanismRegistry(List.of(new DebugButton(), new ThreeDials(), new RoomFixtures.KeyBox()));
+	}
+
+	/** An item to pick up in "box", then the exit: for the inventory's actions through the game. */
+	private static RoomDefinition keys() {
+		return new RoomDefinition("keys", "Keys", "t", 1, 2, 30,
+			List.of(new Slot("box", "pickup", new Pos(1, 1, 1), "north", null),
+				new Slot("exit", "exit", new Pos(5, 0, 5), "north", null)),
+			List.of(new Step("k", "key_box", null, Map.of(), List.of(), List.of(new Give("key", "box", null)), List.of()),
+				new Step("e", "debug_button", null, Map.of("exit", "exit"), List.of("k"), List.of(), List.of())),
+			null);
 	}
 
 	/** press (debug_button, slot btn) -> dials (three_dials, clue on the wall) -> exit button. */
@@ -68,7 +79,7 @@ class GameRoomsTest {
 
 	private GameService newService(ManualClock c, MemoryStore s, RoomService rs) {
 		GameService gs = new GameService(s, c, c);
-		gs.useRooms(new GameRooms(rs, id -> "chain".equals(id) ? Optional.of(chain()) : Optional.empty()));
+		gs.useRooms(new GameRooms(rs, id -> "chain".equals(id) ? Optional.of(chain()) : "keys".equals(id) ? Optional.of(keys()) : Optional.empty()));
 		return gs;
 	}
 
@@ -145,11 +156,16 @@ class GameRoomsTest {
 
 	/** Solves the dials of {@code group} for real, reading the target as a game master would. */
 	private void solveDials(RoomService rs, GameService gs, int group, int player) {
+		solveDials(rs, gs, group, player, null);
+	}
+
+	/** As above; {@code aim}: the group of the room when the player is a visitor of it (free time). */
+	private void solveDials(RoomService rs, GameService gs, int group, int player, Integer aim) {
 		JsonNode view = rs.puzzleView(HUB, group, "s2", ViewerKind.GAME_MASTER).get("view");
 		for (int d = 0; d < 3; d++) {
 			int delta = Math.floorMod(view.get("target").get(d).asInt() - view.get("dials").get(d).asInt(), 10);
 			if (delta != 0) {
-				gs.roomAction(HUB, ids[player], turn(d, delta));
+				gs.roomAction(HUB, ids[player], turn(d, delta), aim);
 			}
 		}
 	}
@@ -233,10 +249,79 @@ class GameRoomsTest {
 			.isInstanceOfSatisfying(TrahisonException.class, ex -> assertThat(ex.code()).isEqualTo(TrahisonException.PAUSED));
 		service.resume(HUB);
 		assertThat(service.roomAction(HUB, ids[0], use("exit")).roomFinished()).isTrue();
-		clock.advanceSeconds(SECONDS); // FREE_TIME: the room stays readable, but nobody acts in it
+		clock.advanceSeconds(SECONDS); // FREE_TIME: the room stays readable and (D8) takes visitors
 		assertThat(roomService.find(HUB, groupOf(0))).isPresent();
+		clock.advanceSeconds(SECONDS); // VOTE: nobody acts in a room any more
+		assertThat(phase(service)).isEqualTo(Phase.VOTE);
 		assertThatThrownBy(() -> service.roomAction(HUB, ids[0], use("exit")))
 			.isInstanceOfSatisfying(TrahisonException.class, ex -> assertThat(ex.code()).isEqualTo(TrahisonException.WRONG_PHASE));
+	}
+
+	private static void assertCode(Runnable call, String code) {
+		assertThatThrownBy(call::run).isInstanceOfSatisfying(TrahisonException.class, ex -> assertThat(ex.code()).isEqualTo(code));
+	}
+
+	/** D8: in the free time any living player plays any room of the round, and a room can be replayed for no points. */
+	@Test
+	void freeTimeLetsEveryPlayerVisitAndReplayAnyRoomForNoPoints() {
+		toRooms("chain");
+		int owner = membersOf(1).get(0);
+		int visitor = membersOf(0).get(0);
+		// During ROOMS: another group's room is closed to him, a replay is not allowed, a group of one's own is fine.
+		assertCode(() -> service.roomAction(HUB, ids[visitor], use("btn"), 1), RoomException.NOT_IN_ROOM);
+		assertCode(() -> service.roomAction(HUB, ids[owner], new RoomAction.Replay(), 1), RoomException.BAD_ACTION);
+		service.roomAction(HUB, ids[owner], use("btn"));
+		solveDials(roomService, service, 1, owner);
+		assertThat(service.roomAction(HUB, ids[owner], use("exit")).roomFinished()).isTrue();
+		assertThat(solved(service)).containsExactly(false, true, false);
+		long events = roomSolvedEvents();
+		long oldSeed = roomService.find(HUB, 1).orElseThrow().seed;
+
+		clock.advanceSeconds(SECONDS);
+		assertThat(phase(service)).isEqualTo(Phase.FREE_TIME);
+		// The visitor replays the finished room of another trio: a fresh state, other solutions, same place.
+		service.roomAction(HUB, ids[visitor], new RoomAction.Replay(), 1);
+		RoomInstance again = roomService.find(HUB, 1).orElseThrow();
+		assertThat(again.exitOpen).isFalse();
+		assertThat(again.stepsDone()).isZero();
+		assertThat(again.seed).isNotEqualTo(oldSeed);
+		assertThat(again.replays).isEqualTo(1);
+		assertThat(again.members).containsExactlyInAnyOrderElementsOf(membersOf(1));
+		assertThat(savedRooms().get(1).get("replays").asInt()).isEqualTo(1);
+		// He plays it to the end: no point, no new room solved, nothing opened for his own group.
+		assertThat(service.roomAction(HUB, ids[visitor], use("btn"), 1).stepSolved()).isTrue();
+		solveDials(roomService, service, 1, visitor, 1);
+		assertThat(service.roomAction(HUB, ids[visitor], use("exit"), 1).roomFinished()).isTrue();
+		assertThat(solved(service)).containsExactly(false, true, false);
+		assertThat(roomSolvedEvents()).isEqualTo(events);
+		assertThat(roomService.find(HUB, 0).orElseThrow().stepsDone()).isZero();
+		// A room that does not exist is refused; without a group the action is for his own room.
+		assertCode(() -> service.roomAction(HUB, ids[visitor], use("btn"), 7), RoomException.NO_ROOM);
+		assertThat(service.roomAction(HUB, ids[visitor], use("btn")).stepSolved()).isTrue();
+		assertThat(roomService.find(HUB, 0).orElseThrow().stepsDone()).isEqualTo(1);
+		assertThat(solved(service)).containsExactly(false, true, false);
+	}
+
+	/** Hands over an item through the game: in range it goes, out of range it is refused, and the zone counts. */
+	@Test
+	void giveItemThroughTheGameChecksTheDistance() {
+		toRooms("keys");
+		List<Integer> team = membersOf(0);
+		int a = team.get(0);
+		int b = team.get(1);
+		service.roomAction(HUB, ids[a], new RoomAction.PickUp("box"));
+		RoomAction give = new RoomAction.GiveItem("brass_key", b);
+		// No position and no zone known: not near.
+		assertCode(() -> service.roomAction(HUB, ids[a], give), RoomException.TOO_FAR);
+		service.setZone(HUB, ids[a], "x", 100, 64, 100);
+		service.setZone(HUB, ids[b], "y", 140, 64, 100);
+		assertCode(() -> service.roomAction(HUB, ids[a], give), RoomException.TOO_FAR);
+		service.setZone(HUB, ids[b], "y", 102, 64, 101);
+		service.roomAction(HUB, ids[a], give);
+		assertCode(() -> service.roomAction(HUB, ids[a], give), RoomException.NO_SUCH_ITEM);
+		// He holds it now and gives it back, out of range this time.
+		service.setZone(HUB, ids[a], "x", 0, 64, 0);
+		assertCode(() -> service.roomAction(HUB, ids[b], new RoomAction.GiveItem("brass_key", a)), RoomException.TOO_FAR);
 	}
 
 	@Test

@@ -56,8 +56,9 @@ nez de son partenaire, et la porte finale ne laisse passer que les bracelets à 
 - Devant chaque porte de couleur, une zone « seuil ». Le backend ouvre la porte quand les bracelets des joueurs
   présents sur le seuil satisfont `Doors.canOpen`, et la referme après leur passage (ou après quelques secondes).
 - Affichage au-dessus de la porte : ses deux couleurs, et ce qu'il manque (« il faut un solo vert »).
-- À la fin de l'étape `DOORS`, toutes les portes se ferment. Un joueur resté dans le hall subit la pénalité
-  (question ouverte : demander avant de coder ; valeur par défaut −1, réglable).
+- À la fin de l'étape `DOORS`, toutes les portes se ferment. **Un vivant qui n'a passé aucune porte de couleur meurt**
+  (D2, tranché le 2026-11-16 : il devient fantôme, l'animatrice le dit ; plus de pénalité de points ni de réglage
+  `no_door_penalty`).
 - Le groupe d'une porte = les bracelets qui l'ont passée. C'est lui qui recevra la salle (T3) et qui votera.
 - **Fini quand :** les deux répartitions possibles fonctionnent en jeu, et une mauvaise combinaison est refusée
   avec le bon message.
@@ -68,18 +69,30 @@ nez de son partenaire, et la porte finale ne laisse passer que les bracelets à 
 
 ### T2.4 Les cabines et le vote (Opus)
 
-- Une cabine a une zone et une porte. Action `close_cabin` : possible seulement depuis l'intérieur ; la porte se
-  ferme (faux blocs) pour tout le monde.
+- Une cabine a une zone et une porte. *(Première version : action `close_cabin` depuis l'intérieur, la porte se
+  ferme pour tout le monde. **Refondue le 2026-11-16 d'après D3, D4, D5** : voir la note « Cabines révisées » plus bas.)*
 - Dans une cabine fermée, un écran de vote s'ouvre sur un pupitre : Allier ou Trahir, puis confirmation. Le vote
   n'est accepté par le backend que si le joueur est dans **sa** cabine (celle de sa porte et de son côté) et
   qu'elle est fermée.
-- Paire : celui des deux qui ferme et vote engage la paire. L'autre, resté dehors, ne peut plus rien.
-- La cabine se rouvre à la fin de l'étape `VOTE`.
+- Paire : l'un des deux qui vote engage la paire (voir « Cabines révisées ») ; celui qui est resté dehors ne peut plus rien.
+- La cabine se rouvre pour le groupe dès son vote, et pour tous à la fin de l'étape `VOTE`.
 - Écran des résultats dans le hall : un grand tableau affiché dans le monde, face à tous, qui révèle les votes
   porte par porte puis les nouveaux points.
 - **Fini quand :** en jeu, un joueur double son partenaire ; sans vote, « Allier » s'applique ; les résultats
   s'affichent à tous.
 
+- **Cabines révisées le 2026-11-16 (D3, D4, D5, à valider en jeu).** Une cabine par côté d'une paire de couleurs (D4, inchangé) ;
+  entrer dans **sa** cabine suffit à la tenir : un solo la verrouille aussitôt ; pour une paire, le premier entré laisse
+  `cabin_partner_seconds` (30 s, réglage) au partenaire, puis elle se verrouille (aussitôt si les deux sont dedans).
+  Pendant l'attente la porte est fermée à tous sauf à la paire ; verrouillée, elle est fermée à tous : personne d'autre
+  n'entre tant qu'elle est occupée. La touche V (`close_cabin`) reste comme raccourci « verrouiller maintenant » quand le
+  partenaire tarde (il est alors laissé dehors : on peut doubler son partenaire). Le vote exige d'être dans sa cabine
+  verrouillée. **Dès que le vote du groupe est déposé, la cabine s'ouvre pour ceux qui sont dedans (D5)** ; ceux qui n'ont pas voté
+  sortent à la fin de `VOTE` (la cabine n'attend plus le maître du jeu). Tout est calculé par le backend
+  (`GameService.updateCabins`, état `CabinLock` gardé avec la partie, `DoorState.openFor` pour la porte) d'après les zones de
+  `EventsTrahisonZone`, comme les seuils de T2.3 ; le client n'a plus qu'une invite et le pupitre. D3 : un solo absent au vote vote
+  « Allier » ; dans une paire, si un membre est absent l'autre vote seul pour elle, et si aucun ne vote, « Allier » (déjà le
+  comportement des règles, ajout de tests). Détails : `protocole.md`, « Cabines et vote ».
 - **Fait le 2026-11-16** (à valider en jeu) : backend `game/Cabins`, `GameService.closeCabin`, vote refusé hors de sa cabine fermée
   (réglage `cabins_required`, sans effet sur un plan sans cabine), `ResultsBoard` dans le plan ; client `screen/VoteScreen` (pupitre),
   `world/CabinFlow` + `hud/CabinPrompt` (touche V), `world/ResultsBoardWorld` (tableau dans le monde, révélation porte par porte),

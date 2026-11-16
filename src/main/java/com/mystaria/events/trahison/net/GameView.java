@@ -77,8 +77,25 @@ public final class GameView {
 	public record GmZone(int index, String zone, Double x, Double y, Double z) {
 	}
 
-	public record Gm(List<GmVote> votes, String mode, Map<String, Integer> durations, int noDoorPenalty, String botPolicy, long seed,
-			List<String> gameMasters, List<GmZone> zones) {
+	public record Gm(List<GmVote> votes, String mode, Map<String, Integer> durations, int cabinPartnerSeconds, String botPolicy, long seed,
+			List<GmZone> zones) {
+	}
+
+	/** An account around the lobby (or a game master of the game): {@code gameMaster} is whether the admins gave it the role (D7). */
+	public record Member(UUID uuid, String name, boolean gameMaster) {
+	}
+
+	/**
+	 * The game masters of the game (public: they may be none) and, in the lobby, the accounts an admin may give the role to
+	 * ({@code members}: the people around who are not in the game, game masters included). Kept beside the view, as {@link Cabins}.
+	 */
+	public record Lobby(List<Member> gameMasters, List<Member> members) {
+
+		public static final Lobby NONE = new Lobby(List.of(), List.of());
+
+		public boolean isGameMaster(UUID account) {
+			return gameMasters.stream().anyMatch(m -> m.uuid().equals(account));
+		}
 	}
 
 	/** One bracelet kind a door's threshold lacks: a game colour, as a pair or as a solo. */
@@ -131,8 +148,26 @@ public final class GameView {
 		}
 	}
 
-	/** One cabin of the plan as the backend's {@code cabins} describes it: whether its door is closed, and whether this viewer closed it. */
-	public record Cabin(String id, boolean closed, boolean closedByMe) {
+	/**
+	 * One cabin of the plan as the backend's {@code cabins} describes it (D4, D5): {@code state} is {@code FREE},
+	 * {@code WAITING} (a member of its group is in and waits for the partner until {@code windowUntil}, server epoch ms),
+	 * {@code LOCKED} (the group is in, nobody leaves before it has voted) or {@code RELEASED} (it voted and walks out).
+	 */
+	public record Cabin(String id, String state, Long windowUntil) {
+
+		/** Its door is shut for those who are not of the group. */
+		public boolean closed() {
+			return !"FREE".equals(state);
+		}
+
+		public boolean waiting() {
+			return "WAITING".equals(state);
+		}
+
+		/** The group is in and the pupitre works: locked, or released after the vote. */
+		public boolean locked() {
+			return "LOCKED".equals(state) || "RELEASED".equals(state);
+		}
 	}
 
 	/**
@@ -159,6 +194,7 @@ public final class GameView {
 
 	private static View current;
 	private static Cabins cabinsState = Cabins.NONE;
+	private static Lobby lobbyState = Lobby.NONE;
 	/** {@code server time - local time} when the last view arrived. */
 	private static long clockOffset;
 	private static long phaseTotalMs;
@@ -180,6 +216,11 @@ public final class GameView {
 	/** The latest view, or an empty NONE view: never null. */
 	public static View orEmpty() {
 		return current == null ? EMPTY : current;
+	}
+
+	/** The game masters and the lobby's candidates of the latest view (D7); {@link Lobby#NONE} without a game. */
+	public static Lobby lobby() {
+		return lobbyState;
 	}
 
 	/** The cabins of the latest view (T2.4); {@link Cabins#NONE} without a game. */
@@ -234,6 +275,7 @@ public final class GameView {
 	public static void clear() {
 		current = null;
 		cabinsState = Cabins.NONE;
+		lobbyState = Lobby.NONE;
 		phaseKey = "";
 		phaseTotalMs = 0;
 		pointsChangedAt = new long[9];
@@ -254,6 +296,7 @@ public final class GameView {
 		clockOffset = next.serverTime() > 0 ? next.serverTime() - now : clockOffset;
 		current = next;
 		cabinsState = next.hasGame() ? parseCabins(data) : Cabins.NONE;
+		lobbyState = next.hasGame() ? parseLobby(data) : Lobby.NONE;
 		String key = next.gameId() + "/" + next.phase() + "/" + next.round() + "/" + next.finalLoop() + "/" + next.finalLoops();
 		long remaining = next.remainingMs() == null ? -1 : next.remainingMs();
 		if (!key.equals(phaseKey)) {
@@ -360,19 +403,14 @@ public final class GameView {
 			Map<String, Object> settings = map(g, "settings");
 			Map<String, Integer> durations = new java.util.LinkedHashMap<>();
 			map(settings, "durations").forEach((k, val) -> durations.put(k, val instanceof Number n ? n.intValue() : 0));
-			List<String> masters = new ArrayList<>();
-			if (g.get("game_masters") instanceof List<?> list) {
-				list.forEach(o -> masters.add(String.valueOf(o)));
-			}
 			List<GmZone> zones = new ArrayList<>();
 			for (Map<String, Object> gz : maps(g, "zones")) {
 				zones.add(new GmZone(integer(gz, "index", zones.size()), str(gz, "zone"),
 						gz.get("x") instanceof Number n ? n.doubleValue() : null, gz.get("y") instanceof Number n ? n.doubleValue() : null,
 						gz.get("z") instanceof Number n ? n.doubleValue() : null));
 			}
-			gm = new Gm(votes, str(settings, "mode") == null ? "AUTO" : str(settings, "mode"), durations, integer(settings, "no_door_penalty", 0),
-					str(g, "bot_policy") == null ? "RANDOM" : str(g, "bot_policy"), lng(g, "seed", 0), masters,
-					Collections.unmodifiableList(zones));
+			gm = new Gm(votes, str(settings, "mode") == null ? "AUTO" : str(settings, "mode"), durations, integer(settings, "cabin_partner_seconds", 30),
+					str(g, "bot_policy") == null ? "RANDOM" : str(g, "bot_policy"), lng(g, "seed", 0), Collections.unmodifiableList(zones));
 		}
 		Map<String, Boolean> doorsOpen = new java.util.LinkedHashMap<>();
 		map(d, "doors_state").forEach((id, state) -> doorsOpen.put(id, "OPEN".equalsIgnoreCase(String.valueOf(state))));
@@ -389,10 +427,22 @@ public final class GameView {
 		for (Map<String, Object> c : maps(d, "cabins")) {
 			String id = str(c, "id");
 			if (id != null) {
-				list.add(new Cabin(id, bool(c, "closed"), bool(c, "closed_by_me")));
+				list.add(new Cabin(id, str(c, "state") == null ? "FREE" : str(c, "state"), c.get("window_until") instanceof Number n ? n.longValue() : null));
 			}
 		}
 		return new Cabins(bool(d, "cabins_required"), Collections.unmodifiableList(list), str(map(d, "viewer"), "my_cabin"));
+	}
+
+	private static Lobby parseLobby(Map<String, Object> d) {
+		List<Member> masters = new ArrayList<>();
+		for (Map<String, Object> m : maps(d, "game_masters")) {
+			masters.add(new Member(uuid(str(m, "uuid")), str(m, "name") == null ? "?" : str(m, "name"), true));
+		}
+		List<Member> members = new ArrayList<>();
+		for (Map<String, Object> m : maps(d, "lobby_members")) {
+			members.add(new Member(uuid(str(m, "uuid")), str(m, "name") == null ? "?" : str(m, "name"), bool(m, "game_master")));
+		}
+		return new Lobby(Collections.unmodifiableList(masters), Collections.unmodifiableList(members));
 	}
 
 	private static List<DoorHint> doorHints(Map<String, Object> d) {

@@ -107,7 +107,7 @@ class DoorThresholdsTest {
 		}
 		clock.advanceSeconds(60); // DOORS -> ROOMS, nobody is penalised and the split is the one the players took
 		assertThat(service.<Integer>read(HUB, g -> g.rounds.get(0).splitIndex)).isEqualTo(splitIndex);
-		assertThat(service.<List<Integer>>read(HUB, g -> g.rounds.get(0).penalized)).isEmpty();
+		assertThat(service.<List<Integer>>read(HUB, g -> g.rounds.get(0).diedAtDoors)).isEmpty();
 	}
 
 	@Test
@@ -222,7 +222,7 @@ class DoorThresholdsTest {
 	}
 
 	@Test
-	void theDoorsShutAtTheEndOfTheStageAndTheLateOnesPayTheirPenalty() {
+	void theDoorsShutAtTheEndOfTheStageAndTheLateOnesDie() {
 		Split s = split(0);
 		gather(s, 0);
 		assertThat(state(0)).isEqualTo("OPEN");
@@ -230,7 +230,7 @@ class DoorThresholdsTest {
 		assertThat(service.find(HUB).phase).isEqualTo(Phase.ROOMS);
 		assertThat(service.<Map<String, DoorWindow>>read(HUB, g -> g.doorWindows)).isEmpty();
 		assertThat(state(0)).isEqualTo("CLOSED");
-		assertThat(service.<List<Integer>>read(HUB, g -> g.currentRound().penalized)).hasSize(9);
+		assertThat(service.<List<Integer>>read(HUB, g -> g.currentRound().diedAtDoors)).hasSize(9);
 	}
 
 	@Test

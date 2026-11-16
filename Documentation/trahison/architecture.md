@@ -189,7 +189,7 @@ Tous les types commencent par `EventsTrahison` (le client de Phantasmon n'accept
 | `EventsTrahisonSay` | S→C | Une réplique de l'animateur, ou un chuchotement privé |
 | `EventsTrahisonAction` | C→S | Une action du joueur : `{ "action": "...", ... }` |
 | `EventsTrahisonZone` | C→S | Le joueur a changé de zone |
-| `EventsTrahisonGm` | C→S | Une action du maître du jeu (refusée si le joueur n'est pas admin) |
+| `EventsTrahisonGm` | C→S | Une action du maître du jeu (refusée si le joueur n'est pas maître du jeu de la partie ; en `LOBBY`, un admin peut préparer la partie) |
 
 - Les actions (`vote`, `pass_door`, `enter_cabin`, `close_cabin`, `use_slot`, `puzzle_input`, `pick_up`,
   `use_item`, `open_final_door`…) sont décrites dans l'étape qui les crée, puis reportées dans

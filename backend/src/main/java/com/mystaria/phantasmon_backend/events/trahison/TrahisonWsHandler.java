@@ -40,7 +40,8 @@ import tools.jackson.databind.node.ObjectNode;
  *   <li>{@code EventsTrahisonPing}: answered by a Pong;</li>
  *   <li>{@code EventsTrahisonAction}: what a player (or a spectator) does: join, leave, pass_door, close_cabin, vote, open_final_door,
  *       debug_solve, view, and the room actions use_slot, puzzle_input, pick_up and the inventory's give_item, use_item, combine;</li>
- *   <li>{@code EventsTrahisonGm}: what the game master does, admins only;</li>
+ *   <li>{@code EventsTrahisonGm}: what the game masters do (D7: the accounts assigned in the lobby), and what an admin does
+ *       in the lobby of a game (create it, add bots, assign game masters, start);</li>
  *   <li>{@code EventsTrahisonZone}: where a player stands (zone and position), sent by his client.</li>
  * </ul>
  * A refused request is answered to its sender only, by an {@code EventsTrahisonSay} of kind {@code error}. Views go out
@@ -76,7 +77,7 @@ public class TrahisonWsHandler implements WsMessageHandler {
 		this.admins = admins;
 		this.players = players;
 		this.hubGate = hubGate;
-		this.broadcaster = new Broadcaster(sessionRegistry, Clock.systemUTC(), () -> this.hubGate, rooms);
+		this.broadcaster = new Broadcaster(sessionRegistry, Clock.systemUTC(), () -> this.hubGate, rooms, this::nameOf);
 		games.addListener(broadcaster);
 		rooms.addListener(broadcaster);
 	}
@@ -162,10 +163,10 @@ public class TrahisonWsHandler implements WsMessageHandler {
 			case "close_cabin" -> games.closeCabin(hubOf(who, in, false), who);
 			case "open_final_door" -> games.openFinalDoor(hubOf(who, in, false), who);
 			case "debug_solve" -> games.debugSolve(hubOf(who, in, false), who);
-			case "use_slot", "puzzle_input", "pick_up", "give_item", "use_item", "combine" -> {
+			case "use_slot", "puzzle_input", "pick_up", "give_item", "use_item", "combine", "replay" -> {
 				ObjectNode data = MAPPER.valueToTree(in);
 				data.put("action", action);
-				games.roomAction(hubOf(who, in, false), who, RoomAction.parse(data));
+				games.roomAction(hubOf(who, in, false), who, RoomAction.parse(data), RoomAction.targetGroup(data));
 			}
 			default -> throw new TrahisonException(TrahisonException.UNKNOWN_ACTION, String.valueOf(action));
 		}
@@ -194,20 +195,34 @@ public class TrahisonWsHandler implements WsMessageHandler {
 	// ------------------------------------------------------------------ game master
 
 	private void gm(UUID who, Map<String, Object> in) {
-		if (!admins.isAdmin(who)) {
-			throw new TrahisonException(TrahisonException.ADMIN_REQUIRED, "game master actions are for admins");
-		}
 		String action = text(in, "action");
-		String hub = gmHub(who, in);
+		boolean admin = admins.isAdmin(who);
+		String hub;
+		try {
+			hub = gmHub(who, in);
+		} catch (TrahisonException ex) {
+			// someone who is no admin and runs no game gets the same answer whatever the hub: he is not a game master
+			throw !admin && TrahisonException.NO_HUB.equals(ex.code())
+				? new TrahisonException(TrahisonException.NOT_GAME_MASTER, "not a game master") : ex;
+		}
 		if ("create".equals(action)) {
+			if (!admin) {
+				throw new TrahisonException(TrahisonException.ADMIN_REQUIRED, "only admins create a game");
+			}
 			broadcaster.watch(hub, who);
 			Long seed = in.get("seed") instanceof Number n ? n.longValue() : null;
 			games.create(hub, settingsOf(in), seed);
-			games.addGameMaster(hub, who);
-			return;
+			return; // nobody is game master by default (D7): the admin assigns them in the lobby
+		}
+		// D7: the game's assigned game masters, and in the lobby any admin (who sets the game up: bots, start, game masters)
+		if (games.find(hub) == null) {
+			throw new TrahisonException(TrahisonException.NO_GAME, "no game in hub " + hub);
+		}
+		boolean allowed = games.read(hub, g -> g.gameMasters.contains(who) || admin && g.phase == Phase.LOBBY);
+		if (!allowed) {
+			throw new TrahisonException(TrahisonException.NOT_GAME_MASTER, "not a game master of this game");
 		}
 		broadcaster.watch(hub, who);
-		games.addGameMaster(hub, who);
 		switch (action) {
 			case "start" -> games.start(hub);
 			case "pause" -> games.pause(hub);
@@ -222,6 +237,21 @@ public class TrahisonWsHandler implements WsMessageHandler {
 				games.setDoor(hub, doorId(in), open);
 			}
 			case "set_points" -> games.setPoints(hub, intArg(in, "bracelet"), intArg(in, "points"));
+			case "set_game_master" -> {
+				if (!admin) {
+					throw new TrahisonException(TrahisonException.ADMIN_REQUIRED, "only admins assign game masters");
+				}
+				if (!(in.get("on") instanceof Boolean on)) {
+					throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "on required (true or false)");
+				}
+				UUID account;
+				try {
+					account = UUID.fromString(String.valueOf(in.get("account")));
+				} catch (IllegalArgumentException ex) {
+					throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "account required (a player id)");
+				}
+				games.setGameMaster(hub, account, nameOf(account), on);
+			}
 			case "add_bots" -> {
 				BotPolicy policy = null;
 				if (in.get("policy") != null) {
@@ -241,7 +271,7 @@ public class TrahisonWsHandler implements WsMessageHandler {
 		}
 	}
 
-	/** The hub a game master message is about: the {@code hub} field, else the hub of the game he already runs. */
+	/** The hub a game master message is about: the {@code hub} field, else the hub of the game he is assigned to. */
 	private String gmHub(UUID who, Map<String, Object> in) {
 		if (in.get("hub") instanceof String name && !name.isBlank()) {
 			return hubGate.resolve(name).orElseThrow(
@@ -255,7 +285,7 @@ public class TrahisonWsHandler implements WsMessageHandler {
 		throw new TrahisonException(TrahisonException.NO_HUB, "hub required");
 	}
 
-	/** {@code {settings?: {mode, durations: {PHASE: seconds}, no_door_penalty, door_open_seconds, cabins_required, test_room}, mode?, test_room?, fast?: seconds}}. */
+	/** {@code {settings?: {mode, durations: {PHASE: seconds}, door_open_seconds, cabin_partner_seconds, cabins_required, test_room}, mode?, test_room?, fast?: seconds}}. */
 	private static Settings settingsOf(Map<String, Object> in) {
 		Settings s = new Settings();
 		Object fast = in.get("fast");
@@ -272,8 +302,8 @@ public class TrahisonWsHandler implements WsMessageHandler {
 			if (m.get("mode") != null) {
 				s.mode = parseMode(m.get("mode"));
 			}
-			if (m.get("no_door_penalty") instanceof Number n) {
-				s.noDoorPenalty = Math.min(0, n.intValue());
+			if (m.get("cabin_partner_seconds") instanceof Number n) {
+				s.cabinPartnerSeconds = Math.max(1, Math.min(300, n.intValue()));
 			}
 			if (m.get("cabins_required") instanceof Boolean b) {
 				s.cabinsRequired = b;

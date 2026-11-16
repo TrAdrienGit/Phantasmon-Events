@@ -23,9 +23,6 @@ public final class Scoring {
 	private Scoring() {
 	}
 
-	/** Proposal in the plan, to be confirmed: a player who passed no door at closing loses this many points. */
-	public static final int NO_DOOR_PENALTY = -1;
-
 	/** A room not solved after 30 minutes opens anyway and each member of the group loses this many points. */
 	public static final int ROOM_TIMEOUT_PENALTY = -1;
 

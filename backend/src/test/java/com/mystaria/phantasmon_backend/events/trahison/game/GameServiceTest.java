@@ -161,19 +161,19 @@ class GameServiceTest {
 	void theFinalLoopsUntilSomeoneOpensTheDoor() {
 		started(7);
 		service.next(HUB); // DOORS
-		service.next(HUB); // ROOMS
-		service.next(HUB);
-		service.next(HUB); // VOTE
-		service.next(HUB); // RESULTS
-		service.next(HUB); // round 2 DOORS
-		for (int i = 0; i < 4; i++) {
-			service.next(HUB); // ... up to RESULTS of round 2
-		}
-		for (int i = 0; i < 6; i++) {
-			service.next(HUB); // round 3 through RESULTS then FINAL
+		for (int round = 1; round <= 3; round++) {
+			everyonePasses(0); // whoever passes no door dies (D2)
+			service.next(HUB); // ROOMS
+			service.next(HUB); // FREE_TIME
+			service.next(HUB); // VOTE
+			service.next(HUB); // RESULTS
+			service.next(HUB); // the next round's DOORS, then FINAL after round 3
 		}
 		assertThat(phase()).isEqualTo(Phase.FINAL);
-		// Nobody at 9 (nobody voted: ALLY/ALLY gives +2 each round: 3 + 6 = 9? the doors penalty took 1 each round).
+		// Nobody voted: ALLY/ALLY gives +2 each round, so everybody is at 9; the game master brings them down.
+		for (int i = 0; i < 9; i++) {
+			service.setPoints(HUB, i, 5);
+		}
 		assertThatThrownBy(() -> service.openFinalDoor(HUB, ids[0]))
 			.isInstanceOf(TrahisonException.class).extracting("code").isEqualTo(TrahisonException.CANNOT_OPEN_FINAL);
 		toNextStage();
@@ -235,11 +235,21 @@ class GameServiceTest {
 		for (int i = 0; i < 9; i++) {
 			service.join(HUB, ids[i], "p" + i);
 		}
+		assertCode(() -> service.start(HUB), TrahisonException.NO_GAME_MASTER); // game master mode needs one (D7)
+		UUID master = UUID.randomUUID();
+		service.setGameMaster(HUB, master, "gm", true);
+		assertCode(() -> service.join(HUB, master, "gm"), TrahisonException.GAME_MASTER_PLAYS);
+		assertCode(() -> service.setGameMaster(HUB, ids[0], "p0", true), TrahisonException.GAME_MASTER_PLAYS);
+		UUID second = UUID.randomUUID();
+		service.setGameMaster(HUB, second, "gm2", true); // from none to as many as wanted
+		service.setGameMaster(HUB, second, null, false);
+		assertThat(service.find(HUB).gameMasters).containsExactly(master);
 		service.start(HUB);
 		clock.advanceSeconds(1000);
 		assertThat(phase()).isEqualTo(Phase.PROLOGUE);
 		service.next(HUB);
 		assertThat(phase()).isEqualTo(Phase.DOORS);
+		assertCode(() -> service.setGameMaster(HUB, UUID.randomUUID(), "late", true), TrahisonException.NOT_IN_LOBBY);
 	}
 
 	@Test
@@ -348,20 +358,71 @@ class GameServiceTest {
 		assertCode(() -> service.passDoor(HUB, ids[g0.solo()], 0), TrahisonException.DEAD);
 		toNextStage();
 		assertThat(points(g0.solo())).isZero();
-		assertThat(service.find(HUB).currentRound().penalized).doesNotContain(g0.solo());
+		assertThat(service.find(HUB).currentRound().diedAtDoors).doesNotContain(g0.solo());
 	}
 
 	@Test
-	void anAbsenteeGetsTheNoDoorPenaltyAndTheSeedChoosesTheSplit() {
+	void everybodyWhoPassedNoDoorDiesWhenTheDoorsCloseAndTheSeedChoosesTheSplit() {
 		started(8);
 		toNextStage();
 		toNextStage();
 		assertThat(phase()).isEqualTo(Phase.ROOMS);
 		Game g = service.find(HUB);
 		assertThat(g.currentRound().splitIndex).isNotNull();
-		assertThat(g.currentRound().penalized).hasSize(9);
+		assertThat(g.currentRound().diedAtDoors).hasSize(9);
 		for (int i = 0; i < 9; i++) {
-			assertThat(points(i)).isEqualTo(2);
+			assertThat(g.players.get(i).alive).isFalse();
+			assertThat(g.bracelets.get(i).ownerAlive).isFalse();
+			assertThat(points(i)).isEqualTo(3); // no point lost: he is dead, not fined
+		}
+	}
+
+	@Test
+	void aLivingPlayerWhoPassedNoColourDoorDiesAndIsAGhostForTheRest() {
+		started(8);
+		toNextStage();
+		Split s = Doors.validSplits(assignment()).get(0);
+		int absent = s.groups().get(0).solo();
+		for (int k = 0; k < 3; k++) {
+			for (int b : s.groups().get(k).members()) {
+				if (b != absent) {
+					service.passDoor(HUB, ids[b], Door.ALL.indexOf(s.groups().get(k).door()));
+				}
+			}
+		}
+		toNextStage();
+		assertThat(phase()).isEqualTo(Phase.ROOMS);
+		Game g = service.find(HUB);
+		assertThat(g.currentRound().diedAtDoors).containsExactly(absent);
+		for (int i = 0; i < 9; i++) {
+			assertThat(g.players.get(i).alive).isEqualTo(i != absent);
+			assertThat(points(i)).isEqualTo(3);
+		}
+		// he is still in the group of the split (his group has a ghost) and the public view says who died
+		assertThat(g.currentRound().split().groups().get(0).solo()).isEqualTo(absent);
+		assertThat(service.<Object>read(HUB, game -> Views.build(game, ids[0], clock.instant()).get("doors_dead"))).isEqualTo(List.of(absent));
+		assertCode(() -> service.debugSolve(HUB, ids[absent]), TrahisonException.DEAD);
+		// the next doors: the dead are not asked to pass, and do not die twice
+		toNextStage(); // FREE_TIME
+		toNextStage(); // VOTE
+		toNextStage(); // RESULTS
+		toNextStage(); // round 2 DOORS
+		assertThat(phase()).isEqualTo(Phase.DOORS);
+		everyonePassesExcept(absent);
+		toNextStage();
+		assertThat(service.find(HUB).currentRound().diedAtDoors).isEmpty();
+		assertThat(service.<Object>read(HUB, game -> Views.build(game, ids[0], clock.instant()).get("doors_dead"))).isEqualTo(List.of());
+	}
+
+	/** Everybody takes the door of the first split, but {@code absent}. */
+	private void everyonePassesExcept(int absent) {
+		Split s = Doors.validSplits(assignment()).get(0);
+		for (int k = 0; k < 3; k++) {
+			for (int b : s.groups().get(k).members()) {
+				if (b != absent) {
+					service.passDoor(HUB, ids[b], Door.ALL.indexOf(s.groups().get(k).door()));
+				}
+			}
 		}
 	}
 

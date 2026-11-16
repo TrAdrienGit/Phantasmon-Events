@@ -40,6 +40,7 @@ final class RoomSnapshot {
 		putTime(out, "lastProgressAt", room.lastProgressAt);
 		putTime(out, "finishedAt", room.finishedAt);
 		out.put("exitOpen", room.exitOpen);
+		out.put("replays", room.replays);
 		ArrayNode inventory = out.putArray("inventory");
 		room.inventory.forEach(inventory::add);
 		ArrayNode holders = out.putArray("holders");
@@ -74,6 +75,7 @@ final class RoomSnapshot {
 		room.lastProgressAt = time(in, "lastProgressAt");
 		room.finishedAt = time(in, "finishedAt");
 		room.exitOpen = in.path("exitOpen").asBoolean(false);
+		room.replays = in.path("replays").asInt(0);
 		in.path("inventory").forEach(i -> room.inventory.add(i.asString()));
 		JsonNode holders = in.path("holders");
 		for (int i = 0; i < room.inventory.size(); i++) {

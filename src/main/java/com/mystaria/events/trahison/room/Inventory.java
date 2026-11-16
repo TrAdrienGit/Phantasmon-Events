@@ -61,8 +61,8 @@ public final class Inventory {
 
 	private static void tick(Minecraft mc) {
 		while (KEY.consumeClick()) {
-			if (mc.screen == null && mc.player != null && Rooms.mine() != null) {
-				mc.setScreen(new InventoryScreen());
+			if (mc.screen == null && mc.player != null && Rooms.current() != null) {
+				mc.setScreen(new com.mystaria.events.trahison.screen.InventoryScreen());
 			}
 		}
 		while (CYCLE_KEY.consumeClick()) {
@@ -76,13 +76,13 @@ public final class Inventory {
 
 	/** Items the local player carries (those without a holder too), in the order they were picked up. */
 	public static List<ItemView> mine() {
-		RoomView room = Rooms.mine();
+		RoomView room = Rooms.current();
 		return room == null ? List.of() : room.carriedBy(Rooms.ownIndex());
 	}
 
 	/** Items his teammates carry. */
 	public static List<ItemView> others() {
-		RoomView room = Rooms.mine();
+		RoomView room = Rooms.current();
 		return room == null ? List.of() : room.carriedByOthers(Rooms.ownIndex());
 	}
 
@@ -171,6 +171,23 @@ public final class Inventory {
 		return tones[Math.floorMod(id.hashCode(), tones.length)];
 	}
 
+	/** Draws an item's picture in a {@code size} square, or a gem of its tint when the pack has no picture for it. */
+	public static void drawIcon(net.minecraft.client.gui.GuiGraphics g, String id, int x, int y, int size) {
+		ResourceLocation icon = icon(id);
+		if (icon != null) {
+			Pictures.draw(g, icon, x, y, size, size);
+			return;
+		}
+		int tint = tint(id);
+		int cx = x + size / 2;
+		int cy = y + size / 2;
+		int half = Math.max(3, size / 2 - 2) * 7 / 10;
+		int in = Math.max(2, half * 7 / 10);
+		com.mystaria.events.trahison.ui.TrahisonUi.rotatedFill(g, cx, cy, 45f, -half, -half, half, half, com.mystaria.events.trahison.ui.TrahisonPalette.BORDER);
+		com.mystaria.events.trahison.ui.TrahisonUi.rotatedFill(g, cx, cy, 45f, -in, -in, in, in, tint);
+		com.mystaria.events.trahison.ui.TrahisonUi.rotatedFill(g, cx, cy, 45f, -in, -in, 0, 0, com.mystaria.events.trahison.ui.TrahisonUi.withAlpha(0xFFFFFF, 0x70));
+	}
+
 	// ---------------------------------------------------------------- actions (all go to the backend)
 
 	public static void give(String item, int to) {
@@ -191,15 +208,26 @@ public final class Inventory {
 
 	// ---------------------------------------------------------------- teammates
 
-	/** The teammates of the local player who can receive an item (the group's other members, alive). */
+	/**
+	 * Who the local player can hand an item to: the group's other living members; in the free time (D8) any other living
+	 * player of the game, since players visit each other's rooms.
+	 */
 	public static List<Integer> teammates() {
-		RoomView room = Rooms.mine();
+		RoomView room = Rooms.current();
 		View v = GameView.current();
 		List<Integer> out = new ArrayList<>();
 		if (room == null || v == null) {
 			return out;
 		}
 		int own = Rooms.ownIndex();
+		if (v.phase() == GameView.Phase.FREE_TIME) {
+			for (GameView.Player p : v.players()) {
+				if (p.index() != own && p.alive()) {
+					out.add(p.index());
+				}
+			}
+			return out;
+		}
 		for (int m : room.members()) {
 			GameView.Player p = v.player(m);
 			if (m != own && p != null && p.alive()) {

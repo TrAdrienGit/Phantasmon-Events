@@ -32,10 +32,10 @@ public class Game {
 	 */
 	public java.util.Map<String, DoorWindow> doorWindows = new java.util.LinkedHashMap<>();
 	/**
-	 * The cabins closed right now (cabin id to the index of the player who closed it), VOTE only (T2.4). Cleared when a
-	 * stage starts, so every cabin reopens when VOTE ends. Kept with the game so a restart brings them back.
+	 * The vote cabins held right now (cabin id to its lock), VOTE only (D4, D5). Cleared when a stage starts, so every cabin
+	 * reopens when VOTE ends. Kept with the game so a restart brings them back.
 	 */
-	public java.util.Map<String, Integer> closedCabins = new java.util.LinkedHashMap<>();
+	public java.util.Map<String, CabinLock> cabinLocks = new java.util.LinkedHashMap<>();
 	/** The ids of the plan's cabins, derived like {@link #doors} and sent as {@code cabins}; not stored. */
 	@com.fasterxml.jackson.annotation.JsonIgnore
 	public java.util.List<String> cabinIds = new java.util.ArrayList<>();
@@ -68,8 +68,10 @@ public class Game {
 	/** Player indices that went through the final door; set when it opens. */
 	public List<Integer> winners = new ArrayList<>();
 	public List<LogEntry> log = new ArrayList<>();
-	/** Admins who run this game (they get the game master view). */
+	/** The accounts the admins assigned in the lobby to run this game (D7); they get the game master view. Possibly none. */
 	public java.util.Set<UUID> gameMasters = new java.util.LinkedHashSet<>();
+	/** The names of the game masters (account to name), for the views of the lobby. */
+	public java.util.Map<UUID, String> gameMasterNames = new java.util.LinkedHashMap<>();
 	/** How the bots vote. */
 	public BotPolicy botPolicy = BotPolicy.RANDOM;
 	/** True while the game is paused by itself because a living player disconnected (AUTO mode only). */
