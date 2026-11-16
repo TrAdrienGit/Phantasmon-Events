@@ -415,9 +415,24 @@ La vue du maître du jeu ajoute, à la place de `"gm": null` :
   ],
   "settings": { "mode": "AUTO", "durations": { "PROLOGUE": 600, "DOORS": 300, "ROOMS": 1800, "FREE_TIME": 600, "VOTE": 300, "RESULTS": 180, "FINAL": 600 }, "door_open_seconds": 6, "final_door_seconds": 10, "cabin_partner_seconds": 30, "cabins_required": true },
   "bot_policy": "RANDOM",
-  "seed": 7
+  "seed": 7,
+  "draw": null
 }
 ```
+
+`gm.settings` porte aussi `draw_max_spread`, `draw_rise` et `draw_avoid_games` (le tirage, voir « Tirage des salles »). `gm.draw` est
+`null` sans tirage ; sinon (T4.1, T4.3) :
+
+```json
+"draw": { "seed": 123, "relaxed": ["variety"],
+  "picks": [ { "round": 1, "group": 0, "room": "atelier", "name": "Atelier", "difficulty": 4, "expected_seconds": 900,
+               "mechanism": "keypad", "manual": false, "place": "place_1a", "orientation": "east" } ] }
+```
+
+Neuf `picks` (manche 1 à 3, groupe 0 à 2 = porte et place). `place` et `orientation` sont ceux du plan (`null` sans plan ou sans
+place) : `orientation` est le quart de tour que la place applique à la salle. `relaxed` : les contraintes que la banque n'a pas pu
+tenir, parmi `rise`, `variety`, `recent`, `spread`, `repeat`. `manual` : la salle a été remplacée par le maître du jeu. Le bloc ne
+part qu'aux maîtres du jeu de la partie.
 
 - Erreurs : aucune (une vue ne se refuse pas ; sans partie, la réponse à `view` est la vue `NONE`).
 
@@ -766,7 +781,7 @@ joue pas (`ERROR_TRAHISON_NOT_A_PLAYER`), hors de l'étape prévue (`ERROR_TRAHI
 
 | `action` | Champs | Effet |
 |---|---|---|
-| `create` | `hub` ; facultatifs : `seed` (entier), `mode` (`AUTO` ou `GAME_MASTER`), `fast` (entier : toutes les étapes durent ce nombre de secondes ; `true` = 10), `test_room` (identifiant d'une salle de la banque, voir ci-dessous), `settings` (`{ mode, durations: { "VOTE": 120, ... }, door_open_seconds, final_door_seconds, cabin_partner_seconds, test_room }`, durées en secondes par étape, `cabin_partner_seconds` : 1 à 300, `cabins_required` : booléen, vrai par défaut) | **Admin seulement.** Crée la partie du hub en `LOBBY`, **sans maître du jeu** (D7 : on les nomme ensuite). Refusée si le hub a une partie non finie. Graine tirée au hasard si absente. Une partie finie ne bloque pas une nouvelle |
+| `create` | `hub` ; facultatifs : `seed` (entier), `mode` (`AUTO` ou `GAME_MASTER`), `fast` (entier : toutes les étapes durent ce nombre de secondes ; `true` = 10), `test_room` (identifiant d'une salle de la banque, voir ci-dessous), `settings` (`{ mode, durations: { "VOTE": 120, ... }, door_open_seconds, final_door_seconds, cabin_partner_seconds, test_room, draw_max_spread, draw_rise, draw_avoid_games }`, durées en secondes par étape, `draw_max_spread` (0 à 20, défaut 1) : écart maximal de difficulté entre les trois salles d'une manche, `draw_rise` (0 à 20, défaut 0) : montée minimale du total d'une manche à la suivante, `draw_avoid_games` (0 à 20, défaut 3) : nombre de parties passées dont les salles sont évitées, `cabin_partner_seconds` : 1 à 300, `cabins_required` : booléen, vrai par défaut) | **Admin seulement.** Crée la partie du hub en `LOBBY`, **sans maître du jeu** (D7 : on les nomme ensuite). Refusée si le hub a une partie non finie. Graine tirée au hasard si absente. Une partie finie ne bloque pas une nouvelle |
 | `start` | | `LOBBY` → `PROLOGUE`. Exactement 9 inscrits (les factices comptent). En mode `GAME_MASTER`, au moins un maître du jeu nommé (`ERROR_TRAHISON_NO_GAME_MASTER`) : c'est lui qui fait avancer la partie |
 | `set_game_master` | `account` : UUID du compte, `on` : booléen | **Admin seulement, en `LOBBY` seulement** (D7) : donne (`on: true`) ou reprend le rôle de maître du jeu de cette partie. Aucun, un ou plusieurs ; **D12 : un joueur inscrit peut l'être, et un maître du jeu peut s'inscrire (`join`) : il joue alors comme un des neuf, en rôle secret (voir « Le maître du jeu qui joue »)**. Les candidats sont donnés dans `lobby_members` de la vue |
 | `pause` / `resume` | | Gèle / relance le chrono. `pause` sur une pause automatique la reprend à son compte (seul `resume` la lève ensuite) |
@@ -777,6 +792,8 @@ joue pas (`ERROR_TRAHISON_NOT_A_PLAYER`), hors de l'étape prévue (`ERROR_TRAHI
 | `set_points` | `bracelet` : 0 à 8, `points` ≥ 0 | Corrige les points d'un bracelet (la mort n'est vérifiée qu'aux prochains résultats) |
 | `add_bots` | `count` (entier ; absent ou ≤ 0 : remplit toutes les places libres), `policy` (facultatif) | En `LOBBY` seulement : ajoute des joueurs factices « Bot n » avec de faux UUID ; refusé s'il n'y a pas assez de places (`ERROR_TRAHISON_GAME_FULL`) |
 | `set_bot_policy` | `policy` : `ally`, `betray` ou `random` | Règle le vote de tous les factices (défaut `random`) |
+| `redraw` | facultatif : `seed` (entier) | Tire à nouveau les neuf salles (graine donnée, sinon la suivante). Seulement en `LOBBY` ou `PROLOGUE`, sinon `ERROR_TRAHISON_WRONG_PHASE` ; `ERROR_TRAHISON_NO_DRAW` si le backend ne tire pas |
+| `replace_room` | `round` (1 à 3), `group` (0 à 2), `room` (identifiant d'une salle de la banque) | Met cette salle à la place de la salle tirée, marquée `manual`. Refusée (`ERROR_TRAHISON_WRONG_PHASE`) si les salles de cette manche ont déjà démarré, `ERROR_TRAHISON_BAD_ARGUMENT` si la salle est inconnue ou veut un groupe plus grand que celui de la place |
 
 #### Les joueurs factices
 
@@ -812,13 +829,30 @@ Un compte à la fois dans `Game.gameMasters` et dans `players` est un **maître 
   après avoir passé un joueur à `alive = false`**, avant toute autre suite.
 - Un maître du jeu qui ne fait que superviser reste possible comme avant (D7).
 
+### Tirage des salles (T4.1) et places (T4.3)
+
+À la création de la partie (`create`), le backend tire les neuf salles dans la banque (les salles qui ont leurs blocs : sans eux, rien
+à coller), à partir de la graine de la partie et des salles jouées lors des dernières parties (table `trahison_games`, les salles
+vraiment démarrées). Pas de tirage si `test_room` est réglé ou si la banque est vide : la partie joue alors la salle d'essai ou la
+salle intégrée. Contraintes, de la plus stricte à la plus relâchable (le tirage les relâche dans cet ordre et dit lesquelles il a
+rompues dans `relaxed`) : `rise` (le total d'une manche dépasse celui de la précédente d'au moins `draw_rise`), `variety` (deux salles
+d'une manche n'ont pas le même mécanisme principal : celui qui compte le plus d'étapes), `recent` (pas de salle des `draw_avoid_games`
+dernières parties), `spread` (écart de difficulté d'au plus `draw_max_spread` dans une manche ; relâché en l'élargissant au minimum),
+`repeat` (neuf salles différentes). Jamais relâché : une salle qui demande un groupe de `n` joueurs (`three_levers` : 3) n'est mise que
+là où le groupe a au moins `n` joueurs. Une banque vide est refusée (`ERROR_TRAHISON_DRAW_EMPTY_BANK`, journalisé, pas de tirage).
+
+Les places : à `start` puis à chaque début de manche, chaque salle tirée reçoit la place du plan de sa manche (la k-ième place du
+plan, dans l'ordre du plan, pour le groupe k) et l'orientation de cette place : le tirage garde ce couple (`place`, `orientation`).
+Les positions des emplacements restent relatives à la salle et c'est le client qui les tourne et les place (voir « Place d'une
+salle ») ; le backend dispose de la même conversion (`RoomPlace.toHub`) pour ses vérifications.
+
 ### Salles d'une manche (branchement sur le moteur de partie)
 
 Quand les portes se ferment (passage de `DOORS` à `ROOMS`), le backend démarre **une salle par groupe** (les trois groupes de la
 répartition de la manche) : membres = les indices de joueur du groupe (le bracelet de poignet `i` est celui du joueur `i`),
 graine = tirée de la graine de la manche et du numéro du groupe (les trois salles ont des solutions différentes, et une
-manche rejouée avec la même graine de partie retrouve les mêmes). Le choix de la salle par groupe viendra du tirage (étape
-T4) ; en attendant, tous les groupes jouent la salle du réglage **`test_room`** (identifiant d'une salle de la banque,
+manche rejouée avec la même graine de partie retrouve les mêmes). La salle de chaque groupe est celle du **tirage** de la partie
+(`game.draw`, voir « Tirage des salles » ; les manches au-delà de la troisième reprennent le cycle). Sans tirage, tous les groupes jouent la salle du réglage **`test_room`** (identifiant d'une salle de la banque,
 réglage de `create`, valide s'il suit `[A-Za-z0-9_-]{1,40}`), ou, quand il n'y en a pas (ou que la salle est introuvable),
 une **salle intégrée** : une seule étape `debug_button` et la sortie, de sorte qu'une partie marche toujours.
 
@@ -1064,6 +1098,7 @@ Préfixe `ERROR_TRAHISON_`. Tous sont envoyés par `EventsTrahisonSay` (genre `e
 |---|---|---|---|
 | `ERROR_TRAHISON_ADMIN_REQUIRED` | WS | `create` ou `set_game_master` envoyé par un non-admin | `phantasmon_events.error.error_trahison_admin_required` |
 | `ERROR_TRAHISON_NOT_GAME_MASTER` | WS | `EventsTrahisonGm` d'un compte qui n'est pas maître du jeu de la partie (et, en `LOBBY`, n'est pas admin) | `phantasmon_events.error.error_trahison_not_game_master` |
+| `ERROR_TRAHISON_NO_DRAW` | WS | `redraw` ou `replace_room` quand la partie n'a pas de tirage | `phantasmon_events.error.error_trahison_no_draw` |
 | `ERROR_TRAHISON_NO_GAME_MASTER` | WS | `start` en mode `GAME_MASTER` sans aucun maître du jeu nommé | `phantasmon_events.error.error_trahison_no_game_master` |
 | `ERROR_TRAHISON_GAME_MASTER_PLAYS` | WS | **Plus émise depuis D12** (un maître du jeu peut jouer) ; le code reste défini | `phantasmon_events.error.error_trahison_game_master_plays` |
 | `ERROR_TRAHISON_NO_HUB` | WS | `hub` absent, ou qui n'est pas un hub miroir, et l'expéditeur ne joue ni ne dirige aucune partie | `phantasmon_events.error.error_trahison_no_hub` |

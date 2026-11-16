@@ -152,6 +152,16 @@ public final class Messages {
 		send(GM, "set_bot_policy", Map.of("policy", policy), true);
 	}
 
+	/** Draws the nine rooms again (T4.1); before round 1. */
+	public static void redraw() {
+		send(GM, "redraw", null, true);
+	}
+
+	/** Puts another room of the bank in the place of a drawn one (T4.1). */
+	public static void replaceRoom(int round, int group, String room) {
+		send(GM, "replace_room", Map.of("round", round, "group", group, "room", room), true);
+	}
+
 	public static void start() {
 		send(GM, "start", null, true);
 	}

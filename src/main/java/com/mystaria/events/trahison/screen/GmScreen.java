@@ -60,6 +60,7 @@ public final class GmScreen extends TrahisonScreen {
 			mc.player.displayClientMessage(Component.translatable(T + "not_admin"), false);
 			return;
 		}
+		DrawPanel.install();
 		mc.setScreen(new GmScreen());
 	}
 
@@ -157,6 +158,12 @@ public final class GmScreen extends TrahisonScreen {
 			used += bh + 4;
 			used += policyButton(g, v, x, y + used, w);
 			used += 4;
+			ui.button(g, x, y + used, w, bh, Component.translatable(T + "export"), ButtonKind.DEFAULT, Component.translatable(T + "export.tip"),
+					com.mystaria.events.trahison.edit.ExportFlow::exportDrawn);
+			used += bh + 4;
+			ui.button(g, x, y + used, w, bh, Component.translatable(G + "check.button"), ButtonKind.DEFAULT, Component.translatable(G + "check.button.tip"),
+					com.mystaria.events.trahison.edit.PlaceCheck::run);
+			used += bh + 4;
 			ui.button(g, x, y + used, w, bh, Component.translatable(T + "start"), ButtonKind.PRIMARY, Component.translatable(T + "start.tip"), Messages::start);
 			used += bh + 4;
 			ui.button(g, x, y + used, w, bh, Component.translatable(T + "end"), ButtonKind.DANGER, null, this::askEnd);
@@ -244,6 +251,7 @@ public final class GmScreen extends TrahisonScreen {
 				used += 30;
 			}
 		}
+		used += DrawPanel.draw(g, ui, v, x + 4, ry + used + 8, rw);
 		ui.unclip(g);
 		rightContent = used + 8;
 		if (bar) {
@@ -296,6 +304,7 @@ public final class GmScreen extends TrahisonScreen {
 					admin ? () -> Messages.setGameMaster(m.uuid(), !master) : null);
 			used += ROW_PITCH;
 		}
+		used += DrawPanel.draw(g, ui, v, x + 4, ry + used + 8, rw);
 		ui.unclip(g);
 		rightContent = used + 8;
 		if (bar) {

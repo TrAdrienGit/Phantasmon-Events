@@ -87,6 +87,13 @@ public class RoomCatalog {
 		return measured == 0 ? new int[] { d.expectedSeconds(), 0 } : new int[] { total, measured };
 	}
 
+	/** The rooms the draw may pick (T4.1): those whose blocks were uploaded, since a room without blocks cannot be pasted. */
+	public List<RoomDefinition> drawable() {
+		return jdbc.query("SELECT data::text FROM trahison_rooms ORDER BY id",
+				(rs, n) -> mapper.readValue(rs.getString(1), RoomDefinition.class)).stream()
+				.filter(d -> Files.exists(file(d.id()))).toList();
+	}
+
 	public Optional<RoomDefinition> find(String id) {
 		checkId(id);
 		List<RoomDefinition> rows = jdbc.query("SELECT data::text FROM trahison_rooms WHERE id = ?",

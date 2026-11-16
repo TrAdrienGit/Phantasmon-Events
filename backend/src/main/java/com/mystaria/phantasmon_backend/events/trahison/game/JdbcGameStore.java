@@ -36,4 +36,29 @@ public class JdbcGameStore implements GameStore {
 		return jdbc.query("SELECT state::text FROM trahison_games WHERE ended_at IS NULL ORDER BY created_at",
 				(rs, i) -> GameJson.read(rs.getString(1)));
 	}
+
+	@Override
+	public java.util.Map<String, Integer> recentRooms(java.util.UUID exclude, int games) {
+		java.util.Map<String, Integer> out = new java.util.LinkedHashMap<>();
+		if (games <= 0) {
+			return out;
+		}
+		List<String> states = jdbc.query("""
+				SELECT state::text FROM trahison_games WHERE id <> ? AND jsonb_array_length(state -> 'rounds') > 0
+				ORDER BY created_at DESC LIMIT ?
+				""", (rs, i) -> rs.getString(1), exclude, games);
+		int ago = 0;
+		for (String json : states) {
+			ago++;
+			Game g = GameJson.read(json);
+			for (RoundState r : g.rounds) {
+				for (tools.jackson.databind.JsonNode room : r.rooms) {
+					if (room != null && room.path("definition").hasNonNull("id")) {
+						out.putIfAbsent(room.path("definition").get("id").asString(), ago);
+					}
+				}
+			}
+		}
+		return out;
+	}
 }

@@ -16,6 +16,7 @@ import com.mystaria.phantasmon_backend.events.trahison.layout.RoomSlot;
 import com.mystaria.phantasmon_backend.events.trahison.room.ActionResult;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomAction;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomDefinition;
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomDraw;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomPlace;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomService;
 import com.mystaria.phantasmon_backend.events.trahison.room.Slot;
@@ -62,6 +63,30 @@ public final class GameRooms {
 		return new SplittableRandom(roundSeed ^ ((group + 1) * GOLDEN) ^ SALT).nextLong();
 	}
 
+	/**
+	 * The room of group {@code group} in round {@code round}: the game's draw (T4.1; the rounds past the third replay the
+	 * cycle), else the settings' test room, else the fallback.
+	 */
+	private RoomDefinition definitionFor(Game g, int round, int group) {
+		if (g.draw != null && (g.settings.testRoom == null || g.settings.testRoom.isBlank())) {
+			int cycle = (Math.max(1, round) - 1) % 3 + 1;
+			RoomDraw.Pick pick = g.draw.pick(cycle, group);
+			if (pick != null) {
+				try {
+					Optional<RoomDefinition> found = definitions.apply(pick.room());
+					if (found.isPresent()) {
+						return found.get();
+					}
+					log.warn("Trahison: drawn room {} no longer in the bank, using the fallback room", pick.room());
+				} catch (RuntimeException ex) {
+					log.warn("Trahison: could not load drawn room {}, using the fallback room", pick.room(), ex);
+				}
+				return fallbackDefinition();
+			}
+		}
+		return definitionFor(g.settings);
+	}
+
 	private RoomDefinition definitionFor(Settings settings) {
 		String id = settings.testRoom;
 		if (id != null && !id.isBlank()) {
@@ -89,13 +114,15 @@ public final class GameRooms {
 	 * k-th for group k; a group without a place has none.
 	 */
 	void startRound(Game g, RoundState r, LayoutContent plan) {
-		RoomDefinition definition = definitionFor(g.settings);
+		if (g.draw != null) {
+			g.draw = GameDraws.assignPlaces(g.draw, plan); // records the place and the turn each room really got
+		}
 		r.rooms = new ArrayList<>();
 		List<RoomSlot> places = placesOf(plan, r.number);
 		for (int k = 0; k < 3; k++) {
 			List<Integer> members = List.copyOf(r.split().group(Door.ALL.get(k)).members());
 			RoomSlot place = k < places.size() ? places.get(k) : null;
-			rooms.start(g.hub, r.number, k, members, definition, roomSeed(r.seed, k),
+			rooms.start(g.hub, r.number, k, members, definitionFor(g, r.number, k), roomSeed(r.seed, k),
 					place == null || place.origin() == null ? null
 							: new RoomPlace(place.id(), place.origin(), place.orientation() == null ? "north" : place.orientation()));
 			r.rooms.add(rooms.snapshot(g.hub, r.number, k));

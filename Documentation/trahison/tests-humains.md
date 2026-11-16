@@ -262,3 +262,32 @@
   une salle en temps libre ou utiliser `debug_solve` n'ajoute aucune ligne. Après trois parties d'une même salle, la liste des salles (éditeur) montre le temps mesuré (`measured: true`).
 - **Fin de `ROOMS`** : laisser un groupe ne pas finir sa salle : à la fin de l'étape sa sortie s'ouvre (sa porte aussi), chaque membre perd 1 point sur son bracelet (jamais sous 0 ; à 0 il devient fantôme) ; les
   groupes qui avaient fini ne perdent rien ; avec `roomTimeout: false` rien ne se passe.
+
+## T4.2 Écriture des fichiers de collage
+
+- Monde d'essai solo, une salle sauvée (`/phantasmon event trahison room list`) : lancer `/phantasmon event trahison export <9 ids>` (même id répété possible) ; le chat donne le dossier, un clic l'ouvre ; il contient `place_*.schem`, `place_*.litematic`, `all_places.*` et `paste_sheet.txt`.
+- Coller `place_<id>.schem` avec Axiom, coin minimum du fichier sur le coin de la fiche, sans rotation : la salle remplit le carré de 48 × 48 de la place, sans décalage, et la sortie (nord de la salle) regarde l'orientation de la place.
+- Faire l'essai pour les quatre orientations (`north`, `east`, `south`, `west`) : escaliers, portes, panneaux muraux et têtes tournent avec la salle ; le texte des panneaux est conservé.
+- Même essai avec le `.litematic` (Litematica ou Axiom) : même résultat que le `.schem`.
+- Coller `all_places.schem` : les 9 places se retrouvent à leurs positions relatives.
+- Comparer les coins d'emplacements de la fiche avec les emplacements affichés par le plan une fois collé.
+- Dans le panneau du maître du jeu (lobby), le bouton « Exporter les salles » explique la commande tant que le tirage n'est pas lisible.
+
+## T4.1 et T4.3 : le tirage et les places
+
+- Avoir au moins neuf salles avec leurs blocs dans la banque. Créer une partie : dans l'écran du maître du jeu (nommé dans le lobby), le panneau « Salles tirées » montre trois manches de trois salles, la difficulté de chacune, le total de la manche, la place.
+- Les trois salles d'une même manche ont des difficultés proches (écart d'au plus 1 par défaut) et des mécanismes différents.
+- « Tirer à nouveau » donne un autre tirage ; avec la même graine (`redraw` avec `seed`), le même.
+- Cliquer une salle puis une autre de la liste : elle prend sa place, marquée d'une étoile. Une fois les portes de la manche fermées, le remplacement est refusé.
+- Avec moins de neuf salles dans la banque, le tirage marche et affiche la ligne « La banque n'a pas pu respecter ... ».
+- Une salle à trois leviers n'apparaît jamais dans un groupe de moins de trois joueurs (aujourd'hui tous les groupes sont des trios : elle peut apparaître partout).
+- Jouer la manche 1 : chaque groupe est dans la salle annoncée par le tirage, à la place prévue, tournée selon l'orientation de la place.
+- Redémarrer le backend en plein lobby : le tirage est le même.
+- Créer une partie avec `test_room` : pas de tirage, tous les groupes jouent la salle d'essai.
+
+## T4.3 : la vérification du collage
+
+- Coller les neuf fichiers de l'export (Axiom), aller près des places, cliquer « Vérifier le collage » : chaque place est « bien collée ».
+- Ne pas coller une place : elle est « pas collée ». Coller une place avec un décalage d'un bloc ou la mauvaise rotation : « mal collée ».
+- S'éloigner de plusieurs places (chunks non chargés) : « chunks non chargés », jamais « bien collée ».
+- Le tirage avec un plan dont les places ne sont pas dans l'ordre alphabétique de leurs identifiants : chaque fichier exporté va bien à la place de sa salle (la fiche de collage et la vérification sont d'accord).

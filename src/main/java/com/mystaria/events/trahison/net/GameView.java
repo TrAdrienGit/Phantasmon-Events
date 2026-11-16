@@ -77,8 +77,26 @@ public final class GameView {
 	public record GmZone(int index, String zone, Double x, Double y, Double z) {
 	}
 
+	/** One room of the draw (T4.1): its round (1 to 3) and group (0 to 2, the door and place), its place and the turn applied there (null without a plan). */
+	public record DrawPick(int round, int group, String room, String name, int difficulty, int expectedSeconds, String mechanism, boolean manual,
+			String place, String orientation) {
+	}
+
+	/** The game's nine drawn rooms and the constraints the draw had to relax ({@code rise variety recent spread repeat}). */
+	public record Draw(long seed, List<DrawPick> picks, List<String> relaxed) {
+
+		/** Total difficulty of a round (1 to 3). */
+		public int total(int round) {
+			int sum = 0;
+			for (DrawPick p : picks) {
+				sum += p.round() == round ? p.difficulty() : 0;
+			}
+			return sum;
+		}
+	}
+
 	public record Gm(List<GmVote> votes, String mode, Map<String, Integer> durations, int cabinPartnerSeconds, String botPolicy, long seed,
-			List<GmZone> zones) {
+			List<GmZone> zones, Draw draw) {
 	}
 
 	/** An account around the lobby (or a game master of the game): {@code gameMaster} is whether the admins gave it the role (D7). */
@@ -433,7 +451,7 @@ public final class GameView {
 						gz.get("z") instanceof Number n ? n.doubleValue() : null));
 			}
 			gm = new Gm(votes, str(settings, "mode") == null ? "AUTO" : str(settings, "mode"), durations, integer(settings, "cabin_partner_seconds", 30),
-					str(g, "bot_policy") == null ? "RANDOM" : str(g, "bot_policy"), lng(g, "seed", 0), Collections.unmodifiableList(zones));
+					str(g, "bot_policy") == null ? "RANDOM" : str(g, "bot_policy"), lng(g, "seed", 0), Collections.unmodifiableList(zones), draw(g));
 		}
 		Map<String, Boolean> doorsOpen = new java.util.LinkedHashMap<>();
 		map(d, "doors_state").forEach((id, state) -> doorsOpen.put(id, "OPEN".equalsIgnoreCase(String.valueOf(state))));
@@ -505,6 +523,26 @@ public final class GameView {
 	}
 
 	// ---------------------------------------------------------------- small typed accessors
+
+	/** The draw block of the game master view, or null. */
+	private static Draw draw(Map<String, Object> g) {
+		if (!(g.get("draw") instanceof Map<?, ?> raw)) {
+			return null;
+		}
+		@SuppressWarnings("unchecked")
+		Map<String, Object> d = (Map<String, Object>) raw;
+		List<DrawPick> picks = new ArrayList<>();
+		for (Map<String, Object> p : maps(d, "picks")) {
+			picks.add(new DrawPick(integer(p, "round", 1), integer(p, "group", 0), str(p, "room") == null ? "" : str(p, "room"),
+					str(p, "name") == null ? "" : str(p, "name"), integer(p, "difficulty", 0), integer(p, "expected_seconds", 0),
+					str(p, "mechanism") == null ? "" : str(p, "mechanism"), bool(p, "manual"), str(p, "place"), str(p, "orientation")));
+		}
+		List<String> relaxed = new ArrayList<>();
+		if (d.get("relaxed") instanceof List<?> l) {
+			l.forEach(x -> relaxed.add(String.valueOf(x)));
+		}
+		return new Draw(lng(d, "seed", 0), Collections.unmodifiableList(picks), Collections.unmodifiableList(relaxed));
+	}
 
 	private static String str(Map<String, Object> m, String k) {
 		Object o = m.get(k);

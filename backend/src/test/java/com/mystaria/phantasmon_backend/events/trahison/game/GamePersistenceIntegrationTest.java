@@ -48,4 +48,22 @@ class GamePersistenceIntegrationTest {
 		assertThat(jdbc.queryForObject("SELECT ended_at IS NOT NULL FROM trahison_games WHERE id = ?", Boolean.class, g.id)).isTrue();
 		assertThat(store.loadActive()).extracting(x -> x.id).doesNotContain(g.id);
 	}
+
+	@Test
+	void theRoomsPlayedInRecentGamesAreFoundInTheTable() {
+		Game g = new Game();
+		g.id = UUID.randomUUID();
+		g.hub = "recent-" + g.id;
+		g.createdAt = java.time.Instant.now().plusSeconds(3600);
+		RoundState r = new RoundState();
+		r.number = 1;
+		tools.jackson.databind.node.ObjectNode room = tools.jackson.databind.json.JsonMapper.builder().build().createObjectNode();
+		room.putObject("definition").put("id", "played_room");
+		r.rooms.add(room);
+		g.rounds.add(r);
+		store.save(g);
+		assertThat(store.recentRooms(UUID.randomUUID(), 3)).containsEntry("played_room", 1);
+		assertThat(store.recentRooms(g.id, 3)).doesNotContainKey("played_room");
+		assertThat(store.recentRooms(UUID.randomUUID(), 0)).isEmpty();
+	}
 }

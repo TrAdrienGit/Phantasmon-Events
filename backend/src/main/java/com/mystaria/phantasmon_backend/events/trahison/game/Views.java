@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomDraw;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Door;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Outcome;
 import com.mystaria.phantasmon_backend.events.trahison.rules.DoorGroup;
@@ -324,8 +325,23 @@ public final class Views {
 			"settings", orderedMap("mode", g.settings.mode.name(), "durations", durations,
 				"door_open_seconds", g.settings.doorOpenSeconds, "final_door_seconds", g.settings.finalDoorSeconds,
 				"cabin_partner_seconds", g.settings.cabinPartnerSeconds,
-				"cabins_required", g.settings.cabinsRequired),
-			"bot_policy", g.botPolicy.name(), "seed", g.seed);
+				"cabins_required", g.settings.cabinsRequired, "draw_max_spread", g.settings.drawMaxSpread,
+				"draw_rise", g.settings.drawRise, "draw_avoid_games", g.settings.drawAvoidGames),
+			"bot_policy", g.botPolicy.name(), "seed", g.seed, "draw", drawBlock(g));
+	}
+
+	/** The drawn rooms (T4.1): null without a draw; the picks round by round with their place and the constraints relaxed. */
+	private static Map<String, Object> drawBlock(Game g) {
+		if (g.draw == null) {
+			return null;
+		}
+		List<Object> picks = new ArrayList<>();
+		for (RoomDraw.Pick p : g.draw.picks()) {
+			picks.add(orderedMap("round", p.round(), "group", p.group(), "room", p.room(), "name", p.name(), "difficulty", p.difficulty(),
+				"expected_seconds", p.expectedSeconds(), "mechanism", p.mechanism(), "manual", p.manual(), "place", p.place(),
+				"orientation", p.orientation()));
+		}
+		return orderedMap("seed", g.draw.seed(), "picks", picks, "relaxed", new ArrayList<>(g.draw.relaxed()));
 	}
 
 	private static String name(Vote v) {

@@ -12,7 +12,7 @@ import com.mystaria.events.hub.MirrorHubCommands;
  * <ul>
  * <li>{@code tournament}: opens the tournaments menu, where players register and check in, and admins create and run
  * the tournaments;</li>
- * <li>{@code trahison}: the betrayal game: bare or {@code ping} checks the link with its backend module, {@code edit} (admins) toggles the plan editor, {@code door <id> open|close} (admins) opens or closes a door of the plan, {@code room new|load|list|off} (admins) the room editor, {@code minigame <mechanism>} (admins) opens a puzzle screen offline;</li>
+ * <li>{@code trahison}: the betrayal game: bare or {@code ping} checks the link with its backend module, {@code edit} (admins) toggles the plan editor, {@code door <id> open|close} (admins) opens or closes a door of the plan, {@code room new|load|list|off} (admins) the room editor, {@code export [room ids]} (admins) writes the nine rooms' Axiom files, {@code check} (admins) lists the places whose blocks differ from the drawn room, {@code minigame <mechanism>} (admins) opens a puzzle screen offline;</li>
  * <li>{@code hub ...}: the mirror hubs, admins only ({@link MirrorHubCommands});</li>
  * <li>{@code npc ...}, {@code open}, {@code close}, {@code list}: events and their trainer NPCs, admins only
  * ({@link com.mystaria.events.npc.NpcCommands}).</li>
@@ -87,6 +87,22 @@ public final class EventsCommands {
 									com.mystaria.events.trahison.edit.RoomEditor.stop();
 									return 1;
 								})))
+							// The files of the nine drawn rooms for Axiom (T4.2): bare, the draw's rooms; with room ids, those, in the places' order.
+							.then(ClientCommandManager.literal("export").requires(source -> com.mystaria.phantasmon.client.api.PhantasmonApi.isAdmin())
+								.executes(context -> {
+									com.mystaria.events.trahison.edit.ExportFlow.exportDrawn();
+									return 1;
+								})
+								.then(ClientCommandManager.argument("rooms", com.mojang.brigadier.arguments.StringArgumentType.greedyString()).executes(context -> {
+									com.mystaria.events.trahison.edit.ExportFlow.exportManual(com.mojang.brigadier.arguments.StringArgumentType.getString(context, "rooms"));
+									return 1;
+								})))
+							// T4.3: compares a sample of the world's blocks at each place with the drawn room.
+							.then(ClientCommandManager.literal("check").requires(source -> com.mystaria.phantasmon.client.api.PhantasmonApi.isAdmin())
+								.executes(context -> {
+									com.mystaria.events.trahison.edit.PlaceCheck.run();
+									return 1;
+								}))
 							// A puzzle screen opened locally with no backend (T3.4), to judge its look and feel.
 							.then(ClientCommandManager.literal("minigame").requires(source -> com.mystaria.phantasmon.client.api.PhantasmonApi.isAdmin())
 								.then(ClientCommandManager.argument("mechanism", com.mojang.brigadier.arguments.StringArgumentType.word())

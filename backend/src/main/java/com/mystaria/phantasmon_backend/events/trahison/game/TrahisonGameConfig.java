@@ -27,9 +27,10 @@ public class TrahisonGameConfig {
 	}
 
 	@Bean
-	GameService trahisonGameService(GameStore store, GameScheduler scheduler, GameRooms rooms, LayoutService layouts) {
+	GameService trahisonGameService(GameStore store, GameScheduler scheduler, GameRooms rooms, GameDraws draws, LayoutService layouts) {
 		GameService service = new GameService(store, Clock.systemUTC(), scheduler);
 		service.useRooms(rooms);
+		service.useDraws(draws);
 		service.useLayouts(layouts::version);
 		return service;
 	}
@@ -38,6 +39,12 @@ public class TrahisonGameConfig {
 	@Bean
 	GameRooms trahisonGameRooms(RoomService roomService, RoomCatalog catalog) {
 		return new GameRooms(roomService, catalog::find);
+	}
+
+	/** The nine rooms of a game are drawn from the bank (rooms with their blocks) and the games played lately. */
+	@Bean
+	GameDraws trahisonGameDraws(RoomCatalog catalog, GameStore store) {
+		return new GameDraws(catalog::drawable, catalog::find, store::recentRooms);
 	}
 
 	/** The bots play through the service and listen to it; created before the games are reloaded. */

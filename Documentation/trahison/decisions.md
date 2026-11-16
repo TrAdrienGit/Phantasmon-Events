@@ -232,6 +232,132 @@ Choix appliqué : l'aide va à la première étape ouverte non résolue (ordre d
 
 Ta réponse :
 
+## D70. Tirage : la taille des groupes et `three_levers`
+Constat : chaque groupe de manche est toujours un trio (une paire plus un solo = 3 bracelets, neuf joueurs en tout), donc `three_levers` peut aller partout aujourd'hui. Choix appliqué : le tirage sait quand même qu'une salle demande un groupe d'au moins `n` joueurs (`RoomDraw.MIN_GROUP`, `three_levers` : 3) et ne la met jamais là où le groupe est plus petit ; il reçoit les tailles par manche et par place (3 partout par défaut) et ne relâche jamais cette règle.
+- [x] Règle générale dans le tirage, tailles 3 partout *(par défaut)*
+- [ ] Rien : les groupes sont toujours des trios
+- [ ] Aussi refuser dans la validation d'une salle qu'elle serve à moins de 3
+
+Ta réponse :
+
+## D71. Tirage : le « mécanisme principal » d'une salle
+Choix appliqué : celui qui compte le plus d'étapes dans la salle, le premier rencontré en cas d'égalité ; une salle sans étape n'en a pas (jamais en conflit de variété).
+- [x] Le plus utilisé, premier en cas d'égalité *(par défaut)*
+- [ ] Celui de la première étape
+- [ ] Celui de la plus grosse difficulté (demande la difficulté des mécanismes dans le tirage)
+
+Ta réponse :
+
+## D72. Tirage : dans quel ordre relâcher les contraintes
+Choix appliqué : montée de difficulté, puis variété des mécanismes, puis salles récentes, puis écart de difficulté (élargi au minimum nécessaire), puis salles toutes différentes. Le résultat dit lesquelles il rompt vraiment.
+- [x] montée, variété, récentes, écart, répétition *(par défaut)*
+- [ ] récentes avant la variété (on préfère rejouer une salle récente qu'avoir deux mécanismes pareils)
+- [ ] l'écart de difficulté en premier
+
+Ta réponse :
+
+## D73. Tirage : banque trop petite
+Choix appliqué : avec moins de neuf salles utilisables, le tirage rejoue des salles (jamais deux fois la même dans une manche si la banque en a trois ou plus) et le signale (`repeat`). Seule une banque vide ne tire rien : la partie joue alors la salle d'essai ou la salle intégrée.
+- [x] Répéter des salles et le dire *(par défaut)*
+- [ ] Refuser la création de la partie tant que la banque a moins de neuf salles
+- [ ] Compléter avec la salle intégrée
+
+Ta réponse :
+
+## D74. Tirage : réglages par défaut
+Choix appliqué : écart maximal 1 entre les trois salles d'une manche, montée 0 (aucune contrainte), 3 parties passées évitées. Réglables à la création (`draw_max_spread`, `draw_rise`, `draw_avoid_games`).
+- [x] Écart 1, montée 0, 3 parties *(par défaut)*
+- [ ] Montée 1 (la manche 3 plus dure que la 1) par défaut
+- [ ] Écart 0 (difficultés identiques)
+
+Ta réponse :
+
+## D75. Tirage : qui le voit, quand il est tiré
+Choix appliqué : le tirage se fait à la création de la partie (`create`), se refait avec « Tirer à nouveau » avant la manche 1, et la salle d'une place se remplace tant que sa manche n'a pas démarré. Seuls les maîtres du jeu nommés le voient (bloc `gm`) : un admin qui n'est pas maître du jeu ne voit pas le tirage dans le lobby.
+- [x] Maîtres du jeu seulement *(par défaut)*
+- [ ] Les admins aussi, dans le lobby
+- [ ] Tirer seulement au démarrage (`start`), pas à la création
+
+Ta réponse :
+
+## D77. Places : qui convertit les positions des emplacements
+Choix appliqué : la conversion « relatif à la salle vers coordonnées de hub » reste faite par le client (`world/RoomFrame`, déjà en jeu depuis T3) ; le backend garde seulement le couple (place, orientation) dans le tirage et une copie testée de la règle (`RoomPlace.toHub`). `RoomInstance` ne change pas.
+- [x] Client convertit, backend garde place et orientation *(par défaut)*
+- [ ] Le backend convertit et envoie des positions de hub dans `EventsTrahisonRoom`
+
+Ta réponse :
+
+## D78. Vérification du collage : échantillon et seuils
+Choix appliqué : le client du maître du jeu compare jusqu'à 600 blocs non vides par place (répartis sur toute la salle tournée), état de bloc seulement (pas les données des panneaux ni des têtes). Place « bien collée » si tout concorde, « pas collée » si moins de 5 % concordent, « mal collée » entre les deux, « chunks non chargés » si plus de la moitié des blocs sont hors des chunks chargés (il faut aller près des places).
+- [x] 600 blocs, état seulement, seuil 5 % *(par défaut)*
+- [ ] Tous les blocs (plus lent, plus sûr)
+- [ ] Comparer aussi les données de bloc (texte des panneaux)
+
+Ta réponse :
+
+## D79. Vérification du collage : quand
+Choix appliqué : à la demande (bouton « Vérifier le collage » du lobby et commande `check`), jamais bloquant : `start` ne la lance pas et ne la refuse pas.
+- [x] À la demande, jamais bloquant *(par défaut)*
+- [ ] `start` refuse tant que la dernière vérification n'est pas entièrement bonne
+- [ ] Vérification automatique à chaque ouverture du lobby
+
+Ta réponse :
+
+## D90. Soirée : l'outil de collage
+Choix appliqué : la procédure demande à l'admin de coller avec Axiom un fichier par place, `.schem` (ou `.litematic`), sans rotation ni miroir, coin minimum sur le coin de la fiche ; le fichier unique `all_places` est donné comme raccourci.
+- [x] Fichiers par place d'abord, fichier unique en raccourci *(par défaut)*
+- [ ] Fichier unique d'abord
+- [ ] WorldEdit en plus d'Axiom
+
+Ta réponse :
+
+## D91. Soirée : quand tirer et coller
+Choix appliqué : la procédure fait tirer et coller la veille ou au moins une heure avant, puis vérifier le jour même ; le lobby n'est ouvert qu'une fois la vérification bonne.
+- [x] Tirer et coller à l'avance, vérifier le jour même *(par défaut)*
+- [ ] Tout le même soir, juste avant le lobby
+
+Ta réponse :
+
 ## Tranché
 
 Voir [`decisions-tranchees.md`](decisions-tranchees.md).
+
+## D80. Fichiers de collage : où ils sont écrits et comment l'admin les reçoit
+Choix appliqué : le client du maître du jeu écrit dans `.minecraft/phantasmon_events/trahison/export/<partie>/` ; le maître du jeu envoie le dossier à l'admin lui-même (la fiche et les fichiers y sont).
+- [x] Dossier local, envoi à la main *(par défaut)*
+- [ ] En plus, téléversement au backend et téléchargement par l'admin depuis un menu
+- [ ] En plus, une copie dans un dossier partagé (cloud du serveur)
+
+Ta réponse :
+
+## D81. Coordonnées de la fiche de collage
+Choix appliqué : la fiche donne les coordonnées du **plan (hub)**, y du monde, avec le coin minimum du fichier. L'admin doit connaître la conversion hub → monde réel de la place d'origine du hub.
+- [x] Coordonnées du plan seulement *(par défaut)*
+- [ ] Ajouter les coordonnées du monde du client qui exporte (le hub miroir), s'il est dans le hub
+- [ ] Faire saisir à l'exportateur le décalage hub → monde de l'original
+
+Ta réponse :
+
+## D82. Fichier unique des 9 places
+Choix appliqué : `all_places.schem` et `.litematic` couvrent la boîte englobant les 9 places ; au-delà de 64 millions de blocs de boîte, il n'est pas écrit (la fiche le dit) et seuls les fichiers par place servent.
+- [x] Limite 64 M blocs, sinon pas de fichier unique *(par défaut)*
+- [ ] Toujours l'écrire, quitte à produire un très gros fichier
+- [ ] Ne jamais l'écrire
+
+Ta réponse :
+
+## D83. Langue de la fiche de collage
+Choix appliqué : `paste_sheet.txt` est en français, sans accents (lue par l'admin dans un éditeur simple).
+- [x] Français sans accents *(par défaut)*
+- [ ] Français avec accents (UTF-8)
+- [ ] Anglais
+
+Ta réponse :
+
+## D84. Source du tirage pour le bouton « Exporter »
+Choix appliqué : tant que le client ne reçoit pas le tirage de T4.1, le bouton demande d'utiliser la commande `/phantasmon event trahison export <9 ids de salle>` (ids dans l'ordre des places : manche puis id) ; il suffira de renseigner `ExportFlow.drawn` quand le backend exposera le tirage.
+- [x] Commande avec ids à la main en attendant *(par défaut)*
+- [ ] Le backend envoie le tirage dans la vue du maître du jeu (`gm.draw`), le bouton l'utilise tout de suite
+- [ ] Un écran de choix des 9 salles dans le client
+
+Ta réponse :

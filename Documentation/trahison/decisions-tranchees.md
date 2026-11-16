@@ -32,3 +32,4 @@
 - **D38 (couleurs de fil)** : fait. `yellow` (losange) et `white` (anneau) ajoutés pour les fils seulement (`WireColor`, `TrahisonPalette`, charte section 3) ; `colors` va de 2 à 5. Voir D60.
 - **D39 (câblage plein mais faux)** : fait. Un court-circuit fait sauter tous les fils.
 - **D40 à D43 (trois leviers)** : défauts gardés (bail renouvelable, ordre et délai tirés, `solo` pour l'essai, pas de contrôle de la taille du groupe).
+- **D76 (ordre des places)** : c'était un défaut, pas une question. L'export et le backend utilisent le même ordre, celui du backend (ordre du plan) : le tirage porte l'identifiant de place de chaque salle et l'export associe salle et place par cet identifiant (`TrahisonExport.pair`, test `PlaceCheckTest`). Seule la commande manuelle `export <salles>` garde l'ordre « manche puis identifiant de place ».

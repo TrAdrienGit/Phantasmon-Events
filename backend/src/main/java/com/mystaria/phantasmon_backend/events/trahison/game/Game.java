@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomDraw;
 import com.mystaria.phantasmon_backend.events.trahison.rules.History;
 
 /**
@@ -50,6 +51,12 @@ public class Game {
 	/** The threshold hints of the colour doors, derived like {@link #doors} and sent as {@code door_hints}; not stored. */
 	@com.fasterxml.jackson.annotation.JsonIgnore
 	public java.util.List<DoorHint> doorHints = new java.util.ArrayList<>();
+
+	/**
+	 * The nine rooms drawn for this game and the place each one is played in (T4.1, T4.3); null when no draw was made (a test
+	 * room is set, the bank is empty, or the room engine is not wired), the rooms then come from the settings.
+	 */
+	public RoomDraw.Result draw;
 
 	public Phase phase = Phase.LOBBY;
 	/** 1..3, stays 3 during the final. */

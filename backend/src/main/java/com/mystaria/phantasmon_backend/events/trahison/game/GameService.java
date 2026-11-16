@@ -71,6 +71,8 @@ public class GameService {
 	private final List<GameListener> listeners = new CopyOnWriteArrayList<>();
 	/** The room engine link; null in tests that play the game alone (then {@code debug_solve} is the only way). */
 	private volatile GameRooms rooms;
+	/** The draw of a game's rooms; null in tests that do not draw (the rooms then come from the settings). */
+	private volatile GameDraws draws;
 	/** Where the plan of a hub comes from; null in tests that play without a plan (then there is no door). */
 	private volatile LayoutLookup layouts;
 	/** The plan of each game, as of the version it started with (read once, then kept). */
@@ -92,6 +94,11 @@ public class GameService {
 	/** Plugs the room engine in (before games are reloaded). */
 	public void useRooms(GameRooms gameRooms) {
 		this.rooms = gameRooms;
+	}
+
+	/** Plugs the room draw in: a game then draws its nine rooms when it is created (T4.1). */
+	public void useDraws(GameDraws gameDraws) {
+		this.draws = gameDraws;
 	}
 
 	/** Plugs the plan source in: a game then reads the plan of its hub when it starts and computes its doors from it. */
@@ -162,6 +169,10 @@ public class GameService {
 		}
 		synchronized (g) {
 			event(g, "created", Map.of("seed", g.seed, "mode", g.settings.mode.name()));
+			if (draws != null) {
+				draws.draw(g, planOf(g), null);
+				plans.remove(g.id); // the plan is read again, at its version, when the game starts
+			}
 			persist(g);
 			notifyPhase(g);
 		}
@@ -240,6 +251,9 @@ public class GameService {
 				} catch (RuntimeException ex) {
 					log.warn("Trahison game {}: could not read the plan of hub {}", g.id, g.hub, ex);
 				}
+			}
+			if (g.draw != null) {
+				g.draw = GameDraws.assignPlaces(g.draw, planOf(g)); // the places of the plan version the game plays on
 			}
 			event(g, "start", Map.of("layoutVersion", g.layoutVersion));
 			enterPhase(g, Phase.PROLOGUE);
@@ -429,6 +443,46 @@ public class GameService {
 	}
 
 	/** How the bots vote from now on. */
+	/** Draws the nine rooms again (T4.1), with a new seed (the given one, else the next one derived from the draw's). Before any room has started. */
+	public Game redraw(String hub, Long seed) {
+		Game g = require(hub);
+		synchronized (g) {
+			if (draws == null) {
+				throw new TrahisonException(TrahisonException.NO_DRAW, "no room draw here");
+			}
+			if (g.phase == Phase.ENDED || g.phase != Phase.LOBBY && g.phase != Phase.PROLOGUE) {
+				throw new TrahisonException(TrahisonException.WRONG_PHASE, "the rooms can only be drawn again before round 1");
+			}
+			long next = seed != null ? seed : (g.draw != null ? g.draw.seed() : g.seed) * 0x9E3779B97F4A7C15L + 1;
+			draws.draw(g, planOf(g), next);
+			event(g, "redraw", Map.of("seed", next));
+			persist(g);
+			notifyChanged(g, "draw");
+			return g;
+		}
+	}
+
+	/** The game master puts another room of the bank in the place of a drawn one, as long as that round's rooms have not started. */
+	public Game replaceRoom(String hub, int round, int group, String roomId) {
+		Game g = require(hub);
+		synchronized (g) {
+			if (draws == null) {
+				throw new TrahisonException(TrahisonException.NO_DRAW, "no room draw here");
+			}
+			if (g.phase == Phase.ENDED) {
+				throw new TrahisonException(TrahisonException.GAME_ENDED, "the game ended");
+			}
+			if (g.rounds.stream().anyMatch(r -> r.number == round && !r.rooms.isEmpty())) {
+				throw new TrahisonException(TrahisonException.WRONG_PHASE, "the rooms of round " + round + " already started");
+			}
+			draws.replace(g, round, group, roomId);
+			event(g, "replace_room", Map.of("round", round, "group", group, "room", String.valueOf(roomId)));
+			persist(g);
+			notifyChanged(g, "draw");
+			return g;
+		}
+	}
+
 	public Game setBotPolicy(String hub, BotPolicy policy) {
 		Game g = require(hub);
 		synchronized (g) {

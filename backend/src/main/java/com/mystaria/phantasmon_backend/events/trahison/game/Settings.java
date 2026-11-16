@@ -3,6 +3,8 @@ package com.mystaria.phantasmon_backend.events.trahison.game;
 import java.util.EnumMap;
 import java.util.Map;
 
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomDraw;
+
 /** What the organiser can tune before a game. Plain data, serialized with the game. */
 public class Settings {
 
@@ -36,6 +38,16 @@ public class Settings {
 	 * built-in fallback room (one button).
 	 */
 	public String testRoom;
+	/** T4.1: the largest difference between the hardest and the easiest room of a round in the draw. */
+	public int drawMaxSpread = RoomDraw.Params.DEFAULT.maxSpread();
+	/** T4.1: how much a round's total difficulty must grow over the previous round's (0: no constraint). */
+	public int drawRise = RoomDraw.Params.DEFAULT.rise();
+	/** T4.1: rooms played in this many past games are avoided while the bank allows. */
+	public int drawAvoidGames = RoomDraw.Params.DEFAULT.avoidGames();
+
+	public RoomDraw.Params drawParams() {
+		return new RoomDraw.Params(drawMaxSpread, drawRise, drawAvoidGames);
+	}
 
 	public static int defaultDuration(Phase phase) {
 		return switch (phase) {

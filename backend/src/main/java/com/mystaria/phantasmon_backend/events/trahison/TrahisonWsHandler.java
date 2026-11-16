@@ -266,6 +266,13 @@ public class TrahisonWsHandler implements WsMessageHandler {
 					games.setBotPolicy(hub, policy);
 				}
 			}
+			case "redraw" -> games.redraw(hub, in.get("seed") instanceof Number n ? n.longValue() : null);
+			case "replace_room" -> {
+				if (!(in.get("room") instanceof String id) || !RoomValidator.validId(id)) {
+					throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "room required (a room id)");
+				}
+				games.replaceRoom(hub, intArg(in, "round"), intArg(in, "group"), id);
+			}
 			case "set_bot_policy" -> games.setBotPolicy(hub, BotPolicy.parse(in.get("policy")));
 			default -> throw new TrahisonException(TrahisonException.UNKNOWN_ACTION, String.valueOf(action));
 		}
@@ -285,7 +292,7 @@ public class TrahisonWsHandler implements WsMessageHandler {
 		throw new TrahisonException(TrahisonException.NO_HUB, "hub required");
 	}
 
-	/** {@code {settings?: {mode, durations: {PHASE: seconds}, door_open_seconds, final_door_seconds, cabin_partner_seconds, cabins_required, test_room}, mode?, test_room?, fast?: seconds}}. */
+	/** {@code {settings?: {mode, durations: {PHASE: seconds}, door_open_seconds, final_door_seconds, cabin_partner_seconds, cabins_required, test_room, draw_max_spread, draw_rise, draw_avoid_games}, mode?, test_room?, fast?: seconds}}. */
 	private static Settings settingsOf(Map<String, Object> in) {
 		Settings s = new Settings();
 		Object fast = in.get("fast");
@@ -313,6 +320,15 @@ public class TrahisonWsHandler implements WsMessageHandler {
 			}
 			if (m.get("final_door_seconds") instanceof Number n) {
 				s.finalDoorSeconds = Math.max(1, Math.min(120, n.intValue()));
+			}
+			if (m.get("draw_max_spread") instanceof Number n) {
+				s.drawMaxSpread = Math.max(0, Math.min(20, n.intValue()));
+			}
+			if (m.get("draw_rise") instanceof Number n) {
+				s.drawRise = Math.max(0, Math.min(20, n.intValue()));
+			}
+			if (m.get("draw_avoid_games") instanceof Number n) {
+				s.drawAvoidGames = Math.max(0, Math.min(20, n.intValue()));
 			}
 			if (m.get("durations") instanceof Map<?, ?> d) {
 				for (Map.Entry<?, ?> e : d.entrySet()) {
