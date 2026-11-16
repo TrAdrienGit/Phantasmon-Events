@@ -62,7 +62,7 @@ Rien n'a encore tourné **en jeu** : aucun déploiement n'a été fait (ni mod, 
 - Les actions de salle écrivent toute la partie en base à chaque geste : prévoir un regroupement des écritures si
   cela pèse.
 
-## Décisions prises par défaut, à confirmer par la propriétaire
+## Décisions prises par défaut (à trancher dans [`decisions.md`](decisions.md))
 
 | Sujet | Choix par défaut | Autres possibilités |
 |---|---|---|
