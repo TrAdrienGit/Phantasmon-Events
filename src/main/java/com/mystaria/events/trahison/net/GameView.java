@@ -1,0 +1,392 @@
+package com.mystaria.events.trahison.net;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import com.mystaria.events.trahison.ui.TrahisonUi.GameColor;
+
+/**
+ * The latest {@code EventsTrahisonView} the backend sent us (Documentation/trahison/protocole.md), parsed into small
+ * records, plus what only the client can know: the clock offset to the server (for countdowns) and when each bracelet's
+ * points last changed (for the HUD's flash). The backend sends a complete view on every change, so {@link #update}
+ * replaces everything. No game rule lives here: this only holds and exposes what the view says. Client thread.
+ */
+public final class GameView {
+
+	public enum Phase {
+		NONE, LOBBY, PROLOGUE, DOORS, ROOMS, FREE_TIME, VOTE, RESULTS, FINAL, ENDED;
+
+		static Phase of(String name) {
+			try {
+				return name == null ? NONE : valueOf(name.toUpperCase(Locale.ROOT));
+			} catch (IllegalArgumentException e) {
+				return NONE;
+			}
+		}
+
+		/** Lower-case name, the suffix of the lang keys. */
+		public String key() {
+			return name().toLowerCase(Locale.ROOT);
+		}
+	}
+
+	public enum ViewerKind { PLAYER, GHOST, SPECTATOR, GM }
+
+	public enum Vote {
+		ALLY, BETRAY;
+
+		static Vote of(Object value) {
+			return value == null ? null : "BETRAY".equalsIgnoreCase(value.toString()) ? BETRAY : "ALLY".equalsIgnoreCase(value.toString()) ? ALLY : null;
+		}
+	}
+
+	public record Player(int index, String name, UUID uuid, boolean connected, boolean alive, boolean bot) {
+	}
+
+	/** {@code color} and {@code pair} are null before the first round. */
+	public record Bracelet(int index, int points, GameColor color, Boolean pair, Integer holder, boolean ownerAlive) {
+	}
+
+	public record Door(int index, List<GameColor> colors) {
+	}
+
+	public record Group(int door, GameColor pairColor, GameColor soloColor, List<Integer> pair, int solo, boolean roomSolved) {
+	}
+
+	public record Viewer(ViewerKind kind, Integer index, Integer group, Boolean pairSide, Integer doorPassed, boolean sideVoted, Vote ownVote) {
+	}
+
+	public record VoteResult(int door, GameColor pairColor, GameColor soloColor, List<Integer> pair, int solo, Vote pairVote,
+			boolean pairCast, Integer pairVoter, Vote soloVote, boolean soloCast) {
+	}
+
+	public record Results(int round, boolean finalLoop, List<VoteResult> votes, List<Integer> deltas, List<Integer> newlyDead) {
+	}
+
+	public record GmVote(int door, Vote pairVote, Integer pairVoter, Vote soloVote) {
+	}
+
+	public record Gm(List<GmVote> votes, String mode, Map<String, Integer> durations, int noDoorPenalty, String botPolicy, long seed,
+			List<String> gameMasters) {
+	}
+
+	public record View(String hub, String gameId, Phase phase, int round, boolean finalLoop, int finalLoops, String mode, Long deadline,
+			boolean paused, boolean autoPaused, Long remainingMs, long serverTime, List<Player> players, List<Bracelet> bracelets,
+			List<Door> doors, List<Group> groups, List<Integer> doorsPassed, Viewer viewer, Results results, List<Integer> winners, Gm gm) {
+
+		public boolean hasGame() {
+			return phase != Phase.NONE;
+		}
+
+		public Player player(int index) {
+			return index >= 0 && index < players.size() && players.get(index).index() == index ? players.get(index) : players.stream().filter(p -> p.index() == index).findFirst().orElse(null);
+		}
+
+		public Bracelet bracelet(int index) {
+			return bracelets.stream().filter(b -> b.index() == index).findFirst().orElse(null);
+		}
+
+		/** The viewer's own bracelet (the one on their wrist), or null. */
+		public Bracelet ownBracelet() {
+			return viewer.index() == null ? null : bracelet(viewer.index());
+		}
+
+		/** The group of the door the viewer passed, or null. */
+		public Group ownGroup() {
+			return viewer.group() == null || groups == null ? null : groups.stream().filter(g -> g.door() == viewer.group()).findFirst().orElse(null);
+		}
+
+		public String nameOf(int index) {
+			Player p = player(index);
+			return p == null ? "?" : p.name();
+		}
+	}
+
+	private static final View EMPTY = new View("", "", Phase.NONE, 0, false, 0, "AUTO", null, false, false, null, 0, List.of(), List.of(),
+			List.of(), null, null, new Viewer(ViewerKind.SPECTATOR, null, null, null, null, false, null), null, null, null);
+
+	private static View current;
+	/** {@code server time - local time} when the last view arrived. */
+	private static long clockOffset;
+	private static long phaseTotalMs;
+	private static String phaseKey = "";
+	private static long[] pointsChangedAt = new long[9];
+	private static int[] pointsDelta = new int[9];
+	private static final List<Runnable> LISTENERS = new CopyOnWriteArrayList<>();
+
+	private GameView() {
+	}
+
+	// ---------------------------------------------------------------- access
+
+	/** The latest view, or null before any (or outside a hub). A hub without a game gives a view whose phase is NONE. */
+	public static View current() {
+		return current;
+	}
+
+	/** The latest view, or an empty NONE view: never null. */
+	public static View orEmpty() {
+		return current == null ? EMPTY : current;
+	}
+
+	public static boolean hasGame() {
+		return current != null && current.hasGame();
+	}
+
+	public static void addListener(Runnable listener) {
+		LISTENERS.add(listener);
+	}
+
+	/** The server's clock now, in epoch ms, from the offset measured at the last view. */
+	public static long serverNow() {
+		return System.currentTimeMillis() + clockOffset;
+	}
+
+	/** Time left in the current step, or -1 when there is none (lobby, ended). Frozen while paused. */
+	public static long remainingMs() {
+		View v = current;
+		if (v == null) {
+			return -1;
+		}
+		if (v.paused() || v.deadline() == null) {
+			return v.remainingMs() == null ? -1 : v.remainingMs();
+		}
+		return Math.max(0, v.deadline() - serverNow());
+	}
+
+	/** Remaining time over the longest remaining time seen in this step (the step's length, to the client's knowledge). */
+	public static float fraction() {
+		long remaining = remainingMs();
+		return remaining < 0 || phaseTotalMs <= 0 ? 0f : Math.min(1f, remaining / (float) phaseTotalMs);
+	}
+
+	/** When bracelet {@code index}'s points last changed ({@code System.currentTimeMillis()}), or 0. */
+	public static long pointsChangedAt(int index) {
+		return index >= 0 && index < pointsChangedAt.length ? pointsChangedAt[index] : 0;
+	}
+
+	/** The last change of bracelet {@code index}'s points. */
+	public static int lastDelta(int index) {
+		return index >= 0 && index < pointsDelta.length ? pointsDelta[index] : 0;
+	}
+
+	// ---------------------------------------------------------------- updates
+
+	/** Forgets the view (left the hub, disconnected). */
+	public static void clear() {
+		current = null;
+		phaseKey = "";
+		phaseTotalMs = 0;
+		pointsChangedAt = new long[9];
+		pointsDelta = new int[9];
+		fire();
+	}
+
+	/** Replaces the state by a received {@code EventsTrahisonView}. */
+	public static void update(Map<String, Object> data) {
+		View next;
+		try {
+			next = parse(data);
+		} catch (RuntimeException e) {
+			return; // A malformed view is ignored: the next one replaces it anyway.
+		}
+		View previous = current;
+		long now = System.currentTimeMillis();
+		clockOffset = next.serverTime() > 0 ? next.serverTime() - now : clockOffset;
+		current = next;
+		String key = next.gameId() + "/" + next.phase() + "/" + next.round() + "/" + next.finalLoop() + "/" + next.finalLoops();
+		long remaining = next.remainingMs() == null ? -1 : next.remainingMs();
+		if (!key.equals(phaseKey)) {
+			phaseKey = key;
+			phaseTotalMs = Math.max(0, remaining);
+		} else {
+			phaseTotalMs = Math.max(phaseTotalMs, remaining);
+		}
+		if (previous != null && previous.gameId().equals(next.gameId())) {
+			for (Bracelet b : next.bracelets()) {
+				Bracelet old = previous.bracelet(b.index());
+				if (old != null && old.points() != b.points() && b.index() < pointsChangedAt.length) {
+					pointsChangedAt[b.index()] = now;
+					pointsDelta[b.index()] = b.points() - old.points();
+				}
+			}
+		} else {
+			pointsChangedAt = new long[9];
+			pointsDelta = new int[9];
+		}
+		fire();
+	}
+
+	private static void fire() {
+		LISTENERS.forEach(Runnable::run);
+	}
+
+	// ---------------------------------------------------------------- parsing
+
+	private static View parse(Map<String, Object> d) {
+		Phase phase = Phase.of(str(d, "phase"));
+		if (phase == Phase.NONE) {
+			return new View(str(d, "hub") == null ? "" : str(d, "hub"), "", Phase.NONE, 0, false, 0, "AUTO", null, false, false, null,
+					lng(d, "server_time", 0), List.of(), List.of(), List.of(), null, null, EMPTY.viewer(), null, null, null);
+		}
+		List<Player> players = new ArrayList<>();
+		for (Map<String, Object> p : maps(d, "players")) {
+			players.add(new Player(integer(p, "index", players.size()), str(p, "name") == null ? "?" : str(p, "name"), uuid(str(p, "uuid")),
+					bool(p, "connected"), bool(p, "alive"), bool(p, "is_bot")));
+		}
+		List<Bracelet> bracelets = new ArrayList<>();
+		for (Map<String, Object> b : maps(d, "bracelets")) {
+			String status = str(b, "status");
+			bracelets.add(new Bracelet(integer(b, "index", bracelets.size()), integer(b, "points", 0), color(str(b, "color")),
+					status == null ? null : "PAIR".equalsIgnoreCase(status), nullableInt(b, "holder"), bool(b, "owner_alive")));
+		}
+		List<Door> doors = new ArrayList<>();
+		for (Map<String, Object> door : maps(d, "doors")) {
+			List<GameColor> colors = new ArrayList<>();
+			if (door.get("colors") instanceof List<?> list) {
+				list.forEach(c -> {
+					GameColor color = color(String.valueOf(c));
+					if (color != null) {
+						colors.add(color);
+					}
+				});
+			}
+			doors.add(new Door(integer(door, "index", doors.size()), colors));
+		}
+		List<Group> groups = null;
+		if (d.get("groups") instanceof List<?> raw) {
+			groups = new ArrayList<>();
+			for (Object o : raw) {
+				if (o instanceof Map<?, ?> m) {
+					@SuppressWarnings("unchecked")
+					Map<String, Object> g = (Map<String, Object>) m;
+					groups.add(new Group(integer(g, "door", 0), color(str(g, "pair_color")), color(str(g, "solo_color")), ints(g, "pair"),
+							integer(g, "solo", -1), bool(g, "room_solved")));
+				}
+			}
+		}
+		List<Integer> passed = d.get("doors_passed") instanceof List<?> ? ints(d, "doors_passed") : null;
+		Map<String, Object> v = map(d, "viewer");
+		ViewerKind kind;
+		try {
+			kind = ViewerKind.valueOf(String.valueOf(v.get("kind")).toUpperCase(Locale.ROOT));
+		} catch (IllegalArgumentException e) {
+			kind = ViewerKind.SPECTATOR;
+		}
+		String side = str(v, "side");
+		Viewer viewer = new Viewer(kind, nullableInt(v, "index"), nullableInt(v, "group"), side == null ? null : "PAIR".equalsIgnoreCase(side),
+				nullableInt(v, "door_passed"), bool(v, "side_voted"), Vote.of(v.get("own_vote")));
+		Results results = null;
+		if (d.get("results") instanceof Map<?, ?> rm) {
+			@SuppressWarnings("unchecked")
+			Map<String, Object> r = (Map<String, Object>) rm;
+			List<VoteResult> votes = new ArrayList<>();
+			for (Map<String, Object> vr : maps(r, "votes")) {
+				votes.add(new VoteResult(integer(vr, "door", 0), color(str(vr, "pair_color")), color(str(vr, "solo_color")), ints(vr, "pair"),
+						integer(vr, "solo", -1), vote(vr, "pair_vote"), bool(vr, "pair_cast"), nullableInt(vr, "pair_voter"), vote(vr, "solo_vote"),
+						bool(vr, "solo_cast")));
+			}
+			results = new Results(integer(r, "round", 0), bool(r, "final_loop"), votes, ints(r, "deltas"), ints(r, "newly_dead"));
+		}
+		List<Integer> winners = d.get("winners") instanceof List<?> ? ints(d, "winners") : null;
+		Gm gm = null;
+		if (d.get("gm") instanceof Map<?, ?> gmRaw) {
+			@SuppressWarnings("unchecked")
+			Map<String, Object> g = (Map<String, Object>) gmRaw;
+			List<GmVote> votes = new ArrayList<>();
+			for (Map<String, Object> gv : maps(g, "votes")) {
+				votes.add(new GmVote(integer(gv, "door", 0), vote(gv, "pair_vote"), nullableInt(gv, "pair_voter"), vote(gv, "solo_vote")));
+			}
+			Map<String, Object> settings = map(g, "settings");
+			Map<String, Integer> durations = new java.util.LinkedHashMap<>();
+			map(settings, "durations").forEach((k, val) -> durations.put(k, val instanceof Number n ? n.intValue() : 0));
+			List<String> masters = new ArrayList<>();
+			if (g.get("game_masters") instanceof List<?> list) {
+				list.forEach(o -> masters.add(String.valueOf(o)));
+			}
+			gm = new Gm(votes, str(settings, "mode") == null ? "AUTO" : str(settings, "mode"), durations, integer(settings, "no_door_penalty", 0),
+					str(g, "bot_policy") == null ? "RANDOM" : str(g, "bot_policy"), lng(g, "seed", 0), masters);
+		}
+		return new View(str(d, "hub") == null ? "" : str(d, "hub"), str(d, "game_id") == null ? "" : str(d, "game_id"), phase, integer(d, "round", 0),
+				bool(d, "final_loop"), integer(d, "final_loops", 0), str(d, "mode") == null ? "AUTO" : str(d, "mode"),
+				d.get("deadline") instanceof Number n ? n.longValue() : null, bool(d, "paused"), bool(d, "auto_paused"),
+				d.get("remaining_ms") instanceof Number n2 ? n2.longValue() : null, lng(d, "server_time", 0), Collections.unmodifiableList(players),
+				Collections.unmodifiableList(bracelets), Collections.unmodifiableList(doors), groups, passed, viewer, results, winners, gm);
+	}
+
+	// ---------------------------------------------------------------- small typed accessors
+
+	private static String str(Map<String, Object> m, String k) {
+		Object o = m.get(k);
+		return o == null ? null : o.toString();
+	}
+
+	private static int integer(Map<String, Object> m, String k, int def) {
+		return m.get(k) instanceof Number n ? n.intValue() : def;
+	}
+
+	private static Integer nullableInt(Map<String, Object> m, String k) {
+		return m.get(k) instanceof Number n ? Integer.valueOf(n.intValue()) : null;
+	}
+
+	private static long lng(Map<String, Object> m, String k, long def) {
+		return m.get(k) instanceof Number n ? n.longValue() : def;
+	}
+
+	private static boolean bool(Map<String, Object> m, String k) {
+		return Boolean.TRUE.equals(m.get(k));
+	}
+
+	private static Vote vote(Map<String, Object> m, String k) {
+		return Vote.of(m.get(k));
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Map<String, Object> map(Map<String, Object> m, String k) {
+		return m.get(k) instanceof Map<?, ?> r ? (Map<String, Object>) r : Map.of();
+	}
+
+	@SuppressWarnings("unchecked")
+	private static List<Map<String, Object>> maps(Map<String, Object> m, String k) {
+		List<Map<String, Object>> out = new ArrayList<>();
+		if (m.get(k) instanceof List<?> list) {
+			for (Object o : list) {
+				if (o instanceof Map<?, ?> e) {
+					out.add((Map<String, Object>) e);
+				}
+			}
+		}
+		return out;
+	}
+
+	private static List<Integer> ints(Map<String, Object> m, String k) {
+		List<Integer> out = new ArrayList<>();
+		if (m.get(k) instanceof List<?> list) {
+			for (Object o : list) {
+				out.add(o instanceof Number n ? n.intValue() : -1);
+			}
+		}
+		return out;
+	}
+
+	private static UUID uuid(String s) {
+		try {
+			return s == null ? null : UUID.fromString(s);
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
+	}
+
+	private static GameColor color(String s) {
+		try {
+			return s == null ? null : GameColor.valueOf(s.toUpperCase(Locale.ROOT));
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
+	}
+}

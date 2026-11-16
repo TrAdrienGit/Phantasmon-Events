@@ -229,3 +229,78 @@ Si un artiste ajoute des textures plus tard, les mettre sous
 11. Fantômes et maître du jeu : prévoir les deux rendus (`GHOST`, `GAME_MASTER`) ; ne jamais montrer à un joueur ce
     que seul le MJ voit.
 12. Mettre à jour cette charte si un jeton, un composant ou une règle change.
+
+## 12. Écrans de mini-jeu
+
+Posés à l'étape T3.4, dans `com.mystaria.events.trahison.minigame` (écrans) et `minigame.widget` (éléments). Tout écran
+d'énigme hérite de `MiniGameScreen` ; il ne dessine jamais son propre cadre.
+
+### Le cadre
+
+- **Mode fenêtre**, pas toile : tout en pixels GUI entiers (le texte reste net), une scène de 400 x 240 centrée par
+  `TrahisonUi.stage` (jamais plus grande que l'écran moins `SAFE_MARGIN`, donc 308 x 168 à 320 x 180). La toile de
+  `PhantasmonCanvasScreen` n'est pas utilisée : elle sert aux modèles 3D et à une grille de 1600 x 900 propre à
+  Phantasmon, et son échelle flottante floute la police.
+- De haut en bas : fond plein écran (`Backdrop`), `titledPanel` (titre en gras, losange d'accent), boutons d'en-tête
+  « ? » (aide) et croix (quitter, genre `DANGER`), zone de contenu creusée (`well` + points), pied de page de 28.
+- La zone de contenu est donnée par `contentX / contentY / contentW / contentH` : le mécanisme y centre ses pièces
+  dans `layout()` et dessine ses étiquettes dans `drawUnder` / `drawOver`. Prévoir 108 pixels de haut au minimum.
+- Pied de page : « Ici : » puis les têtes (16 x 16) des membres du groupe d'après la dernière `EventsTrahisonView`,
+  chacune sur un liseré de la couleur du joueur ; la tête de celui qui a fait le dernier geste a un contour qui pulse
+  1,5 s ; infobulle = pseudo. À droite : pastille « Déverrouillé » ou « Essai local » (`GAME_MASTER`).
+- Aide : bouton « ? », touche H ou F1 ; le texte (`phantasmon_events.trahison.minigame.<mécanisme>.help`) s'écrit à la
+  machine dans une fenêtre sur le contenu ; un clic la ferme. Le choix ouvert / fermé est gardé d'un écran au suivant.
+- Échap ou la croix ferme sans rien perdre. `isPauseScreen` est faux. `MiniGameScreen.isOpen()` dit si un écran est
+  ouvert : le HUD du jeu doit se cacher tant que c'est vrai.
+
+### Le grain « vieux complexe abandonné » (`Backdrop`)
+
+Tout est tiré de la palette, sans fichier : dégradé `BG` vers `BG_DEEP`, panneaux muraux (joints tous les 64 pixels,
+rivets, rangées décalées), quatre taches d'humidité très douces, grain de pellicule et lignes de balayage (une seule
+texture de bruit de 128 x 128 générée au premier affichage et pavée), une bande de lumière à peine visible qui descend
+en 9 s, vignette sur les bords. Rien ne clignote. Ne pas ajouter de couche sans la décrire ici.
+
+### Éléments (`minigame.widget`)
+
+| Élément | Usage | Gestes |
+|---|---|---|
+| `DetentKnob(n)` | Molette à `n` crans, valeur au centre en échelle 2 (`bigText`) | Glisser autour du centre, molette de souris, deux chevrons ; clic de cran à chaque valeur ; `setValue` anime par le plus court chemin |
+| `RotaryRing(R, r, n)` | Anneau qui tourne (anneaux concentriques) | Glisser ; suit le pointeur puis se cale sur le cran le plus proche (son de verrou) |
+| `SlidingPiece(horizontal, crans, longueur)` | Pièce qu'on glisse dans une glissière | Glisser ou cliquer dans la glissière ; se cale sur un cran |
+| `PushButton` | Bouton-poussoir (`TrahisonUi.button`) | Enfoncé tant que la souris est tenue, agit au relâchement dessus ; `flash` montre l'appui d'un autre |
+| `PullWire` | Fil qu'on tire (bézier qui pend plus ou moins) | Glisser la prise ; elle revient en ressort ou reste (`sticky`) ; `onDrop` donne la position |
+| `Typewriter` | Texte qui s'écrit, 40 caractères par seconde, pause 300 ms sur `. ! ?`, curseur bloc | `skip()` affiche tout |
+
+Chacun dessine ses quatre états (normal, survol, pressé, inactif) avec les jetons de la palette. Un widget inactif
+(écran verrouillé) ignore les gestes. Pour ajouter une forme ronde ou tournée à un élément : `TrahisonUi.disc`,
+`TrahisonUi.ring`, `TrahisonUi.rotatedFill` (ajoutés avec ce chapitre).
+
+### Sons (`MiniGameSounds`)
+
+Uniquement des événements sonores vanilla ou de Cobblemon, aucun fichier audio : `click` (clic du PC de Cobblemon),
+`detent(hauteur)` (cran, comparateur), `clunk` (verrou, trappe de fer), `error` (note grave), `success` (porte de fer
+puis carillon d'améthyste), `open`. Remplacer un son = changer cette classe seulement.
+
+### Synchronisation
+
+1. Le geste est appliqué tout de suite par le mécanisme (`DetentKnob.turn`...), puis envoyé par
+   `sendGesture(input)` = `EventsTrahisonAction` / `puzzle_input` avec l'étape.
+2. Chaque `EventsTrahisonPuzzle` de l'étape (filtré par `PuzzleScreens` sur le hub et le groupe de la dernière vue)
+   appelle `applyView(view)` : l'écran se recale sur l'état du backend, jamais sur la solution.
+3. Le geste d'un autre joueur (`last.player` différent de soi) appelle `onRemote` : le mécanisme appelle
+   `remoteTouch(joueur, x, y)` pour dessiner une onde, un pointeur et le pseudo à la couleur du joueur
+   (`MiniGameFx.playerColor`, neuf couleurs tirées de la palette selon l'index) et allume la pièce touchée.
+4. `succeed()` (ou `solved` reçu) lance l'animation de réussite (800 ms : voile, cadenas dont l'anse s'ouvre, anneaux de
+   lumière, particules), puis l'écran se ferme tout seul. `fail()` : secousse 200 ms, flash `DANGER` sur le cadre, son.
+5. Un écran ouvert sur une étape déjà résolue reste affiché verrouillé, sans animation.
+
+### Ajouter un mécanisme
+
+1. Classe `XxxScreen extends MiniGameScreen` : constructeur `(String step, boolean offline)`, widgets créés dans le
+   constructeur et enregistrés avec `add`, `layout()`, `applyView`, `onRemote`, et si possible `simulateRemote` (mode
+   hors ligne).
+2. Une ligne dans `PuzzleScreens` : `register("xxx", XxxScreen::new)`.
+3. Clés `phantasmon_events.trahison.minigame.xxx.title` et `.help` (+ le reste) dans les deux fichiers de langue.
+4. Essayer sans backend : `/phantasmon event trahison minigame xxx` (admins). L'écran s'ouvre en mode hors ligne : les
+   gestes ne partent pas, la pastille « Essai local » est visible, deux joueurs fictifs agissent de temps en temps pour
+   montrer les curseurs distants.

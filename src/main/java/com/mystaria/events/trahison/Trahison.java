@@ -2,6 +2,11 @@ package com.mystaria.events.trahison;
 
 import java.util.Map;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
@@ -16,12 +21,27 @@ public final class Trahison {
 	public static final String PING = "EventsTrahisonPing";
 	public static final String PONG = "EventsTrahisonPong";
 
+	/** The provisional player screen's key: unbound by default (the command {@code /phantasmon event trahison menu} always works). */
+	public static final KeyMapping MENU_KEY = new KeyMapping("key.phantasmon_events.trahison_menu",
+			InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), "key.categories.phantasmon_events");
+
 	private Trahison() {
 	}
 
 	/** Called once by {@code PhantasmonEvents}. */
 	public static void register() {
 		com.mystaria.events.trahison.edit.TrahisonEditor.register();
+		com.mystaria.events.trahison.minigame.PuzzleScreens.install();
+		com.mystaria.events.trahison.net.Link.register();
+		com.mystaria.events.trahison.hud.BraceletHud.register();
+		KeyBindingHelper.registerKeyBinding(MENU_KEY);
+		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			while (MENU_KEY.consumeClick()) {
+				if (client.screen == null && client.player != null) {
+					com.mystaria.events.trahison.screen.GameScreen.open();
+				}
+			}
+		});
 		PhantasmonApi.onEventsMessage((type, data) -> {
 			if (PONG.equals(type)) {
 				Minecraft client = Minecraft.getInstance();

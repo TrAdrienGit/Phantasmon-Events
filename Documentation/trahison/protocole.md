@@ -541,6 +541,16 @@ simultanés donnent un `409 ERROR_TRAHISON_LAYOUT_CONFLICT` au second.
 - Clic gauche : coin A ; clic droit : coin B (le bloc visé, ou en étant accroupi le bloc devant la face visée, pour
   une ouverture). Ces clics n'atteignent pas le serveur tant que l'éditeur est actif.
 
+### 4.2 bis Commandes et touche du client provisoire (étape T1.4)
+
+- `/phantasmon event trahison menu` : l'écran du joueur (liste des 9, étape, chrono, boutons de l'étape). Touche réglable
+  `key.phantasmon_events.trahison_menu` (catégorie « Phantasmon Events »), **non assignée** par défaut.
+- `/phantasmon event trahison gm` (admins) : l'écran du maître du jeu (créer, factices, démarrer, pause, suivant, prolonger,
+  terminer, points d'un bracelet, votes en cours).
+- À l'entrée dans un hub, le client envoie `view` (avec `hub`), la renvoie tant que le WebSocket n'est pas prêt, puis toutes
+  les 30 s (une reconnexion du WebSocket n'est pas signalée au module). Le HUD (bracelet, étape, chrono) et les répliques
+  (`Say`) sont dessinés par `hud/BraceletHud` et `hud/Announcer`.
+
 ### 4.3 Les salles (étape T3.1)
 
 | Méthode | Route | Accès | Effet |

@@ -150,6 +150,44 @@ public final class TrahisonUi {
 		return new int[] { r[0] + 8, r[1] + 28, r[2] - 16, r[3] - 36 };
 	}
 
+	// ---------------------------------------------------------------- round shapes
+
+	/** A filled disc of radius {@code r} centred on {@code cx, cy}, drawn with one rectangle per row (no texture). */
+	public static void disc(GuiGraphics g, int cx, int cy, int r, int color) {
+		for (int dy = -r; dy < r; dy++) {
+			double d = dy + 0.5;
+			int half = (int) Math.round(Math.sqrt(Math.max(0, (double) r * r - d * d)));
+			g.fill(cx - half, cy + dy, cx + half, cy + dy + 1, color);
+		}
+	}
+
+	/** A ring between {@code inner} and {@code outer} radii, centred on {@code cx, cy}. */
+	public static void ring(GuiGraphics g, int cx, int cy, int outer, int inner, int color) {
+		for (int dy = -outer; dy < outer; dy++) {
+			double d = dy + 0.5;
+			int ho = (int) Math.round(Math.sqrt(Math.max(0, (double) outer * outer - d * d)));
+			if (Math.abs(d) >= inner) {
+				g.fill(cx - ho, cy + dy, cx + ho, cy + dy + 1, color);
+			} else {
+				int hi = (int) Math.round(Math.sqrt((double) inner * inner - d * d));
+				g.fill(cx - ho, cy + dy, cx - hi, cy + dy + 1, color);
+				g.fill(cx + hi, cy + dy, cx + ho, cy + dy + 1, color);
+			}
+		}
+	}
+
+	/**
+	 * A rectangle {@code {x1, y1, x2, y2}} (relative to a centre) rotated by {@code degrees} around {@code cx, cy}.
+	 * Clockwise on screen, 0 pointing up when the rectangle sits above the centre (negative y).
+	 */
+	public static void rotatedFill(GuiGraphics g, int cx, int cy, float degrees, int x1, int y1, int x2, int y2, int color) {
+		g.pose().pushPose();
+		g.pose().translate(cx, cy, 0);
+		g.pose().mulPose(com.mojang.math.Axis.ZP.rotationDegrees(degrees));
+		g.fill(x1, y1, x2, y2, color);
+		g.pose().popPose();
+	}
+
 	// ---------------------------------------------------------------- controls
 
 	/** The state a button is drawn in. */
