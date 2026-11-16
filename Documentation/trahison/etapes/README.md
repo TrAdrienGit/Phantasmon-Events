@@ -32,6 +32,9 @@ Deux étapes ne se font en même temps que si elles ne touchent pas les mêmes f
 
 ## Comment confier une sous-tâche à un agent
 
+0. **Depuis le 2026-11-16 :** l'agent lit d'abord [`contexte-agent.md`](../contexte-agent.md), puis seulement la
+   sous-tâche de sa fiche et les sections utiles des gros fichiers (par `grep`). Les étapes 1 et 2 ci-dessous
+   s'entendent par sections.
 1. Donner à l'agent, dans cet ordre : [`Documentation/trahison/README.md`](../README.md),
    [`architecture.md`](../architecture.md), la fiche de l'étape, et le nom de la sous-tâche.
 2. Lui dire de lire d'abord la rubrique « À lire avant » de la fiche, et les solutions techniques qu'elle cite

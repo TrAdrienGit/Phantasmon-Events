@@ -58,7 +58,7 @@ On peut commencer les sous-tâches 1 et 2 sur le plan seul, avec les noms des pl
 
 - Backend : un ensemble `explored` par joueur, rempli quand sa zone désigne une salle ou une place. Il est enregistré
   avec la partie, survit à un redémarrage, et part dans la vue du joueur (`viewer.explored`).
-- Les maîtres du jeu et les spectateurs voient toutes les salles sans hachures. Voir aussi la question D14.
+- Les maîtres du jeu, les spectateurs et les fantômes voient toutes les salles sans hachures, et les curseurs de tous les joueurs (D14, D16). Un fantôme garde ses annotations.
 - Les noms des salles, par place, sont dans la vue dès que le tirage est fait.
 - **Fini quand :** des tests couvrent la visite, la persistance, et le fait qu'un joueur ne reçoive jamais
   l'exploration d'un autre.
@@ -94,15 +94,13 @@ On peut commencer les sous-tâches 1 et 2 sur le plan seul, avec les noms des pl
   Un client n'en reçoit jamais d'autres que les siens.
 - Les écritures sont regroupées, au plus une toutes les 2 secondes, et la taille est limitée (par exemple
   2 000 points de trait par étage et 8 000 caractères de notes).
-- Tout est effacé à la fin de la partie, ou gardé pour le bilan : voir la question D15.
+- À la fin de la partie, les annotations et les notes de chacun sont gardées et montrées à tout le monde au bilan (D15).
 - **Fini quand :** le « Fini quand » de l'étape, partie persistance.
 
-## Questions ouvertes
+## Décisions
 
-Elles sont portées dans [`decisions.md`](../decisions.md) :
-- **D14** : un spectateur ou un maître du jeu voit-il les curseurs de tous les joueurs ?
-- **D15** : que deviennent les annotations à la fin de la partie ?
-- **D16** : un fantôme garde-t-il sa carte ?
+D14 : les maîtres du jeu et les spectateurs voient les curseurs. D15 : les notes sont montrées au bilan. D16 : un fantôme voit la carte
+comme un spectateur et garde ses annotations.
 
 ## Pièges
 
