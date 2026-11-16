@@ -183,7 +183,7 @@ Tous les types commencent par `EventsTrahison` (le client de Phantasmon n'accept
 | Message | Sens | Contenu |
 |---|---|---|
 | `EventsTrahisonView` | S→C | La vue complète du destinataire. Envoyée à chaque changement d'étape et à la connexion |
-| `EventsTrahisonPatch` | S→C | Un changement ciblé : points, porte, objet, joueur, chrono |
+| `EventsTrahisonPatch` | S→C | Un changement ciblé : points, porte, objet, joueur, chrono. **Réservé** : en T1 le backend envoie toujours des vues complètes (l'état est petit) |
 | `EventsTrahisonRoom` | S→C | État d'une salle : étapes faites, emplacements actifs, indices visibles |
 | `EventsTrahisonPuzzle` | S→C | État ou changement d'un mini-jeu ouvert (diffusé à ceux qui regardent l'écran) |
 | `EventsTrahisonSay` | S→C | Une réplique de l'animateur, ou un chuchotement privé |

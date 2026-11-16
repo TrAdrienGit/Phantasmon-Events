@@ -47,6 +47,11 @@ Toutes demandent un jeton de joueur, sauf la page publique des tournois et la co
 | `DELETE` | `/admin/events/mirror/{hub}/ghosts` | Admin | Effacer les blocs fantômes d'un hub miroir |
 | `POST` | `/admin/hubs/{name}/resize` `{ "delta" }` | Admin | Agrandir / réduire un hub miroir (`ERROR_HUB_NOT_MIRROR`, `ERROR_HUB_INVALID_RADIUS`) |
 | `GET` / `POST` | `/server/mirror/...` | Jeton du serveur | Copie du serveur dédié (§2.2) |
+| `GET` | `/events/trahison/layout/{hub}` | Joueur | Plan fixe du jeu de trahison, dernière version (`version: 0` si le hub n'en a pas) |
+| `PUT` / `POST` | `/events/trahison/layout/{hub}` | Admin | Enregistrer une nouvelle version du plan (`POST` : même effet, pour le client qui n'a pas de `PUT`). Validation `ERROR_TRAHISON_LAYOUT_*` ; corps et règles : [`trahison/protocole.md`](trahison/protocole.md) section 4.1 |
+| `GET` | `/events/trahison/rooms`, `/events/trahison/rooms/{id}` | Joueur | Liste (résumés) et définition d'une salle du jeu de trahison |
+| `PUT` / `POST` / `DELETE` | `/events/trahison/rooms/{id}` | Admin | Créer ou remplacer (le serveur numérote la version et calcule difficulté et durée ; `POST` = `PUT`), supprimer. Validation `ERROR_TRAHISON_ROOM_*` ; corps et règles : [`trahison/protocole.md`](trahison/protocole.md) section 4.3 |
+| `GET` / `POST` / `PUT` | `/events/trahison/rooms/{id}/schematic` | Joueur (lecture), Admin (écriture) | Les blocs de la salle, corps binaire (`application/octet-stream`, 16 Mio au plus), fichier `<phantasmon.hub.schematics-dir>/trahison_rooms/<id>/room.bin` |
 
 Un hub miroir se crée par la route du cœur : `POST /admin/hubs` `{ "name", "mirror": true, "radius" }` ; ses Anchors
 par `POST /hub/anchors` avec `"role": "SOURCE"` (une par hub, `ERROR_HUB_SOURCE_TAKEN`) ou `"COPY"` (une par admin,
@@ -124,6 +129,12 @@ Reçus par le cœur et confiés au module (`EventsWsHandler`), ou envoyés par l
 | `ERROR_EVENT_NAME` | 400 | REST | Nom d'événement invalide (minuscules, chiffres, `_`) | `phantasmon_events.error.error_event_name` |
 | `ERROR_EVENT_NOT_FOUND` | 404 | REST | Événement inconnu | `phantasmon_events.error.error_event_not_found` |
 
+Le plan du jeu de trahison a ses codes `ERROR_TRAHISON_LAYOUT_*` (`INVALID`, `CONFLICT`, `BAD_HUB` et, dans `details.errors` d'un
+`INVALID`, un code par problème) : liste complète dans [`trahison/protocole.md`](trahison/protocole.md) section 5. Les salles ont
+les leurs, `ERROR_TRAHISON_ROOM_*` (`INVALID`, `NOT_FOUND`, `BAD_ID`, `SCHEMATIC_MISSING`, `SCHEMATIC_INVALID` et, dans `details.errors`, un code
+par problème), et les actions de salle `ERROR_TRAHISON_NO_ROOM`, `NOT_IN_ROOM`, `BAD_ACTION`, `BAD_INPUT`, `SLOT_INACTIVE`, `STEP_NOT_OPEN`,
+`STEP_SOLVED`, `NOTHING_TO_PICK`, `ROOM_FINISHED` (même fichier).
+
 Les tournois ont leurs codes `ERROR_TOURNAMENT_*` (nom, format, étape, inscription, check-in, dates dans le désordre
 `ERROR_TOURNAMENT_INVALID_DATES`…), décrits par leur message dans le client Events.
 
@@ -148,6 +159,8 @@ en V18-V19 et V22-V24), la ligne de base `0` puis les `IF NOT EXISTS` ne changen
 |---|---|---|
 | 1 | `V1__tournaments.sql` | Ancien V18 + V19 : `tournaments`, `tournament_players`, `tournament_matches` (§5.2) |
 | 2 | `V2__event_npcs.sql` | Ancien V22 à V24 : `event_groups`, `event_npcs` (§5.3) |
+| 8 | `V8__trahison_rooms.sql` | `trahison_rooms` (2026-11-16) : la banque de salles du jeu de trahison, une ligne par salle (§5.7) |
+| 7 | `V7__trahison_layouts.sql` | `trahison_layouts` (2026-11-16) : les versions du plan fixe du jeu de trahison, par hub (§5.6) |
 | 6 | `V6__trahison_games.sql` | `trahison_games` (2026-11-16) : une ligne par partie du jeu de trahison (§5.5) |
 | 5 | `V5__tournament_display_name.sql` | `tournaments.display_name` (2026-11-12) : le nom lisible, l'identifiant en est tiré |
 | 4 | `V4__tournament_check_in_dates.sql` | `tournaments.check_in_opens_at`, `check_in_closes_at` (2026-11-11) : le check-in s'ouvre et le tournoi démarre à ces dates |
@@ -215,3 +228,33 @@ utilisée par du code (étape T0 : la table seule).
 | `state` | JSONB | NOT NULL | L'objet `Game` |
 | `created_at`, `updated_at` | TIMESTAMPTZ | NOT NULL, défaut `now()` | |
 | `ended_at` | TIMESTAMPTZ | | Null tant que la partie n'est pas terminée |
+
+### 5.6 `trahison_layouts` (V7 du module)
+
+Le plan fixe du complexe ([`trahison/architecture.md`](trahison/architecture.md) section 6), une ligne par version et par
+hub. L'historique est gardé (rien n'est écrasé) ; le plan d'un hub est sa plus haute version. Lu et écrit par
+`LayoutService` (`JdbcTemplate`), paquet `events.trahison.layout`.
+
+| Colonne | Type | Contraintes | Notes |
+|---|---|---|---|
+| `hub` | TEXT | PK (avec `version`) | Nom du hub |
+| `version` | INTEGER | PK (avec `hub`) | 1, 2, 3... : +1 à chaque enregistrement ; deux écritures simultanées de la même version : la seconde échoue (`409`) |
+| `draft` | BOOLEAN | NOT NULL, défaut `false` | Plan incomplet enregistré comme travail en cours |
+| `data` | JSONB | NOT NULL | `zones`, `doors`, `room_slots`, `cabins`, `hiding_spots` en `snake_case`, positions en coordonnées de hub |
+| `updated_by` | UUID | | L'admin qui a enregistré |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, défaut `now()` | |
+
+
+### 5.7 `trahison_rooms` (V8 du module)
+
+La banque de salles du jeu de trahison ([`trahison/architecture.md`](trahison/architecture.md) section 7), une ligne par salle,
+gérée par `RoomCatalog` (`JdbcTemplate`), paquet `events.trahison.room`. Les blocs ne sont pas en base : fichier
+`<phantasmon.hub.schematics-dir>/trahison_rooms/<id>/room.bin`.
+
+| Colonne | Type | Contraintes | Notes |
+|---|---|---|---|
+| `id` | TEXT | PK | `[A-Za-z0-9_-]{1,40}` |
+| `version` | INTEGER | NOT NULL | Nombre d'enregistrements de la salle |
+| `data` | JSONB | NOT NULL | La définition : `name`, `author`, `difficulty`, `expected_seconds`, `slots`, `steps`, `secret` (`snake_case`) |
+| `updated_by` | UUID | | L'admin qui a enregistré |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, défaut `now()` | |

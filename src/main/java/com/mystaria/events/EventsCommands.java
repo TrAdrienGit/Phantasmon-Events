@@ -12,7 +12,7 @@ import com.mystaria.events.hub.MirrorHubCommands;
  * <ul>
  * <li>{@code tournament}: opens the tournaments menu, where players register and check in, and admins create and run
  * the tournaments;</li>
- * <li>{@code trahison}: checks the link with the betrayal game's backend module (more later);</li>
+ * <li>{@code trahison}: the betrayal game: bare or {@code ping} checks the link with its backend module, {@code edit} (admins) toggles the plan editor;</li>
  * <li>{@code hub ...}: the mirror hubs, admins only ({@link MirrorHubCommands});</li>
  * <li>{@code npc ...}, {@code open}, {@code close}, {@code list}: events and their trainer NPCs, admins only
  * ({@link com.mystaria.events.npc.NpcCommands}).</li>
@@ -34,7 +34,17 @@ public final class EventsCommands {
 						.then(ClientCommandManager.literal("trahison").executes(context -> {
 								com.mystaria.events.trahison.Trahison.ping();
 								return 1;
+							})
+							.then(ClientCommandManager.literal("ping").executes(context -> {
+								com.mystaria.events.trahison.Trahison.ping();
+								return 1;
 							}))
+							// The plan editor (T2.1): shown to Phantasmon's admins only, which the editor checks again.
+							.then(ClientCommandManager.literal("edit").requires(source -> com.mystaria.phantasmon.client.api.PhantasmonApi.isAdmin())
+								.executes(context -> {
+									com.mystaria.events.trahison.edit.TrahisonEditor.toggle();
+									return 1;
+								})))
 							.then(MirrorHubCommands.node())
 						.then(com.mystaria.events.npc.NpcCommands.nodes().get(0))
 						.then(com.mystaria.events.npc.NpcCommands.nodes().get(1))

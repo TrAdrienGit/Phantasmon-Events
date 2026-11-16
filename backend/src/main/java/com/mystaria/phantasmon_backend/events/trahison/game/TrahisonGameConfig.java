@@ -27,6 +27,14 @@ public class TrahisonGameConfig {
 		return new GameService(store, Clock.systemUTC(), scheduler);
 	}
 
+	/** The bots play through the service and listen to it; created before the games are reloaded. */
+	@Bean
+	Bots trahisonBots(GameService service, GameScheduler scheduler) {
+		Bots bots = new Bots(service, Clock.systemUTC(), scheduler);
+		service.addListener(bots);
+		return bots;
+	}
+
 	/** A game running when the backend stopped resumes: its deadline is scheduled again (at once if it passed). */
 	@EventListener(ApplicationReadyEvent.class)
 	void reloadGames(ApplicationReadyEvent event) {

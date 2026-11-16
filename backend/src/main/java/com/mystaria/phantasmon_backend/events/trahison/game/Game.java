@@ -41,6 +41,14 @@ public class Game {
 	/** Player indices that went through the final door; set when it opens. */
 	public List<Integer> winners = new ArrayList<>();
 	public List<LogEntry> log = new ArrayList<>();
+	/** Admins who run this game (they get the game master view). */
+	public java.util.Set<UUID> gameMasters = new java.util.LinkedHashSet<>();
+	/** How the bots vote. */
+	public BotPolicy botPolicy = BotPolicy.RANDOM;
+	/** True while the game is paused by itself because a living player disconnected (AUTO mode only). */
+	public boolean autoPaused;
+	/** When an automatic pause ends whatever happens; null when not auto-paused. */
+	public Instant autoPauseUntil;
 
 	public Instant createdAt;
 	public Instant endedAt;

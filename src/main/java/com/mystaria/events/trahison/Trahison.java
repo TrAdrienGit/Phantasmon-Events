@@ -21,6 +21,7 @@ public final class Trahison {
 
 	/** Called once by {@code PhantasmonEvents}. */
 	public static void register() {
+		com.mystaria.events.trahison.edit.TrahisonEditor.register();
 		PhantasmonApi.onEventsMessage((type, data) -> {
 			if (PONG.equals(type)) {
 				Minecraft client = Minecraft.getInstance();
@@ -29,7 +30,7 @@ public final class Trahison {
 		});
 	}
 
-	/** {@code /phantasmon event trahison}: checks the link with the backend module. */
+	/** {@code /phantasmon event trahison ping}: checks the link with the backend module. */
 	public static void ping() {
 		if (!PhantasmonApi.send(PING, Map.of("nonce", Long.toString(System.nanoTime())))) {
 			chat(Component.translatable("phantasmon_events.trahison.not_connected"));

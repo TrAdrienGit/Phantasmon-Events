@@ -10,6 +10,8 @@ public class PlayerState {
 	public String name;
 	public boolean connected = true;
 	public boolean alive = true;
+	/** A fake player added by the game master (never receives messages, acts through {@code Bots}). */
+	public boolean bot;
 
 	// Fields for later steps (T6, T7), unused in T1.
 	public String zone;

@@ -44,6 +44,8 @@ public class GameService {
 
 	private static final Logger log = LoggerFactory.getLogger(GameService.class);
 	public static final int PLAYERS = 9;
+	/** Longest automatic pause after a disconnection (AUTO mode). */
+	public static final Duration AUTO_PAUSE_MAX = Duration.ofMinutes(5);
 	private static final long GOLDEN = 0x9E3779B97F4A7C15L;
 	private static final long SPLIT_SALT = 0x5DEECE66DL;
 
@@ -53,6 +55,7 @@ public class GameService {
 	private final Map<String, Game> byHub = new ConcurrentHashMap<>();
 	private final Map<UUID, Game> byId = new ConcurrentHashMap<>();
 	private final Map<UUID, GameScheduler.Handle> timers = new ConcurrentHashMap<>();
+	private final Map<UUID, GameScheduler.Handle> autoTimers = new ConcurrentHashMap<>();
 	private final List<GameListener> listeners = new CopyOnWriteArrayList<>();
 
 	public GameService(GameStore store, Clock clock, GameScheduler scheduler) {
@@ -70,6 +73,23 @@ public class GameService {
 	/** The current game of a hub (possibly ended), or null. */
 	public Game find(String hub) {
 		return byHub.get(hub);
+	}
+
+	/** Every game known (current game of each hub), for lookups by player. */
+	public List<Game> games() {
+		return List.copyOf(byHub.values());
+	}
+
+	/** The unfinished game this account plays in, or null. */
+	public Game findByPlayer(UUID uuid) {
+		for (Game g : byHub.values()) {
+			synchronized (g) {
+				if (g.phase != Phase.ENDED && g.indexOf(uuid) >= 0) {
+					return g;
+				}
+			}
+		}
+		return null;
 	}
 
 	/** Runs {@code reader} on the hub's game while it is locked. */
@@ -118,6 +138,11 @@ public class GameService {
 	}
 
 	public Game join(String hub, UUID uuid, String name) {
+		return join(hub, uuid, name, false);
+	}
+
+	/** Same, for a bot when {@code bot} is true. */
+	public Game join(String hub, UUID uuid, String name, boolean bot) {
 		Game g = require(hub);
 		synchronized (g) {
 			if (g.phase != Phase.LOBBY) {
@@ -129,8 +154,10 @@ public class GameService {
 			if (g.players.size() >= PLAYERS) {
 				throw new TrahisonException(TrahisonException.GAME_FULL, "nine players already");
 			}
-			g.players.add(new PlayerState(uuid, name));
-			event(g, "join", Map.of("player", uuid.toString(), "name", String.valueOf(name)));
+			PlayerState added = new PlayerState(uuid, name);
+			added.bot = bot;
+			g.players.add(added);
+			event(g, "join", Map.of("player", uuid.toString(), "name", String.valueOf(name), "bot", bot));
 			persist(g);
 			notifyChanged(g, "join");
 			return g;
@@ -195,13 +222,16 @@ public class GameService {
 		synchronized (g) {
 			requireRunning(g);
 			if (g.paused) {
+				if (g.autoPaused) { // the game master takes over an automatic pause: it now lasts until he resumes
+					clearAutoPause(g);
+					event(g, "pause", Map.of("remainingMs", g.remainingMs, "takeover", true));
+					persist(g);
+					notifyPhase(g);
+					return g;
+				}
 				throw new TrahisonException(TrahisonException.PAUSED, "already paused");
 			}
-			g.remainingMs = Math.max(0, Duration.between(clock.instant(), g.deadline).toMillis());
-			g.paused = true;
-			g.deadline = null;
-			cancelTimer(g);
-			event(g, "pause", Map.of("remainingMs", g.remainingMs));
+			doPause(g);
 			persist(g);
 			notifyPhase(g);
 			return g;
@@ -215,10 +245,8 @@ public class GameService {
 			if (!g.paused) {
 				throw new TrahisonException(TrahisonException.NOT_PAUSED, "not paused");
 			}
-			g.paused = false;
-			g.deadline = clock.instant().plusMillis(g.remainingMs);
-			scheduleTimer(g);
-			event(g, "resume", Map.of("remainingMs", g.remainingMs));
+			clearAutoPause(g);
+			doResume(g, "gm");
 			persist(g);
 			notifyPhase(g);
 			return g;
@@ -281,11 +309,130 @@ public class GameService {
 			if (i < 0) {
 				throw new TrahisonException(TrahisonException.NOT_A_PLAYER, "not in the game");
 			}
-			g.players.get(i).connected = connected;
+			PlayerState p = g.players.get(i);
+			if (p.connected == connected) {
+				return g;
+			}
+			p.connected = connected;
 			event(g, connected ? "connected" : "disconnected", Map.of("player", i));
+			boolean pauseChanged = false;
+			if (g.settings.mode == Mode.AUTO && g.phase.timed()) {
+				if (!connected && p.alive && !g.paused) {
+					// A living player dropped: the clock stops for at most AUTO_PAUSE_MAX (plan, section 3).
+					doPause(g);
+					g.autoPaused = true;
+					g.autoPauseUntil = clock.instant().plus(AUTO_PAUSE_MAX);
+					scheduleAutoResume(g);
+					event(g, "auto_pause", Map.of("player", i, "until", g.autoPauseUntil.toString()));
+					pauseChanged = true;
+				}
+			}
+			if (connected && g.autoPaused && g.paused && !anyLivingDisconnected(g)) {
+				clearAutoPause(g);
+				doResume(g, "reconnected");
+				pauseChanged = true;
+			}
 			persist(g);
-			notifyChanged(g, "connection");
+			if (pauseChanged) {
+				notifyPhase(g);
+			} else {
+				notifyChanged(g, "connection");
+			}
 			return g;
+		}
+	}
+
+	/** Adds an admin to the game masters (they get the game master view). */
+	public Game addGameMaster(String hub, UUID uuid) {
+		Game g = require(hub);
+		synchronized (g) {
+			if (g.gameMasters.add(uuid)) {
+				event(g, "game_master", Map.of("account", uuid.toString()));
+				persist(g);
+				notifyChanged(g, "gm");
+			}
+			return g;
+		}
+	}
+
+	/** How the bots vote from now on. */
+	public Game setBotPolicy(String hub, BotPolicy policy) {
+		Game g = require(hub);
+		synchronized (g) {
+			if (policy == null) {
+				throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "policy: ally, betray or random");
+			}
+			g.botPolicy = policy;
+			event(g, "bot_policy", Map.of("policy", policy.name()));
+			persist(g);
+			notifyChanged(g, "bots");
+			return g;
+		}
+	}
+
+	private static boolean anyLivingDisconnected(Game g) {
+		for (PlayerState p : g.players) {
+			if (p.alive && !p.connected) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Freezes the stage's clock (the caller persists and notifies). */
+	private void doPause(Game g) {
+		g.remainingMs = Math.max(0, Duration.between(clock.instant(), g.deadline).toMillis());
+		g.paused = true;
+		g.deadline = null;
+		cancelTimer(g);
+		event(g, "pause", Map.of("remainingMs", g.remainingMs));
+	}
+
+	/** Restarts the stage's clock with the time that was left (the caller persists and notifies). */
+	private void doResume(Game g, String cause) {
+		g.paused = false;
+		g.deadline = clock.instant().plusMillis(g.remainingMs);
+		scheduleTimer(g);
+		event(g, "resume", Map.of("remainingMs", g.remainingMs, "cause", cause));
+	}
+
+	private void clearAutoPause(Game g) {
+		g.autoPaused = false;
+		g.autoPauseUntil = null;
+		GameScheduler.Handle h = autoTimers.remove(g.id);
+		if (h != null) {
+			h.cancel();
+		}
+	}
+
+	private void scheduleAutoResume(Game g) {
+		GameScheduler.Handle old = autoTimers.remove(g.id);
+		if (old != null) {
+			old.cancel();
+		}
+		UUID id = g.id;
+		Instant until = g.autoPauseUntil;
+		autoTimers.put(id, scheduler.schedule(until, () -> onAutoResume(id, until)));
+	}
+
+	private void onAutoResume(UUID id, Instant until) {
+		Game g = byId.get(id);
+		if (g == null) {
+			return;
+		}
+		try {
+			synchronized (g) {
+				if (!g.autoPaused || !g.paused || !until.equals(g.autoPauseUntil)) {
+					return; // stale: someone resumed or took over meanwhile
+				}
+				autoTimers.remove(id);
+				clearAutoPause(g);
+				doResume(g, "auto_pause_over");
+				persist(g);
+				notifyPhase(g);
+			}
+		} catch (RuntimeException ex) {
+			log.error("Trahison game {}: automatic resume failed", id, ex);
 		}
 	}
 
@@ -402,6 +549,9 @@ public class GameService {
 			synchronized (g) {
 				if (g.phase.timed() && !g.paused && g.deadline != null) {
 					scheduleTimer(g);
+				}
+				if (g.autoPaused && g.paused && g.autoPauseUntil != null) {
+					scheduleAutoResume(g);
 				}
 				log.info("Trahison game {} reloaded in {} (hub {})", g.id, g.phase, g.hub);
 				notifyPhase(g);
@@ -604,6 +754,7 @@ public class GameService {
 		g.endedAt = clock.instant();
 		g.deadline = null;
 		g.paused = false;
+		clearAutoPause(g);
 		cancelTimer(g);
 		event(g, "ended", Map.of("cause", cause));
 		notifyPhase(g);
