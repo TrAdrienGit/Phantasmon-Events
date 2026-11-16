@@ -94,8 +94,7 @@ Bas) ; à droite, l'étape choisie :
 - **Paramètres** : des lignes clé / valeur (entier, `true` ou `false`, ou texte). Une valeur hors de l'intervalle connu s'affiche
   en rouge. Changer de mécanisme remet les paramètres à leurs valeurs par défaut.
 - **Emplacements des rôles** : chaque rôle du mécanisme est lié à un emplacement. Les rôles et les genres d'emplacement que chacun accepte viennent du
-  backend (`slot_roles`) : la liste ne propose que les emplacements d'un genre accepté (`keypad` : un `keypad` ou un `terminal` ; `deposit` de `pickup_set` : un
-  `pedestal`, `terminal`, `plate`, `secret` ou `inner_door`...). Le rôle `exit` ouvre la sortie de la salle : son emplacement doit être de genre `exit`.
+  backend (`slot_roles`) : la liste ne propose que les emplacements d'un genre accepté (`keypad` : un `keypad` ou un `terminal` ; `pickup_set` n'a plus de rôle d'emplacement). Le rôle `exit` ouvre la sortie de la salle : son emplacement doit être de genre `exit`.
 - **Prérequis** : les étapes à finir avant celle-ci (cliquer pour cocher). Ce sont les prérequis qui décident de l'ordre d'ouverture ; l'ordre
   de la liste ne sert qu'à la lecture. Une nouvelle étape demande par défaut la précédente.
 - **Indices donnés** : un indice du mécanisme (son rôle d'indice), l'emplacement où il s'affiche, et quand (« dès que l'étape est
@@ -108,18 +107,19 @@ Bas) ; à droite, l'étape choisie :
 
 - **Digicode** : un emplacement `keypad` au mur, une étape `keypad` (paramètre `length`, 3 à 6) liée à lui par le rôle `keypad`, et un **indice donné** `code`
   « dès que l'étape est ouverte » sur un emplacement `wall_clue` ou `document` : sans lui le code n'est montré nulle part et le backend refuse l'enregistrement.
-  Les joueurs trouvent le code, reviennent au digicode et le tapent.
+  Les joueurs trouvent le code, reviennent au digicode et le tapent. Trois mauvais essais de suite le verrouillent 10 secondes (l'afficheur le dit).
 - **Objets cachés** : autant d'emplacements `pickup` que de rôles d'indice `spot_1`..`spot_n` (réglez `spots` sur ce nombre : **chaque** `spot_n` doit être donné à un
-  emplacement, dès l'ouverture), un emplacement de dépôt (un `pedestal` par exemple) lié au rôle `deposit`, et les paramètres `filled` (combien de cases garnies, tirées
+  emplacement, dès l'ouverture), et les paramètres `filled` (combien de cases garnies, tirées
   par la graine à chaque partie) et `items` (la réserve d'objets). Pour joindre un document, remplissez le paramètre `document` (pages séparées par une ligne `---`) et
-  donnez l'indice `document` à un emplacement `document`. Les joueurs ramassent les objets là où la graine les a mis, puis les utilisent sur le dépôt : l'étape est
-  résolue quand ils sont tous revenus.
-- **Câblage** (`wiring`) : un emplacement `terminal` ou `pedestal` lié au rôle `panel`, une étape `wiring` (paramètres `wires` de 3 à 6 et `colors` de 2 à 3), et un **indice donné** `scheme` « dès que l'étape est
-  ouverte » sur un `wall_clue` ou un `document` : l'indice montre les couleurs dans l'ordre, la n-ième est celle de la borne de gauche n° n (chaque couleur a son symbole). Sans lui le schéma n'est montré
-  nulle part et le backend refuse l'enregistrement. Les joueurs lisent le schéma, retournent au panneau et tirent les fils : une borne de gauche doit arriver à une borne de droite de la bonne couleur.
+  donnez l'indice `document` à un emplacement `document`. Les joueurs ramassent les objets là où la graine les a mis : l'étape est
+  résolue quand ils sont tous ramassés (aucun dépôt, aucun emplacement à lier à l'étape).
+- **Câblage** (`wiring`) : un emplacement `terminal` ou `pedestal` lié au rôle `panel`, une étape `wiring` (paramètres `wires` de 3 à 6 et `colors` de 2 à 5, au plus `wires` : rouge, vert, bleu, puis jaune et blanc), et un **indice donné** « dès que l'étape est
+  ouverte » : `scheme` (les couleurs dans l'ordre, la n-ième est celle de la borne de gauche n° n ; chaque couleur a son symbole) sur un `wall_clue` ou un `document`, et/ou `scheme_text` (le même schéma en texte,
+  « 1 : rouge, 2 : bleu… », dans la langue du joueur) sur un emplacement `document`. Vous pouvez placer l'un, l'autre ou les deux ; sans aucun des deux le schéma n'est montré
+  nulle part et le backend refuse l'enregistrement. Un mauvais câblage complet est un court-circuit : tous les fils sautent. Les joueurs lisent le schéma, retournent au panneau et tirent les fils : une borne de gauche doit arriver à une borne de droite de la bonne couleur.
 - **Décodeur** (`code_breaker`) : un emplacement `terminal` ou `pedestal` lié au rôle `terminal`, une étape `code_breaker` (paramètres `length` 3 à 5, `alphabet` 4 à 9, `kind` `symbols` ou `digits`, `repeats`, `maxTries`).
   **Aucun indice** : la logique suffit, les joueurs déduisent la combinaison des réponses « bien placé / mal placé » (les essais restent à l'écran). Avec `maxTries` (6 à 30), un terminal qui manque d'essais
-  tire une nouvelle combinaison.
+  efface l'historique (la combinaison ne change pas).
 - **Trois leviers** (`three_levers`) : trois emplacements `lever` **aux trois coins** de la salle, liés aux rôles `lever_1`, `lever_2` et `lever_3` d'une même étape (chacun son emplacement), et les paramètres
   `ordered` (la graine tire l'ordre des leviers), `gap` (délai maximal entre deux, 2 à 8 s) et `hold` (durée pendant laquelle un clic tient le levier, au moins deux fois `gap`). **Aucun indice** : les joueurs
   cliquent, trois personnes, chacune sur un levier ; l'ordre se trouve par essais (un mauvais ordre ou un retard fait tout lâcher). Il faut **trois joueurs différents** : prévoir la salle pour un groupe de trois.

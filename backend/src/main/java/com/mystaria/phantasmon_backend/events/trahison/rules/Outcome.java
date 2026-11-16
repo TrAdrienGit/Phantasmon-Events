@@ -52,6 +52,30 @@ public final class Outcome {
 		return out;
 	}
 
+	/**
+	 * D12: whether a playing game master is dead. {@code masters}: the seats of the game masters who play; {@code alive}: the
+	 * flags of the seats. Whatever killed him counts (doors, bracelet at 0, and what T6 adds).
+	 */
+	public static boolean gameMasterKilled(java.util.Collection<Integer> masters, boolean[] alive) {
+		for (int m : masters) {
+			if (m >= 0 && m < alive.length && !alive[m]) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** D12: when a playing game master is killed, every other participant (alive or not) wins. Seats 0..players-1. */
+	public static List<Integer> winnersWhenGameMasterKilled(java.util.Collection<Integer> masters, int players) {
+		List<Integer> out = new ArrayList<>();
+		for (int i = 0; i < players; i++) {
+			if (!masters.contains(i)) {
+				out.add(i);
+			}
+		}
+		return out;
+	}
+
 	private static void check(int a, int b) {
 		if (a != Assignment.BRACELETS || b != Assignment.BRACELETS) {
 			throw new IllegalArgumentException("Expected arrays of length 9");

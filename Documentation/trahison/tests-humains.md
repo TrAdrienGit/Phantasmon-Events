@@ -225,3 +225,40 @@
   - **Réseau** : la vue d'un joueur ne contient ni `order` ni `gapMs` (seul l'écran du maître du jeu les reçoit) ; « Rejouer » tire un autre ordre et un autre délai.
   - **Cas limites à regarder** : un groupe de deux ne peut pas résoudre la salle (D42, D43) ; quitter la salle avec un levier tenu : il retombe au bout du bail ; un backend redémarré en pleine tenue garde les leviers tenus jusqu'à la fin de leur bail, pas au-delà.
 
+
+## Porte finale, maître du jeu joueur, salles libres (D12, D17 à D22)
+
+- Plan complet sans pupitre sur la porte finale : l'éditeur refuse l'enregistrement final (champ `threshold` manquant) ; un brouillon passe.
+- Porte finale : un joueur à 9 points actionne le pupitre ; tous (joueurs, fantôme, spectateur, maître du jeu) voient le compte à rebours
+  de 60 s et l'annonce « la porte 9 vient d'être ouverte » ; la hôtesse rappelle à 30, 10 et 5 secondes.
+- Tous les openers passent avant la fin : la porte reste ouverte jusqu'à 0 s, puis la partie finit ; les gagnants sont ceux qui sont passés.
+- Plan sans porte finale (essai) : même compte à rebours de 60 s sans rien à franchir, puis tous les openers gagnent.
+- Maître du jeu joueur : l'admin nomme X dans le lobby, X s'inscrit ; les autres ne le voient ni dans la liste des maîtres du jeu ni
+  ailleurs ; X ouvre l'écran MJ (touche habituelle) et agit (pause, points) sans que personne apprenne qui fait quoi.
+- X meurt (n'a passé aucune porte, ou bracelet à 0 après un vote) : la partie finit, les huit autres gagnent, son nom est annoncé.
+- Un groupe termine sa salle avant la fin de `ROOMS` : ses membres entrent dans les autres salles (celles d'autres trios, des manches
+  précédentes), y jouent et peuvent les rejouer, sans point ; pareil en `VOTE`. Un groupe qui n'a pas fini reste cantonné à sa salle.
+
+## T3.5 retouches des décisions D30 à D39 (digicode, objets cachés, décodeur, câblage)
+
+- **Digicode (D30)** : taper trois mauvais codes de suite : à la troisième erreur l'afficheur devient rouge et dit « Verrouillé : 10 s » avec un décompte ; les touches ne font rien (au clavier non plus) ; au bout de 10 s
+  l'afficheur redevient normal et le bon code résout ; deux erreurs puis le bon code : aucun verrou. Le verrou est le même pour tout le groupe (un coéquipier voit le décompte). Hors ligne
+  (`/phantasmon event trahison minigame keypad`) : trois erreurs verrouillent aussi.
+- **Objets cachés (D32)** : ramasser le dernier objet résout l'étape (la suite de la chaîne s'ouvre) sans rien déposer ; les objets restent dans le sac ; une salle sans emplacement `deposit` s'enregistre sans erreur ;
+  une ancienne salle qui lie encore `deposit` reste valide (le compteur s'ouvre dessus).
+- **Décodeur (D36)** : avec `maxTries: 6`, six essais faux effacent l'historique ; la combinaison est **la même** (retaper un essai déjà tenté redonne la même réponse).
+- **Câblage (D37)** : la même salle avec un `document` portant l'indice `scheme_text` : lu en français, il donne « 1 : Rouge », « 2 : Bleu »... et en anglais « 1 : Red »... ; une salle qui ne donne que `scheme_text`
+  (sans `scheme`) s'enregistre ; une salle qui ne donne ni l'un ni l'autre est refusée.
+- **Câblage (D38)** : avec `colors: 5` et `wires: 5` ou 6, le panneau montre des bornes jaunes (losange) et blanches (anneau) ; l'indice mural, l'écran de lecture et l'écran de câblage les dessinent avec leur symbole ;
+  `colors` plus grand que `wires` est refusé dans l'éditeur. Les portes et les votes n'ont pas changé de couleurs.
+- **Câblage (D39)** : poser tous les fils de travers : le panneau tremble et **tous** les fils sautent, le compteur de courts-circuits monte ; on recommence du début.
+
+## T3.6 aides automatiques, mesure des temps, fin de `ROOMS`
+
+- **Aides** (salle d'essai avec 3 textes d'aide sur une étape ; démarrer le backend avec `phantasmon.trahison.hint-minutes=1,2,3` pour ne pas attendre 25 minutes) : sans rien faire, au bout d'une minute l'hôtesse lit
+  « Indice : (texte vague) » à tout le groupe seulement ; une minute plus tard le deuxième, puis le troisième ; ensuite plus rien. Ramasser un objet ou résoudre une étape relance la série (la première aide revient
+  une minute après le progrès). Un joueur d'un autre groupe n'entend rien ; l'écran du maître du jeu montre `hints_given` de l'étape. Reconnexion en cours de partie : les aides déjà données ne sont pas relues.
+- **Mesures** : résoudre une salle de bout en bout, puis `GET /events/trahison/telemetry/step-times` (admin) : une ligne par mécanisme et par salle avec les médianes ; un joueur non admin reçoit 403. Rejouer
+  une salle en temps libre ou utiliser `debug_solve` n'ajoute aucune ligne. Après trois parties d'une même salle, la liste des salles (éditeur) montre le temps mesuré (`measured: true`).
+- **Fin de `ROOMS`** : laisser un groupe ne pas finir sa salle : à la fin de l'étape sa sortie s'ouvre (sa porte aussi), chaque membre perd 1 point sur son bracelet (jamais sous 0 ; à 0 il devient fantôme) ; les
+  groupes qui avaient fini ne perdent rien ; avec `roomTimeout: false` rien ne se passe.

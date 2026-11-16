@@ -15,3 +15,20 @@
 
 - **D9 carte** : prévue comme une nouvelle étape, [`etapes/T11-carte.md`](etapes/T11-carte.md), placée après T4 (tirage et collage). Questions ouvertes : D14 à D16.
 - **D14 à D16 carte** : curseurs visibles des MJ et spectateurs ; notes montrées au bilan ; un fantôme voit comme un spectateur et garde ses notes. Reporté dans `etapes/T11-carte.md`.
+- **D12 (le maître du jeu peut jouer)** : fait. Un compte peut être maître du jeu et joueur : rôle secret, `game_masters` ne le montre qu'aux maîtres du jeu, `viewer.is_game_master`, vue de joueur plus bloc `gm`, mort d'un maître du jeu qui joue = victoire des huit autres (`Outcome.gameMasterKilled`, crochet `GameService.endIfGameMasterKilled`, à rappeler dans T6). Le maître du jeu qui ne fait que superviser reste possible.
+- **D17 (pupitre de la porte finale)** : fait. Un plan complet refuse une porte finale sans pupitre (`MISSING_FIELD`, `field=threshold`) ; sans plan (essais, factices) on actionne de partout.
+- **D18 + D19 (gagnants et fermeture de la porte finale)** : fait. `final_door_seconds` vaut 60 par défaut, la fenêtre dure toujours en entier même si tous sont passés ; compte à rebours pour tous (HUD et hôtesse à 30, 10, 5 s), annonce globale « la porte 9 est ouverte » ; gagnants = ceux qui sont passés.
+- **D20 (fin de partie par la porte finale)** : fait (option par défaut) : toutes les portes s'ouvrent à `ENDED`.
+- **D21 (porte finale absente du plan)** : fait. Même fenêtre de `final_door_seconds` sans porte à franchir, puis tous les openers gagnent.
+- **D22 (salles hors du temps libre)** : fait. En `ROOMS` et `VOTE`, un joueur dont le groupe a terminé sa salle de la manche en cours est libre de visiter et rejouer toutes les salles (`viewer.can_roam`), règles du temps libre inchangées (aucun point, rien ne s'ouvre).
+- **D30 (digicode)** : fait. Trois essais ratés d'affilée verrouillent le digicode 10 s (état et horloge injectée dans `Keypad`, vue `lock_ms`, événement `wrong` avec `locked` et `ms`, l'afficheur le montre).
+- **D31 (code du digicode)** : défaut gardé : le code est celui de l'étape `keypad`, placé par `gives`.
+- **D32 (objets cachés)** : fait, ramasser suffit. Crochet `Mechanism.onPickUp(state, player, role, item)` appelé par `RoomService` à chaque `pick_up` d'un objet d'une étape ouverte ; plus de dépôt, plus de rôle d'emplacement, événement `collect`. Voir D61.
+- **D33 (total annoncé)** : défaut gardé : le total est dans la vue.
+- **D34 (document des objets cachés)** : défaut gardé : indice à part placé par `gives`.
+- **D35 (contrôle à l'enregistrement)** : défaut gardé : rôles et indices contrôlés.
+- **D36 (décodeur)** : fait. Essais épuisés : même combinaison, historique effacé.
+- **D37 (schéma du câblage)** : fait. L'indice `colors` `scheme` reste, et un indice `document` `scheme_text` (« 1 : @color:red ») s'y ajoute ; la salle place l'un ou l'autre, ou les deux. Voir D63.
+- **D38 (couleurs de fil)** : fait. `yellow` (losange) et `white` (anneau) ajoutés pour les fils seulement (`WireColor`, `TrahisonPalette`, charte section 3) ; `colors` va de 2 à 5. Voir D60.
+- **D39 (câblage plein mais faux)** : fait. Un court-circuit fait sauter tous les fils.
+- **D40 à D43 (trois leviers)** : défauts gardés (bail renouvelable, ordre et délai tirés, `solo` pour l'essai, pas de contrôle de la taille du groupe).

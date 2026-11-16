@@ -16,25 +16,28 @@ import tools.jackson.databind.node.ObjectNode;
 
 /**
  * A panel of terminals to join with wires. The left terminals are numbered 1..n from the top; each right terminal has a
- * colour (the three colours of the game, with their symbols: red triangle, green disc, blue square, so colour is never
- * the only signal). The seed draws the <em>scheme</em>: for every left terminal, the colour of the right terminal it must
+ * colour (the three colours of the game, with their symbols: red triangle, green disc, blue square, plus two colours that
+ * exist for wires only, yellow diamond and white ring, D38; colour is never the only signal). The seed draws the <em>scheme</em>: for every left terminal, the colour of the right terminal it must
  * be wired to. The scheme is produced as a {@link ClueType#COLORS} clue, role {@value #SCHEME_ROLE}, that the room shows
  * somewhere else (a wall panel, a document...): the n-th colour of the clue is for left terminal n. The panel never says
- * it, so the clue is needed (decisions.md, D37).
+ * it, so the clue is needed (D37). The scheme is <em>also</em> produced as a text {@link ClueType#DOCUMENT} clue, role
+ * {@value #SCHEME_TEXT_ROLE} (one page, one line {@code "1 : @color:red"} per terminal; the client turns {@code @color:<id>}
+ * into the colour's name in the player's language): a room designer places either clue, or both.
  *
  * <h2>Parameters</h2>
  * <ul>
  * <li>{@code wires} 3..6 (default 4): number of terminals on each side;</li>
- * <li>{@code colors} 2..3 (default 3): how many of the colours the scheme uses (each used at least once). With more wires
- * than colours several right terminals share a colour, and any of them will do for a left terminal of that colour.</li>
+ * <li>{@code colors} 2..5 (default 3, at most {@code wires}): how many of the colours the scheme uses (each used at least
+ * once): 2 or 3 of red, green, blue (drawn by the seed), then yellow, then white. With more wires than colours several
+ * right terminals share a colour, and any of them will do for a left terminal of that colour.</li>
  * </ul>
  *
  * <h2>Gestures</h2>
  * {@code {"op": "connect", "left": i, "right": j}} wires left terminal i to right terminal j (a terminal holds one wire:
  * the wires it already had are removed); {@code {"op": "disconnect", "left": i}} or {@code {"op": "disconnect", "right":
  * j}} removes a wire. When all the wires are placed the panel checks them: every left terminal wired to a right terminal
- * of the colour the scheme gives it solves the step; any other full set counts one short circuit ({@code wrong} in the
- * view) and stays as it is, to be corrected.
+ * of the colour the scheme gives it solves the step; any other full set is a <b>short circuit</b> (D39): {@code wrong} counts
+ * it and <b>every wire drops</b>, the players start over from an empty panel (event {@code wrong} with {@code cleared: true}).
  *
  * <h2>Generation</h2>
  * The scheme is drawn from the seed, the right colours are a shuffle of the same colours, so a complete matching always
@@ -46,15 +49,18 @@ public class Wiring implements Mechanism {
 
 	public static final String ID = "wiring";
 	public static final String SCHEME_ROLE = "scheme";
+	public static final String SCHEME_TEXT_ROLE = "scheme_text";
 	public static final String PANEL_ROLE = "panel";
-	/** The colour names, as the client's {@code GameColor} knows them. */
-	public static final List<String> COLORS = List.of("red", "green", "blue");
+	/** The three game colours, as the client's {@code GameColor} knows them. */
+	public static final List<String> GAME_COLORS = List.of("red", "green", "blue");
+	/** The wire colours: the game colours, then the two that exist for wires only (client {@code WireColor}). */
+	public static final List<String> COLORS = List.of("red", "green", "blue", "yellow", "white");
 
 	static final int MIN_WIRES = 3;
 	static final int MAX_WIRES = 6;
 	static final int DEFAULT_WIRES = 4;
 	static final int MIN_COLORS = 2;
-	static final int MAX_COLORS = 3;
+	static final int MAX_COLORS = 5;
 	static final int DEFAULT_COLORS = 3;
 
 	record Config(int wires, int colors) {
@@ -79,7 +85,7 @@ public class Wiring implements Mechanism {
 
 	@Override
 	public List<String> clueRoles(JsonNode params) {
-		return List.of(SCHEME_ROLE);
+		return List.of(SCHEME_ROLE, SCHEME_TEXT_ROLE);
 	}
 
 	@Override
@@ -92,7 +98,7 @@ public class Wiring implements Mechanism {
 		return List.of(
 				new MechanismParam("wires", "int", MIN_WIRES, MAX_WIRES, String.valueOf(DEFAULT_WIRES), "Terminals on each side of the panel"),
 				new MechanismParam("colors", "int", MIN_COLORS, MAX_COLORS, String.valueOf(DEFAULT_COLORS),
-						"Colours the scheme uses (red, green, blue); the scheme is a colours clue (role scheme) to show elsewhere"));
+						"Colours the scheme uses, at most wires (red, green, blue, yellow, white); the scheme is a colours clue (role scheme) and a document clue (role scheme_text) to show elsewhere, either or both"));
 	}
 
 	@Override
@@ -100,6 +106,9 @@ public class Wiring implements Mechanism {
 		List<String> problems = new ArrayList<>();
 		check(params, "wires", MIN_WIRES, MAX_WIRES, problems);
 		check(params, "colors", MIN_COLORS, MAX_COLORS, problems);
+		if (problems.isEmpty() && intParam(params, "colors", DEFAULT_COLORS) > intParam(params, "wires", DEFAULT_WIRES)) {
+			problems.add("colors: at most wires");
+		}
 		return problems;
 	}
 
@@ -113,11 +122,12 @@ public class Wiring implements Mechanism {
 		}
 	}
 
-	/** The scheme clue must be shown from the moment the step opens, and a slot must be bound to play on. */
+	/** One of the two scheme clues must be shown from the moment the step opens, and a slot must be bound to play on. */
 	@Override
 	public List<String> validateStep(Step step) {
 		List<String> problems = new ArrayList<>();
-		if (step.gives().stream().noneMatch(g -> SCHEME_ROLE.equals(g.clue()) && Give.OPEN.equals(g.when()))) {
+		if (step.gives().stream().noneMatch(g -> (SCHEME_ROLE.equals(g.clue()) || SCHEME_TEXT_ROLE.equals(g.clue()))
+				&& Give.OPEN.equals(g.when()))) {
 			problems.add("missing=" + SCHEME_ROLE + ";when=open");
 		}
 		if (step.slots().isEmpty()) {
@@ -128,7 +138,7 @@ public class Wiring implements Mechanism {
 
 	static Config config(JsonNode params) {
 		int wires = clamp(intParam(params, "wires", DEFAULT_WIRES), MIN_WIRES, MAX_WIRES);
-		int colors = clamp(intParam(params, "colors", DEFAULT_COLORS), MIN_COLORS, MAX_COLORS);
+		int colors = clamp(intParam(params, "colors", DEFAULT_COLORS), MIN_COLORS, Math.min(MAX_COLORS, wires));
 		return new Config(wires, colors);
 	}
 
@@ -145,9 +155,12 @@ public class Wiring implements Mechanism {
 	@Override
 	public MechanismState generate(RandomGenerator rng, JsonNode params) {
 		Config c = config(params);
-		List<String> palette = new ArrayList<>(COLORS);
+		List<String> palette = new ArrayList<>(GAME_COLORS);
 		shuffle(palette, rng);
-		palette = palette.subList(0, c.colors());
+		palette = new ArrayList<>(palette.subList(0, Math.min(3, c.colors())));
+		for (int i = 3; i < c.colors(); i++) {
+			palette.add(COLORS.get(i)); // yellow, then white
+		}
 		// Every colour of the palette at least once, the rest at random, then in any order.
 		List<String> scheme = new ArrayList<>(palette);
 		while (scheme.size() < c.wires()) {
@@ -163,7 +176,12 @@ public class Wiring implements Mechanism {
 		data.set("links", links(new int[c.wires()], true));
 		data.put("wrong", 0);
 		data.put("solved", false);
-		return new MechanismState(data, List.of(new Clue(SCHEME_ROLE, ClueType.COLORS, strings(scheme))));
+		List<String> lines = new ArrayList<>();
+		for (int i = 0; i < scheme.size(); i++) {
+			lines.add((i + 1) + " : @color:" + scheme.get(i));
+		}
+		return new MechanismState(data, List.of(new Clue(SCHEME_ROLE, ClueType.COLORS, strings(scheme)),
+				Clue.document(SCHEME_TEXT_ROLE, List.of(String.join("\n", lines)))));
 	}
 
 	// ---------------------------------------------------------------- gestures
@@ -256,8 +274,10 @@ public class Wiring implements Mechanism {
 				events.add(unlock);
 			} else {
 				data.put("wrong", old.path("wrong").asInt() + 1);
+				data.set("links", links(new int[links.length], true)); // short circuit: every wire drops (D39)
 				ObjectNode wrong = Json.object();
 				wrong.put("type", "wrong");
+				wrong.put("cleared", true);
 				events.add(wrong);
 			}
 		}

@@ -28,7 +28,7 @@ import com.mystaria.events.trahison.room.RoomView.Show;
 import com.mystaria.events.trahison.room.RoomView.SlotView;
 import com.mystaria.events.trahison.ui.TrahisonPalette;
 import com.mystaria.events.trahison.ui.TrahisonUi;
-import com.mystaria.events.trahison.ui.TrahisonUi.GameColor;
+import com.mystaria.events.trahison.ui.TrahisonUi.WireColor;
 import com.mystaria.events.trahison.world.Interactables.Item;
 
 /**
@@ -444,7 +444,7 @@ final class InteractableRender {
 				float size = Math.max(9, Math.min(Math.min(band - 6, 20), (w - 12) / Math.max(1, names.size()) - 4));
 				float x = -(names.size() * (size + 4) - 4) / 2f;
 				for (String name : names) {
-					GameColor c = colorOf(name);
+					WireColor c = colorOf(name);
 					int tone = c == null ? TrahisonPalette.TEXT_MUTED : c.base;
 					rect(vc, fm, x - 1, mid - size / 2 - 1, x + size + 1, mid + size / 2 + 1, -2, TrahisonPalette.BORDER);
 					rect(vc, fm, x, mid - size / 2, x + size, mid + size / 2, -3, tone);
@@ -484,10 +484,12 @@ final class InteractableRender {
 		// the colour's symbol goes with its square (never the colour alone, charte-ui.md section 9)
 		float x = -(names.size() * (size + 4) - 4) / 2f;
 		for (String name : names) {
-			GameColor c = colorOf(name);
+			WireColor c = colorOf(name);
 			String mark = c == null ? "?" : switch (c.glyph) {
 				case TRIANGLE -> "\u25B2";
 				case CIRCLE -> "\u25CF";
+				case DIAMOND -> "\u25C6";
+				case RING -> "\u25CB";
 				default -> "\u25A0";
 			};
 			texts.add(new TextJob(f, x + size / 2f - 3, y - 4, Component.literal(mark), TrahisonPalette.BG_DEEP, 1f, false, null));
@@ -495,12 +497,8 @@ final class InteractableRender {
 		}
 	}
 
-	private static GameColor colorOf(String name) {
-		try {
-			return GameColor.valueOf(name.toUpperCase(java.util.Locale.ROOT));
-		} catch (IllegalArgumentException e) {
-			return null;
-		}
+	private static WireColor colorOf(String name) {
+		return WireColor.of(name);
 	}
 
 	private static String spaced(String digits) {

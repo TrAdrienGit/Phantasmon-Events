@@ -24,7 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /** Tests of {@link Keypad}. */
 class KeypadTest {
 
-	final Keypad pad = new Keypad();
+	final RoomFixtures.TestClock clock = new RoomFixtures.TestClock();
+	final Keypad pad = new Keypad(clock);
 
 	static ObjectNode params(int length) {
 		ObjectNode p = Json.object();
@@ -99,7 +100,7 @@ class KeypadTest {
 			for (ViewerKind kind : new ViewerKind[] { ViewerKind.PLAYER, ViewerKind.SPECTATOR }) {
 				JsonNode view = pad.view(state, kind);
 				assertFalse(Json.write(view).contains("code"), Json.write(view));
-				assertEquals("[length, entry, wrong, solved]", view.propertyNames().toString());
+				assertEquals("[length, entry, wrong, solved, lock_ms]", view.propertyNames().toString());
 				assertEquals("", view.get("entry").asString());
 			}
 			assertEquals(code, pad.view(state, ViewerKind.GAME_MASTER).get("code").asString());
@@ -210,5 +211,84 @@ class KeypadTest {
 		assertTrue(pad.expectedSeconds(params(6)) > pad.expectedSeconds(params(3)));
 		assertEquals(List.of("code"), pad.clueRoles(Json.object()));
 		assertEquals("keypad", pad.slotRoles().get(0).role());
+	}
+
+	/** Types a wrong code of the right length and confirms it. */
+	MechanismState wrongTry(MechanismState state) {
+		String code = code(state);
+		char[] bad = code.toCharArray();
+		bad[0] = bad[0] == '0' ? '1' : '0';
+		String[] keys = new String[bad.length + 1];
+		for (int i = 0; i < bad.length; i++) {
+			keys[i] = String.valueOf(bad[i]);
+		}
+		keys[bad.length] = "enter";
+		return type(state, keys).state();
+	}
+
+	@Test
+	void theThirdWrongTryLocksTheKeypadForTenSeconds() {
+		MechanismState state = pad.generate(new SplittableRandom(8), params(3));
+		state = wrongTry(state);
+		state = wrongTry(state);
+		assertEquals(0, pad.view(state, ViewerKind.PLAYER).get("lock_ms").asLong(), "two errors do not lock");
+		MechanismState before = state;
+		InputResult lockedTry = wrongOf(before);
+		JsonNode event = wrongEvent(lockedTry);
+		assertTrue(event.get("locked").asBoolean());
+		assertEquals(10000, event.get("ms").asLong());
+		state = lockedTry.state();
+		assertEquals(10000, pad.view(state, ViewerKind.PLAYER).get("lock_ms").asLong());
+		// Locked: every key is ignored, even the right code.
+		String code = code(state);
+		for (int i = 0; i < code.length(); i++) {
+			InputResult r = pad.onInput(state, 0, key(String.valueOf(code.charAt(i))));
+			assertTrue(r.events().isEmpty());
+			assertEquals(state.data(), r.state().data());
+		}
+		assertFalse(pad.onInput(state, 0, key("enter")).solved());
+		clock.now = clock.now.plusSeconds(4);
+		assertEquals(6000, pad.view(state, ViewerKind.PLAYER).get("lock_ms").asLong());
+		assertTrue(pad.onInput(state, 0, key("1")).events().isEmpty(), "still locked at 4 s");
+		clock.now = clock.now.plusSeconds(6);
+		assertEquals(0, pad.view(state, ViewerKind.PLAYER).get("lock_ms").asLong());
+		assertEquals("key", pad.onInput(state, 0, key("1")).events().get(0).get("type").asString());
+	}
+
+	private JsonNode wrongEvent(InputResult r) {
+		return r.events().stream().filter(e -> "wrong".equals(e.path("type").asString(""))).findFirst().orElse(null);
+	}
+
+	private InputResult wrongOf(MechanismState state) {
+		String code = code(state);
+		char[] bad = code.toCharArray();
+		bad[0] = bad[0] == '0' ? '1' : '0';
+		String[] keys = new String[bad.length + 1];
+		for (int i = 0; i < bad.length; i++) {
+			keys[i] = String.valueOf(bad[i]);
+		}
+		keys[bad.length] = "enter";
+		return type(state, keys);
+	}
+
+	@Test
+	void afterTheLockTheCountStartsAgainAndTheRightCodeSolves() {
+		MechanismState state = pad.generate(new SplittableRandom(9), params(4));
+		for (int i = 0; i < 3; i++) {
+			state = wrongTry(state);
+		}
+		assertEquals(3, state.data().get("wrong").asInt());
+		clock.now = clock.now.plusSeconds(11);
+		state = wrongTry(state);
+		state = wrongTry(state);
+		assertEquals(0, pad.view(state, ViewerKind.PLAYER).get("lock_ms").asLong(), "two new errors: not locked yet");
+		InputResult third = wrongOf(state);
+		assertTrue(wrongEvent(third).get("locked").asBoolean(), "the third error in the new series locks again");
+		clock.now = clock.now.plusSeconds(11);
+		MechanismState s = third.state();
+		for (char c : code(s).toCharArray()) {
+			s = pad.onInput(s, 0, key(String.valueOf(c))).state();
+		}
+		assertTrue(pad.onInput(s, 0, key("enter")).solved());
 	}
 }

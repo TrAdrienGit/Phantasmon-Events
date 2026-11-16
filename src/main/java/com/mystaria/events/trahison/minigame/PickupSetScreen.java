@@ -13,14 +13,14 @@ import com.mystaria.events.trahison.ui.TrahisonUi;
 import com.mystaria.phantasmon.client.gui.menu.MenuUi;
 
 /**
- * Mechanism {@code pickup_set}: the deposit. The objects hidden in the room are picked up in the world and brought back
- * here with the inventory's "use on" (an object the step expects is consumed; any other stays in the bag). This screen is
- * only a counter: it opens when a player uses the deposit slot with empty hands, shows how many objects are back out of
- * how many were hidden, and which ones. It sends no gesture.
+ * Mechanism {@code pickup_set}: the hidden objects. Picking one up in the world is enough (D32): the backend counts it as
+ * soon as it goes into the bag. This screen is only a counter, kept for a room that binds a slot of role {@code deposit}
+ * to the step (it opens when a player uses that slot): it shows how many objects have been picked up out of how many were
+ * hidden, and which ones. It sends no gesture.
  *
  * <p>
  * View: {@code {total, delivered: [id...], solved}} (the game master's view adds {@code required} and {@code filled}; this
- * screen never shows them). Event {@code {type: "deposit", item}}. Offline, the screen fakes three objects arriving one
+ * screen never shows them). Event {@code {type: "collect", item}}. Offline, the screen fakes three objects arriving one
  * after the other.
  */
 public final class PickupSetScreen extends MiniGameScreen {

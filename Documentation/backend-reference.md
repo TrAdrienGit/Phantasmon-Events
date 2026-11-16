@@ -51,6 +51,7 @@ Toutes demandent un jeton de joueur, sauf la page publique des tournois et la co
 | `PUT` / `POST` | `/events/trahison/layout/{hub}` | Admin | Enregistrer une nouvelle version du plan (`POST` : même effet, pour le client qui n'a pas de `PUT`). Validation `ERROR_TRAHISON_LAYOUT_*` ; corps et règles : [`trahison/protocole.md`](trahison/protocole.md) section 4.1 |
 | `GET` | `/events/trahison/rooms`, `/events/trahison/rooms/{id}` | Admin | Liste (résumés) et définition d'une salle du jeu de trahison (réservé aux admins : une définition contient les aides et la chaîne) |
 | `PUT` / `POST` / `DELETE` | `/events/trahison/rooms/{id}` | Admin | Créer ou remplacer (le serveur numérote la version et calcule difficulté et durée ; `POST` = `PUT`), supprimer. Validation `ERROR_TRAHISON_ROOM_*` ; corps et règles : [`trahison/protocole.md`](trahison/protocole.md) section 4.3 |
+| `GET` | `/events/trahison/telemetry/step-times` | Admin | Les médianes des temps d'étape, par mécanisme et par salle (T3.6, §5.8) |
 | `GET` | `/events/trahison/mechanisms` | Admin | Les mécanismes (id, rôles d'indices, paramètres, difficulté et durée par défaut) pour l'éditeur de salle |
 | `GET` / `POST` | `/events/trahison/rooms/{id}/schematic.json` | Admin | Les mêmes blocs en JSON `{ id, version, data }` / `{ data }`, `data` en base64 (16 Mio décodés au plus) |
 | `GET` / `POST` / `PUT` | `/events/trahison/rooms/{id}/schematic` | Admin | Les blocs de la salle, corps binaire (`application/octet-stream`, 16 Mio au plus), fichier `<phantasmon.hub.schematics-dir>/trahison_rooms/<id>/room.bin` |
@@ -161,6 +162,7 @@ en V18-V19 et V22-V24), la ligne de base `0` puis les `IF NOT EXISTS` ne changen
 |---|---|---|
 | 1 | `V1__tournaments.sql` | Ancien V18 + V19 : `tournaments`, `tournament_players`, `tournament_matches` (§5.2) |
 | 2 | `V2__event_npcs.sql` | Ancien V22 à V24 : `event_groups`, `event_npcs` (§5.3) |
+| 9 | `V9__trahison_step_times.sql` | `trahison_step_times` (2026-11-16) : le temps mesuré de chaque étape réellement résolue (T3.6, §5.8) |
 | 8 | `V8__trahison_rooms.sql` | `trahison_rooms` (2026-11-16) : la banque de salles du jeu de trahison, une ligne par salle (§5.7) |
 | 7 | `V7__trahison_layouts.sql` | `trahison_layouts` (2026-11-16) : les versions du plan fixe du jeu de trahison, par hub (§5.6) |
 | 6 | `V6__trahison_games.sql` | `trahison_games` (2026-11-16) : une ligne par partie du jeu de trahison (§5.5) |
@@ -260,3 +262,25 @@ gérée par `RoomCatalog` (`JdbcTemplate`), paquet `events.trahison.room`. Les b
 | `data` | JSONB | NOT NULL | La définition : `name`, `author`, `difficulty`, `expected_seconds`, `slots`, `steps`, `secret` (`snake_case`) |
 | `updated_by` | UUID | | L'admin qui a enregistré |
 | `updated_at` | TIMESTAMPTZ | NOT NULL, défaut `now()` | |
+
+### 5.8 `trahison_step_times` (V9 du module)
+
+Les temps mesurés du jeu de trahison (T3.6), une ligne par étape réellement résolue par un groupe, écrite par
+`telemetry.StepTimes` (paquet `events.trahison.telemetry`) quand la salle le signale ; ni un rejeu du temps libre, ni
+`debug_solve`, ni l'ouverture de fin de `ROOMS` ne comptent. Les médianes (`percentile_cont(0.5)`) servent à la route admin
+`GET /events/trahison/telemetry/step-times` et au temps affiché d'une salle (dès 3 mesures d'une étape).
+
+| Colonne | Type | Contraintes | Notes |
+|---|---|---|---|
+| `id` | BIGSERIAL | PK | |
+| `room_id` | TEXT | NOT NULL | La salle de la banque |
+| `room_version` | INTEGER | NOT NULL | Sa version au moment du jeu |
+| `step_id` | TEXT | NOT NULL | |
+| `mechanism` | TEXT | NOT NULL | |
+| `params` | JSONB | NOT NULL, défaut `{}` | Les paramètres de l'étape |
+| `seconds` | INTEGER | NOT NULL | De l'ouverture de l'étape à sa résolution |
+| `hints_given` | SMALLINT | NOT NULL, défaut 0 | Aides données à l'étape |
+| `group_size` | SMALLINT | NOT NULL | Joueurs du groupe |
+| `recorded_at` | TIMESTAMPTZ | NOT NULL, défaut `now()` | |
+
+Index : `(room_id, step_id)` et `(mechanism)`.

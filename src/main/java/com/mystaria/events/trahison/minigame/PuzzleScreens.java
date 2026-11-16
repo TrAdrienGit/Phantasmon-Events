@@ -118,7 +118,8 @@ public final class PuzzleScreens {
 
 	private static void onView(Map<String, Object> data) {
 		String phase = asString(data.get("phase"), "");
-		freeTime = "FREE_TIME".equals(phase);
+		// D22: a group that finished its room roams like in the free time (the backend says so: viewer.can_roam)
+		freeTime = "FREE_TIME".equals(phase) || data.get("viewer") instanceof Map<?, ?> viewer && Boolean.TRUE.equals(viewer.get("can_roam"));
 		hub = asString(data.get("hub"), hub);
 		if (phase.isEmpty() || "NONE".equals(phase) || "ENDED".equals(phase)) {
 			STATES.clear();

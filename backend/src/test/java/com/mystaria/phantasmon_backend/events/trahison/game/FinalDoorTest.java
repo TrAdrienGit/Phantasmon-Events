@@ -128,7 +128,7 @@ class FinalDoorTest {
 		// Everything else of the plan is untouched; the stage clock now counts the door's time.
 		assertThat(service.<Instant>read(HUB, g -> g.deadline)).isEqualTo(clock.instant().plusSeconds(DOOR_SECONDS));
 
-		// The eight walk through, one after the other; the last one closes the door and ends the game.
+		// The eight walk through, one after the other; the door stays open its whole window (D19), then the game ends.
 		for (int i = 0; i < 7; i++) {
 			stand(i, "beyond");
 			assertThat(phase()).isEqualTo(Phase.FINAL);
@@ -136,6 +136,11 @@ class FinalDoorTest {
 		stand(8, "beyond"); // the ninth is not let through: he stands there but never counted
 		assertThat(phase()).isEqualTo(Phase.FINAL);
 		stand(7, "beyond");
+		assertThat(phase()).isEqualTo(Phase.FINAL); // all eight are through, the door is still open
+		assertThat(service.find(HUB).finalDoor).isNotNull();
+		clock.advanceSeconds(DOOR_SECONDS - 1);
+		assertThat(phase()).isEqualTo(Phase.FINAL);
+		clock.advanceSeconds(1);
 		assertThat(phase()).isEqualTo(Phase.ENDED);
 		assertThat(service.find(HUB).winners).containsExactly(0, 1, 2, 3, 4, 5, 6, 7);
 		assertThat(service.find(HUB).finalDoor).isNull();
@@ -161,6 +166,8 @@ class FinalDoorTest {
 			}
 		}
 		stand(4, "beyond");
+		assertThat(phase()).isEqualTo(Phase.FINAL);
+		clock.advanceSeconds(DOOR_SECONDS);
 		assertThat(phase()).isEqualTo(Phase.ENDED);
 		assertThat(service.find(HUB).winners).containsExactly(4);
 	}
@@ -295,12 +302,25 @@ class FinalDoorTest {
 	}
 
 	@Test
-	void aPlanWithoutAFinalDoorEndsTheGameAtOnceForEveryOpener() {
+	void aPlanWithoutAFinalDoorHasTheSameWindowThenEveryOpenerWins() {
 		service = newService(null);
 		toFinal();
 		service.setPoints(HUB, 7, 6);
 		service.openFinalDoor(HUB, ids[2]);
+		assertThat(phase()).isEqualTo(Phase.FINAL); // D21: the window runs, with no door to cross
+		FinalDoorWindow window = service.find(HUB).finalDoor;
+		assertThat(window).isNotNull();
+		assertThat(window.openers()).containsExactly(0, 1, 2, 3, 4, 5, 6, 8);
+		assertThat(view(ids[0]).get("final_door")).isNotNull(); // everybody gets the countdown
+		clock.advanceSeconds(DOOR_SECONDS - 1);
+		assertThat(phase()).isEqualTo(Phase.FINAL);
+		clock.advanceSeconds(1);
 		assertThat(phase()).isEqualTo(Phase.ENDED);
 		assertThat(service.find(HUB).winners).containsExactly(0, 1, 2, 3, 4, 5, 6, 8);
+	}
+
+	@Test
+	void theWindowLastsOneMinuteByDefault() {
+		assertThat(new Settings().finalDoorSeconds).isEqualTo(60);
 	}
 }

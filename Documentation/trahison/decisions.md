@@ -22,15 +22,6 @@ Choix appliqué : le mode `AUTO` marche sans maître du jeu ; le mode `GAME_MAST
 
 Ta réponse :
 
-## D12. Qui peut être maître du jeu
-Choix appliqué : un admin nomme n'importe quel compte autour du lobby (membre du hub, hors des 9 joueurs), admin ou non ; un maître du jeu ne joue pas et un joueur inscrit ne peut pas être nommé.
-Seuls les admins nomment, et seulement en `LOBBY`. Un admin qui n'est pas nommé peut préparer le lobby (factices, démarrage) mais ne dirige plus la partie une fois lancée.
-- [ ] Comme appliqué *(par défaut)*
-- [x] Un maître du jeu peut aussi jouer
-- [ ] On peut nommer ou retirer un maître du jeu en cours de partie
-
-Ta réponse : un maitre du jeu peut aussi se jouer, ceci se passera sous la forme d'un rôle secret. C'est lui qui manipule le jeu, et si les autre participant le decouvre (le tue) alors ils gagnent automatiquement tous. Il peut ne pas y avoir de MJ qui joue mais qui reste en supervision hors jeu aussi.
-
 ## D13. Mort aux portes : ce qui reste de la personne
 Choix appliqué : un joueur mort faute d'avoir passé une porte devient fantôme tout de suite (avant les salles), garde ses points sur son bracelet, reste dans son groupe de la
 répartition (le groupe a un fantôme, son vote est « Allier » par défaut, son bracelet peut encore être trahi) et n'est plus compté aux portes des manches suivantes.
@@ -40,190 +31,204 @@ répartition (le groupe a un fantôme, son vote est « Allier » par défaut, so
 
 Ta réponse :
 
-## D17. Porte finale : faut-il se tenir au pupitre pour l'actionner ?
-Choix appliqué : `open_final_door` exige d'être dans la zone du pupitre (le champ `threshold` de la porte `final` du plan) **seulement quand le plan en nomme une** ; sans pupitre dans le plan, on actionne
-de n'importe où (c'est le cas des essais sans plan). Les factices sont dispensés. Refus : `ERROR_TRAHISON_NOT_AT_FINAL_DOOR`.
-- [x] Seulement si le plan nomme un pupitre *(par défaut)*
-- [ ] Toujours : un plan sans pupitre est refusé à l'enregistrement final, et le bouton du menu du jeu n'ouvre plus la porte
-- [ ] Jamais : la zone du pupitre ne sert qu'à l'affichage, on peut actionner de partout
-
-Ta réponse : pour les test c'est accptable mais une partie reel doit avoir un pupitre
-
-## D18. Porte finale : qui est gagnant ?
-Choix appliqué : sont gagnants les joueurs vivants à 9 points ou plus au moment de l'ouverture **qui ont réellement franchi la porte** (ils sont entrés dans la `zone_b` pendant la fenêtre, ou s'y tiennent
-à la fermeture) ; un joueur à 9 qui n'est pas passé reste derrière et la partie se termine quand même. Les factices passent avec la porte.
-- [x] Seuls ceux qui sont passés *(par défaut)*
-- [ ] Tous les joueurs à 9 points au moment de l'ouverture, qu'ils soient passés ou non (comme avant T2.5)
-- [ ] Ceux qui sont passés, et la fenêtre se prolonge tant qu'un joueur à 9 est encore dans l'antichambre (pas de fin forcée)
-
-Ta réponse : 1 minute d'ouverture avec un final countdown et annonce global que la porte 9 a ete ouverte
-
-## D19. Porte finale : quand se ferme-t-elle ?
-Choix appliqué : à la fin de `final_door_seconds` (10 par défaut, réglage de la partie), ou **tout de suite** quand tous ceux qu'elle laisse passer sont passés ; le maître du jeu peut aussi la fermer avec `next`.
-La fenêtre suit l'horloge, pas la pause de la partie.
-- [ ] Délai ou tous passés, la pause ne l'arrête pas *(par défaut)*
-- [x] Toujours le délai complet, même si tout le monde est passé
-- [ ] Une pause (automatique ou du maître du jeu) gèle aussi la fenêtre
-
-Ta réponse : 1 minute
-
-## D20. Après la fin de la partie par la porte finale
-Choix appliqué : à `ENDED` toutes les portes du plan sont `OPEN`, la porte finale comprise (la partie est finie : le hub se libère ; le client retire tous les faux blocs).
-- [x] Tout s'ouvre à la fin *(par défaut)*
-- [ ] La porte finale reste fermée pour ceux qui ne sont pas passés (elle « se ferme pour toujours » aussi dans le monde, jusqu'à ce que le maître du jeu libère le hub)
+## D44. Maître du jeu qui joue : qui gagne quand les autres le tuent
+Choix appliqué : les huit autres participants gagnent, vivants ou morts (« tous les autres gagnent automatiquement »).
+- [x] Les huit autres, vivants ou morts *(par défaut)*
+- [ ] Seulement les autres encore vivants à ce moment
 
 Ta réponse :
 
-## D21. Porte finale sans porte dans le plan
-Choix appliqué : un plan sans porte `final` (hub sans plan, essais, factices) n'a rien à attendre : la partie finit tout de suite à l'action et tous les joueurs à 9 sont gagnants, comme avant T2.5.
-- [ ] Fin immédiate *(par défaut)*
-- [x] La même fenêtre de `final_door_seconds` secondes, sans porte à franchir, puis tous les openers gagnent
+## D45. Maître du jeu qui joue : comment il devient joueur
+Choix appliqué : l'admin le nomme dans le lobby (avant ou après son `join`) ; il s'inscrit comme tout le monde et prend un des neuf sièges. Tant qu'il n'a pas rejoint, son rôle de maître du jeu est visible dans la liste du lobby (il y reste public pour ceux qui supervisent).
+- [x] Nommé puis inscrit, visible seulement avant son inscription *(par défaut)*
+- [ ] Un admin le désigne en secret : il n'apparaît dans aucune liste, même avant son inscription
+- [ ] Il s'inscrit d'abord, puis seul un message à l'admin le fait maître du jeu
 
 Ta réponse :
 
-## D22. Salles des manches précédentes : jouables hors du temps libre ?
-Choix appliqué : les salles des manches précédentes ne servent qu'à `FREE_TIME` : pendant `ROOMS` d'une manche on ne joue que la salle de son groupe de la manche en cours, et les salles anciennes n'envoient
-rien aux joueurs (elles restent visibles des fantômes, spectateurs et maîtres du jeu). Rien n'y rapporte de point ni n'ouvre de porte, même en temps libre.
-- [ ] Seulement en temps libre *(par défaut)*
-- [ ] Lisibles (documents, indices) en `ROOMS` aussi, sans y agir
-- [x] Jouables aussi pendant `ROOMS` et `VOTE`
-
-Ta réponse : Si les membre d'un groupe finissent une salle avant le temps complet, ils sont libres de naviguer
-
-## D30. Digicode : droit à l'erreur
-Choix appliqué : le digicode `keypad` ne se verrouille jamais : on peut taper autant de codes qu'on veut, le compteur « Essais ratés » est seulement affiché. Un code de 3 chiffres se force donc en quelques
-minutes ; la difficulté vient de la longueur du code (3 à 6) et de l'endroit où il est caché. Un verrouillage demanderait une horloge dans le mécanisme (aujourd'hui pur et sans temps).
-- [ ] Pas de verrouillage *(par défaut)*
-- [x] Verrouillage de 10 s après 3 essais ratés d'affilée
-- [ ] Après 5 essais ratés, l'étape redonne un code neuf (nouveau tirage) et l'ancien indice change
+## D46. Maître du jeu qui joue : plusieurs maîtres du jeu qui jouent
+Choix appliqué : tout maître du jeu inscrit est un rôle secret ; la partie finit dès qu'un seul d'entre eux meurt, et les gagnants sont tous les participants qui ne sont pas maîtres du jeu.
+- [x] La première mort d'un maître du jeu qui joue finit la partie *(par défaut)*
+- [ ] Un seul maître du jeu peut jouer à la fois (refusé sinon)
+- [ ] La partie finit quand tous les maîtres du jeu qui jouent sont morts
 
 Ta réponse :
 
-## D31. Digicode : d'où vient le code
-Choix appliqué : comme `ring_dial` et `three_dials`, le code est tiré **par l'étape `keypad` elle-même** et produit un indice `code` (type `digits`) que la salle place où elle veut (`gives`, à l'ouverture
-de l'étape : le validateur refuse un digicode dont le code n'est montré nulle part). Le code d'un digicode ne peut pas être lu dans l'indice d'une *autre* étape : il faudrait des étapes qui partagent
-leur tirage, ce que le moteur ne fait pas (chaque étape tire seule, de la graine et de son identifiant).
-- [x] Le code est celui de l'étape `keypad` et se place par `gives` *(par défaut)*
-- [ ] Un paramètre `from: <étape>.<indice>` fait lire au digicode le code `digits` d'une autre étape (à construire dans le moteur)
+## D47. Maître du jeu qui joue : sa vue de salle
+Choix appliqué : il reçoit la vue de salle d'un joueur (pas celle du maître du jeu, qui montre les solutions), pour ne pas se trahir par ce qu'il sait.
+- [x] Vue de joueur, la sienne seule *(par défaut)*
+- [ ] Vue maître du jeu de toutes les salles (il voit les solutions)
+- [ ] Un bouton pour passer de l'une à l'autre
 
 Ta réponse :
 
-## D32. Objets cachés : ce que « collecté » veut dire
-Choix appliqué : `pickup_set` est résolu quand **tous les objets que la graine a posés ont été rapportés** : on les ramasse dans le monde (`pick_up`), puis on les utilise sur un emplacement lié au rôle
-`deposit` (socle, terminal...) ; l'objet déposé est consommé. Un objet que l'étape n'attend pas est refusé et reste dans le sac. Le simple ramassage ne suffit pas, parce que le mécanisme n'est pas
-prévenu d'un ramassage (c'est `RoomService` qui le traite). Sans emplacement lié, l'étape est insoluble : le validateur le refuse.
-- [ ] Ramassés **et** déposés sur l'emplacement `deposit` *(par défaut)*
-- [x] Ramassés suffit (demande que `RoomService` prévienne le mécanisme à chaque `pick_up`)
-- [ ] Déposés dans l'ordre où la salle les a posés
+## D48. Maître du jeu qui joue : ses actions de supervision restent-elles discrètes
+Choix appliqué : aucun texte ni vue ne nomme l'auteur d'une action de maître du jeu ; en revanche une pause, une prolongation ou une porte forcée se voient (l'état change), ce qui montre qu'un maître du jeu existe sans dire qui.
+- [x] L'état change visiblement, l'auteur reste secret *(par défaut)*
+- [ ] Aucune trace visible : pas de bandeau « pause », la pause est dite « technique » sans cause
+- [ ] Les pouvoirs qui se voient (pause, porte forcée) sont retirés au maître du jeu qui joue
 
 Ta réponse :
 
-## D33. Objets cachés : le total est-il annoncé ?
-Choix appliqué : l'écran du dépôt affiche « 2 / 3 » : le nombre total d'objets cachés est connu des joueurs (jamais lesquels). Sans cela, on ne sait pas quand on a fini de chercher.
-- [x] Le total est affiché *(par défaut)*
-- [ ] Seul le nombre déjà rapporté est affiché
-- [ ] Rien : l'écran ne dit que « rapporté » ou « pas encore »
+## D49. Maître du jeu qui joue : révéler son nom à la fin
+Choix appliqué : quand il est tué, l'annonce finale dit son nom (`say.game_master_killed`). S'il n'est pas tué, il n'est pas révélé (la partie finit par la porte finale ou un `end`).
+- [x] Nom annoncé seulement s'il est tué *(par défaut)*
+- [ ] Nom annoncé à la fin de toute partie
+- [ ] Jamais annoncé
 
 Ta réponse :
 
-## D34. Objets cachés : le document
-Choix appliqué : le document est un indice à part (rôle `document`, texte donné en paramètre, pages séparées par `---`), toujours produit quand le paramètre `document` n'est pas vide, et placé par
-`gives` (à un emplacement de genre `document`, dès le début ou à la résolution). La graine ne tire que les emplacements `pickup` garnis et les objets, pas la place du document. Un document n'est pas ramassé :
-on le lit sur place.
-- [x] Document à part, placé par `gives` *(par défaut)*
-- [ ] Le document occupe un des emplacements garnis, tiré par la graine (il remplace un objet)
-- [ ] Le document se ramasse dans le sac et se relit à volonté
+## D50. Maître du jeu qui joue : sa propre mort par ses pouvoirs
+Choix appliqué : ses pouvoirs ne peuvent pas le tuer : `set_points` à 0 sur son propre bracelet ne tue qu'au prochain vote, comme pour tout joueur, et la victoire des autres s'applique alors aussi.
+- [x] Pas d'exception, la règle s'applique comme pour un autre mort *(par défaut)*
+- [ ] Sa propre mort par ses pouvoirs ne donne pas la victoire aux autres
+- [ ] Ses pouvoirs ne peuvent pas toucher son propre bracelet
 
 Ta réponse :
 
-## D35. Éditeur : rôles et indices contrôlés à l'enregistrement
-Choix appliqué : `GET /events/trahison/mechanisms` donne maintenant `slot_roles` (chaque rôle d'étape et les genres d'emplacement qu'il accepte). Le validateur refuse un rôle inconnu du mécanisme, un emplacement
-d'un genre non accepté (`ERROR_TRAHISON_ROOM_BAD_KIND`) et, pour `keypad` et `pickup_set` seulement, une étape dont l'indice nécessaire n'est placé nulle part (`ERROR_TRAHISON_ROOM_BAD_GIVE`,
-`info` `missing=...`). `ring_dial` et `three_dials` ne sont pas contrôlés sur l'indice (leurs salles d'essai ne le placent pas toujours).
-- [x] Refuser à l'enregistrement *(par défaut)*
-- [ ] Seulement avertir dans l'éditeur, le backend accepte
-- [ ] Refuser aussi pour `ring_dial` et `three_dials` (indice `symbols` / `code` obligatoire)
+## D51. Maître du jeu qui joue : un maître du jeu mort peut-il encore agir
+Choix appliqué : la mort d'un maître du jeu qui joue finit la partie : il n'y a donc pas de fantôme-maître. Le point reste à reprendre si une autre règle (T6) le laisse en vie après sa « mort ».
+- [x] La partie finit toujours à sa mort *(par défaut)*
+- [ ] Il devient fantôme et garde ses pouvoirs, les autres ont gagné quand même
 
 Ta réponse :
 
-## D36. Décodeur (`code_breaker`) : que se passe-t-il quand les essais sont épuisés
-Choix appliqué : le paramètre `maxTries` (0 = aucune limite, par défaut ; sinon 6 à 30) ne perd jamais la partie : quand le dernier essai est raté, la combinaison est **retirée** (déduite de la graine de l'étape et du nombre de
-réinitialisations, donc rejouable à l'identique), l'historique est effacé et le terminal l'annonce (« Terminal réinitialisé ! »). Pas d'impasse : l'étape reste toujours résoluble, sans horloge dans le mécanisme (comme D30).
-- [ ] Nouvelle combinaison et historique effacé *(par défaut)*
-- [x] Même combinaison, historique effacé (les essais ne servent qu'à ralentir)
-- [ ] Verrouillage du terminal : l'étape ne se résout plus (demande un moyen de la rouvrir : levier, autre étape)
+## D52. Porte finale : durée maximale du réglage
+Choix appliqué : `final_door_seconds` vaut 60 par défaut et le backend le borne à 1..120 secondes (réglage de la partie).
+- [x] Borné à 120 secondes *(par défaut)*
+- [ ] Borné à 300 secondes
+- [ ] Aucun plafond
 
 Ta réponse :
 
-## D37. Câblage (`wiring`) : comment le schéma est communiqué, et ce que « relié correctement » veut dire
-Choix appliqué : le schéma est un **indice `scheme` de type `colors`** (la n-ième couleur de l'indice = la borne gauche n° n) que la salle place où elle veut (`gives`, dès l'ouverture : le validateur refuse un câblage dont le schéma n'est montré
-nulle part), comme le code du digicode (D31). Les bornes de gauche sont numérotées ; celles de droite portent une couleur **et son symbole** (triangle rouge, disque vert, carré bleu). Une borne de gauche est correcte si son fil arrive à une
-borne de droite **de la couleur demandée** ; avec plus de fils que de couleurs, plusieurs bornes de droite partagent une couleur et n'importe laquelle convient (chacune ne tient qu'un fil). Un indice `document` n'est pas produit : l'indice
-`colors` se dessine déjà sur un panneau mural et dans l'écran de lecture.
-- [ ] Indice `colors` ; relié correctement = la bonne couleur à droite *(par défaut)*
-- [ ] Indice `colors` ; relié correctement = exactement la borne tirée par la graine (une seule solution, bornes de droite repérées aussi par leur rang)
-- [x] Un document en texte (« 1 : rouge, 2 : bleu... ») à la place, ou en plus
+## D53. Porte finale : les rappels du compte à rebours
+Choix appliqué : l'hôtesse rappelle le compte à rebours chez chacun à 30, 10 et 5 secondes (affichage du client, sur l'heure du serveur) en plus de l'annonce d'ouverture ; le HUD affiche les secondes tout du long.
+- [x] 30, 10 et 5 secondes *(par défaut)*
+- [ ] Tous les 10 secondes puis chaque seconde sur les 5 dernières
+- [ ] Aucun rappel, le HUD suffit
 
 Ta réponse :
 
-## D38. Câblage : seulement les trois couleurs du jeu ?
-Choix appliqué : le schéma n'emploie que `red`, `green` et `blue`, avec leurs symboles de la charte (le paramètre `colors` de 2 à 3 dit combien en sont utilisées, chacune au moins une fois) ; `wires` va de 3 à 6, les couleurs se répètent donc dès
-qu'il y a plus de fils que de couleurs. Cela évite d'ajouter des teintes à la charte (habillage Feu / Plante / Eau prévu) et garde la lisibilité pour le daltonisme.
-- [ ] Trois couleurs et leurs symboles, couleurs répétées au-delà de 3 fils *(par défaut)*
-- [x] Ajouter deux couleurs de fil (jaune, blanc) avec leurs propres symboles, dans la charte, l'écran de lecture et l'indice mural
-- [ ] Limiter `wires` à 3 (une couleur par fil)
+## D54. Porte finale : qui est « passé »
+Choix appliqué : est passé celui qui est entré dans la `zone_b` de la porte pendant la fenêtre, ou qui s'y tient à la fermeture ; un opener qui y est entré puis en est ressorti reste compté.
+- [x] Entré à un moment de la fenêtre, même s'il est ressorti *(par défaut)*
+- [ ] Seulement ceux qui s'y tiennent à la fermeture
 
 Ta réponse :
 
-## D39. Câblage : un panneau plein mais faux
-Choix appliqué : quand tous les fils sont posés et que ce n'est pas bon, c'est un « court-circuit » : le compteur monte, l'écran tremble pour tout le monde, mais **les fils restent** pour être corrigés un par un (le panneau ne dit pas lesquels
-sont bons). Le panneau démarre sans aucun fil.
-- [ ] Les fils restent, le compteur de courts-circuits est affiché *(par défaut)*
-- [x] Les fils sautent tous (on recommence) à chaque court-circuit
-- [ ] Le panneau dit combien de fils sont bons (comme « bien placé » du décodeur)
+## D55. Porte finale : un deuxième actionnement pendant la fenêtre
+Choix appliqué : actionner de nouveau le pupitre pendant la fenêtre ne fait rien (ni prolongation ni nouvelle fenêtre), même par un joueur qui n'était pas opener et qui a gagné des points depuis.
+- [x] Sans effet *(par défaut)*
+- [ ] Il ajoute un opener (un 9 tardif peut passer lui aussi)
 
 Ta réponse :
 
-## D40. Trois leviers (`three_levers`) : « tenir » un levier, c'est quoi sur le réseau
-Choix appliqué : un clic sur un levier l'**enclenche pour `hold` secondes** (bail, 12 par défaut) ; recliquer le même levier (par le même joueur) renouvelle le bail. Il n'y a **aucun message « relâcher »** et
-aucun battement de cœur : le client n'a pas à garder la touche d'utilisation enfoncée, donc la latence ou la gigue du WebSocket ne peut pas faire tomber un levier (la fenêtre fait plusieurs secondes) et un message perdu
-coûte un clic. Le mécanisme garde une horloge (injectée, donc testable) : l'expiration est évaluée à la demande, au geste suivant ou à la vue ; le client décompte depuis les `ms` restantes de la vue. Ce choix
-déroge à D30 (« aucune horloge dans le mécanisme ») pour ce seul mécanisme : sans temps, « en même temps » ne veut rien dire.
-- [x] Bail de `hold` secondes renouvelable par un nouveau clic, expiration paresseuse *(par défaut)*
-- [ ] Vrai maintien : le client envoie `hold` à l'appui sur la touche d'utilisation, `release` au relâchement, et un battement toutes les secondes (le backend lâche seul le levier après 3 s sans battement)
-- [ ] Bail fixe sans renouvellement (un clic = `hold` secondes, point)
+## D56. Porte finale : plan sans porte, annonce de la fin
+Choix appliqué : sans porte dans le plan, la fenêtre est la même mais rien n'est à franchir : au terme, tous les openers gagnent. La phrase d'ouverture parle de « la porte 9 » même sans porte construite (l'essai est un banc d'essai).
+- [x] Même annonce, tous gagnent à la fin *(par défaut)*
+- [ ] Annonce adaptée « le compte à rebours commence » sans parler d'une porte
 
 Ta réponse :
 
-## D41. Trois leviers : l'ordre n'est dit nulle part
-Choix appliqué : la graine tire l'**ordre** dans lequel les leviers doivent être enclenchés (6 ordres ; paramètre `ordered`, vrai par défaut ; faux : n'importe quel ordre) et le **délai** maximal entre deux enclenchements
-(`gap` de 2 à 8 s, la graine tire une valeur dans `gap-2..gap`, au moins 2). Aucun indice n'est produit : le groupe cherche par essais. Un levier enclenché hors de l'ordre fait tout lâcher (événement `wrong`, compteur
-`resets`, bruit sourd) ; trop lent : tout lâche aussi (`slow`) et l'enclenchement compte comme le premier d'un nouvel essai. Les trois petites lumières de chaque levier disent combien sont enclenchés ensemble, ce qui
-aide à trouver l'ordre (un premier levier juste reste enclenché, un faux fait tout lâcher). Le délai tiré n'est pas montré. `hold` doit valoir au moins deux fois `gap` (validé), pour que le premier levier tienne
-encore quand le troisième s'enclenche.
-- [x] Ordre et délai tirés, découverts par essais, lumières de progression partagées *(par défaut)*
-- [ ] Ordre donné par un indice (`digits` ou `symbols`, rôle `order`) à placer ailleurs dans la salle, comme le code du digicode
-- [ ] Délai affiché sur les leviers (compte à rebours entre deux enclenchements)
+## D57. Salles libres : une salle non terminée à l'échéance
+Choix appliqué : un groupe dont la salle n'est pas terminée ne peut pas visiter les autres salles avant le temps libre, même si l'échéance de `ROOMS` approche ; la salle jamais terminée n'ouvre donc pas la libre circulation.
+- [x] Pas de libre circulation sans salle terminée *(par défaut)*
+- [ ] Libre circulation dès qu'il reste moins de N minutes de `ROOMS`
+- [ ] Libre circulation pour tous dès que la première salle est finie
 
 Ta réponse :
 
-## D42. Trois leviers : un joueur seul, un test seul, les factices
-Choix appliqué : un joueur ne tient **qu'un levier à la fois** (en enclencher un autre lâche le premier), donc trois leviers tenus veulent trois joueurs différents : un joueur seul, ou deux, n'y arrivent jamais (testé).
-Le paramètre `solo` (faux par défaut) est la seule dérogation, pour la salle d'essai de l'éditeur : un joueur peut enclencher les trois et le délai est ignoré (le bail `hold` court toujours : réglez-le haut, jusqu'à 30 s,
-le temps de courir d'un coin à l'autre). Les factices (bots) de la partie ne touchent pas aux salles : ils ne peuvent pas aider, et le maître du jeu ne peut pas non plus tenir un levier ; une salle avec
-`three_levers` demande donc trois vrais joueurs vivants dans le groupe (un groupe est de 2 ou 3 : **un groupe de 2 ne peut pas la résoudre**, voir la question suivante).
-- [x] `solo` réservé à l'essai, un joueur par levier sinon ; la salle doit être jouée par un groupe de 3 *(par défaut)*
-- [ ] Un levier de plus tenu par le maître du jeu à distance (action MJ `hold_lever`) quand le groupe n'est que de deux
-- [ ] Un levier « bloqué » en position haute par un objet (la salle fournit le contrepoids) quand le groupe n'est que de deux
+## D58. Salles libres : sa propre salle pendant `VOTE`
+Choix appliqué : pendant `VOTE`, un joueur libre de visiter peut rejouer les autres salles et aussi la sienne, comme en temps libre (rien ne compte) ; la salle de sa manche ne rapporte plus rien.
+- [x] Toutes les salles, la sienne comprise, sans effet sur la partie *(par défaut)*
+- [ ] Seulement les autres salles pendant `VOTE`
 
 Ta réponse :
 
-## D43. Trois leviers : la taille du groupe
-Un groupe est une paire ou un solo plus un (jusqu'à 3 joueurs selon la répartition de la manche ; voir les règles des portes). Une salle qui exige trois joueurs distincts ne peut pas être résolue par une paire. Choix
-appliqué : le validateur ne refuse rien, c'est à l'auteur de la salle de le savoir (le guide de l'éditeur le dit) ; T4 (tirage et collage) devra ne proposer `three_levers` qu'aux groupes de trois.
-- [x] Pas de contrôle dans le validateur ; consigne pour T4 *(par défaut)*
-- [ ] Un champ `min_players` dans la définition d'une salle, vérifié au tirage (T4)
-- [ ] Le mécanisme accepte aussi deux joueurs (un levier tenu par deux clics rapprochés d'un même joueur) quand le groupe est de deux
+## D59. Salles libres : cabine de vote et salles
+Choix appliqué : un joueur libre de visiter une salle pendant `VOTE` peut en même temps avoir à voter dans sa cabine : rien ne l'empêche de visiter une salle avant ou après son vote.
+- [x] Aucune restriction de lieu *(par défaut)*
+- [ ] Un joueur enfermé dans sa cabine (verrouillée) ne peut pas visiter ailleurs jusqu'au vote
+
+Ta réponse :
+
+## D60. Câblage : `colors` plus grand que `wires`
+Choix appliqué : avec D38 (5 couleurs), `colors` ne peut pas dépasser `wires` (chaque couleur du schéma est employée au moins une fois, donc il faut au moins autant de fils que de couleurs). L'éditeur et le validateur refusent `colors > wires` (`colors: at most wires`) ; le moteur, lui, borne en silence.
+- [x] Refuser `colors > wires` dans le validateur *(par défaut)*
+- [ ] Accepter et borner en silence (`colors` devient `wires`)
+- [ ] Autoriser des couleurs absentes du schéma mais présentes à droite (leurres)
+
+Ta réponse :
+
+## D61. Objets cachés : un compteur sans dépôt
+Choix appliqué : sans emplacement de dépôt (D32), l'écran compteur « n / total » de `pickup_set` ne s'ouvre plus par un emplacement ; il ne reste ouvert que pour une salle ancienne qui lie encore `deposit`. Les joueurs ne voient donc plus combien d'objets restent à trouver (le total annoncé par D33 n'est plus visible).
+- [ ] Rien de plus : on cherche sans compteur *(par défaut)*
+- [ ] Une ligne du bracelet / de la salle (HUD) « objets : 2 / 3 », portée par la vue de l'étape
+- [ ] L'objet ramassé s'annonce dans la discussion de la salle (« un objet de plus, il en reste 1 »)
+
+Ta réponse :
+
+## D62. Digicode : réglage du verrouillage
+Choix appliqué : 3 essais et 10 s sont des constantes du mécanisme (`LOCK_AFTER`, `LOCK_SECONDS`), pas des paramètres de l'étape ; le verrou est commun à tout le groupe et le compteur d'échecs repart de 0 au verrouillage.
+- [x] Constantes, identiques pour toutes les salles *(par défaut)*
+- [ ] Paramètres `lockAfter` (2 à 6) et `lockSeconds` (5 à 60) de l'étape, pour régler la difficulté salle par salle
+- [ ] Le verrou s'allonge à chaque répétition (10 s, 20 s, 40 s)
+
+Ta réponse :
+
+## D63. Câblage : le schéma en texte et la langue
+Choix appliqué : l'indice `scheme_text` est un document dont les lignes portent des jetons neutres (`1 : @color:red`) ; le client les remplace par le nom de la couleur dans la langue du joueur (clés `phantasmon_events.trahison.color.<id>`). Un texte fixe écrit par le backend serait dans une seule langue.
+- [x] Jetons `@color:<id>` traduits par le client *(par défaut)*
+- [ ] Texte fixe en français écrit par le backend
+- [ ] Le concepteur de la salle écrit lui-même le texte (paramètre `schemeText`), sans lien avec la graine
+
+Ta réponse :
+
+## D64. Salles : ce que la mesure change à la difficulté affichée
+Choix appliqué : dès 3 mesures d'une étape, le **temps attendu** affiché (`expected_seconds` de la liste des salles) prend la médiane mesurée de cette étape ; la **difficulté** (1 à 3 par mécanisme, sommée) ne change pas et un champ `measured` dit que le temps est mesuré.
+- [x] Seul le temps attendu devient mesuré ; la note de difficulté reste celle des mécanismes *(par défaut)*
+- [ ] La difficulté affichée est aussi déduite du temps mesuré (par seuils, ex. moins de 5 min = 1, plus de 12 min = 3)
+- [ ] La mesure remplace aussi les valeurs enregistrées dans la définition à chaque enregistrement
+
+Ta réponse :
+
+## D65. Aides : où se règlent les délais
+Choix appliqué : les délais (10, 18, 25 minutes sans progrès) sont une propriété du backend (`phantasmon.trahison.hint-minutes`), valable pour toutes les parties ; pas un réglage de partie.
+- [x] Propriété du backend, commune à toutes les parties *(par défaut)*
+- [ ] Réglage de la partie (comme `door_open_seconds`), modifiable par l'organisateur avant la partie
+- [ ] Délai propre à chaque salle (champ de la définition)
+
+Ta réponse :
+
+## D66. Aides : pause et maître du jeu
+Choix appliqué : le compteur d'aide est celui des salles (heure du dernier progrès) : une partie mise en pause **n'arrête pas** le compte, et un maître du jeu ne peut pas donner une aide à la main (le moteur sait le faire, aucune action ne l'expose).
+- [x] Le compte continue pendant la pause ; pas d'aide manuelle *(par défaut)*
+- [ ] Le compte s'arrête pendant la pause (le délai de pause est ajouté à l'heure du dernier progrès)
+- [ ] Une action MJ `give_hint` donne l'aide suivante à un groupe tout de suite
+
+Ta réponse :
+
+## D67. Fin de `ROOMS` : qui perd le point
+Choix appliqué : chaque membre du groupe (vivant ou non) d'une salle non finie perd 1 point, jamais sous 0 ; un bracelet à 0 tue son propriétaire comme après un vote. Aucune mesure de temps n'est enregistrée pour ces salles.
+- [x] Tous les membres, mort possible à 0 *(par défaut)*
+- [ ] Tous les membres, mais le point perdu ne peut pas faire tomber un bracelet à 0 (reste à 1)
+- [ ] Seulement les membres encore vivants
+
+Ta réponse :
+
+## D68. Mesures : « médiane d'une salle »
+Choix appliqué : la table garde une ligne par étape ; la médiane d'une salle est la **somme des médianes de ses étapes mesurées** (pas la médiane des durées totales des parties).
+- [x] Somme des médianes des étapes *(par défaut)*
+- [ ] Une ligne de plus par salle jouée (durée totale), médiane réelle des parties
+- [ ] Ne compter que les parties sans aucune aide donnée
+
+Ta réponse :
+
+## D69. Aides : à qui et comment
+Choix appliqué : l'aide va à la première étape ouverte non résolue (ordre de la définition) qui en a encore une ; elle voyage dans la vue de la salle (`steps[].hints`) donc seul le groupe la reçoit (plus les spectateurs et le maître du jeu, comme toute vue de salle), et le client de ses membres la fait lire par l'hôtesse. Elle n'est pas relue à la reconnexion.
+- [x] Aide dans la vue de la salle, lue par l'hôtesse chez les membres *(par défaut)*
+- [ ] Aussi une liste « aides reçues » relisible dans l'inventaire
+- [ ] Une annonce `say.*` du backend (comme les portes), en plus
 
 Ta réponse :
 

@@ -60,7 +60,7 @@ public final class GameView {
 
 	/** {@code canOpenFinalDoor}: the backend's answer (rules.Outcome) whether this viewer's bracelet opens the final door. */
 	public record Viewer(ViewerKind kind, Integer index, Integer group, Boolean pairSide, Integer doorPassed, boolean sideVoted, Vote ownVote,
-			boolean canOpenFinalDoor) {
+			boolean canOpenFinalDoor, boolean canRoam, boolean isGameMaster) {
 	}
 
 	public record VoteResult(int door, GameColor pairColor, GameColor soloColor, List<Integer> pair, int solo, Vote pairVote,
@@ -198,7 +198,7 @@ public final class GameView {
 	}
 
 	private static final View EMPTY = new View("", "", 0, Map.of(), List.of(), Phase.NONE, 0, false, 0, "AUTO", null, false, false, null, 0, List.of(), List.of(),
-			List.of(), null, null, new Viewer(ViewerKind.SPECTATOR, null, null, null, null, false, null, false), null, null, null);
+			List.of(), null, null, new Viewer(ViewerKind.SPECTATOR, null, null, null, null, false, null, false, false, false), null, null, null);
 
 	private static View current;
 	private static Cabins cabinsState = Cabins.NONE;
@@ -400,7 +400,8 @@ public final class GameView {
 		}
 		String side = str(v, "side");
 		Viewer viewer = new Viewer(kind, nullableInt(v, "index"), nullableInt(v, "group"), side == null ? null : "PAIR".equalsIgnoreCase(side),
-				nullableInt(v, "door_passed"), bool(v, "side_voted"), Vote.of(v.get("own_vote")), bool(v, "can_open_final_door"));
+				nullableInt(v, "door_passed"), bool(v, "side_voted"), Vote.of(v.get("own_vote")), bool(v, "can_open_final_door"),
+				bool(v, "can_roam"), bool(v, "is_game_master"));
 		Results results = null;
 		if (d.get("results") instanceof Map<?, ?> rm) {
 			@SuppressWarnings("unchecked")

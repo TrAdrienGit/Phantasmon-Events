@@ -69,6 +69,15 @@ public interface Mechanism {
 	}
 
 	/**
+	 * A player picked up an object in the world that this step gave ({@code role}: the clue role of the object, {@code item}: its
+	 * id), while the step is open and unsolved. Empty (the default): the mechanism does not care, nothing changes. Called by
+	 * {@code RoomService} on every {@code pick_up} (decisions-tranchees.md, D32).
+	 */
+	default java.util.Optional<InputResult> onPickUp(MechanismState state, int player, String role, String item) {
+		return java.util.Optional.empty();
+	}
+
+	/**
 	 * A player used an item on one of the step's slots ({@code role}: the role the slot has in the step). Empty means the
 	 * mechanism does not take items there: nothing happens and the item stays. A handled use consumes the item. Default:
 	 * not handled.

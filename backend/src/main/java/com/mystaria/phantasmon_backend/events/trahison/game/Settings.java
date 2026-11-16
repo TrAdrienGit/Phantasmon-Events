@@ -18,14 +18,19 @@ public class Settings {
 	/** How long a colour door stays open once the bracelets at its threshold satisfy it (seconds). */
 	public int doorOpenSeconds = DEFAULT_DOOR_OPEN_SECONDS;
 	public static final int DEFAULT_DOOR_OPEN_SECONDS = 6;
-	/** How long the final door stays open once a 9-point bracelet uses the pupitre (T2.5, seconds); then it closes for ever. */
+	/** How long the final door stays open once a 9-point bracelet uses the pupitre (T2.5, seconds, D19: always the full window); then it closes for ever. */
 	public int finalDoorSeconds = DEFAULT_FINAL_DOOR_SECONDS;
-	public static final int DEFAULT_FINAL_DOOR_SECONDS = 10;
+	public static final int DEFAULT_FINAL_DOOR_SECONDS = 60;
 	/**
 	 * Whether a human must close his cabin and vote from inside it (T2.4). False: the old free vote, anywhere, for games
 	 * played without a built map. Bots are exempt either way.
 	 */
 	public boolean cabinsRequired = true;
+	/**
+	 * T3.6: at the end of {@code ROOMS} the exit of a room not finished opens and each member of its group loses a point.
+	 * False: nothing happens to an unfinished room (tests that keep rooms unsolved across stages).
+	 */
+	public boolean roomTimeout = true;
 	/**
 	 * Id of a room of the bank that every group plays in every round (trials, until the draw of T4); null or unknown: the
 	 * built-in fallback room (one button).

@@ -45,21 +45,46 @@ public class RoomCatalog {
 	private final ObjectMapper mapper;
 	private final MechanismRegistry mechanisms;
 	private final Path root;
+	private final StepMedians medians;
 
-	public RoomCatalog(JdbcTemplate jdbc, ObjectMapper mapper, MechanismRegistry mechanisms,
+	public RoomCatalog(JdbcTemplate jdbc, ObjectMapper mapper, MechanismRegistry mechanisms, StepMedians medians,
 			@Value("${phantasmon.hub.schematics-dir:hub_schematics}") String schematicsDir) {
+		this.medians = medians;
 		this.jdbc = jdbc;
 		this.mapper = mapper;
 		this.mechanisms = mechanisms;
 		this.root = Path.of(schematicsDir, "trahison_rooms");
 	}
 
+	/**
+	 * The room list. The expected time of a room is the sum over its steps of the measured median (T3.6) when the step has at
+	 * least {@link StepMedians#MIN_MEASURES} measures, else the mechanism's estimate; {@code measured} says that at least one
+	 * step used a measure. (The difficulty stays the sum of the mechanisms' ratings, see decisions.md.)
+	 */
 	public List<RoomSummary> list() {
+		Map<String, Map<String, StepMedians.Median>> measures = medians.byRoomAndStep();
 		return jdbc.query("SELECT data::text, updated_at FROM trahison_rooms ORDER BY id", (rs, n) -> {
 			RoomDefinition d = mapper.readValue(rs.getString(1), RoomDefinition.class);
-			return new RoomSummary(d.id(), d.name(), d.author(), d.version(), d.difficulty(), d.expectedSeconds(),
-					d.steps().size(), d.slots().size(), Files.exists(file(d.id())), rs.getTimestamp(2).toInstant());
+			int[] shown = shownTime(d, measures.getOrDefault(d.id(), Map.of()));
+			return new RoomSummary(d.id(), d.name(), d.author(), d.version(), d.difficulty(), shown[0],
+					d.steps().size(), d.slots().size(), Files.exists(file(d.id())), rs.getTimestamp(2).toInstant(), shown[1] > 0);
 		});
+	}
+
+	/** {@code {expected seconds, number of steps that used a measure}}. */
+	int[] shownTime(RoomDefinition d, Map<String, StepMedians.Median> measures) {
+		int total = 0;
+		int measured = 0;
+		for (Step st : d.steps()) {
+			StepMedians.Median m = measures.get(st.id());
+			if (m != null && m.count() >= StepMedians.MIN_MEASURES) {
+				total += m.seconds();
+				measured++;
+			} else {
+				total += mechanisms.find(st.mechanism()).map(x -> x.expectedSeconds(st.params())).orElse(0);
+			}
+		}
+		return measured == 0 ? new int[] { d.expectedSeconds(), 0 } : new int[] { total, measured };
 	}
 
 	public Optional<RoomDefinition> find(String id) {

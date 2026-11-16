@@ -1,9 +1,11 @@
 package com.mystaria.phantasmon_backend.events.trahison.room.mechanism;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.random.RandomGenerator;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.mystaria.phantasmon_backend.events.trahison.room.Give;
@@ -27,7 +29,10 @@ import tools.jackson.databind.node.ObjectNode;
  * {@code {"key": "0".."9" | "del" | "clear" | "enter"}}. A digit is appended to the entry (ignored when the entry is as
  * long as the code), {@code del} removes the last digit, {@code clear} empties the entry, {@code enter} compares: the
  * right code solves the step; anything else (a short entry included) empties the entry and counts one error
- * ({@code wrong} in the view). There is no lock-out: the mechanism holds no clock (decisions.md, D30).
+ * ({@code wrong} in the view). <b>Lock-out</b> (decisions-tranchees.md, D30): the {@value #LOCK_AFTER}rd wrong try in a row locks the
+ * keypad for {@value #LOCK_SECONDS} seconds: every key is ignored until then, the failure count starts again, the event
+ * is {@code wrong} with {@code locked: true} and {@code ms}, and the view carries {@code lock_ms} (milliseconds left, 0 when
+ * free; the client counts down from the moment it receives it). The expiry is lazy, measured on the clock this bean holds.
  *
  * <h2>Generation</h2>
  * Every digit is drawn independently (a code may start with 0). Always solvable: typing the code and {@code enter} solves
@@ -43,6 +48,20 @@ public class Keypad implements Mechanism {
 	static final int MIN_LENGTH = 3;
 	static final int MAX_LENGTH = 6;
 	static final int DEFAULT_LENGTH = 4;
+	static final int LOCK_AFTER = 3;
+	static final int LOCK_SECONDS = 10;
+
+	private final Clock clock;
+
+	@Autowired
+	public Keypad() {
+		this(Clock.systemUTC());
+	}
+
+	/** With the clock the lock-out is measured on (tests move it). */
+	public Keypad(Clock clock) {
+		this.clock = clock;
+	}
 
 	@Override
 	public String id() {
@@ -118,6 +137,8 @@ public class Keypad implements Mechanism {
 		data.put("length", length);
 		data.put("entry", "");
 		data.put("wrong", 0);
+		data.put("fails", 0);
+		data.put("lockedUntil", 0L);
 		data.put("solved", false);
 		return new MechanismState(data, List.of(Clue.digits(CODE_ROLE, code.toString())));
 	}
@@ -131,6 +152,10 @@ public class Keypad implements Mechanism {
 		ObjectNode old = state.data();
 		if (old.path("solved").asBoolean(false)) {
 			return InputResult.unchanged(state);
+		}
+		long now = clock.millis();
+		if (old.path("lockedUntil").asLong(0) > now) {
+			return InputResult.unchanged(state); // locked out: every key is ignored
 		}
 		String entry = old.path("entry").asString("");
 		int length = old.path("length").asInt();
@@ -163,6 +188,14 @@ public class Keypad implements Mechanism {
 					data.put("entry", "");
 					data.put("wrong", old.path("wrong").asInt() + 1);
 					event.put("type", "wrong");
+					int fails = old.path("fails").asInt() + 1;
+					if (fails >= LOCK_AFTER) {
+						fails = 0;
+						data.put("lockedUntil", now + LOCK_SECONDS * 1000L);
+						event.put("locked", true);
+						event.put("ms", LOCK_SECONDS * 1000L);
+					}
+					data.put("fails", fails);
 				}
 			}
 			default -> {
@@ -185,6 +218,7 @@ public class Keypad implements Mechanism {
 		view.put("entry", d.path("entry").asString(""));
 		view.put("wrong", d.path("wrong").asInt());
 		view.put("solved", d.path("solved").asBoolean(false));
+		view.put("lock_ms", Math.max(0L, d.path("lockedUntil").asLong(0) - clock.millis()));
 		if (viewer == ViewerKind.GAME_MASTER) {
 			view.put("code", d.path("code").asString(""));
 		}

@@ -47,6 +47,10 @@ public final class RoomViews {
 			n.put("id", s.step.id());
 			n.put("open", s.open);
 			n.put("solved", s.solved);
+			ArrayNode given = n.putArray("hints"); // the help texts the group was given, vaguest first (T3.6)
+			for (int h = 0; h < s.hintsGiven && h < s.step.hints().size(); h++) {
+				given.add(s.step.hints().get(h));
+			}
 			if (viewer == ViewerKind.GAME_MASTER) {
 				n.put("mechanism", s.step.mechanism());
 				n.put("hints_given", s.hintsGiven);

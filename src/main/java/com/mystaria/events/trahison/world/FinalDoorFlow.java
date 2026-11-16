@@ -31,7 +31,9 @@ public final class FinalDoorFlow {
 		/** The door is open and it is open for him: go through. */
 		OPEN_FOR_ME,
 		/** The door is open, not for him. */
-		OPEN_NOT_ME
+		OPEN_NOT_ME,
+		/** The final window runs (D18, D21) and he has no door to look at: a ghost, a spectator, a game master, a plan without a door. */
+		COUNTDOWN
 	}
 
 	private FinalDoorFlow() {
@@ -64,12 +66,14 @@ public final class FinalDoorFlow {
 
 	public static Prompt prompt() {
 		View v = GameView.current();
+		// The final countdown is for everyone (D18); the window also runs when the plan has no final door (D21).
+		boolean window = v != null && v.hasGame() && v.phase() == Phase.FINAL && GameView.finalDoor() != null;
 		if (!finalStage(v)) {
-			return Prompt.NONE;
+			return window ? Prompt.COUNTDOWN : Prompt.NONE;
 		}
 		LayoutDto.Door door = finalDoor();
 		if (door == null) {
-			return Prompt.NONE;
+			return window ? Prompt.COUNTDOWN : Prompt.NONE;
 		}
 		if (GameView.finalDoor() != null) {
 			return Boolean.TRUE.equals(v.doorsOpen().get(door.id)) ? Prompt.OPEN_FOR_ME : Prompt.OPEN_NOT_ME;

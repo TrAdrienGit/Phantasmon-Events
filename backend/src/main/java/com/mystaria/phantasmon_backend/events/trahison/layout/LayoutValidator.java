@@ -269,6 +269,12 @@ public final class LayoutValidator {
 		if (finals != 1) {
 			issues.add(new Issue(FINAL_DOOR, l(), "count=" + finals));
 		}
+		// D17: a real game needs a pupitre to open the final door (only trials without a plan go without one).
+		for (LayoutDoor door : layout.doors()) {
+			if ("final".equals(door.type()) && (door.threshold() == null || door.threshold().isBlank())) {
+				issues.add(new Issue(MISSING_FIELD, l(door.id()), "field=threshold"));
+			}
+		}
 	}
 
 	private static void link(LayoutDoor door, String zoneId, String field, Map<String, LayoutZone> zones, List<Issue> issues) {

@@ -14,7 +14,7 @@ import com.mystaria.events.trahison.room.Documents.Page;
 import com.mystaria.events.trahison.room.Pictures;
 import com.mystaria.events.trahison.ui.TrahisonPalette;
 import com.mystaria.events.trahison.ui.TrahisonUi;
-import com.mystaria.events.trahison.ui.TrahisonUi.GameColor;
+import com.mystaria.events.trahison.ui.TrahisonUi.WireColor;
 import com.mystaria.phantasmon.client.gui.menu.MenuUi;
 
 /**
@@ -82,7 +82,7 @@ public final class DocumentScreen extends TrahisonScreen {
 				int total = p.lines().size() * (size + 8) - 8;
 				int cx = x + (w - total) / 2;
 				for (String name : p.lines()) {
-					GameColor c = colorOf(name);
+					WireColor c = colorOf(name);
 					g.fill(cx - 1, y + h / 2 - size / 2 - 1, cx + size + 1, y + h / 2 + size / 2 + 1, TrahisonPalette.BORDER);
 					g.fill(cx, y + h / 2 - size / 2, cx + size, y + h / 2 + size / 2, c == null ? TrahisonPalette.TEXT_MUTED : c.base);
 					if (c != null) {
@@ -129,12 +129,8 @@ public final class DocumentScreen extends TrahisonScreen {
 		}
 	}
 
-	private static GameColor colorOf(String name) {
-		try {
-			return GameColor.valueOf(name.toUpperCase(java.util.Locale.ROOT));
-		} catch (IllegalArgumentException e) {
-			return null;
-		}
+	private static WireColor colorOf(String name) {
+		return WireColor.of(name);
 	}
 
 	@Override

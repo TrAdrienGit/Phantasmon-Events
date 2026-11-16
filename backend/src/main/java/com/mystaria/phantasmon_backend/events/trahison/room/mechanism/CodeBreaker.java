@@ -28,7 +28,7 @@ import tools.jackson.databind.node.ObjectNode;
  * <li>{@code repeats} (default false): whether a token may appear several times in the combination (without repeats the
  * alphabet must be at least {@code length});</li>
  * <li>{@code maxTries} 0 or 6..30 (default 0 = no limit): tries before the terminal resets. There is no dead end: when
- * the tries run out the combination is redrawn and the history cleared ({@code resets} counts them, decisions.md D36).</li>
+ * the tries run out the <em>same</em> combination stays and the history is cleared ({@code resets} counts them, D36).</li>
  * </ul>
  *
  * <h2>Model</h2>
@@ -97,7 +97,7 @@ public class CodeBreaker implements Mechanism {
 				new MechanismParam("kind", "text", 0, 0, "symbols", "symbols (glyphs drawn by the seed) or digits"),
 				new MechanismParam("repeats", "bool", 0, 0, "false", "A token may appear several times in the combination"),
 				new MechanismParam("maxTries", "int", 0, MAX_TRIES, "0",
-						"Tries before the terminal resets with a new combination; 0 = no limit, else 6..30"));
+						"Tries before the terminal clears its history (same combination); 0 = no limit, else 6..30"));
 	}
 
 	@Override
@@ -319,10 +319,8 @@ public class CodeBreaker implements Mechanism {
 		event.put("misplaced", s[1]);
 		int max = data.path("maxTries").asInt();
 		if (max > 0 && tries >= max) {
-			// Out of tries: a fresh combination, deterministic from the stored seed and the number of resets.
+			// Out of tries: the same combination, the history cleared (decisions-tranchees.md, D36).
 			int resets = data.path("resets").asInt() + 1;
-			SplittableRandom next = new SplittableRandom(data.path("seed").asLong() + 0x9E3779B97F4A7C15L * resets);
-			data.set("code", ints(draw(next, length, alphabet, data.path("repeats").asBoolean(false))));
 			data.set("history", Json.array());
 			data.put("tries", 0);
 			data.put("resets", resets);

@@ -87,7 +87,7 @@ class LayoutValidatorTest {
 		assertThat(LayoutValidator.validate(LayoutFixtures.with(base, null, none, null, null), false))
 				.anyMatch(i -> i.code().equals(LayoutValidator.FINAL_DOOR) && i.info().equals("count=0"));
 		List<LayoutDoor> two = new ArrayList<>(base.doors());
-		two.add(new LayoutDoor("door_final_2", "final", LayoutFixtures.cell(95), "hall", "final", null, null));
+		two.add(new LayoutDoor("door_final_2", "final", LayoutFixtures.cell(95), "hall", "final", null, null, "hall"));
 		assertThat(LayoutValidator.validate(LayoutFixtures.with(base, null, two, null, null), false))
 				.anyMatch(i -> i.code().equals(LayoutValidator.FINAL_DOOR) && i.info().equals("count=2"));
 	}
@@ -184,5 +184,22 @@ class LayoutValidatorTest {
 		doors.set(at, new LayoutDoor(door.id(), door.type(), door.block(), door.zoneA(), door.zoneB(), null, null, "nowhere"));
 		assertThat(LayoutValidator.validate(LayoutFixtures.with(base, null, doors, null, null), false))
 				.anyMatch(i -> i.code().equals(LayoutValidator.BAD_REFERENCE) && i.info().equals("field=threshold"));
+	}
+
+	/** D17: a final plan refuses a final door without a pupitre; a draft accepts it. */
+	@Test
+	void theFinalDoorNeedsAPupitreInACompletePlan() {
+		LayoutContent base = LayoutFixtures.complete();
+		List<LayoutDoor> doors = new ArrayList<>(base.doors());
+		for (int i = 0; i < doors.size(); i++) {
+			LayoutDoor door = doors.get(i);
+			if ("final".equals(door.type())) {
+				doors.set(i, new LayoutDoor(door.id(), door.type(), door.block(), door.zoneA(), door.zoneB(), null, null, null));
+			}
+		}
+		LayoutContent noPupitre = LayoutFixtures.with(base, null, doors, null, null);
+		assertThat(LayoutValidator.validate(noPupitre, false))
+				.anyMatch(i -> i.code().equals(LayoutValidator.MISSING_FIELD) && i.info().equals("field=threshold"));
+		assertThat(LayoutValidator.validate(noPupitre, true)).isEmpty();
 	}
 }

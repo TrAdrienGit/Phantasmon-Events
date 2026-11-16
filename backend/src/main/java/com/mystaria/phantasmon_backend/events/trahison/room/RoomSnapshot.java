@@ -42,6 +42,8 @@ final class RoomSnapshot {
 		putTime(out, "finishedAt", room.finishedAt);
 		out.put("exitOpen", room.exitOpen);
 		out.put("replays", room.replays);
+		out.put("autoHints", room.autoHints);
+		putTime(out, "autoHintMark", room.autoHintMark);
 		ArrayNode inventory = out.putArray("inventory");
 		room.inventory.forEach(inventory::add);
 		ArrayNode holders = out.putArray("holders");
@@ -78,6 +80,8 @@ final class RoomSnapshot {
 		room.finishedAt = time(in, "finishedAt");
 		room.exitOpen = in.path("exitOpen").asBoolean(false);
 		room.replays = in.path("replays").asInt(0);
+		room.autoHints = in.path("autoHints").asInt(0);
+		room.autoHintMark = time(in, "autoHintMark");
 		in.path("inventory").forEach(i -> room.inventory.add(i.asString()));
 		JsonNode holders = in.path("holders");
 		for (int i = 0; i < room.inventory.size(); i++) {

@@ -71,16 +71,18 @@ class Broadcaster implements GameListener, RoomListener {
 	 * accounts are bots, the game masters.
 	 */
 	private record Audience(List<UUID> accounts, boolean[] alive, Set<UUID> bots, Set<UUID> gameMasters, boolean freeTime,
-			int round) {
+			int round, boolean[] roam) {
 
 		static Audience of(Game g) {
 			List<UUID> accounts = new java.util.ArrayList<>();
 			boolean[] alive = new boolean[g.players.size()];
+			boolean[] roam = new boolean[alive.length];
 			Set<UUID> bots = new LinkedHashSet<>();
 			for (int i = 0; i < alive.length; i++) {
 				PlayerState p = g.players.get(i);
 				accounts.add(p.uuid);
 				alive[i] = p.alive;
+				roam[i] = com.mystaria.phantasmon_backend.events.trahison.game.GameService.canRoam(g, i);
 				if (p.bot) {
 					bots.add(p.uuid);
 				}
@@ -88,14 +90,15 @@ class Broadcaster implements GameListener, RoomListener {
 			var current = g.currentRound();
 			return new Audience(List.copyOf(accounts), alive, Set.copyOf(bots), Set.copyOf(g.gameMasters),
 					g.phase == com.mystaria.phantasmon_backend.events.trahison.game.Phase.FREE_TIME,
-					current == null ? 0 : current.number);
+					current == null ? 0 : current.number, roam);
 		}
 
 		/**
 		 * What this account sees of a room: a living member of the group, the player view; a living player of another
 		 * group, nothing (except in the free time, D8: every living player visits and plays every room opened so far, those
 		 * of earlier rounds too, so he gets the player view of all of them; outside it, the rooms of earlier rounds are closed
-		 * to everybody who plays); a ghost or anyone not playing, the spectator view; a game master who does not play, the game
+		 * to everybody who plays, except, D22, in ROOMS and VOTE for a player whose group has finished its own room of the
+		 * round: he roams like in the free time); a ghost or anyone not playing, the spectator view; a game master who does not play, the game
 		 * master view (as {@link Views#kindOf}, a game master who plays is a player).
 		 */
 		ViewerKind viewerOf(UUID account, RoomInstance room) {
@@ -104,7 +107,7 @@ class Broadcaster implements GameListener, RoomListener {
 				if (!alive[i]) {
 					return ViewerKind.SPECTATOR;
 				}
-				return freeTime || room.round == round && room.members.contains(i) ? ViewerKind.PLAYER : null;
+				return freeTime || roam[i] || room.round == round && room.members.contains(i) ? ViewerKind.PLAYER : null;
 			}
 			return gameMasters.contains(account) ? ViewerKind.GAME_MASTER : ViewerKind.SPECTATOR;
 		}
@@ -151,6 +154,10 @@ class Broadcaster implements GameListener, RoomListener {
 					&& g.log.stream().anyMatch(e -> e.type.equals("final_door"))) {
 				announceEscape(g);
 			}
+			if (g.phase == com.mystaria.phantasmon_backend.events.trahison.game.Phase.ENDED
+					&& g.log.stream().anyMatch(e -> e.type.equals("game_master_killed"))) {
+				announceGameMasterKilled(g);
+			}
 		}
 	}
 
@@ -158,6 +165,15 @@ class Broadcaster implements GameListener, RoomListener {
 	public void changed(Game g, String patch) {
 		audiences.put(g.hub, Audience.of(g));
 		sendViews(g);
+		if ("room".equals(patch)) {
+			// D22: a group that finished its room is free to roam, so its members get the rooms they did not see until now.
+			Audience audience = audiences.get(g.hub);
+			for (int i = 0; audience != null && i < audience.roam().length; i++) {
+				if (audience.roam()[i] && !audience.bots().contains(audience.accounts().get(i))) {
+					sendRooms(g, audience.accounts().get(i));
+				}
+			}
+		}
 		if ("final_door".equals(patch) && g.finalDoor != null && !g.finalDoor.equals(openDoors.put(g.id, g.finalDoor))) {
 			announceFinalDoor(g);
 		}
@@ -169,7 +185,7 @@ class Broadcaster implements GameListener, RoomListener {
 		Audience audience = Audience.of(g);
 		audiences.put(g.hub, audience);
 		for (UUID account : audience.gameMasters()) {
-			if (Views.kindOf(g, account) == Views.Kind.GM) {
+			if (Views.kindOf(g, account) == Views.Kind.GM || g.indexOf(account) >= 0) { // D12: a playing game master too
 				sendView(g, account);
 			}
 		}
@@ -302,6 +318,23 @@ class Broadcaster implements GameListener, RoomListener {
 		say.put("kind", "announce");
 		say.put("key", SAY_KEY + "final_door_open");
 		say.put("args", List.of(g.players.get(g.finalDoor.openedBy()).name, String.valueOf(g.settings.finalDoorSeconds)));
+		say.put("phase", g.phase.name());
+		say.put("round", g.round);
+		for (UUID account : recipients(g)) {
+			sessions.send(account, WsMessage.of(SAY, say));
+		}
+	}
+
+	/** D12: the game ended because the others killed the game master who played; his identity is now public. */
+	private void announceGameMasterKilled(Game g) {
+		List<String> who = new java.util.ArrayList<>();
+		for (int i : g.playingGameMasters()) {
+			who.add(g.players.get(i).name);
+		}
+		Map<String, Object> say = new java.util.LinkedHashMap<>();
+		say.put("kind", "announce");
+		say.put("key", SAY_KEY + "game_master_killed");
+		say.put("args", List.of(String.join(", ", who)));
 		say.put("phase", g.phase.name());
 		say.put("round", g.round);
 		for (UUID account : recipients(g)) {

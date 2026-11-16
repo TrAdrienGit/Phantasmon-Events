@@ -13,12 +13,12 @@ import net.minecraft.network.chat.Component;
 import com.mystaria.events.trahison.minigame.widget.Widget;
 import com.mystaria.events.trahison.ui.TrahisonPalette;
 import com.mystaria.events.trahison.ui.TrahisonUi;
-import com.mystaria.events.trahison.ui.TrahisonUi.GameColor;
+import com.mystaria.events.trahison.ui.TrahisonUi.WireColor;
 import com.mystaria.phantasmon.client.gui.menu.MenuUi;
 
 /**
  * Mechanism {@code wiring}: a panel of terminals to join with wires. Left terminals are numbered; right terminals carry a
- * colour and its symbol (red triangle, green disc, blue square: never the colour alone). A clue elsewhere in the room says
+ * colour and its symbol (red triangle, green disc, blue square, yellow diamond, white ring: never the colour alone). A clue elsewhere in the room says
  * which colour each numbered terminal must reach; here the group drags wires.
  *
  * <p>
@@ -26,8 +26,8 @@ import com.mystaria.phantasmon.client.gui.menu.MenuUi;
  * links[], wrong, solved}} (the game master's view adds the {@code scheme}, which this screen never shows). A terminal
  * holds one wire. Drag from a free terminal to one on the other side to wire it; drag from a wired terminal to take its
  * wire off (drop on another terminal to move it, anywhere else to remove it); or click a terminal then a terminal on the
- * other side; right-click a terminal to remove its wire. A full panel that is wrong is a short circuit: the backend counts
- * it ({@code wrong}) and the screen shakes. Other players' wires appear in the view, and their touch shows as a cursor in
+ * other side; right-click a terminal to remove its wire. A full panel that is wrong is a short circuit (D39): the backend
+ * counts it ({@code wrong}), drops every wire (the next view has empty {@code links}) and the screen shakes. Other players' wires appear in the view, and their touch shows as a cursor in
  * their colour.
  *
  * <p>
@@ -35,8 +35,8 @@ import com.mystaria.phantasmon.client.gui.menu.MenuUi;
  */
 public final class WiringScreen extends MiniGameScreen {
 
-	private static final List<String> OFFLINE_SCHEME = List.of("red", "green", "blue", "red");
-	private static final List<String> OFFLINE_RIGHT = List.of("blue", "red", "red", "green");
+	private static final List<String> OFFLINE_SCHEME = List.of("red", "yellow", "white", "red");
+	private static final List<String> OFFLINE_RIGHT = List.of("white", "red", "red", "yellow");
 	private static final int RADIUS = 9;
 
 	private final Panel panel;
@@ -95,12 +95,8 @@ public final class WiringScreen extends MiniGameScreen {
 		return null;
 	}
 
-	private static GameColor colorOf(String name) {
-		try {
-			return GameColor.valueOf(name.toUpperCase(Locale.ROOT));
-		} catch (IllegalArgumentException e) {
-			return null;
-		}
+	private static WireColor colorOf(String name) {
+		return WireColor.of(name);
 	}
 
 	private int rightOf(int left) {
@@ -268,20 +264,20 @@ public final class WiringScreen extends MiniGameScreen {
 		for (int i = 0; i < links.length && i < wires; i++) {
 			int r = links[i];
 			if (r >= 0 && r < right.size()) {
-				GameColor c = colorOf(right.get(r));
+				WireColor c = colorOf(right.get(r));
 				wire(g, leftX(), termY(i), rightX(), termY(r), c, done);
 			}
 		}
 		if (t != null) {
 			int ax = termX(t[0]);
 			int ay = termY(t[1]);
-			GameColor held = t[0] == 1 && t[1] < right.size() ? colorOf(right.get(t[1])) : panel.heldColor();
+			WireColor held = t[0] == 1 && t[1] < right.size() ? colorOf(right.get(t[1])) : panel.heldColor();
 			wire(g, ax, ay, panel.mouseX(), panel.mouseY(), held, false);
 		}
 	}
 
 	/** A wire between two points: a sagging curve in the wire's colour, with its symbol at the right end. */
-	private void wire(GuiGraphics g, int x1, int y1, int x2, int y2, GameColor c, boolean done) {
+	private void wire(GuiGraphics g, int x1, int y1, int x2, int y2, WireColor c, boolean done) {
 		int tone = done ? TrahisonPalette.SUCCESS : c != null ? c.base : TrahisonPalette.EDGE_LIGHT;
 		int dark = done ? TrahisonPalette.SUCCESS_DARK : c != null ? c.dark : TrahisonPalette.EDGE;
 		int light = done ? TrahisonPalette.SUCCESS : c != null ? c.light : TrahisonPalette.TEXT_SECONDARY;
@@ -325,7 +321,7 @@ public final class WiringScreen extends MiniGameScreen {
 		int cy = termY(index);
 		boolean wired = side == 0 ? rightOf(index) >= 0 : leftOfRight(index) >= 0;
 		boolean pick = selected != null && selected[0] == side && selected[1] == index;
-		GameColor c = side == 1 && index < right.size() ? colorOf(right.get(index)) : null;
+		WireColor c = side == 1 && index < right.size() ? colorOf(right.get(index)) : null;
 		TrahisonUi.disc(g, cx, cy, RADIUS + 2, pick ? TrahisonPalette.ACCENT_HOT : hot ? TrahisonPalette.EDGE_LIGHT : TrahisonPalette.BORDER);
 		TrahisonUi.disc(g, cx, cy, RADIUS, done ? TrahisonPalette.SUCCESS_DARK : c != null ? c.dark : TrahisonPalette.PANEL_RAISED);
 		TrahisonUi.disc(g, cx, cy, RADIUS - 2, c != null ? c.base : TrahisonPalette.PANEL_SUNKEN);
@@ -360,7 +356,7 @@ public final class WiringScreen extends MiniGameScreen {
 		/** The terminal the wire being dragged is fixed to ({side, index}), or null. */
 		private int[] anchor;
 		/** The colour of a wire picked up from a left terminal (the colour of the right one it was on). */
-		private GameColor held;
+		private WireColor held;
 		/** Where the picked-up wire was plugged, to restore it when dropped back on the same terminal: {left, right}. */
 		private int[] origin;
 		private double mouseX;
@@ -378,7 +374,7 @@ public final class WiringScreen extends MiniGameScreen {
 			return anchor;
 		}
 
-		GameColor heldColor() {
+		WireColor heldColor() {
 			return held;
 		}
 

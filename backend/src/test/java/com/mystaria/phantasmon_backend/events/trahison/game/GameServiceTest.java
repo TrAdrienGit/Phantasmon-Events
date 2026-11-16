@@ -146,6 +146,10 @@ class GameServiceTest {
 		assertThat(service.find(HUB).finalLoops).isEqualTo(1);
 
 		service.openFinalDoor(HUB, ids[4]);
+		assertThat(phase()).isEqualTo(Phase.FINAL); // D21: no door in the plan, same window of 60 seconds (D19)
+		clock.advanceSeconds(59);
+		assertThat(phase()).isEqualTo(Phase.FINAL);
+		clock.advanceSeconds(1);
 		assertThat(phase()).isEqualTo(Phase.ENDED);
 		assertThat(service.find(HUB).winners).containsExactly(0, 1, 2, 3, 4, 5, 6, 7, 8);
 		assertThat(service.find(HUB).endedAt).isNotNull();
@@ -184,6 +188,7 @@ class GameServiceTest {
 		assertThat(service.find(HUB).finalLoops).isEqualTo(1);
 		service.setPoints(HUB, 2, 9);
 		service.openFinalDoor(HUB, ids[2]);
+		clock.advanceSeconds(60);
 		assertThat(service.find(HUB).winners).containsExactly(2);
 	}
 
@@ -238,8 +243,6 @@ class GameServiceTest {
 		assertCode(() -> service.start(HUB), TrahisonException.NO_GAME_MASTER); // game master mode needs one (D7)
 		UUID master = UUID.randomUUID();
 		service.setGameMaster(HUB, master, "gm", true);
-		assertCode(() -> service.join(HUB, master, "gm"), TrahisonException.GAME_MASTER_PLAYS);
-		assertCode(() -> service.setGameMaster(HUB, ids[0], "p0", true), TrahisonException.GAME_MASTER_PLAYS);
 		UUID second = UUID.randomUUID();
 		service.setGameMaster(HUB, second, "gm2", true); // from none to as many as wanted
 		service.setGameMaster(HUB, second, null, false);

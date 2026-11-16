@@ -21,15 +21,14 @@ import tools.jackson.databind.node.ObjectNode;
  * Objects hidden in the room, to find and bring back. The room has up to {@value #MAX_SPOTS} <em>spots</em>: the clue
  * roles {@code spot_1}..{@code spot_n}, each given ({@code Step.gives}) to a slot of kind {@code pickup} (or any other).
  * The seed picks which {@code filled} spots really hold an object and which object each holds; a spot left empty shows
- * nothing, so its slot is not even active: the players do not know where the objects are (the deposit screen only
- * counts them). An object is picked up with the room's {@code pick_up} (it goes to the inventory); a {@code document} may be
+ * nothing, so its slot is not even active: the players do not know where the objects are (the counter only counts them). An object is picked up with the room's {@code pick_up} (it goes to the inventory); a {@code document} may be
  * given too, and is read where it lies.
  *
  * <h2>Solved</h2>
- * The step is solved when <b>every object the seed placed has been brought back</b>: a player uses each object on a slot
- * the step binds (role {@value #DEPOSIT_ROLE}, a crate, a pedestal... or the exit slot itself). A deposited object is
- * consumed. An object the step does not expect is refused and stays in the bag. So "collected" means found, carried and
- * delivered, never just seen. The mechanism holds no screen gesture.
+ * The step is solved when <b>every object the seed placed has been picked up</b> (decisions-tranchees.md, D32): picking an
+ * object up is enough, nothing is brought anywhere. {@code RoomService} tells the mechanism on every {@code pick_up}
+ * ({@link Mechanism#onPickUp}). Giving an object away or using it elsewhere afterwards changes nothing. The step binds no
+ * slot and holds no screen gesture (a slot of role {@value #DEPOSIT_ROLE} may still be bound: it only shows the counter).
  *
  * <h2>Parameters</h2>
  * <ul>
@@ -45,7 +44,7 @@ import tools.jackson.databind.node.ObjectNode;
  *
  * <h2>Generation</h2>
  * Shuffled with the step's generator: the same seed always fills the same spots with the same objects. Always solvable:
- * every object placed is a clue the players can pick up, and depositing them all solves the step.
+ * every object placed is a clue the players can pick up, and picking them all up solves the step.
  */
 @Component
 public class PickupSet implements Mechanism {
@@ -95,11 +94,6 @@ public class PickupSet implements Mechanism {
 	}
 
 	@Override
-	public List<SlotRole> slotRoles() {
-		return List.of(SlotRole.of(DEPOSIT_ROLE, "pedestal", "terminal", "plate", "secret", "inner_door"));
-	}
-
-	@Override
 	public List<MechanismParam> params() {
 		return List.of(
 				new MechanismParam("spots", "int", MIN_SPOTS, MAX_SPOTS, String.valueOf(DEFAULT_SPOTS),
@@ -144,7 +138,7 @@ public class PickupSet implements Mechanism {
 		return problems;
 	}
 
-	/** Every spot must be given to a slot from the start (or its object would be out of reach), and something bound to deposit on. */
+	/** Every spot must be given to a slot from the start, or its object would be out of reach. No slot is needed to bring objects to. */
 	@Override
 	public List<String> validateStep(Step step) {
 		List<String> problems = new ArrayList<>();
@@ -154,9 +148,6 @@ public class PickupSet implements Mechanism {
 			if (step.gives().stream().noneMatch(g -> role.equals(g.clue()) && Give.OPEN.equals(g.when()))) {
 				problems.add("missing=" + role + ";when=open");
 			}
-		}
-		if (step.slots().isEmpty()) {
-			problems.add("missing=slot:" + DEPOSIT_ROLE);
 		}
 		if (c.document().isBlank() && step.gives().stream().anyMatch(g -> DOCUMENT_ROLE.equals(g.clue()))) {
 			problems.add("missing=param:" + DOCUMENT_ROLE);
@@ -260,9 +251,9 @@ public class PickupSet implements Mechanism {
 		return InputResult.unchanged(state);
 	}
 
-	/** An object brought to a bound slot: taken when the seed placed it and it is not delivered yet. */
+	/** An object of the step picked up: counted when the seed placed it and it is not counted yet. */
 	@Override
-	public Optional<InputResult> onItem(MechanismState state, int player, String role, String item) {
+	public Optional<InputResult> onPickUp(MechanismState state, int player, String role, String item) {
 		ObjectNode old = state.data();
 		if (old.path("solved").asBoolean(false) || !contains(old.get("required"), item) || contains(old.get("delivered"), item)) {
 			return Optional.empty();
@@ -273,7 +264,7 @@ public class PickupSet implements Mechanism {
 		boolean solved = delivered.size() == data.get("required").size();
 		data.put("solved", solved);
 		ObjectNode event = Json.object();
-		event.put("type", "deposit");
+		event.put("type", "collect");
 		event.put("item", item);
 		return Optional.of(new InputResult(state.withData(data), List.of(event), solved));
 	}
@@ -289,7 +280,7 @@ public class PickupSet implements Mechanism {
 
 	// ---------------------------------------------------------------- view
 
-	/** How many objects there are and which are back; never the ones still hidden (the game master sees them). */
+	/** How many objects there are and which are picked up (field {@code delivered}); never the ones still hidden (the game master sees them). */
 	@Override
 	public JsonNode view(MechanismState state, ViewerKind viewer) {
 		ObjectNode d = state.data();

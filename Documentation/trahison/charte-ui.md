@@ -89,6 +89,15 @@ Base : remplissages et glyphes. Claire : texte sur fond sombre, lueurs. Sombre :
 `TrahisonUi.GameColor` regroupe les trois tons et le symbole d'une couleur. Le futur habillage Feu / Plante / Eau ne
 change que ces valeurs et ces symboles (flamme, feuille, goutte), jamais le code des écrans.
 
+**Couleurs de fil seulement** (puzzle de câblage, jamais une porte ni un vote ; `TrahisonUi.WireColor` reprend les trois couleurs de jeu et ajoute celles-ci) :
+
+| Couleur | Base | Claire | Sombre | Symbole |
+|---|---|---|---|---|
+| `YELLOW` | `0xFFF2E24A` | `0xFFFFF59A` | `0xFF8C8420` | losange (`Glyph.DIAMOND`) |
+| `WHITE` | `0xFFF2F4FA` | `0xFFFFFFFF` | `0xFF8E94A8` | anneau (`Glyph.RING`) |
+
+Le jaune de fil est distinct de l'or du vote « Allier » (`ALLY`) ; le blanc n'est jamais un texte. Même règle d'accessibilité : le symbole accompagne toujours la couleur (écran de câblage, écran de lecture, indice mural).
+
 ### Votes, états, teintes
 
 | Jeton | Valeur | Usage |

@@ -187,7 +187,6 @@ class RoomIntegrationTest {
 				.andExpect(jsonPath("$[?(@.id == 'keypad')].slot_roles[0].role").value(hasItem("keypad")))
 				.andExpect(jsonPath("$[?(@.id == 'keypad')].slot_roles[0].kinds[0]").value(hasItem("keypad")))
 				.andExpect(jsonPath("$[?(@.id == 'keypad')].clue_roles[0]").value(hasItem("code")))
-				.andExpect(jsonPath("$[?(@.id == 'pickup_set')].slot_roles[0].role").value(hasItem("deposit")))
 				.andExpect(jsonPath("$[?(@.id == 'pickup_set')].clue_roles[0]").value(hasItem("spot_1")))
 				.andExpect(jsonPath("$[?(@.id == 'ring_dial')].slot_roles[0].role").value(hasItem("terminal")))
 				.andExpect(jsonPath("$[?(@.id == 'wiring')].slot_roles[0].role").value(hasItem("panel")))

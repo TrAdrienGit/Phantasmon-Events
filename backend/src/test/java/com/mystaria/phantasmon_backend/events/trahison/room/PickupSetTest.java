@@ -59,10 +59,10 @@ class PickupSetTest {
 				assertTrue(roles.add(c.role()), "one object per spot");
 				assertTrue(ids.add(c.value().asString()), "distinct objects");
 			}
-			// Solve it from the clues alone, through the real engine: only the last deposit reports solved.
+			// Solve it from the clues alone, through the real engine: only the last pick up reports solved.
 			MechanismState s = state;
 			for (int i = 0; i < items.size(); i++) {
-				Optional<InputResult> r = set.onItem(s, 0, "deposit", items.get(i).value().asString());
+				Optional<InputResult> r = set.onPickUp(s, 0, items.get(i).role(), items.get(i).value().asString());
 				assertTrue(r.isPresent(), "seed " + seed);
 				assertEquals(i == items.size() - 1, r.get().solved(), "seed " + seed + " item " + i);
 				s = r.get().state();
@@ -115,7 +115,7 @@ class PickupSetTest {
 			assertEquals(4, gm.get("filled").size());
 			// A delivered object shows (the players handed it over), the others stay hidden.
 			String first = items(state).get(0).value().asString();
-			MechanismState after = set.onItem(state, 0, "deposit", first).get().state();
+			MechanismState after = set.onPickUp(state, 0, "spot_1", first).get().state();
 			String json = Json.write(set.view(after, ViewerKind.PLAYER));
 			assertTrue(json.contains("\"" + first + "\""));
 			for (Clue c : items(state).subList(1, 4)) {
@@ -125,31 +125,32 @@ class PickupSetTest {
 	}
 
 	@Test
-	void anUnexpectedOrRepeatedObjectIsRefused() {
+	void anUnexpectedOrRepeatedObjectIsIgnored() {
 		MechanismState state = set.generate(new SplittableRandom(4), params(6, 3));
-		assertTrue(set.onItem(state, 0, "deposit", "toaster").isEmpty());
+		assertTrue(set.onPickUp(state, 0, "spot_1", "toaster").isEmpty());
 		String first = items(state).get(0).value().asString();
-		MechanismState after = set.onItem(state, 0, "deposit", first).get().state();
-		assertTrue(set.onItem(after, 0, "deposit", first).isEmpty(), "delivered twice");
-		assertEquals("deposit", set.onItem(state, 0, "deposit", first).get().events().get(0).get("type").asString());
+		MechanismState after = set.onPickUp(state, 0, "spot_1", first).get().state();
+		assertTrue(set.onPickUp(after, 0, "spot_1", first).isEmpty(), "picked up twice");
+		assertEquals("collect", set.onPickUp(state, 0, "spot_1", first).get().events().get(0).get("type").asString());
 	}
 
 	@Test
 	void solvedStepRefusesMore() {
 		MechanismState s = set.generate(new SplittableRandom(4), params(6, 1));
 		String only = items(s).get(0).value().asString();
-		s = set.onItem(s, 0, "deposit", only).get().state();
+		s = set.onPickUp(s, 0, "spot_1", only).get().state();
 		assertTrue(s.data().get("solved").asBoolean());
-		assertTrue(set.onItem(s, 0, "deposit", only).isEmpty());
+		assertTrue(set.onPickUp(s, 0, "spot_1", only).isEmpty());
 	}
 
 	@Test
-	void onItemDoesNotModifyTheOldState() {
+	void onPickUpDoesNotModifyTheOldState() {
 		MechanismState state = set.generate(new SplittableRandom(3), params(6, 3));
 		String before = state.data().toString();
-		set.onItem(state, 0, "deposit", items(state).get(0).value().asString());
+		set.onPickUp(state, 0, "spot_1", items(state).get(0).value().asString());
 		assertEquals(before, state.data().toString());
 		assertTrue(set.onInput(state, 0, Json.object()).events().isEmpty());
+		assertTrue(set.onItem(state, 0, "deposit", items(state).get(0).value().asString()).isEmpty(), "items are no longer taken anywhere");
 	}
 
 	@Test
@@ -194,20 +195,20 @@ class PickupSetTest {
 		ObjectNode bad = params(4, 2);
 		bad.put("items", "ok,not ok!");
 		assertFalse(set.validateParams(bad).isEmpty());
-		// Wiring: every spot must be given from the start, and a slot must be bound to deposit on.
+		// Wiring: every spot must be given from the start; no slot is needed (D32).
 		List<Give> gives = new ArrayList<>();
 		for (int i = 1; i <= 3; i++) {
 			gives.add(new Give("spot_" + i, "p" + i, null));
 		}
-		Step ok = new Step("s", "pickup_set", params(3, 2), Map.of("deposit", "box"), List.of(), gives, List.of());
+		Step ok = new Step("s", "pickup_set", params(3, 2), Map.of("spot_1", "box"), List.of(), gives, List.of());
 		assertTrue(set.validateStep(ok).isEmpty());
-		Step partial = new Step("s", "pickup_set", params(3, 2), Map.of("deposit", "box"), List.of(), gives.subList(0, 2), List.of());
+		Step partial = new Step("s", "pickup_set", params(3, 2), Map.of("spot_1", "box"), List.of(), gives.subList(0, 2), List.of());
 		assertEquals(List.of("missing=spot_3;when=open"), set.validateStep(partial));
-		Step ghostDoc = new Step("s", "pickup_set", params(3, 2), Map.of("deposit", "box"), List.of(),
+		Step ghostDoc = new Step("s", "pickup_set", params(3, 2), Map.of("spot_1", "box"), List.of(),
 				List.of(gives.get(0), gives.get(1), gives.get(2), new Give("document", "desk", null)), List.of());
 		assertEquals(List.of("missing=param:document"), set.validateStep(ghostDoc));
-		Step nowhere = new Step("s", "pickup_set", params(3, 2), Map.of(), List.of(), gives, List.of());
-		assertEquals(1, set.validateStep(nowhere).size());
+		Step noSlot = new Step("s", "pickup_set", params(3, 2), Map.of(), List.of(), gives, List.of());
+		assertTrue(set.validateStep(noSlot).isEmpty(), "picking up is enough: no deposit slot needed");
 	}
 
 	@Test
@@ -216,6 +217,6 @@ class PickupSetTest {
 		assertEquals(2, set.difficulty(Json.object()));
 		assertEquals(3, set.difficulty(params(6, 6)));
 		assertTrue(set.expectedSeconds(params(6, 6)) > set.expectedSeconds(params(6, 1)));
-		assertEquals("deposit", set.slotRoles().get(0).role());
+		assertTrue(set.slotRoles().isEmpty(), "no slot to bring objects to (D32)");
 	}
 }

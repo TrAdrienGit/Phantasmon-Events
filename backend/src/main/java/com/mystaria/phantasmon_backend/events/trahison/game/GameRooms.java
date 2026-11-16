@@ -134,6 +134,21 @@ public final class GameRooms {
 		return result;
 	}
 
+	/**
+	 * End of {@code ROOMS} (T3.6): opens the exit of every room of the round that is not finished and saves it. Returns the
+	 * groups that were not finished (their members pay the timeout penalty).
+	 */
+	List<Integer> openUnsolved(Game g, RoundState r) {
+		List<Integer> opened = new ArrayList<>();
+		for (int k = 0; k < 3; k++) {
+			if (!r.roomSolved[k] && rooms.find(g.hub, r.number, k).isPresent() && !rooms.isFinished(g.hub, k)) {
+				forceSolve(g, r, k);
+				opened.add(k);
+			}
+		}
+		return opened;
+	}
+
 	/** Solves the group's room at once (the provisional {@code debug_solve}, bots); no room: nothing happens. */
 	void forceSolve(Game g, RoundState r, int group) {
 		if (rooms.find(g.hub, r.number, group).isEmpty()) {

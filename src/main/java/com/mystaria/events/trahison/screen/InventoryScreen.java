@@ -116,7 +116,7 @@ public final class InventoryScreen extends TrahisonScreen {
 		}
 		// ---- footer
 		int by = y + h - 8 - TrahisonUi.BUTTON_H;
-		if (GameView.current() != null && GameView.current().phase() == Phase.FREE_TIME) {
+		if (Rooms.roaming(GameView.current())) {
 			ui.button(g, x + 8, by, 150, TrahisonUi.BUTTON_H, Component.translatable(T + "replay.button"), ButtonKind.DEFAULT,
 					Component.translatable(T + "replay.tip"), () -> modal = new Modal(Component.translatable(T + "replay.title"),
 							Component.translatable(T + "replay.text", room.name()), Component.translatable(T + "replay.confirm"), false, Messages::replay));

@@ -34,7 +34,28 @@ public final class FinalDoorPrompt {
 		HudRenderCallback.EVENT.register((graphics, tickCounter) -> render(graphics));
 	}
 
+	private static final int[] CALLS = { 5, 10, 30 };
+	/** Seconds left at the previous frame, to say each call of the final countdown once (client display only). */
+	private static int lastSeconds = Integer.MAX_VALUE;
+
+	/** D18: the hostess calls the final countdown for everyone, at 30, 10 and 5 seconds. */
+	private static void announceCountdown() {
+		if (GameView.finalDoor() == null) {
+			lastSeconds = Integer.MAX_VALUE;
+			return;
+		}
+		int seconds = GameView.finalDoorSeconds();
+		for (int mark : CALLS) {
+			if (seconds <= mark && lastSeconds > mark) {
+				Announcer.say(Component.translatable(T + "say.final_countdown", Math.max(1, seconds)));
+				break;
+			}
+		}
+		lastSeconds = seconds;
+	}
+
 	private static void render(GuiGraphics g) {
+		announceCountdown();
 		Minecraft mc = Minecraft.getInstance();
 		if (!TrahisonUi.hudVisible() || mc.screen instanceof TrahisonScreen || HudSuppression.hidden() || MiniGameScreen.isOpen()) {
 			return;
@@ -51,12 +72,14 @@ public final class FinalDoorPrompt {
 			case CANNOT -> Component.translatable(T + "final.prompt.cannot");
 			case OPEN_FOR_ME -> Component.translatable(T + "final.prompt.open_for_me", seconds);
 			case OPEN_NOT_ME -> Component.translatable(T + "final.prompt.open_not_me", seconds);
+			case COUNTDOWN -> Component.translatable(T + "final.prompt.countdown", seconds);
 			default -> Component.empty();
 		};
 		int color = switch (prompt) {
 			case AT_PUPITRE, GO -> TrahisonPalette.ACCENT;
 			case OPEN_FOR_ME -> TrahisonPalette.SUCCESS;
 			case CANNOT, OPEN_NOT_ME -> TrahisonPalette.DANGER;
+			case COUNTDOWN -> TrahisonPalette.ACCENT;
 			default -> TrahisonPalette.TEXT_SECONDARY;
 		};
 		int w = Math.min(g.guiWidth() - 2 * TrahisonUi.SAFE_MARGIN, TrahisonUi.width(text) + 20);

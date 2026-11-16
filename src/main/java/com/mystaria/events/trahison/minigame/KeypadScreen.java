@@ -25,6 +25,11 @@ import com.mystaria.phantasmon.client.gui.menu.MenuUi;
  * numeric pad), Backspace, Delete (clear) and Enter.
  *
  * <p>
+ * Lock-out (decisions-tranchees.md, D30): the view also carries {@code lock_ms}, the milliseconds the keypad stays locked
+ * after the third wrong try in a row (0 when free). The screen counts down from the moment it receives it: the display
+ * turns red and says how many seconds are left, and keys are ignored (the backend ignores them too).
+ *
+ * <p>
  * Offline (debug command) the screen holds a fake code and shows it in a side note, so the look can be judged.
  */
 public final class KeypadScreen extends MiniGameScreen {
@@ -48,6 +53,9 @@ public final class KeypadScreen extends MiniGameScreen {
 	private int wrong = -1;
 	private boolean unlocked;
 	private long errorAt = -10000;
+	/** When the lock-out ends (milliseconds, wall clock), 0 when the keypad is free. */
+	private long lockedUntil;
+	private int offlineFails;
 
 	public KeypadScreen(String step, boolean offline) {
 		super("keypad", step, offline);
@@ -67,6 +75,9 @@ public final class KeypadScreen extends MiniGameScreen {
 
 	/** A key pressed here (mouse or keyboard): the entry changes at once, then the gesture goes to the backend. */
 	private void press(String key) {
+		if (locked()) {
+			return;
+		}
 		switch (key) {
 			case "del" -> {
 				if (entry.isEmpty()) {
@@ -99,9 +110,17 @@ public final class KeypadScreen extends MiniGameScreen {
 				entry = "";
 				wrong++;
 				errorAt = System.currentTimeMillis();
+				if (++offlineFails >= 3) {
+					offlineFails = 0;
+					lockedUntil = errorAt + 10_000;
+				}
 				fail();
 			}
 		}
+	}
+
+	private boolean locked() {
+		return lockedUntil > System.currentTimeMillis();
 	}
 
 	private PushButton buttonOf(String key) {
@@ -159,6 +178,8 @@ public final class KeypadScreen extends MiniGameScreen {
 			fail();
 		}
 		wrong = w;
+		int lockMs = PuzzleScreens.asInt(view.get("lock_ms"), 0);
+		lockedUntil = lockMs > 0 ? System.currentTimeMillis() + lockMs : 0;
 		unlocked = Boolean.TRUE.equals(view.get("solved"));
 	}
 
@@ -191,7 +212,8 @@ public final class KeypadScreen extends MiniGameScreen {
 	protected void drawUnder(GuiGraphics g, int mx, int my) {
 		placeClear();
 		long now = System.currentTimeMillis();
-		boolean error = now - errorAt < ERROR_MS;
+		boolean lock = lockedUntil > now;
+		boolean error = lock || now - errorAt < ERROR_MS;
 		int x = displayX();
 		int y = contentY + 8;
 		int frame = unlocked || isSolved() ? TrahisonPalette.SUCCESS : error ? TrahisonPalette.DANGER : TrahisonPalette.EDGE;
@@ -211,6 +233,12 @@ public final class KeypadScreen extends MiniGameScreen {
 			} else {
 				g.fill(cx + CELL_W / 2 - 3, y + CELL_H / 2 - 1, cx + CELL_W / 2 + 3, y + CELL_H / 2 + 1, TrahisonPalette.TEXT_DISABLED);
 			}
+		}
+		if (lock) {
+			int seconds = (int) Math.ceil((lockedUntil - now) / 1000.0);
+			g.fill(x, y, x + displayWidth(), y + CELL_H, TrahisonUi.lerp(0.5f, TrahisonPalette.PANEL_SUNKEN, TrahisonPalette.DANGER_DARK));
+			MenuUi.centered(g, Component.translatable("phantasmon_events.trahison.minigame.keypad.locked", seconds), x + displayWidth() / 2, y + (CELL_H - 8) / 2,
+					displayWidth() - 8, TrahisonPalette.DANGER);
 		}
 		int noteX = contentX + 10;
 		int noteY = contentY + contentH - 22;

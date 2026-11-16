@@ -46,11 +46,11 @@ class NewMechanismsRoomTest {
 	/** objects (pickup_set, 3 spots) -> keypad (code on the wall) -> exit button. */
 	static RoomDefinition room() {
 		return new RoomDefinition("hunt_room", "Hunt", "tester", 1, 3, 100,
-				List.of(RoomFixtures.slot("crate", "pedestal", 2, 1, 2), RoomFixtures.slot("a", "pickup", 5, 1, 2),
+				List.of(RoomFixtures.slot("a", "pickup", 5, 1, 2),
 						RoomFixtures.slot("b", "pickup", 6, 1, 2), RoomFixtures.slot("c", "pickup", 7, 1, 2),
 						RoomFixtures.slot("desk", "document", 9, 1, 2), RoomFixtures.slot("pad", "keypad", 10, 1, 4),
 						RoomFixtures.slot("wall", "wall_clue", 20, 2, 0), RoomFixtures.slot("exit", "exit", 40, 0, 20)),
-				List.of(new Step("hunt", "pickup_set", hunt(), Map.of("deposit", "crate"), List.of(),
+				List.of(new Step("hunt", "pickup_set", hunt(), Map.of(), List.of(),
 								List.of(new Give("spot_1", "a", null), new Give("spot_2", "b", null), new Give("spot_3", "c", null),
 										new Give("document", "desk", null)),
 								List.of()),
@@ -73,24 +73,22 @@ class NewMechanismsRoomTest {
 		JsonNode view = rooms.roomView("hub", 0, ViewerKind.PLAYER);
 		List<String> active = new java.util.ArrayList<>();
 		view.get("slots").forEach(s -> active.add(s.get("id").asString()));
-		assertTrue(active.contains("desk") && active.contains("crate"), active.toString());
+		assertTrue(active.contains("desk"), active.toString());
 		long spotsShown = active.stream().filter(id -> List.of("a", "b", "c").contains(id)).count();
 		assertEquals(2, spotsShown, active.toString());
 		assertFalse(active.contains("pad"), "the keypad's step is not open yet");
 		assertFalse(Json.write(view).contains("hunt_secret"));
-		// Pick everything up, bring it back.
-		for (String slot : active.stream().filter(id -> List.of("a", "b", "c").contains(id)).toList()) {
-			assertEquals(1, rooms.apply("hub", 0, 0, new RoomAction.PickUp(slot)).pickedItems().size());
-		}
-		List<String> bag = new java.util.ArrayList<>();
-		rooms.roomView("hub", 0, ViewerKind.PLAYER).get("inventory").forEach(i -> bag.add(i.asString()));
-		assertEquals(2, bag.size());
-		assertThrows(RoomException.class, () -> rooms.apply("hub", 0, 0, new RoomAction.UseItem("toaster", "crate")));
-		rooms.apply("hub", 0, 0, new RoomAction.UseItem(bag.get(0), "crate"));
+		// Pick everything up: that is enough (D32), the last pick up solves the step. A solved step is not notified again.
+		List<String> spots = active.stream().filter(id -> List.of("a", "b", "c").contains(id)).toList();
+		ActionResult first = rooms.apply("hub", 0, 0, new RoomAction.PickUp(spots.get(0)));
+		assertEquals(1, first.pickedItems().size());
+		assertFalse(first.stepSolved());
 		assertFalse(rooms.find("hub", 0).orElseThrow().steps.get("hunt").solved);
-		ActionResult last = rooms.apply("hub", 0, 0, new RoomAction.UseItem(bag.get(1), "crate"));
+		ActionResult last = rooms.apply("hub", 0, 0, new RoomAction.PickUp(spots.get(1)));
+		assertEquals(1, last.pickedItems().size());
 		assertTrue(last.stepSolved());
-		assertTrue(rooms.roomView("hub", 0, ViewerKind.PLAYER).get("inventory").isEmpty(), "deposited objects are consumed");
+		assertEquals("hunt", last.step());
+		assertEquals(2, rooms.roomView("hub", 0, ViewerKind.PLAYER).get("inventory").size(), "the objects stay in the bag");
 		// The keypad: its code is the clue shown on the wall; the puzzle view never holds it.
 		JsonNode after = rooms.roomView("hub", 0, ViewerKind.PLAYER);
 		String code = null;

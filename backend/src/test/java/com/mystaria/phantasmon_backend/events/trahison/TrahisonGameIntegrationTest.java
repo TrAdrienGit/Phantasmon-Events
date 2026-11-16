@@ -316,7 +316,7 @@ class TrahisonGameIntegrationTest {
 		spectator.act("{\"action\":\"view\",\"hub\":\"" + hub + "\"}");
 		assertThat(spectator.view().get("phase").asString()).isEqualTo("NONE"); // no game yet
 
-		createGame("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":2,\"seed\":7,\"settings\":{\"cabins_required\":false}}");
+		createGame("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":2,\"seed\":7,\"settings\":{\"cabins_required\":false,\"final_door_seconds\":2}}");
 		assertThat(admin.view().get("phase").asString()).isEqualTo("LOBBY");
 		assertThat(admin.view().get("viewer").get("kind").asString()).isEqualTo("GM");
 		assertThat(admin.view().get("gm").get("seed").asLong()).isEqualTo(7L);
@@ -463,9 +463,7 @@ class TrahisonGameIntegrationTest {
 		assertThat(a.view().get("game_masters").toString()).contains(b.uuid.toString());
 		assertThat(spectator.view().get("viewer").get("kind").asString()).isEqualTo("GM");
 		assertThat(spectator.view().get("gm").isNull()).isFalse();
-		// a game master does not play
-		act(b, "{\"action\":\"join\"}");
-		assertThat(b.errors()).containsExactly("ERROR_TRAHISON_NOT_GAME_MASTER", "ERROR_TRAHISON_GAME_MASTER_PLAYS");
+		assertThat(b.errors()).containsExactly("ERROR_TRAHISON_NOT_GAME_MASTER");
 		gm("{\"action\":\"start\"}"); // an admin sets the lobby up and starts
 		assertThat(phase()).isEqualTo(Phase.PROLOGUE);
 		// the stage moves on for an assigned game master, not for the admin who is none
@@ -620,7 +618,7 @@ class TrahisonGameIntegrationTest {
 			assertThat(spectator.ofType("EventsTrahisonRoom").size() - before).isEqualTo(3);
 			int beforeA = a.ofType("EventsTrahisonRoom").size();
 			a.act("{\"action\":\"view\"}");
-			assertThat(a.ofType("EventsTrahisonRoom").size() - beforeA).isEqualTo(1);
+			assertThat(a.ofType("EventsTrahisonRoom").size() - beforeA).isEqualTo(3); // D22: his group finished, he roams: every room
 
 			// Who saw what: only the game master ever got a solution, nobody got a hint text; players see their room only.
 			assertThat(admin.ofType("EventsTrahisonPuzzle").stream().anyMatch(p -> p.toString().contains("\"target\""))).isTrue();
@@ -631,7 +629,7 @@ class TrahisonGameIntegrationTest {
 					}
 				}
 			}
-			assertThat(roomGroups(a).stream().distinct().toList()).containsExactly(group);
+			assertThat(roomGroups(a).stream().distinct().toList()).containsExactlyInAnyOrder(0, 1, 2); // (D22: after his room was done)
 			assertThat(roomGroups(spectator).stream().distinct().toList()).containsExactlyInAnyOrder(0, 1, 2);
 			assertThat(admin.ofType("EventsTrahisonRoom").stream().anyMatch(r -> r.get("steps").get(0).has("mechanism"))).isTrue();
 			assertThat(spectator.ofType("EventsTrahisonRoom").stream().noneMatch(r -> r.get("steps").get(0).has("mechanism"))).isTrue();
@@ -648,8 +646,9 @@ class TrahisonGameIntegrationTest {
 			act(a, "{\"action\":\"use_slot\",\"slot\":\"exit\",\"round\":0}");
 			assertThat(a.errors()).contains("ERROR_TRAHISON_BAD_ACTION");
 			toNextStage(Phase.VOTE);
+			// D22: his group finished its room, so VOTE does not shut him out of the rooms
 			act(a, "{\"action\":\"use_slot\",\"slot\":\"exit\"}");
-			assertThat(a.errors()).contains("ERROR_TRAHISON_WRONG_PHASE");
+			assertThat(a.errors()).doesNotContain("ERROR_TRAHISON_WRONG_PHASE");
 			gm("{\"action\":\"end\"}");
 			assertThat(rooms.rooms(hub)).isEmpty();
 		} finally {

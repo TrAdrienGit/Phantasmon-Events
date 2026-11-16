@@ -47,6 +47,14 @@ public final class TrahisonPalette {
 	public static final int BLUE_LIGHT = 0xFF8FBBFF;
 	public static final int BLUE_DARK = 0xFF204E94;
 
+	// ---- Wire-only colours (the wiring puzzle, never a door or a vote; each has its own symbol)
+	public static final int YELLOW = 0xFFF2E24A;
+	public static final int YELLOW_LIGHT = 0xFFFFF59A;
+	public static final int YELLOW_DARK = 0xFF8C8420;
+	public static final int WHITE = 0xFFF2F4FA;
+	public static final int WHITE_LIGHT = 0xFFFFFFFF;
+	public static final int WHITE_DARK = 0xFF8E94A8;
+
 	// ---- Votes
 	public static final int ALLY = 0xFFFFD36B;
 	public static final int ALLY_DARK = 0xFF8A6A1E;

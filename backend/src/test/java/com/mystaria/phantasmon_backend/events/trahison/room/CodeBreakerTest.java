@@ -18,6 +18,7 @@ import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.ViewerKind
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -244,7 +245,7 @@ class CodeBreakerTest {
 	}
 
 	@Test
-	void runningOutOfTriesRedrawsTheCombinationAndClearsTheHistory() {
+	void runningOutOfTriesKeepsTheSameCombinationAndClearsTheHistory() {
 		MechanismState state = breaker.generate(new SplittableRandom(5), params(3, 4, "digits", false, 6));
 		MechanismState s = state;
 		int[] first = code(state);
@@ -261,15 +262,15 @@ class CodeBreakerTest {
 		assertEquals(1, last.state().data().get("resets").asInt());
 		assertEquals(0, last.state().data().get("tries").asInt());
 		assertEquals(0, last.state().data().get("history").size());
-		// Deterministic: the same play on the same seed redraws the same combination.
+		assertArrayEquals(first, code(last.state()), "same combination after a reset (D36)");
+		// Deterministic: the same play on the same seed gives the same state.
 		MechanismState again = state;
 		for (int i = 0; i < 6; i++) {
 			again = submit(again, wrong).state();
 		}
 		assertEquals(last.state().data(), again.data());
-		// And the new combination still has a valid shape.
-		int[] second = code(last.state());
-		assertEquals(3, java.util.Arrays.stream(second).distinct().count());
+		// And the combination can still be found and solves the step after the reset.
+		assertTrue(submit(last.state(), first).solved());
 	}
 
 	static int[] wrongGuess(int[] code, int alphabet) {

@@ -94,9 +94,13 @@ class GameRoomsTest {
 		}
 	}
 
+	/** Most tests keep unfinished rooms across the stages (T3.6's end-of-ROOMS opening is tested on its own). */
+	private boolean roomTimeout;
+
 	private void toRooms(String testRoom) {
 		Settings settings = Settings.fast(SECONDS);
 		settings.testRoom = testRoom;
+		settings.roomTimeout = roomTimeout;
 		service.create(HUB, settings, 42L);
 		for (int i = 0; i < 9; i++) {
 			service.join(HUB, ids[i], "p" + i);
@@ -203,6 +207,31 @@ class GameRoomsTest {
 		assertThat(savedRooms().get(1).get("exitOpen").asBoolean()).isTrue();
 	}
 
+	/** T3.6: at the end of ROOMS an unsolved room opens its exit and each member of its group loses a point. */
+	@Test
+	void anUnsolvedRoomOpensAtTheEndOfRoomsAndItsMembersLoseAPoint() {
+		roomTimeout = true;
+		toRooms(null);
+		int[] before = service.read(HUB, g -> g.points());
+		int me = membersOf(1).get(0);
+		service.debugSolve(HUB, ids[me]); // group 1 finishes in time
+		clock.advanceSeconds(SECONDS); // end of ROOMS
+		assertThat(phase(service)).isEqualTo(Phase.FREE_TIME);
+		assertThat(solved(service)).containsExactly(true, true, true);
+		for (int k = 0; k < 3; k++) {
+			assertThat(roomService.find(HUB, k).orElseThrow().exitOpen).isTrue();
+		}
+		int[] after = service.read(HUB, g -> g.points());
+		for (int k = 0; k < 3; k++) {
+			for (int p : membersOf(k)) {
+				assertThat(after[p]).as("player %d of group %d", p, k).isEqualTo(k == 1 ? before[p] : before[p] - 1);
+			}
+		}
+		long timeouts = service.read(HUB, g -> g.log.stream().filter(e -> e.type.equals("rooms_timeout")).count());
+		assertThat(timeouts).isEqualTo(1L);
+		assertThat(roomSolvedEvents()).isEqualTo(3L);
+	}
+
 	@Test
 	void aGroupReallySolvesItsRoomAndTheGameSeesIt() {
 		toRooms("chain");
@@ -227,6 +256,7 @@ class GameRoomsTest {
 	@Test
 	void roomActionsAreRefusedOutsideTheRoomsStageOrWhilePaused() {
 		Settings settings = Settings.fast(SECONDS);
+		settings.roomTimeout = false;
 		service.create(HUB, settings, 42L);
 		for (int i = 0; i < 9; i++) {
 			service.join(HUB, ids[i], "p" + i);
@@ -253,8 +283,41 @@ class GameRoomsTest {
 		assertThat(roomService.find(HUB, groupOf(0))).isPresent();
 		clock.advanceSeconds(SECONDS); // VOTE: nobody acts in a room any more
 		assertThat(phase(service)).isEqualTo(Phase.VOTE);
-		assertThatThrownBy(() -> service.roomAction(HUB, ids[0], use("exit")))
+		// (D22: ids[0]'s group finished its room, so he may roam; a player of a group that did not is refused)
+		int stuck = membersOf((groupOf(0) + 1) % 3).get(0);
+		assertThatThrownBy(() -> service.roomAction(HUB, ids[stuck], use("exit")))
 			.isInstanceOfSatisfying(TrahisonException.class, ex -> assertThat(ex.code()).isEqualTo(TrahisonException.WRONG_PHASE));
+	}
+
+	/** D22: a group that finished its own room is free to roam the other rooms during ROOMS and VOTE, for no points. */
+	@Test
+	void aGroupThatFinishedItsRoomRoamsDuringRoomsAndVote() {
+		toRooms("chain");
+		int owner = membersOf(1).get(0);
+		int other = membersOf(0).get(0);
+		assertThat(GameService.canRoam(service.find(HUB), owner)).isFalse();
+		assertCode(() -> service.roomAction(HUB, ids[owner], use("btn"), 0), RoomException.NOT_IN_ROOM);
+		service.roomAction(HUB, ids[owner], use("btn"));
+		solveDials(roomService, service, 1, owner);
+		assertThat(service.roomAction(HUB, ids[owner], use("exit")).roomFinished()).isTrue();
+		assertThat(GameService.canRoam(service.find(HUB), owner)).isTrue();
+		assertThat(GameService.canRoam(service.find(HUB), other)).isFalse();
+		long events = roomSolvedEvents();
+		@SuppressWarnings("unchecked")
+		Map<String, Object> viewer = (Map<String, Object>) service.read(HUB, g -> Views.build(g, ids[owner], clock.instant())).get("viewer");
+		assertThat(viewer).containsEntry("can_roam", true);
+		// He plays the room of another trio: it counts for nothing and the trio's own state is the room's, not its game's.
+		assertThat(service.roomAction(HUB, ids[owner], use("btn"), 0).stepSolved()).isTrue();
+		service.roomAction(HUB, ids[owner], new RoomAction.Replay(), 0);
+		assertThat(solved(service)).containsExactly(false, true, false);
+		assertThat(roomSolvedEvents()).isEqualTo(events);
+		// The ones who did not finish are still shut out of other rooms.
+		assertCode(() -> service.roomAction(HUB, ids[other], use("btn"), 1), RoomException.NOT_IN_ROOM);
+		clock.advanceSeconds(SECONDS); // FREE_TIME
+		clock.advanceSeconds(SECONDS); // VOTE
+		assertThat(phase(service)).isEqualTo(Phase.VOTE);
+		assertThat(service.roomAction(HUB, ids[owner], use("btn"), 0).stepSolved()).isTrue();
+		assertCode(() -> service.roomAction(HUB, ids[other], use("btn")), TrahisonException.WRONG_PHASE);
 	}
 
 	private static void assertCode(Runnable call, String code) {

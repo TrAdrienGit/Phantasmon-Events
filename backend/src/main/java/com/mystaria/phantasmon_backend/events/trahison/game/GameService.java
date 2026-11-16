@@ -182,9 +182,7 @@ public class GameService {
 			if (g.indexOf(uuid) >= 0) {
 				throw new TrahisonException(TrahisonException.ALREADY_JOINED, "already in the game");
 			}
-			if (g.gameMasters.contains(uuid)) {
-				throw new TrahisonException(TrahisonException.GAME_MASTER_PLAYS, "a game master does not play");
-			}
+			// D12: a game master may join as a player (secret role): nothing tells the others who he is.
 			if (g.players.size() >= PLAYERS) {
 				throw new TrahisonException(TrahisonException.GAME_FULL, "nine players already");
 			}
@@ -390,7 +388,7 @@ public class GameService {
 
 	/**
 	 * D7: an admin gives or takes back the game master role of an account, in the lobby only. A game can have none, one or
-	 * several; an account that plays cannot be one.
+	 * several. D12: a game master may also play (he is then one of the nine, and nobody else is told he is a game master).
 	 */
 	public Game setGameMaster(String hub, UUID account, String name, boolean on) {
 		Game g = require(hub);
@@ -399,9 +397,6 @@ public class GameService {
 				throw new TrahisonException(TrahisonException.NOT_IN_LOBBY, "game masters are assigned in the lobby");
 			}
 			if (on) {
-				if (g.indexOf(account) >= 0) {
-					throw new TrahisonException(TrahisonException.GAME_MASTER_PLAYS, "a player cannot be a game master");
-				}
 				if (!g.gameMasters.add(account)) {
 					return g;
 				}
@@ -502,7 +497,7 @@ public class GameService {
 				}
 			}
 			if (g.phase == Phase.FINAL && g.finalDoor != null && changed && finalCrossing(g, i, next)) {
-				persist(g); // the last of them going through ends the game (everybody is told by finish)
+				persist(g);
 			}
 			boolean cabinsMoved = false;
 			if (g.phase == Phase.VOTE && !g.paused) {
@@ -524,7 +519,8 @@ public class GameService {
 
 	/**
 	 * A player entered a zone while the final door is open (T2.5): if it is the zone beyond the door and he is one of those it
-	 * lets through, he has crossed; when all of them have, the door closes at once. True if he was counted.
+	 * lets through, he has crossed. The door stays open its whole window even when all of them have crossed (D19). True if he
+	 * was counted.
 	 */
 	private boolean finalCrossing(Game g, int player, String zone) {
 		FinalDoorWindow window = g.finalDoor;
@@ -536,9 +532,6 @@ public class GameService {
 		window = window.withCrossed(player);
 		g.finalDoor = window;
 		event(g, "final_cross", Map.of("player", player));
-		if (window.crossed().containsAll(window.openers())) {
-			closeFinalDoor(g, "all_crossed");
-		}
 		return true;
 	}
 
@@ -864,15 +857,22 @@ public class GameService {
 	public ActionResult roomAction(String hub, UUID uuid, RoomAction action, Integer group, Integer round) {
 		Game g = require(hub);
 		synchronized (g) {
-			boolean free = g.phase == Phase.FREE_TIME;
-			int p = playerAction(g, uuid, free ? Phase.FREE_TIME : Phase.ROOMS);
+			boolean freeTime = g.phase == Phase.FREE_TIME;
+			// D22: ROOMS and VOTE also take actions, from a player whose group has finished its own room of the round
+			Phase stage = freeTime || g.phase == Phase.VOTE ? g.phase : Phase.ROOMS;
+			int p = playerAction(g, uuid, stage);
 			if (rooms == null) {
 				throw new TrahisonException(RoomException.NO_ROOM, "no room engine");
 			}
 			RoundState current = g.currentRound();
+			boolean roam = freeTime || canRoam(g, p);
+			if (!roam && g.phase == Phase.VOTE) {
+				throw new TrahisonException(TrahisonException.WRONG_PHASE, "rooms are closed during the vote, until his group's room is done");
+			}
+			boolean free = roam;
 			RoundState r = current;
 			if (round != null && round != current.number) {
-				if (!free) {
+				if (!roam) {
 					throw new TrahisonException(RoomException.NOT_IN_ROOM, "the rooms of round " + round + " are closed now");
 				}
 				r = null;
@@ -887,7 +887,7 @@ public class GameService {
 			}
 			int k = r.groupOf(p);
 			if (group != null && group != k) {
-				if (!free) {
+				if (!roam) {
 					throw new TrahisonException(RoomException.NOT_IN_ROOM, "player " + p + " is not in group " + group);
 				}
 				if (group >= r.rooms.size()) {
@@ -904,6 +904,10 @@ public class GameService {
 					throw new TrahisonException(RoomException.TOO_FAR, "player " + give.to() + " is too far");
 				}
 			}
+			// His own room of this round, in ROOMS, still plays as before (a room being solved gives its door); everywhere else
+			// (the free time, another room, an earlier round, any room during VOTE) it is the visit: no point, nothing opened.
+			boolean own = r == current && k == current.groupOf(p) && g.phase == Phase.ROOMS;
+			free = !own;
 			ActionResult result = rooms.apply(g, r, k, p, action, free);
 			if (result.roomFinished() && !free) {
 				markRoomSolved(g, r, k, p); // (not free: r is the current round)
@@ -911,6 +915,53 @@ public class GameService {
 			persist(g);
 			return result;
 		}
+	}
+
+	/**
+	 * D22: whether player {@code p} is free to roam the rooms (his own, of earlier rounds and of the other trios) outside the
+	 * free time: the stage is {@code ROOMS} or {@code VOTE}, he is alive and the room of his group in the current round is
+	 * finished. Decided here, sent to the client as {@code viewer.can_roam}.
+	 */
+	public static boolean canRoam(Game g, int p) {
+		RoundState r = g.currentRound();
+		if (r == null || r.splitIndex == null || p < 0 || p >= g.players.size() || !g.players.get(p).alive
+				|| g.phase != Phase.ROOMS && g.phase != Phase.VOTE) {
+			return false;
+		}
+		return r.roomSolved[r.groupOf(p)];
+	}
+
+	/**
+	 * End of {@code ROOMS} (T3.6): the exit of each room still unsolved opens (so does its door) and every member of its group
+	 * loses {@link Scoring#ROOM_TIMEOUT_PENALTY} point; a bracelet that reaches 0 kills its owner, as after a vote. Returns true
+	 * when that ended the game.
+	 */
+	private boolean penalizeUnsolvedRooms(Game g) {
+		if (rooms == null || !g.settings.roomTimeout) {
+			return false;
+		}
+		RoundState r = g.currentRound();
+		List<Integer> opened = rooms.openUnsolved(g, r);
+		if (opened.isEmpty()) {
+			return false;
+		}
+		int[] delta = new int[PLAYERS];
+		for (int k : opened) {
+			markRoomSolved(g, r, k, -1);
+			for (int p : r.split().group(Door.ALL.get(k)).members()) {
+				delta[p] += Scoring.ROOM_TIMEOUT_PENALTY;
+			}
+		}
+		int[] after = Scoring.applyAll(g.points(), delta);
+		for (int i = 0; i < PLAYERS; i++) {
+			g.bracelets.get(i).points = after[i];
+		}
+		for (int i : Outcome.newlyDead(after, g.aliveFlags())) {
+			g.players.get(i).alive = false;
+			g.bracelets.get(i).ownerAlive = false;
+		}
+		event(g, "rooms_timeout", Map.of("groups", opened, "points", toList(after)));
+		return endIfGameMasterKilled(g);
 	}
 
 	/** The group's room is done: remembers it (once), logs it and tells the listeners. The caller persists. */
@@ -1197,11 +1248,12 @@ public class GameService {
 
 	/**
 	 * In FINAL only; the wrist bracelet must read 9 or more and the player be alive (T2.5). When the plan has a final door
-	 * with a pupitre zone (its {@code threshold}), he must stand in it (bots excepted). The door then opens for
-	 * {@code final_door_seconds} for every living player who reads 9 (it stays closed for the others); when the time is up,
-	 * or when all of them have crossed, it closes for ever and the game ends, {@code winners} being the ones who walked
-	 * through. A plan without a final door has nothing to wait for: the game ends at once, every opener winning. Pressing the
-	 * pupitre again while the door is open does nothing.
+	 * with a pupitre zone (its {@code threshold}), he must stand in it (bots excepted; a real plan always has one, D17). The
+	 * door then opens for {@code final_door_seconds} (60 by default, D18/D19) for every living player who reads 9 (it stays
+	 * closed for the others); the window always runs its full length, even when all of them have crossed. When the time is up
+	 * it closes for ever and the game ends, {@code winners} being the ones who walked through. A plan without a final door has
+	 * the same window with no door to cross (D21): every opener wins at its end. Pressing the pupitre again while the door
+	 * is open does nothing.
 	 */
 	public Game openFinalDoor(String hub, UUID uuid) {
 		Game g = require(hub);
@@ -1219,13 +1271,7 @@ public class GameService {
 				throw new TrahisonException(TrahisonException.NOT_AT_FINAL_DOOR, "the final door opens from its pupitre");
 			}
 			List<Integer> openers = Outcome.finalDoorOpeners(g.points(), g.aliveFlags());
-			if (door == null) {
-				g.winners = new ArrayList<>(openers);
-				event(g, "final_door", Map.of("opener", p, "winners", g.winners));
-				finish(g, "final_door");
-				persist(g);
-				return g;
-			}
+			// D21: a plan without a final door has the same window, with no door to walk through: every opener wins at the end.
 			long until = clock.millis() + Math.max(1, g.settings.finalDoorSeconds) * 1000L;
 			List<Integer> crossed = new ArrayList<>();
 			for (int o : openers) {
@@ -1285,8 +1331,8 @@ public class GameService {
 
 	/**
 	 * The final door closes for ever and the game ends. The winners are the openers who walked through it (standing in the
-	 * zone beyond it, {@code zone_b} of the door) and the bots among them; with no zone beyond the door in the plan, every
-	 * opener.
+	 * zone beyond it, {@code zone_b} of the door) and the bots among them; with no door, or no zone beyond it in the plan,
+	 * every opener (D21).
 	 */
 	private void closeFinalDoor(Game g, String cause) {
 		FinalDoorWindow window = g.finalDoor;
@@ -1378,17 +1424,27 @@ public class GameService {
 			}
 			case DOORS -> {
 				closeDoors(g);
+				if (endIfGameMasterKilled(g)) { // D12: the doors killed a playing game master
+					break;
+				}
 				enterPhase(g, Phase.ROOMS);
 				if (rooms != null) {
 					// After the stage view went out, so a client gets ROOMS first, then its room.
 					rooms.startRound(g, g.currentRound(), planOf(g));
 				}
 			}
-			// T3 adds the timeout penalty of an unsolved room here.
-			case ROOMS -> enterPhase(g, Phase.FREE_TIME);
+			case ROOMS -> {
+				if (penalizeUnsolvedRooms(g)) { // T3.6: a bracelet at 0 killed a playing game master
+					break;
+				}
+				enterPhase(g, Phase.FREE_TIME);
+			}
 			case FREE_TIME -> enterPhase(g, Phase.VOTE);
 			case VOTE -> {
 				resolveVotes(g);
+				if (endIfGameMasterKilled(g)) { // D12: a bracelet at 0 killed a playing game master
+					break;
+				}
 				enterPhase(g, Phase.RESULTS);
 			}
 			case RESULTS -> {
@@ -1414,6 +1470,27 @@ public class GameService {
 			default -> throw new TrahisonException(TrahisonException.WRONG_PHASE, "cannot advance from " + g.phase);
 		}
 		event(g, "advanced", Map.of("cause", cause, "phase", g.phase.name()));
+	}
+
+	/**
+	 * D12: the game master who plays is a secret role; when the other participants kill him (any death of a playing game
+	 * master), all the others win and the game ends. THE HOOK OF EVERY DEATH PATH: call it after any change of a player's
+	 * {@code alive} to false. Today: the doors that close ({@link #closeDoors}) and the bracelets at 0 points
+	 * ({@link #resolveVotes}), both reached from {@link #advance}. T6 (killing between players) must call it right after
+	 * its kill. Returns true when the game ended by it. The caller persists.
+	 */
+	private boolean endIfGameMasterKilled(Game g) {
+		if (g.phase == Phase.ENDED || g.phase == Phase.LOBBY) {
+			return false;
+		}
+		List<Integer> masters = g.playingGameMasters();
+		if (!Outcome.gameMasterKilled(masters, g.aliveFlags())) {
+			return false;
+		}
+		g.winners = new ArrayList<>(Outcome.winnersWhenGameMasterKilled(masters, g.players.size()));
+		event(g, "game_master_killed", Map.of("winners", g.winners));
+		finish(g, "game_master_killed");
+		return true;
 	}
 
 	/** Draws the assignment of a new round (or final loop) from the game seed and the history. */

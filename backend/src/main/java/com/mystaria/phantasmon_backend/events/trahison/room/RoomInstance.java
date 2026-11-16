@@ -47,6 +47,10 @@ public final class RoomInstance {
 	public Instant finishedAt;
 	/** The exit is open (every step solved). */
 	public boolean exitOpen;
+	/** The {@link #lastProgressAt} the automatic hint counter {@link #autoHints} was counted from (T3.6). */
+	public Instant autoHintMark;
+	/** Automatic hints given since {@link #autoHintMark}. */
+	public int autoHints;
 	/** How many times the room was put back to a fresh state in the free time (D8); 0 for the round's own play. */
 	public int replays;
 

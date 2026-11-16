@@ -46,8 +46,49 @@ public final class TrahisonUi {
 		}
 	}
 
+	/**
+	 * The wire colours of the wiring puzzle: the three game colours (same tones, same symbols) plus yellow (diamond) and white
+	 * (ring), which exist for wires only (charte-ui.md section 3). Names are the ids the backend sends ({@code red}...
+	 * {@code white}).
+	 */
+	public enum WireColor {
+		RED(GameColor.RED),
+		GREEN(GameColor.GREEN),
+		BLUE(GameColor.BLUE),
+		YELLOW(TrahisonPalette.YELLOW, TrahisonPalette.YELLOW_LIGHT, TrahisonPalette.YELLOW_DARK, Glyph.DIAMOND),
+		WHITE(TrahisonPalette.WHITE, TrahisonPalette.WHITE_LIGHT, TrahisonPalette.WHITE_DARK, Glyph.RING);
+
+		public final int base;
+		public final int light;
+		public final int dark;
+		public final Glyph glyph;
+
+		WireColor(GameColor game) {
+			this(game.base, game.light, game.dark, game.glyph);
+		}
+
+		WireColor(int base, int light, int dark, Glyph glyph) {
+			this.base = base;
+			this.light = light;
+			this.dark = dark;
+			this.glyph = glyph;
+		}
+
+		/** The colour of a backend id, or null when unknown. */
+		public static WireColor of(String name) {
+			if (name == null) {
+				return null;
+			}
+			try {
+				return valueOf(name.toUpperCase(java.util.Locale.ROOT));
+			} catch (IllegalArgumentException e) {
+				return null;
+			}
+		}
+	}
+
 	/** Symbols drawn with rectangles, so colour is never the only signal. */
-	public enum Glyph { TRIANGLE, CIRCLE, SQUARE, ALLY, BETRAY }
+	public enum Glyph { TRIANGLE, CIRCLE, SQUARE, DIAMOND, RING, ALLY, BETRAY }
 
 	public enum ButtonState { NORMAL, HOVER, PRESSED, DISABLED }
 
@@ -344,6 +385,28 @@ public final class TrahisonUi {
 					g.fill(x + r - half, y + row, x + r + half, y + row + 1, color);
 				}
 			}
+			case DIAMOND -> {
+				int r = size / 2;
+				for (int row = 0; row < size; row++) {
+					int half = Math.max(1, Math.min(r, (row < r ? row + 1 : size - row)));
+					g.fill(x + r - half, y + row, x + r + half, y + row + 1, color);
+				}
+			}
+			case RING -> {
+				int r = size / 2;
+				int inner = Math.max(1, r - 2);
+				for (int row = 0; row < size; row++) {
+					double dy = row + 0.5 - r;
+					int outerHalf = (int) Math.round(Math.sqrt(Math.max(0, r * r - dy * dy)));
+					int innerHalf = Math.abs(dy) < inner ? (int) Math.round(Math.sqrt(Math.max(0, inner * inner - dy * dy))) : 0;
+					if (innerHalf <= 0) {
+						g.fill(x + r - outerHalf, y + row, x + r + outerHalf, y + row + 1, color);
+					} else {
+						g.fill(x + r - outerHalf, y + row, x + r - innerHalf, y + row + 1, color);
+						g.fill(x + r + innerHalf, y + row, x + r + outerHalf, y + row + 1, color);
+					}
+				}
+			}
 			case TRIANGLE -> {
 				for (int row = 0; row < size; row++) {
 					int half = Math.min(size / 2, 1 + row * size / (2 * size - 2));
@@ -367,6 +430,11 @@ public final class TrahisonUi {
 
 	/** Draws a game colour's glyph in its base tone, a tiny colour chip for lists. */
 	public static void colorGlyph(GuiGraphics g, GameColor color, int x, int y, int size) {
+		glyph(g, color.glyph, x, y, size, color.base);
+	}
+
+	/** Draws a wire colour's glyph in its base tone. */
+	public static void colorGlyph(GuiGraphics g, WireColor color, int x, int y, int size) {
 		glyph(g, color.glyph, x, y, size, color.base);
 	}
 

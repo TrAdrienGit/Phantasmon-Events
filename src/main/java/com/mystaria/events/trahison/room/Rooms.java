@@ -31,6 +31,8 @@ public final class Rooms {
 	private static final Map<Integer, RoomView> ROOMS = new TreeMap<>();
 	private static final List<Runnable> LISTENERS = new CopyOnWriteArrayList<>();
 	private static int revision;
+	/** How many hints each room had at its last message (T3.6). */
+	private static final Map<Integer, Integer> HINTS_SEEN = new TreeMap<>();
 
 	private Rooms() {
 	}
@@ -51,8 +53,43 @@ public final class Rooms {
 		if (room == null || hub != null && !room.hub().isEmpty() && !room.hub().equals(hub)) {
 			return;
 		}
+		boolean known = ROOMS.containsKey(room.key());
 		ROOMS.put(room.key(), room);
+		announceHints(room, hintsOf(data), known);
 		changed();
+	}
+
+	/** The help texts the backend says were given so far (T3.6), in step order, vaguest first. */
+	private static List<String> hintsOf(Map<String, Object> data) {
+		List<String> out = new java.util.ArrayList<>();
+		if (data.get("steps") instanceof List<?> steps) {
+			for (Object s : steps) {
+				if (s instanceof Map<?, ?> step && step.get("hints") instanceof List<?> hints) {
+					for (Object h : hints) {
+						if (h instanceof String text) {
+							out.add(text);
+						}
+					}
+				}
+			}
+		}
+		return out;
+	}
+
+	/**
+	 * A hint that arrives for the player's own room is read out by the hostess (T3.6). The first message of a room after a
+	 * (re)connection only records what was already given, so nothing old is repeated.
+	 */
+	private static void announceHints(RoomView room, List<String> hints, boolean known) {
+		int key = room.key();
+		int seen = HINTS_SEEN.getOrDefault(key, 0);
+		HINTS_SEEN.put(key, hints.size());
+		if (!known || hints.size() <= seen || !room.members().contains(ownIndex())) {
+			return;
+		}
+		for (String text : hints.subList(seen, hints.size())) {
+			com.mystaria.events.trahison.hud.Announcer.say(net.minecraft.network.chat.Component.translatable("phantasmon_events.trahison.room.hint", text));
+		}
 	}
 
 	private static void onView() {
@@ -70,6 +107,7 @@ public final class Rooms {
 
 	/** Forgets every room (new round, end of game, left the hub). */
 	public static void clear() {
+		HINTS_SEEN.clear();
 		if (!ROOMS.isEmpty()) {
 			ROOMS.clear();
 			changed();
@@ -128,7 +166,7 @@ public final class Rooms {
 	 */
 	public static RoomView current() {
 		View v = GameView.current();
-		if (v != null && v.phase() == Phase.FREE_TIME && ownIndex() >= 0) {
+		if (roaming(v) && ownIndex() >= 0) {
 			RoomView at = roomAtPlayer();
 			if (at != null) {
 				return at;
@@ -165,10 +203,16 @@ public final class Rooms {
 			return false;
 		}
 		return switch (v.phase()) {
-			case ROOMS -> room.members().contains(own) && !room.finished() && currentRound(room);
+			case ROOMS -> room.members().contains(own) && !room.finished() && currentRound(room) || v.viewer().canRoam();
 			case FREE_TIME -> true;
+			case VOTE -> v.viewer().canRoam();
 			default -> false;
 		};
+	}
+
+	/** The free time, or (D22, ROOMS and VOTE) a group that finished its own room: every room is open to him. */
+	public static boolean roaming(View v) {
+		return v != null && (v.phase() == Phase.FREE_TIME || v.viewer().canRoam());
 	}
 
 	/** Whether the local player's room accepts actions now: his room runs, the stage is {@code ROOMS}, it is not finished. */

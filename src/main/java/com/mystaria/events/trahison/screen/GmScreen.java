@@ -55,7 +55,8 @@ public final class GmScreen extends TrahisonScreen {
 	/** Opens the screen; refused (a chat line) for someone who is neither an admin nor a game master of the game. */
 	public static void open() {
 		Minecraft mc = Minecraft.getInstance();
-		if (!PhantasmonApi.isAdmin() && GameView.orEmpty().viewer().kind() != ViewerKind.GM) {
+		if (!PhantasmonApi.isAdmin() && GameView.orEmpty().viewer().kind() != ViewerKind.GM
+				&& !GameView.orEmpty().viewer().isGameMaster()) {
 			mc.player.displayClientMessage(Component.translatable(T + "not_admin"), false);
 			return;
 		}
@@ -175,7 +176,7 @@ public final class GmScreen extends TrahisonScreen {
 
 	/** The viewer is one of the game's game masters (the backend lets only them act once the game runs). */
 	private static boolean isGameMaster(View v) {
-		return v.viewer().kind() == ViewerKind.GM;
+		return v.viewer().kind() == ViewerKind.GM || v.viewer().isGameMaster(); // D12: a game master may also play
 	}
 
 	/** The policy of the dummy players: the game's own when the view tells it, else the last chosen here. */

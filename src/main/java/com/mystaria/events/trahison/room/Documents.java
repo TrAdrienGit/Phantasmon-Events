@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 
 import com.mystaria.events.trahison.room.RoomView.Clue;
 import com.mystaria.events.trahison.room.RoomView.SlotView;
+import com.mystaria.events.trahison.ui.TrahisonUi;
 
 /**
  * The reading side of T3.3: turns what a slot shows (clues of every readable kind) into pages and opens the reading screen. A
@@ -52,13 +53,28 @@ public final class Documents {
 		return pages;
 	}
 
-	/** A page of text: its lines, where a line {@code @image:<id>} is a picture. */
+	private static final java.util.regex.Pattern COLOR = java.util.regex.Pattern.compile("@color:([a-z_]+)");
+
+	/**
+	 * A page of text: its lines, where a line {@code @image:<id>} is a picture and a token {@code @color:<id>} is the name of
+	 * that wire colour in the player's language ({@code 1 : @color:red} reads "1 : Red"; D37, the wiring scheme as text).
+	 */
 	static Page textPage(String text) {
 		List<String> lines = new ArrayList<>();
 		for (String line : text.split("\n", -1)) {
-			lines.add(line);
+			lines.add(colorNames(line));
 		}
 		return new Page("text", lines);
+	}
+
+	/** Replaces every {@code @color:<id>} of a line by the colour's name; an unknown colour id is left as it is. */
+	static String colorNames(String line) {
+		if (!line.contains("@color:")) {
+			return line;
+		}
+		return COLOR.matcher(line).replaceAll(m -> java.util.regex.Matcher.quoteReplacement(
+				TrahisonUi.WireColor.of(m.group(1)) == null ? m.group()
+						: Component.translatable("phantasmon_events.trahison.color." + m.group(1)).getString()));
 	}
 
 	/** The picture id of a line, or null when the line is plain text. */

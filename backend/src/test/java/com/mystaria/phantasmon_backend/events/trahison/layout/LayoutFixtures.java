@@ -27,7 +27,7 @@ final class LayoutFixtures {
 		zones.add(new LayoutZone("hall", "hall", List.of(cell(n++))));
 		zones.add(new LayoutZone("vote", "vote", List.of(cell(n++))));
 		zones.add(new LayoutZone("final", "final", List.of(cell(n++))));
-		doors.add(new LayoutDoor("door_final", "final", cell(n++), "hall", "final", null, null));
+		doors.add(new LayoutDoor("door_final", "final", cell(n++), "hall", "final", null, null, "hall"));
 		for (int round = 1; round <= 3; round++) {
 			zones.add(new LayoutZone("doors_" + round, "doors", List.of(cell(n++))));
 			for (int p = 0; p < 3; p++) {

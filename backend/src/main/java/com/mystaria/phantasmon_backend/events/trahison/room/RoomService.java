@@ -44,6 +44,7 @@ public class RoomService {
 	private final Clock clock;
 	private final Map<String, RoomInstance> rooms = new ConcurrentHashMap<>();
 	private final List<RoomListener> listeners = new CopyOnWriteArrayList<>();
+	private volatile StepTimeSink sink;
 
 	public RoomService(MechanismRegistry registry, Clock clock) {
 		this.registry = registry;
@@ -52,6 +53,11 @@ public class RoomService {
 
 	public void addListener(RoomListener listener) {
 		listeners.add(listener);
+	}
+
+	/** Where the time of every step really solved goes (T3.6 telemetry); none by default. */
+	public void setStepTimeSink(StepTimeSink sink) {
+		this.sink = sink;
 	}
 
 	private static String key(String hub, int round, int group) {
@@ -421,6 +427,7 @@ public class RoomService {
 			s.solved = true;
 			s.solvedAt = now;
 			room.lastProgressAt = now;
+			measure(room, s);
 			notifyPuzzle(room, new PuzzleUpdate(s.step.id(), "solved", player, r.events(), null));
 			openReady(room, now);
 			if (room.steps.values().stream().allMatch(x -> x.solved)) {
@@ -438,6 +445,7 @@ public class RoomService {
 		Slot slot = room.definition.slot(slotId).orElseThrow(
 				() -> new RoomException(RoomException.NOTHING_TO_PICK, "unknown slot " + slotId));
 		List<String> taken = new ArrayList<>();
+		List<Object[]> notices = new ArrayList<>(); // {step runtime, clue role, item}
 		for (StepRuntime s : room.steps.values()) {
 			for (Give g : s.step.gives()) {
 				if (!g.slot().equals(slot.id()) || !(g.whenSolved() ? s.solved : s.open || s.solved)) {
@@ -450,6 +458,7 @@ public class RoomService {
 						String item = clue.value().asString("");
 						room.addItem(item, player);
 						taken.add(item);
+						notices.add(new Object[] { s, clue.role(), item });
 					}
 				}
 			}
@@ -458,8 +467,22 @@ public class RoomService {
 			throw new RoomException(RoomException.NOTHING_TO_PICK, "nothing to pick up in " + slotId);
 		}
 		room.lastProgressAt = clock.instant();
+		// D32: the step that gave an object hears about the pick up (pickup_set counts it)
+		String solvedStep = null;
+		boolean solvedAny = false;
+		for (Object[] n : notices) {
+			StepRuntime s = (StepRuntime) n[0];
+			if (!s.open || s.solved) {
+				continue;
+			}
+			Optional<InputResult> heard = runItem(() -> s.mechanism.onPickUp(s.state, player, (String) n[1], (String) n[2]));
+			if (heard.isPresent() && commit(room, s, player, heard.get())) {
+				solvedAny = true;
+				solvedStep = s.step.id();
+			}
+		}
 		notifyRoom(room);
-		return new ActionResult(null, false, false, taken);
+		return new ActionResult(solvedStep, solvedAny, room.exitOpen, taken);
 	}
 
 	/** Hands an item over to another member of the group: only the holder gives. (Distance is the game's to check.) */
@@ -540,18 +563,86 @@ public class RoomService {
 
 	/**
 	 * The next help text for the group: the first open, unsolved step (in definition order) that still has one. Empty
-	 * when there is none. The caller decides when (10, 18, 25 minutes without progress: {@link RoomInstance#lastProgressAt}).
+	 * when there is none. {@link #tickHints} calls it at the automatic delays; a game master may call it by hand. The room's
+	 * listeners are told (the room view carries the hints given).
 	 */
 	public Optional<Hint> giveHint(String hub, int group) {
 		RoomInstance room = require(hub, group);
 		synchronized (room) {
-			for (StepRuntime s : room.steps.values()) {
-				if (s.open && !s.solved && s.hintsGiven < s.step.hints().size()) {
-					s.hintsGiven++;
-					return Optional.of(new Hint(s.step.id(), s.hintsGiven, s.step.hints().get(s.hintsGiven - 1)));
+			Optional<Hint> hint = nextHint(room);
+			if (hint.isPresent()) {
+				notifyRoom(room);
+			}
+			return hint;
+		}
+	}
+
+	private static Optional<Hint> nextHint(RoomInstance room) {
+		for (StepRuntime s : room.steps.values()) {
+			if (s.open && !s.solved && s.hintsGiven < s.step.hints().size()) {
+				s.hintsGiven++;
+				return Optional.of(new Hint(s.step.id(), s.hintsGiven, s.step.hints().get(s.hintsGiven - 1)));
+			}
+		}
+		return Optional.empty();
+	}
+
+	/** The default automatic delays, in seconds without progress: 10, 18 and 25 minutes (T3.6). */
+	public static final long[] DEFAULT_HINT_DELAYS = { 600, 1080, 1500 };
+
+	/**
+	 * T3.6: gives the automatic help. For each room still being played (exit closed, not a free-time replay) whose group made
+	 * no progress for {@code delays[k]} seconds, the k-th hint is due; at most one hint per room per call, and each delay
+	 * counts from the last progress (a step solved, an item picked up...), so progress starts the series again. {@code delays}
+	 * is ascending (up to {@value Step#MAX_HINTS} values). Returns what was given, with the room it went to.
+	 */
+	public List<GivenHint> tickHints(long[] delays) {
+		Instant now = clock.instant();
+		List<GivenHint> given = new ArrayList<>();
+		for (RoomInstance room : rooms.values()) {
+			synchronized (room) {
+				if (room.exitOpen || room.replays > 0 || room.lastProgressAt == null) {
+					continue;
+				}
+				if (!room.lastProgressAt.equals(room.autoHintMark)) {
+					room.autoHintMark = room.lastProgressAt;
+					room.autoHints = 0;
+				}
+				long idle = java.time.Duration.between(room.lastProgressAt, now).getSeconds();
+				int due = 0;
+				for (long d : delays) {
+					if (idle >= d) {
+						due++;
+					}
+				}
+				if (room.autoHints < due) {
+					room.autoHints++; // counted even when nothing is left to give, so it is not tried every call
+					Optional<Hint> hint = nextHint(room);
+					if (hint.isPresent()) {
+						given.add(new GivenHint(room.hub, room.round, room.group, hint.get()));
+						notifyRoom(room);
+					}
 				}
 			}
-			return Optional.empty();
+		}
+		return given;
+	}
+
+	/** A hint given by {@link #tickHints}, with the room it went to. */
+	public record GivenHint(String hub, int round, int group, Hint hint) {
+	}
+
+	/** Sends the measure of a step just solved to the telemetry, when it was a real play (not a free-time replay). */
+	private void measure(RoomInstance room, StepRuntime s) {
+		StepTimeSink out = sink;
+		if (out == null || room.replays > 0 || s.openedAt == null) {
+			return;
+		}
+		try {
+			out.record(room.definition.id(), room.definition.version(), s.step.id(), s.step.mechanism(), s.step.params(),
+					(int) Math.max(0, java.time.Duration.between(s.openedAt, s.solvedAt).getSeconds()), s.hintsGiven, room.members.size());
+		} catch (RuntimeException ex) {
+			LOG.warn("Trahison: step time not recorded", ex);
 		}
 	}
 

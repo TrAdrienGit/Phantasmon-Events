@@ -220,7 +220,7 @@ public final class Inventory {
 			return out;
 		}
 		int own = Rooms.ownIndex();
-		if (v.phase() == GameView.Phase.FREE_TIME) {
+		if (Rooms.roaming(v)) {
 			for (GameView.Player p : v.players()) {
 				if (p.index() != own && p.alive()) {
 					out.add(p.index());

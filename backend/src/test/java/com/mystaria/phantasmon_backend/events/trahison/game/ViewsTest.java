@@ -208,6 +208,10 @@ class ViewsTest {
 		assertThat(view(ids[0]).get("players").get(0).get("is_bot").asBoolean()).isFalse();
 		service.read(HUB, g -> g.gameMasters.add(ids[0]));
 		assertThat(view(ids[0]).get("viewer").get("kind").asString()).isEqualTo("PLAYER");
-		assertThat(view(ids[0]).get("gm").isNull()).isTrue();
+		// D12: the game master who plays keeps his player view and gets the game master block on top (nobody else does)
+		assertThat(view(ids[0]).get("gm").isNull()).isFalse();
+		assertThat(view(ids[0]).get("viewer").get("is_game_master").asBoolean()).isTrue();
+		assertThat(view(ids[1]).get("gm").isNull()).isTrue();
+		assertThat(view(ids[1]).get("viewer").get("is_game_master").asBoolean()).isFalse();
 	}
 }

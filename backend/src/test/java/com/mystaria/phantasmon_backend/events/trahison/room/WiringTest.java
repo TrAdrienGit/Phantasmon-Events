@@ -8,6 +8,7 @@ import java.util.SplittableRandom;
 
 import org.junit.jupiter.api.Test;
 
+import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.Clue;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.InputResult;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.Json;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.MechanismState;
@@ -66,9 +67,9 @@ class WiringTest {
 		SplittableRandom pick = new SplittableRandom(11);
 		for (long seed = 0; seed < 1000; seed++) {
 			int wires = 3 + pick.nextInt(4);
-			int colors = 2 + pick.nextInt(2);
+			int colors = 2 + pick.nextInt(Math.min(4, wires - 1)); // 2..min(5, wires)
 			MechanismState state = wiring.generate(new SplittableRandom(seed), params(wires, colors));
-			assertEquals(1, state.clues().size());
+			assertEquals(2, state.clues().size());
 			assertEquals("scheme", state.clues().get(0).role());
 			assertEquals("colors", state.clues().get(0).type().wire());
 			List<String> scheme = scheme(state);
@@ -150,7 +151,7 @@ class WiringTest {
 	}
 
 	@Test
-	void aFullWrongSetCountsAShortCircuitAndStaysToBeCorrected() {
+	void aFullWrongSetIsAShortCircuitThatDropsEveryWire() {
 		// Find a seed whose panel has a wrong full set that is not a valid one: wire everything on the "wrong" side.
 		MechanismState state = wiring.generate(new SplittableRandom(4), params(3, 3));
 		List<String> scheme = scheme(state);
@@ -169,11 +170,10 @@ class WiringTest {
 		assertFalse(r.solved());
 		assertEquals("wrong", r.events().get(1).get("type").asString());
 		assertEquals(1, s.data().get("wrong").asInt());
-		assertEquals(3, s.data().get("links").size());
-		// Fixing one wire at a time works: swap two wires into place.
-		for (int i = 0; i < 3; i++) {
-			s = wiring.onInput(s, 0, disconnect("left", i)).state();
-		}
+		assertEquals("[-1,-1,-1]", s.data().get("links").toString(), "a short circuit drops every wire (D39)");
+		assertTrue(r.events().get(1).get("cleared").asBoolean());
+		assertEquals("[-1,-1,-1]", wiring.view(s, ViewerKind.PLAYER).get("links").toString());
+		// Starting over from the empty panel works.
 		for (int i = 0; i < 3; i++) {
 			r = wiring.onInput(s, 0, connect(i, right.indexOf(scheme.get(i))));
 			s = r.state();
@@ -227,14 +227,59 @@ class WiringTest {
 		assertFalse(wiring.validateParams(params(2, 3)).isEmpty());
 		assertFalse(wiring.validateParams(params(7, 3)).isEmpty());
 		assertFalse(wiring.validateParams(params(4, 1)).isEmpty());
-		assertFalse(wiring.validateParams(params(4, 4)).isEmpty());
+		assertTrue(wiring.validateParams(params(4, 4)).isEmpty());
+		assertTrue(wiring.validateParams(params(6, 5)).isEmpty());
+		assertFalse(wiring.validateParams(params(4, 6)).isEmpty());
+		assertFalse(wiring.validateParams(params(3, 4)).isEmpty(), "colors at most wires");
 		Step ok = new Step("w", "wiring", null, Map.of("panel", "t"), List.of(), List.of(new Give("scheme", "wall", null)), List.of());
 		assertTrue(wiring.validateStep(ok).isEmpty());
 		Step late = new Step("w", "wiring", null, Map.of("panel", "t"), List.of(), List.of(new Give("scheme", "wall", "solved")), List.of());
 		assertFalse(wiring.validateStep(late).isEmpty());
 		Step none = new Step("w", "wiring", null, Map.of(), List.of(), List.of(), List.of());
 		assertEquals(2, wiring.validateStep(none).size());
+		// D37: the text document does as well as the colours clue, from the start.
+		Step text = new Step("w", "wiring", null, Map.of("panel", "t"), List.of(), List.of(new Give("scheme_text", "desk", null)), List.of());
+		assertTrue(wiring.validateStep(text).isEmpty());
+		Step textLate = new Step("w", "wiring", null, Map.of("panel", "t"), List.of(), List.of(new Give("scheme_text", "desk", "solved")), List.of());
+		assertFalse(wiring.validateStep(textLate).isEmpty());
 	}
+
+	@Test
+	void theSchemeIsAlsoATextDocument() {
+		for (long seed = 0; seed < 100; seed++) {
+			MechanismState state = wiring.generate(new SplittableRandom(seed), params(5, 3));
+			Clue doc = state.clues().get(1);
+			assertEquals("scheme_text", doc.role());
+			assertEquals("document", doc.type().wire());
+			assertEquals(1, doc.value().size());
+			String[] lines = doc.value().get(0).asString().split("\n");
+			List<String> scheme = scheme(state);
+			assertEquals(5, lines.length);
+			for (int i = 0; i < 5; i++) {
+				assertEquals((i + 1) + " : @color:" + scheme.get(i), lines[i]);
+			}
+		}
+	}
+
+	@Test
+	void yellowAndWhiteAreWireColoursOnlyUsedFromFourColours() {
+		Set<String> seen = new HashSet<>();
+		for (long seed = 0; seed < 200; seed++) {
+			for (int colors = 2; colors <= 3; colors++) {
+				assertTrue(GAME.containsAll(new HashSet<>(scheme(wiring.generate(new SplittableRandom(seed), params(6, colors))))),
+						"up to three colours: game colours only");
+			}
+			Set<String> four = new HashSet<>(scheme(wiring.generate(new SplittableRandom(seed), params(6, 4))));
+			assertEquals(Set.of("red", "green", "blue", "yellow"), four);
+			Set<String> five = new HashSet<>(scheme(wiring.generate(new SplittableRandom(seed), params(6, 5))));
+			assertEquals(Set.of("red", "green", "blue", "yellow", "white"), five);
+			seen.addAll(five);
+		}
+		assertTrue(seen.contains("yellow") && seen.contains("white"));
+		assertEquals(List.of("red", "green", "blue"), Wiring.GAME_COLORS);
+	}
+
+	static final Set<String> GAME = Set.of("red", "green", "blue");
 
 	@Test
 	void difficultyAndTimeGrowWithTheWires() {
@@ -242,7 +287,7 @@ class WiringTest {
 		assertEquals(2, wiring.difficulty(Json.object()));
 		assertEquals(3, wiring.difficulty(params(6, 3)));
 		assertTrue(wiring.expectedSeconds(params(6, 3)) > wiring.expectedSeconds(params(3, 3)));
-		assertEquals(List.of("scheme"), wiring.clueRoles(Json.object()));
+		assertEquals(List.of("scheme", "scheme_text"), wiring.clueRoles(Json.object()));
 		assertEquals("panel", wiring.slotRoles().get(0).role());
 	}
 }

@@ -118,12 +118,13 @@ public final class Views {
 		v.put("cabins_required", g.settings.cabinsRequired && !g.cabinIds.isEmpty());
 		v.put("cabins", cabins(g));
 		v.put("doors_dead", r == null ? new ArrayList<>() : new ArrayList<>(r.diedAtDoors));
-		v.put("game_masters", gameMasters(g));
+		v.put("game_masters", gameMasters(g, viewer));
 		v.put("viewer", viewer(g, r, kind, viewer));
 		v.put("results", results(g));
 		v.put("final_door", finalDoor(g));
 		v.put("winners", g.phase == Phase.ENDED ? new ArrayList<>(g.winners) : null);
-		v.put("gm", kind == Kind.GM ? gmBlock(g, r) : null);
+		// D12: a game master who plays keeps his player view and gets the game master block on top of it.
+		v.put("gm", kind == Kind.GM || g.gameMasters.contains(viewer) ? gmBlock(g, r) : null);
 		return v;
 	}
 
@@ -137,10 +138,17 @@ public final class Views {
 		return w == null || g.phase != Phase.FINAL ? null : orderedMap("open_until", w.untilMs(), "openers", w.openers().size());
 	}
 
-	/** The game masters (account and name), public: the lobby shows who runs the game. Possibly none. */
-	private static List<Object> gameMasters(Game g) {
+	/**
+	 * The game masters (account and name): the lobby shows who runs the game. Possibly none. D12: a game master who plays is
+	 * a secret role, so he is left out for everyone but the game masters themselves; the one who only supervises stays public.
+	 */
+	private static List<Object> gameMasters(Game g, UUID viewer) {
 		List<Object> out = new ArrayList<>();
+		boolean viewerIsMaster = g.gameMasters.contains(viewer);
 		for (UUID u : g.gameMasters) {
+			if (!viewerIsMaster && g.indexOf(u) >= 0) {
+				continue;
+			}
 			out.add(orderedMap("uuid", u.toString(), "name", g.gameMasterNames.getOrDefault(u, u.toString())));
 		}
 		return out;
@@ -258,7 +266,9 @@ public final class Views {
 		boolean canOpenFinal = index >= 0 && Outcome.canOpenFinalDoor(g.bracelets.size() > index ? g.bracelets.get(index).points : 0,
 			g.players.get(index).alive) && kind == Kind.PLAYER;
 		return orderedMap("kind", kind.name(), "index", index >= 0 ? index : null, "group", group, "side", side,
-			"door_passed", passed, "side_voted", sideVoted, "own_vote", ownVote, "my_cabin", myCabin, "can_open_final_door", canOpenFinal);
+			"door_passed", passed, "side_voted", sideVoted, "own_vote", ownVote, "my_cabin", myCabin, "can_open_final_door", canOpenFinal,
+			"can_roam", index >= 0 && kind == Kind.PLAYER && GameService.canRoam(g, index),
+			"is_game_master", g.gameMasters.contains(uuid));
 	}
 
 	/**

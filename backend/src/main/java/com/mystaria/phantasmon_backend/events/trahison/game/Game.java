@@ -91,6 +91,17 @@ public class Game {
 		return rounds.isEmpty() ? null : rounds.get(rounds.size() - 1);
 	}
 
+	/** Indices of the players who are also game masters (D12: a secret role), in seat order. */
+	public List<Integer> playingGameMasters() {
+		List<Integer> out = new ArrayList<>();
+		for (int i = 0; i < players.size(); i++) {
+			if (gameMasters.contains(players.get(i).uuid)) {
+				out.add(i);
+			}
+		}
+		return out;
+	}
+
 	/** Index of the player with this account, or -1. */
 	public int indexOf(UUID uuid) {
 		for (int i = 0; i < players.size(); i++) {
