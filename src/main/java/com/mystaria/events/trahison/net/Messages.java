@@ -41,6 +41,11 @@ public final class Messages {
 		send(ACTION, "pass_door", Map.of("door", door), true);
 	}
 
+	/** VOTE: closes the cabin the player stands in (his own); the backend refuses otherwise. */
+	public static void closeCabin() {
+		send(ACTION, "close_cabin", null, true);
+	}
+
 	public static void vote(boolean ally) {
 		send(ACTION, "vote", Map.of("vote", ally ? "ally" : "betray"), true);
 	}
@@ -52,6 +57,42 @@ public final class Messages {
 	/** Provisional action of step T1 (the simulated room). */
 	public static void debugSolve() {
 		send(ACTION, "debug_solve", null, true);
+	}
+
+	// ---------------------------------------------------------------- room actions (T3.3)
+
+	/** {@code use_slot}: uses an active slot; a puzzle bound to it opens its screen ({@code EventsTrahisonPuzzle}, {@code open}). */
+	public static void useSlot(String slot) {
+		send(ACTION, "use_slot", Map.of("slot", slot), true);
+	}
+
+	/** {@code pick_up}: takes the items shown in a slot into the player's bag. */
+	public static void pickUp(String slot) {
+		send(ACTION, "pick_up", Map.of("slot", slot), true);
+	}
+
+	/** {@code give_item}: hands an item the player carries to the group member {@code to} (a player index). */
+	public static void giveItem(String item, int to) {
+		Map<String, Object> extra = new LinkedHashMap<>();
+		extra.put("item", item);
+		extra.put("to", to);
+		send(ACTION, "give_item", extra, true);
+	}
+
+	/** {@code use_item}: uses an item the player carries on an active slot. */
+	public static void useItem(String item, String slot) {
+		Map<String, Object> extra = new LinkedHashMap<>();
+		extra.put("item", item);
+		extra.put("slot", slot);
+		send(ACTION, "use_item", extra, true);
+	}
+
+	/** {@code combine}: combines two items the player carries, following a recipe of the room. */
+	public static void combine(String a, String b) {
+		Map<String, Object> extra = new LinkedHashMap<>();
+		extra.put("a", a);
+		extra.put("b", b);
+		send(ACTION, "combine", extra, true);
 	}
 
 	// ---------------------------------------------------------------- game master

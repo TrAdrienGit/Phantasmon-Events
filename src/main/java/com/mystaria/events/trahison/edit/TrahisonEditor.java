@@ -30,9 +30,11 @@ import com.mystaria.events.trahison.edit.LayoutDto.Box;
 import com.mystaria.events.trahison.edit.LayoutDto.Cabin;
 import com.mystaria.events.trahison.edit.LayoutDto.Door;
 import com.mystaria.events.trahison.edit.LayoutDto.Pos;
+import com.mystaria.events.trahison.edit.LayoutDto.ResultsBoard;
 import com.mystaria.events.trahison.edit.LayoutDto.Slot;
 import com.mystaria.events.trahison.edit.LayoutDto.Spot;
 import com.mystaria.events.trahison.edit.LayoutDto.Zone;
+import com.mystaria.events.trahison.world.BoardGeometry;
 import com.mystaria.phantasmon.client.api.PhantasmonApi;
 import com.mystaria.phantasmon.client.hub.HubAnchorDto;
 import com.mystaria.phantasmon.client.network.BackendApiException;
@@ -224,6 +226,11 @@ public final class TrahisonEditor {
 			case SLOT -> layout.roomSlots.forEach(e -> ids.add(e.id));
 			case CABIN -> layout.cabins.forEach(e -> ids.add(e.id));
 			case SPOT -> layout.hidingSpots.forEach(e -> ids.add(e.id));
+			case BOARD -> {
+				if (layout.resultsBoard != null) {
+					ids.add(EditKinds.BOARD_ID);
+				}
+			}
 		}
 		return ids;
 	}
@@ -242,6 +249,11 @@ public final class TrahisonEditor {
 
 	static Cabin cabin(String id) {
 		return layout.cabins.stream().filter(e -> e.id.equals(id)).findFirst().orElse(null);
+	}
+
+	/** The results board (its id is {@link EditKinds#BOARD_ID}), or null. */
+	static ResultsBoard board(String id) {
+		return EditKinds.BOARD_ID.equals(id) ? layout.resultsBoard : null;
 	}
 
 	static Spot spot(String id) {
@@ -296,6 +308,15 @@ public final class TrahisonEditor {
 				spot.id = id;
 				layout.hidingSpots.add(spot);
 			}
+			case BOARD -> {
+				if (layout.resultsBoard == null) {
+					ResultsBoard board = new ResultsBoard();
+					board.facing = "south";
+					board.width = EditKinds.BOARD_DEFAULT_WIDTH;
+					board.height = EditKinds.BOARD_DEFAULT_HEIGHT;
+					layout.resultsBoard = board;
+				}
+			}
 		}
 		select(kind, id);
 		changed();
@@ -303,6 +324,9 @@ public final class TrahisonEditor {
 	}
 
 	private static String freeId(Kind kind) {
+		if (kind == Kind.BOARD) {
+			return EditKinds.BOARD_ID;
+		}
 		List<String> used = ids(kind);
 		for (int n = 1;; n++) {
 			String id = kind.key + "_" + n;
@@ -331,6 +355,7 @@ public final class TrahisonEditor {
 			case SLOT -> layout.roomSlots.removeIf(e -> e.id.equals(id));
 			case CABIN -> layout.cabins.removeIf(e -> e.id.equals(id));
 			case SPOT -> layout.hidingSpots.removeIf(e -> e.id.equals(id));
+			case BOARD -> layout.resultsBoard = null;
 		}
 		if (kind == selectedKind && id.equals(selectedId)) {
 			selectedId = null;
@@ -345,6 +370,9 @@ public final class TrahisonEditor {
 	static boolean rename(Kind kind, String from, String to) {
 		if (from.equals(to)) {
 			return true;
+		}
+		if (kind == Kind.BOARD) {
+			return false; // the board's id is fixed
 		}
 		if (!to.matches("[A-Za-z0-9_-]{1,40}") || exists(kind, to)) {
 			return false;
@@ -366,6 +394,7 @@ public final class TrahisonEditor {
 			case SLOT -> slot(from).id = to;
 			case CABIN -> cabin(from).id = to;
 			case SPOT -> spot(from).id = to;
+			case BOARD -> { }
 		}
 		if (kind == selectedKind && from.equals(selectedId)) {
 			selectedId = to;
@@ -420,6 +449,18 @@ public final class TrahisonEditor {
 		}
 	}
 
+	/** The board takes the selection: its face on the {@code facing} side, the width along the readers' right, the height of the box. */
+	static void fitBoard(ResultsBoard board) {
+		Box box = selectionHub();
+		if (box != null && BoardGeometry.normal(board.facing) != null) {
+			ResultsBoard fitted = BoardGeometry.fit(box, board.facing);
+			board.position = fitted.position;
+			board.width = fitted.width;
+			board.height = fitted.height;
+			changed();
+		}
+	}
+
 	static void setPosition(Spot spot) {
 		Box box = selectionHub();
 		if (box != null) {
@@ -456,7 +497,7 @@ public final class TrahisonEditor {
 
 	/** What goes to the backend: the plan and where it comes from. */
 	private record SaveBody(int baseVersion, boolean draft, List<Zone> zones, List<Door> doors, List<Slot> roomSlots,
-			List<Cabin> cabins, List<Spot> hidingSpots) {
+			List<Cabin> cabins, List<Spot> hidingSpots, ResultsBoard resultsBoard) {
 	}
 
 	/** Saves a new version; {@code draft}: an incomplete plan, without the completeness checks. */
@@ -466,7 +507,7 @@ public final class TrahisonEditor {
 		}
 		busy = true;
 		setStatus(Component.translatable("phantasmon_events.trahison.edit.saving"), false);
-		SaveBody body = new SaveBody(layout.version, draft, layout.zones, layout.doors, layout.roomSlots, layout.cabins, layout.hidingSpots);
+		SaveBody body = new SaveBody(layout.version, draft, layout.zones, layout.doors, layout.roomSlots, layout.cabins, layout.hidingSpots, layout.resultsBoard);
 		PhantasmonApi.post("/events/trahison/layout/" + URLEncoder.encode(hub, StandardCharsets.UTF_8), body, LayoutDto.class)
 				.whenComplete((saved, failure) -> Minecraft.getInstance().execute(() -> {
 					busy = false;

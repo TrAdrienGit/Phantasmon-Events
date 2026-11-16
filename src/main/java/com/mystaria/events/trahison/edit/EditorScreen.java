@@ -18,6 +18,7 @@ import com.mystaria.events.trahison.edit.LayoutDto.Box;
 import com.mystaria.events.trahison.edit.LayoutDto.Cabin;
 import com.mystaria.events.trahison.edit.LayoutDto.Door;
 import com.mystaria.events.trahison.edit.LayoutDto.Pos;
+import com.mystaria.events.trahison.edit.LayoutDto.ResultsBoard;
 import com.mystaria.events.trahison.edit.LayoutDto.Slot;
 import com.mystaria.events.trahison.edit.LayoutDto.Spot;
 import com.mystaria.events.trahison.edit.LayoutDto.Zone;
@@ -35,7 +36,7 @@ import com.mystaria.phantasmon.client.gui.menu.MenuUi;
 public final class EditorScreen extends Screen {
 
 	private static final String T = "phantasmon_events.trahison.edit.";
-	private static final int PANEL_W = 232;
+	private static final int PANEL_W = 248;
 	private static final int PAD = 8;
 	private static final int ROW_H = 18;
 	private static final int ROW_PITCH = 20;
@@ -170,17 +171,18 @@ public final class EditorScreen extends Screen {
 
 	private void drawList(GuiGraphics g) {
 		int x = cx;
+		int tabW = (cw - 2 * (Kind.values().length - 1)) / Kind.values().length;
 		for (Kind kind : Kind.values()) {
 			boolean selected = kind == TrahisonEditor.selectedKind;
-			boolean hovered = ui.hovered(x, py + 28, 40, ROW_H);
-			TrahisonUi.tab(g, x, py + 28, 40, ROW_H, t("tab." + kind.key), selected, hovered);
-			ui.zone(x, py + 28, 40, ROW_H, button -> {
+			boolean hovered = ui.hovered(x, py + 28, tabW, ROW_H);
+			TrahisonUi.tab(g, x, py + 28, tabW, ROW_H, t("tab." + kind.key), selected, hovered);
+			ui.zone(x, py + 28, tabW, ROW_H, button -> {
 				if (kind != TrahisonEditor.selectedKind) {
 					TrahisonEditor.select(kind, null);
 					listScroll = 0;
 				}
 			});
-			x += 44;
+			x += tabW + 2;
 		}
 		int listH = actionY - 4 - listY;
 		TrahisonUi.well(g, cx, listY, cw, listH);
@@ -209,7 +211,8 @@ public final class EditorScreen extends Screen {
 
 		int bx = cx;
 		boolean selected = TrahisonEditor.selectedId != null && TrahisonEditor.exists(TrahisonEditor.selectedKind, TrahisonEditor.selectedId);
-		ui.button(g, bx, actionY, BUTTON_W, ROW_H, t("new"), ButtonKind.PRIMARY, t("new.tip"), () -> {
+		boolean boardTaken = TrahisonEditor.selectedKind == Kind.BOARD && TrahisonEditor.layout.resultsBoard != null;
+		ui.button(g, bx, actionY, BUTTON_W, ROW_H, t("new"), ButtonKind.PRIMARY, t(boardTaken ? "new.board_exists" : "new.tip"), boardTaken ? null : () -> {
 			TrahisonEditor.create(TrahisonEditor.selectedKind);
 			openForm();
 		});
@@ -249,6 +252,7 @@ public final class EditorScreen extends Screen {
 			case SLOT -> EditKinds.SLOT_COLOR;
 			case CABIN -> TrahisonPalette.BETRAY;
 			case SPOT -> EditKinds.SPOT_COLOR;
+			case BOARD -> EditKinds.BOARD_COLOR;
 		};
 		g.fill(x + 7, y + 4, x + 17, y + 14, TrahisonPalette.BORDER);
 		g.fill(x + 8, y + 5, x + 16, y + 13, chip);
@@ -357,9 +361,11 @@ public final class EditorScreen extends Screen {
 		int cw2 = w - LABEL_W;
 		int cxl = x + LABEL_W;
 		// id (every kind)
-		label(g, x, y, "id");
-		ui.field(g, idField, cxl, y, cw2, ROW_H, idInvalid());
-		y += FORM_PITCH;
+		if (kind != Kind.BOARD) { // the board's id is fixed
+			label(g, x, y, "id");
+			ui.field(g, idField, cxl, y, cw2, ROW_H, idInvalid());
+			y += FORM_PITCH;
+		}
 		switch (kind) {
 			case ZONE -> {
 				Zone zone = TrahisonEditor.zone(id);
@@ -475,6 +481,29 @@ public final class EditorScreen extends Screen {
 					TrahisonEditor.changed();
 				});
 			}
+			case BOARD -> {
+				ResultsBoard board = TrahisonEditor.board(id);
+				y = cycleRow(g, x, y, w, "facing", board.facing == null ? t("none") : t("orientation." + board.facing), dir -> {
+					board.facing = step(EditKinds.ORIENTATIONS, board.facing, dir);
+					TrahisonEditor.changed();
+				});
+				y = cycleRow(g, x, y, w, "width", Component.literal(board.width == null ? "-" : Integer.toString(board.width)), dir -> {
+					board.width = sized(board.width, dir);
+					TrahisonEditor.changed();
+				});
+				y = cycleRow(g, x, y, w, "height", Component.literal(board.height == null ? "-" : Integer.toString(board.height)), dir -> {
+					board.height = sized(board.height, dir);
+					TrahisonEditor.changed();
+				});
+				label(g, x, y, "position");
+				TrahisonUi.textEllipsis(g, board.position == null ? t("not_set") : posText(board.position), cxl, y + 5, cw2,
+						board.position == null ? TrahisonPalette.TEXT_MUTED : TrahisonPalette.TEXT_SECONDARY);
+				y += FORM_PITCH;
+				ui.button(g, x, y, w, ROW_H, t("board.fit"), ButtonKind.PRIMARY, t("board.fit.tip"),
+						TrahisonEditor.selectionLocal() == null ? null : () -> TrahisonEditor.fitBoard(board));
+				y += FORM_PITCH;
+				y += MenuUi.paragraph(g, t("board.help"), x + 2, y, w - 4, TrahisonPalette.TEXT_MUTED) + 4;
+			}
 			case SPOT -> {
 				Spot spot = TrahisonEditor.spot(id);
 				label(g, x, y, "position");
@@ -507,6 +536,13 @@ public final class EditorScreen extends Screen {
 			return options.get(dir >= 0 ? 0 : options.size() - 1);
 		}
 		return options.get(Math.floorMod(at + dir, options.size()));
+	}
+
+	/** A board size stepped by one (four with Shift), kept inside the backend's bounds. */
+	private static Integer sized(Integer current, int dir) {
+		int step = Screen.hasShiftDown() ? 4 : 1;
+		int base = current == null ? EditKinds.BOARD_MIN : current;
+		return Math.max(EditKinds.BOARD_MIN, Math.min(EditKinds.BOARD_MAX, base + dir * step));
 	}
 
 	/** {@code ids} preceded by null, "no element". */
@@ -595,7 +631,7 @@ public final class EditorScreen extends Screen {
 	/** A click on a problem selects the first element it names, when it still exists. */
 	private void jumpTo(TrahisonEditor.Issue issue) {
 		for (String id : issue.ids()) {
-			for (Kind kind : List.of(Kind.DOOR, Kind.ZONE, Kind.SLOT, Kind.CABIN, Kind.SPOT)) {
+			for (Kind kind : List.of(Kind.DOOR, Kind.ZONE, Kind.SLOT, Kind.CABIN, Kind.SPOT, Kind.BOARD)) {
 				if (TrahisonEditor.exists(kind, id)) {
 					TrahisonEditor.select(kind, id);
 					view = View.LIST;

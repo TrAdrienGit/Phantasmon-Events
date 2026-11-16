@@ -8,7 +8,7 @@ import com.mystaria.events.trahison.ui.TrahisonPalette;
 final class EditKinds {
 
 	enum Kind {
-		ZONE("zone"), DOOR("door"), SLOT("slot"), CABIN("cabin"), SPOT("spot");
+		ZONE("zone"), DOOR("door"), SLOT("slot"), CABIN("cabin"), SPOT("spot"), BOARD("board");
 
 		final String key;
 
@@ -55,6 +55,14 @@ final class EditKinds {
 		};
 	}
 
+	/** The results board's id: the plan holds at most one, so its id is fixed. */
+	static final String BOARD_ID = "results_board";
+	static final int BOARD_COLOR = TrahisonPalette.ACCENT;
+	static final int BOARD_DEFAULT_WIDTH = 12;
+	static final int BOARD_DEFAULT_HEIGHT = 6;
+	/** Same bounds as the backend's {@code ResultsBoard}. */
+	static final int BOARD_MIN = 4;
+	static final int BOARD_MAX = 64;
 	static final int SLOT_COLOR = TrahisonPalette.BLUE_LIGHT;
 	static final int SPOT_COLOR = TrahisonPalette.RED_LIGHT;
 	static final int SELECTED_COLOR = TrahisonPalette.TEXT;

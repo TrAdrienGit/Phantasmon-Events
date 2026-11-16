@@ -1,4 +1,17 @@
-# Reprise du chantier (pause du 2026-11-16)
+# Reprise du chantier (pause du 2026-11-16, après-midi)
+
+> **À la reprise, d'abord :** `git checkout wip/trahison-t24-t33`. La branche `main` s'arrête à 7de54b9 (backend
+> partiel de T2.4 et T3.3, tests verts). La branche wip contient :
+> - **T2.4 cabines et vote, terminée** par l'agent (pupitre `screen/VoteScreen`, `world/CabinFlow`, touche V,
+>   tableau des résultats `world/ResultsBoardWorld` + repli HUD, onglet Tableau de l'éditeur, 36 clés de langue,
+>   docs). Build client et 193 tests backend verts selon l'agent, **pas encore recontrôlés par l'orchestrateur**.
+>   Corrigé au passage : un plan sans cabines laisse le vote libre même avec `cabins_required`.
+> - **T3.3 objets, inventaire, documents, interrompue** (pause à 84 % de la limite) : `GiveRangeTest`, `world/RoomFrame`,
+>   dossier client `room/` commencé. État inconnu, le client peut ne pas compiler.
+>
+> À faire à la reprise : vérifier que le client compile, relancer un agent T3.3 « reprendre depuis l'arbre de
+> travail » (brief : section T3.3 de `etapes/T3-salles.md`), puis contrôle, tests, fusion dans `main`.
+
 
 > Point d'arrêt de l'orchestration du développement. À lire en premier à la reprise, avec
 > [`etapes/README.md`](etapes/README.md).
@@ -120,6 +133,28 @@ Rien n'a encore tourné **en jeu** : aucun déploiement n'a été fait (ni mod, 
   - le plan se dessine dans l'éditeur sur les mêmes blocs que les faux blocs (ancre à origine fractionnaire, le cas de l'ancienne
     erreur d'un bloc) ;
   - la zone de chaque joueur apparaît dans la vue du maître du jeu (`gm.zones`, pas encore affichée par l'écran provisoire).
+
+- **T2.4 cabines et vote** (mod `--events` et module backend déployés ; plan avec 6 cabines, chacune une zone de type `cabin` et une
+  porte de type `cabin`, et idéalement un `results_board`) :
+  - l'onglet **Tableau** de l'éditeur : créer, choisir le côté des lecteurs, **Ajuster à la sélection** sur un pan de mur ; la boîte
+    d'accent est bien sur le mur voulu, avec le bon côté dans l'étiquette ; enregistrer puis recharger : identique ; un tableau de
+    moins de 4 blocs est refusé ;
+  - en `VOTE`, la ligne du HUD dit où aller (cabine, couleurs, côté) ; dans une cabine qui n'est pas la sienne : « Ce n'est pas ta
+    cabine » ; dans la sienne : « Appuie sur V pour fermer ta cabine et voter » ;
+  - V ferme la cabine : la porte se ferme (faux blocs) chez tous, **on est enfermé** jusqu'à la fin de `VOTE`, et le pupitre s'ouvre
+    tout seul ;
+  - le pupitre en 320 x 180 et en 854 x 480 : or pour S'allier, violet pour Trahir, symboles nets, chrono, texte qui ne déborde pas ;
+    flèches gauche et droite, Entrée, clic ; le choix validé reste allumé et l'autre s'assombrit ; « Fermer » cache le pupitre sans
+    rouvrir la cabine, V le rouvre ;
+  - paire : l'un ferme et vote, l'autre (dedans ou dehors) ne peut plus rien (message « fermée par quelqu'un d'autre ») ; le vote de
+    la paire compte pour les deux ;
+  - voter sans avoir fermé (par l'écran `menu`) est refusé ; pas de vote : « Allier » ; à la fin de `VOTE` toutes les cabines
+    se rouvrent ; un joueur déconnecté dans une cabine fermée : elle se rouvre à la fin de l'étape ;
+  - `cabins_required` coupé dans `create` : le vote libre de l'écran `menu` revient ;
+  - `RESULTS` : le tableau se lit en face, **pas en miroir** (texte de gauche à droite, du bon côté du mur, vu de l'autre côté il est
+    simplement derrière le mur), les votes se révèlent porte par porte (« ? » avant), puis les points ; lisible à 10 et 30 blocs, pas
+    à travers un mur, pas de scintillement entre le fond et le texte (si oui : augmenter `LAYER` dans `ResultsBoardWorld`) ;
+  - sans `results_board` dans le plan : le panneau du HUD en haut à gauche (il peut chevaucher le bracelet en 320 x 180).
 
 ## Notes de contrôle de l'orchestrateur (2026-11-16, après 27b1d8c)
 

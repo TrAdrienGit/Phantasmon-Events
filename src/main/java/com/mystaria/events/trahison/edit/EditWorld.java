@@ -18,9 +18,11 @@ import com.mystaria.events.trahison.edit.LayoutDto.Box;
 import com.mystaria.events.trahison.edit.LayoutDto.Cabin;
 import com.mystaria.events.trahison.edit.LayoutDto.Door;
 import com.mystaria.events.trahison.edit.LayoutDto.Pos;
+import com.mystaria.events.trahison.edit.LayoutDto.ResultsBoard;
 import com.mystaria.events.trahison.edit.LayoutDto.Slot;
 import com.mystaria.events.trahison.edit.LayoutDto.Spot;
 import com.mystaria.events.trahison.edit.LayoutDto.Zone;
+import com.mystaria.events.trahison.world.BoardGeometry;
 
 /**
  * The editor's view of the plan in the world (solution S14, {@code WorldRenderEvents.AFTER_TRANSLUCENT}): every
@@ -77,6 +79,11 @@ final class EditWorld {
 				WorldDraw.queue(cmds, grid.toLocal(new Box(p.x, p.y, p.z, p.x, p.y, p.z)), EditKinds.SPOT_COLOR, selected, 0.5f);
 			}
 		}
+		Box board = BoardGeometry.blocks(layout.resultsBoard);
+		if (board != null) {
+			boolean selected = lit.contains("board:" + EditKinds.BOARD_ID);
+			WorldDraw.queue(cmds, grid.toLocal(board), EditKinds.BOARD_COLOR, selected, selected ? 0.45f : 0.25f);
+		}
 		drawSelection(cmds);
 		WorldDraw.flush(pose, buffers, cmds);
 
@@ -131,6 +138,12 @@ final class EditWorld {
 				String text = slot.id + (slot.orientation == null ? "" : " [" + slot.orientation + "]");
 				WorldDraw.label(context, buffers, camera, grid.toLocal(place), text, EditKinds.SLOT_COLOR, lit.contains("slot:" + slot.id));
 			}
+		}
+		ResultsBoard results = TrahisonEditor.layout.resultsBoard;
+		Box boardBox = BoardGeometry.blocks(results);
+		if (boardBox != null) {
+			WorldDraw.label(context, buffers, camera, grid.toLocal(boardBox), EditKinds.BOARD_ID + " [" + results.facing + "]", EditKinds.BOARD_COLOR,
+					lit.contains("board:" + EditKinds.BOARD_ID));
 		}
 		for (Spot spot : TrahisonEditor.layout.hidingSpots) {
 			if (spot.position != null) {

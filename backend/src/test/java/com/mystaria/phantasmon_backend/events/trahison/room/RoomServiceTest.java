@@ -237,6 +237,115 @@ class RoomServiceTest {
 				assertThrows(RoomException.class, () -> rooms.apply(HUB, 0, 5, new RoomAction.PickUp("box"))).code());
 	}
 
+	/** key box (item brass_key in "box") -> lock (use the key on "lock") -> exit; recipe brass_key + rope = rope_key. */
+	private RoomDefinition keyRoom() {
+		return new RoomDefinition("keys", "Keys", "t", 1, 2, 30,
+				List.of(RoomFixtures.slot("box", "pickup", 1, 1, 1), RoomFixtures.slot("lock", "terminal", 3, 1, 3),
+						RoomFixtures.slot("door", "exit", 5, 0, 5)),
+				List.of(RoomFixtures.step("k", "key_box", Map.of(), List.of(), List.of(new Give("key", "box", null))),
+						RoomFixtures.step("l", "key_lock", Map.of("lock", "lock"), List.of(), List.of()),
+						RoomFixtures.step("e", "debug_button", Map.of("exit", "door"), List.of("l"), List.of())),
+				null, List.of(new Combine("brass_key", "rope", "rope_key")));
+	}
+
+	private List<String> carried(int player) {
+		List<String> out = new ArrayList<>();
+		for (JsonNode i : rooms.roomView(HUB, 0, ViewerKind.PLAYER).get("items")) {
+			if (i.get("holder").asInt() == player) {
+				out.add(i.get("id").asString());
+			}
+		}
+		return out;
+	}
+
+	@Test
+	void pickedItemBelongsToThePickerAndOnlyHeGivesIt() {
+		rooms.start(HUB, 0, MEMBERS, keyRoom(), 1L);
+		rooms.apply(HUB, 0, 3, new RoomAction.PickUp("box"));
+		assertEquals(List.of("brass_key"), carried(3));
+		assertEquals(RoomException.NO_SUCH_ITEM,
+				assertThrows(RoomException.class, () -> rooms.apply(HUB, 0, 5, new RoomAction.GiveItem("brass_key", 0))).code());
+		assertEquals(RoomException.BAD_ACTION,
+				assertThrows(RoomException.class, () -> rooms.apply(HUB, 0, 3, new RoomAction.GiveItem("brass_key", 3))).code());
+		assertEquals(RoomException.BAD_ACTION,
+				assertThrows(RoomException.class, () -> rooms.apply(HUB, 0, 3, new RoomAction.GiveItem("brass_key", 9))).code());
+		rooms.apply(HUB, 0, 3, new RoomAction.GiveItem("brass_key", 5));
+		assertEquals(List.of(), carried(3));
+		assertEquals(List.of("brass_key"), carried(5));
+		assertEquals(RoomException.NO_SUCH_ITEM,
+				assertThrows(RoomException.class, () -> rooms.apply(HUB, 0, 3, new RoomAction.UseItem("brass_key", "lock"))).code());
+	}
+
+	@Test
+	void useItemOnASlotSolvesTheStepAndConsumesTheItem() {
+		rooms.start(HUB, 0, MEMBERS, keyRoom(), 1L);
+		// Not carried, then carried but at a slot that takes nothing, then at the wrong item.
+		assertEquals(RoomException.NO_SUCH_ITEM,
+				assertThrows(RoomException.class, () -> rooms.apply(HUB, 0, 3, new RoomAction.UseItem("brass_key", "lock"))).code());
+		rooms.apply(HUB, 0, 3, new RoomAction.PickUp("box"));
+		assertEquals(RoomException.ITEM_REFUSED,
+				assertThrows(RoomException.class, () -> rooms.apply(HUB, 0, 3, new RoomAction.UseItem("brass_key", "door"))).code());
+		assertEquals(List.of("brass_key"), carried(3), "a refused use keeps the item");
+		assertEquals(RoomException.SLOT_INACTIVE,
+				assertThrows(RoomException.class, () -> rooms.apply(HUB, 0, 3, new RoomAction.UseItem("brass_key", "nowhere"))).code());
+		ActionResult r = rooms.apply(HUB, 0, 3, new RoomAction.UseItem("brass_key", "lock"));
+		assertTrue(r.stepSolved());
+		assertEquals("l", r.step());
+		assertEquals(List.of(), carried(3), "the item is consumed");
+		assertTrue(rooms.roomView(HUB, 0, ViewerKind.PLAYER).get("steps").toString().contains("\"solved\":true"));
+	}
+
+	@Test
+	void combineFollowsTheRoomsRecipes() {
+		// Two boxes give two brass keys; the recipe turns two keys into a twin key.
+		var def = new RoomDefinition("keys", "Keys", "t", 1, 2, 30,
+				List.of(RoomFixtures.slot("box1", "pickup", 1, 1, 1), RoomFixtures.slot("box2", "pickup", 2, 1, 1),
+						RoomFixtures.slot("door", "exit", 5, 0, 5)),
+				List.of(RoomFixtures.step("k1", "key_box", Map.of(), List.of(), List.of(new Give("key", "box1", null))),
+						RoomFixtures.step("k2", "key_box", Map.of(), List.of(), List.of(new Give("key", "box2", null))),
+						RoomFixtures.step("e", "debug_button", Map.of("exit", "door"), List.of("k1", "k2"), List.of())),
+				null, List.of(new Combine("brass_key", "brass_key", "twin_key"), new Combine("twin_key", "oil", "oiled_key")));
+		rooms.start(HUB, 0, MEMBERS, def, 1L);
+		rooms.apply(HUB, 0, 3, new RoomAction.PickUp("box1"));
+		// One key is not two: the same item needs two copies.
+		assertEquals(RoomException.NO_SUCH_ITEM,
+				assertThrows(RoomException.class, () -> rooms.apply(HUB, 0, 3, new RoomAction.CombineItems("brass_key", "brass_key"))).code());
+		assertEquals(RoomException.NO_COMBINATION,
+				assertThrows(RoomException.class, () -> rooms.apply(HUB, 0, 3, new RoomAction.CombineItems("brass_key", "oil"))).code());
+		assertEquals(List.of("brass_key"), carried(3), "a failed combine changes nothing");
+		rooms.apply(HUB, 0, 5, new RoomAction.PickUp("box2"));
+		// The second key is player 5's: player 3 cannot combine it, 5 cannot either (one key each).
+		assertEquals(RoomException.NO_SUCH_ITEM,
+				assertThrows(RoomException.class, () -> rooms.apply(HUB, 0, 3, new RoomAction.CombineItems("brass_key", "brass_key"))).code());
+		rooms.apply(HUB, 0, 5, new RoomAction.GiveItem("brass_key", 3));
+		ActionResult r = rooms.apply(HUB, 0, 3, new RoomAction.CombineItems("brass_key", "brass_key"));
+		assertEquals(List.of("twin_key"), r.pickedItems());
+		assertEquals(List.of("twin_key"), carried(3));
+		assertEquals(List.of(), carried(5));
+		assertEquals(1, rooms.roomView(HUB, 0, ViewerKind.PLAYER).get("inventory").size());
+	}
+
+	@Test
+	void combineIsDeterministicAndRecipeOrderDoesNotMatter() {
+		var recipe = new Combine("a", "b", "c");
+		assertTrue(recipe.matches("a", "b"));
+		assertTrue(recipe.matches("b", "a"));
+		assertFalse(recipe.matches("a", "a"));
+		var def = keyRoom();
+		assertEquals(def.combine("brass_key", "rope"), def.combine("rope", "brass_key"));
+		assertTrue(def.combine("rope", "rope").isEmpty());
+	}
+
+	@Test
+	void roomViewCarriesItemsHoldersAndPlaceButNeverASolution() {
+		rooms.start(HUB, 0, MEMBERS, keyRoom(), 1L, new RoomPlace("p1", new com.mystaria.phantasmon_backend.events.trahison.layout.Pos(10, 64, 20), "east"));
+		rooms.apply(HUB, 0, 3, new RoomAction.PickUp("box"));
+		ObjectNode view = rooms.roomView(HUB, 0, ViewerKind.PLAYER);
+		assertEquals("east", view.get("place").get("orientation").asString());
+		assertEquals(10, view.get("place").get("origin").get("x").asInt());
+		assertEquals(3, view.get("items").get(0).get("holder").asInt());
+	}
+
 	@Test
 	void actionsParse() {
 		var mapper = tools.jackson.databind.json.JsonMapper.builder().build();

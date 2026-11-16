@@ -80,6 +80,12 @@ nez de son partenaire, et la porte finale ne laisse passer que les bracelets à 
 - **Fini quand :** en jeu, un joueur double son partenaire ; sans vote, « Allier » s'applique ; les résultats
   s'affichent à tous.
 
+- **Fait le 2026-11-16** (à valider en jeu) : backend `game/Cabins`, `GameService.closeCabin`, vote refusé hors de sa cabine fermée
+  (réglage `cabins_required`, sans effet sur un plan sans cabine), `ResultsBoard` dans le plan ; client `screen/VoteScreen` (pupitre),
+  `world/CabinFlow` + `hud/CabinPrompt` (touche V), `world/ResultsBoardWorld` (tableau dans le monde, révélation porte par porte),
+  `hud/ResultsHud` (repli sans tableau), onglet Tableau de l'éditeur. Détails : `protocole.md`, « Cabines et vote » et « Tableau
+  des résultats ».
+
 ### T2.5 La porte finale (Sonnet)
 
 - Devant la porte finale, un pupitre : action `open_final_door`, acceptée si le bracelet du poignet a 9 points

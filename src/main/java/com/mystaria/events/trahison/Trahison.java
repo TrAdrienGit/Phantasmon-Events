@@ -25,6 +25,10 @@ public final class Trahison {
 	public static final KeyMapping MENU_KEY = new KeyMapping("key.phantasmon_events.trahison_menu",
 			InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), "key.categories.phantasmon_events");
 
+	/** Key V: close the cabin you stand in, then open its voting pupitre (T2.4). Rebindable. */
+	public static final KeyMapping CABIN_KEY = new KeyMapping("key.phantasmon_events.trahison_cabin",
+			InputConstants.Type.KEYSYM, org.lwjgl.glfw.GLFW.GLFW_KEY_V, "key.categories.phantasmon_events");
+
 	private Trahison() {
 	}
 
@@ -37,7 +41,12 @@ public final class Trahison {
 		com.mystaria.events.trahison.world.Zones.register();
 		com.mystaria.events.trahison.world.FakeBlocks.register();
 		com.mystaria.events.trahison.world.DoorPanels.register();
+		com.mystaria.events.trahison.world.CabinFlow.register();
+		com.mystaria.events.trahison.world.ResultsBoardWorld.register();
+		com.mystaria.events.trahison.hud.CabinPrompt.register();
+		com.mystaria.events.trahison.hud.ResultsHud.register();
 		KeyBindingHelper.registerKeyBinding(MENU_KEY);
+		KeyBindingHelper.registerKeyBinding(CABIN_KEY);
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (MENU_KEY.consumeClick()) {
 				if (client.screen == null && client.player != null) {

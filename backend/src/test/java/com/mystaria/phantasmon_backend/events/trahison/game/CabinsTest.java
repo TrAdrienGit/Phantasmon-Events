@@ -242,6 +242,25 @@ class CabinsTest {
 	}
 
 	@Test
+	void aHubWithoutAPlanKeepsTheVoteFreeEvenWhenCabinsAreRequired() {
+		service.useLayouts((hub, version) -> Layout.of(hub, 0, true, Instant.EPOCH, LayoutContent.empty()));
+		service.create(HUB, Settings.fast(10), 5L);
+		for (int i = 0; i < 9; i++) {
+			ids[i] = new UUID(0, i + 1);
+			service.join(HUB, ids[i], "p" + i, false);
+		}
+		service.start(HUB);
+		for (int i = 0; i < 4; i++) {
+			clock.advanceSeconds(10);
+		}
+		assertThat(service.find(HUB).phase).isEqualTo(Phase.VOTE);
+		int p = group(0).solo();
+		service.vote(HUB, ids[p], Vote.BETRAY); // no cabin in the plan: nothing to close
+		assertThat(service.find(HUB).currentRound().soloVote[0]).isEqualTo(Vote.BETRAY);
+		assertThat(view(0).get("cabins_required")).isEqualTo(false);
+	}
+
+	@Test
 	void closedCabinsSurviveARestart() {
 		gameInVote();
 		int p = group(0).solo();

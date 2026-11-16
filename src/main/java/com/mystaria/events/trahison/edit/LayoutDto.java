@@ -18,6 +18,8 @@ public final class LayoutDto {
 	public List<Slot> roomSlots = new ArrayList<>();
 	public List<Cabin> cabins = new ArrayList<>();
 	public List<Spot> hidingSpots = new ArrayList<>();
+	/** The big results board of the hall (T2.4); null: the plan has none, the results are drawn on the HUD instead. */
+	public ResultsBoard resultsBoard;
 
 	/** A box of blocks, both corners included. */
 	public static final class Box {
@@ -89,6 +91,23 @@ public final class LayoutDto {
 		public String side;
 		public String zone;
 		public String door;
+	}
+
+	/**
+	 * The results board: {@code position} is the lowest block, on the left when one faces the board; it spreads {@code width}
+	 * blocks to the right and {@code height} up; {@code facing} is the side the readers stand on (north, east, south, west).
+	 * See {@code world/BoardGeometry}.
+	 */
+	public static final class ResultsBoard {
+		public Pos position;
+		public String facing;
+		public Integer width;
+		public Integer height;
+
+		/** Whether every field is set (the backend requires them in a complete plan). */
+		public boolean complete() {
+			return position != null && facing != null && width != null && height != null;
+		}
 	}
 
 	public static final class Spot {

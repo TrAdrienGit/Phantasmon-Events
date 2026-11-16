@@ -131,10 +131,34 @@ public final class GameView {
 		}
 	}
 
+	/** One cabin of the plan as the backend's {@code cabins} describes it: whether its door is closed, and whether this viewer closed it. */
+	public record Cabin(String id, boolean closed, boolean closedByMe) {
+	}
+
+	/**
+	 * What T2.4 adds to the view, kept beside it (not inside {@link View}, so the other fields' constructor stays as it is):
+	 * {@code required}: votes are cast from a closed cabin; {@code cabins}: every cabin of the plan; {@code myCabin}: the id of
+	 * the cabin this viewer closes and votes in (null for a spectator, or before the groups are known).
+	 */
+	public record Cabins(boolean required, List<Cabin> cabins, String myCabin) {
+
+		public static final Cabins NONE = new Cabins(false, List.of(), null);
+
+		public Cabin cabin(String id) {
+			return id == null ? null : cabins.stream().filter(c -> c.id().equals(id)).findFirst().orElse(null);
+		}
+
+		/** The viewer's own cabin, or null. */
+		public Cabin mine() {
+			return cabin(myCabin);
+		}
+	}
+
 	private static final View EMPTY = new View("", "", 0, Map.of(), List.of(), Phase.NONE, 0, false, 0, "AUTO", null, false, false, null, 0, List.of(), List.of(),
 			List.of(), null, null, new Viewer(ViewerKind.SPECTATOR, null, null, null, null, false, null, false), null, null, null);
 
 	private static View current;
+	private static Cabins cabinsState = Cabins.NONE;
 	/** {@code server time - local time} when the last view arrived. */
 	private static long clockOffset;
 	private static long phaseTotalMs;
@@ -156,6 +180,11 @@ public final class GameView {
 	/** The latest view, or an empty NONE view: never null. */
 	public static View orEmpty() {
 		return current == null ? EMPTY : current;
+	}
+
+	/** The cabins of the latest view (T2.4); {@link Cabins#NONE} without a game. */
+	public static Cabins cabins() {
+		return cabinsState;
 	}
 
 	public static boolean hasGame() {
@@ -204,6 +233,7 @@ public final class GameView {
 	/** Forgets the view (left the hub, disconnected). */
 	public static void clear() {
 		current = null;
+		cabinsState = Cabins.NONE;
 		phaseKey = "";
 		phaseTotalMs = 0;
 		pointsChangedAt = new long[9];
@@ -223,6 +253,7 @@ public final class GameView {
 		long now = System.currentTimeMillis();
 		clockOffset = next.serverTime() > 0 ? next.serverTime() - now : clockOffset;
 		current = next;
+		cabinsState = next.hasGame() ? parseCabins(data) : Cabins.NONE;
 		String key = next.gameId() + "/" + next.phase() + "/" + next.round() + "/" + next.finalLoop() + "/" + next.finalLoops();
 		long remaining = next.remainingMs() == null ? -1 : next.remainingMs();
 		if (!key.equals(phaseKey)) {
@@ -351,6 +382,17 @@ public final class GameView {
 				d.get("deadline") instanceof Number n ? n.longValue() : null, bool(d, "paused"), bool(d, "auto_paused"),
 				d.get("remaining_ms") instanceof Number n2 ? n2.longValue() : null, lng(d, "server_time", 0), Collections.unmodifiableList(players),
 				Collections.unmodifiableList(bracelets), Collections.unmodifiableList(doors), groups, passed, viewer, results, winners, gm);
+	}
+
+	private static Cabins parseCabins(Map<String, Object> d) {
+		List<Cabin> list = new ArrayList<>();
+		for (Map<String, Object> c : maps(d, "cabins")) {
+			String id = str(c, "id");
+			if (id != null) {
+				list.add(new Cabin(id, bool(c, "closed"), bool(c, "closed_by_me")));
+			}
+		}
+		return new Cabins(bool(d, "cabins_required"), Collections.unmodifiableList(list), str(map(d, "viewer"), "my_cabin"));
 	}
 
 	private static List<DoorHint> doorHints(Map<String, Object> d) {

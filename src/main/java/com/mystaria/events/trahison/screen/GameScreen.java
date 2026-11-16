@@ -362,6 +362,9 @@ public final class GameScreen extends TrahisonScreen {
 		if (!player) {
 			return used + hint(g, T + "hint.vote_watch", x, y + used, w);
 		}
+		if (GameView.cabins().required()) {
+			return used + drawVoteCabin(g, v, x, y + used, w);
+		}
 		Vote own = v.viewer().ownVote();
 		if (own == null && pendingVote != null && System.currentTimeMillis() - pendingAt < PENDING_MS) {
 			own = pendingVote;
@@ -385,6 +388,24 @@ public final class GameScreen extends TrahisonScreen {
 		Component status = own != null ? Component.translatable(T + "vote.cast", Shown.voteName(own))
 				: v.viewer().sideVoted() ? Component.translatable(T + "vote.side_done") : Component.translatable(T + "vote.waiting");
 		used += MenuUi.paragraph(g, status, x, y + used, w, own != null ? Shown.voteTone(own) : TrahisonPalette.TEXT_SECONDARY) + 4;
+		return used;
+	}
+
+	/** With cabins (T2.4) the vote is cast at the pupitre of the closed cabin: here, the way there and the pupitre's button. */
+	private int drawVoteCabin(GuiGraphics g, View v, int x, int y, int w) {
+		int used = MenuUi.paragraph(g, Component.translatable(T + "hint.vote_cabin", com.mystaria.events.trahison.Trahison.CABIN_KEY.getTranslatedKeyMessage()),
+				x, y, w, TrahisonPalette.TEXT_SECONDARY) + 6;
+		GameView.Cabin mine = GameView.cabins().mine();
+		boolean closedByMe = mine != null && mine.closedByMe();
+		ui.button(g, x, y + used, w, TrahisonUi.BUTTON_H, Component.translatable(T + "votepad.open"), ButtonKind.PRIMARY,
+				closedByMe ? null : Component.translatable(T + "votepad.open.tip"), closedByMe ? VoteScreen::open : null);
+		used += TrahisonUi.BUTTON_H + 6;
+		Vote own = v.viewer().ownVote();
+		if (own != null) {
+			used += MenuUi.paragraph(g, Component.translatable(T + "vote.cast", Shown.voteName(own)), x, y + used, w, Shown.voteTone(own)) + 4;
+		} else if (v.viewer().sideVoted()) {
+			used += MenuUi.paragraph(g, Component.translatable(T + "vote.side_done"), x, y + used, w, TrahisonPalette.TEXT_SECONDARY) + 4;
+		}
 		return used;
 	}
 

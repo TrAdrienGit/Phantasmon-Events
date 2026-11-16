@@ -858,6 +858,9 @@ public class GameService {
 			return;
 		}
 		LayoutContent plan = planOf(g);
+		if (plan.cabins().isEmpty()) {
+			return; // no map yet (hub without a plan): nothing to close, the vote stays free
+		}
 		Cabin inside = Cabins.ofZone(plan, g.players.get(p).zone).orElseThrow(
 			() -> new TrahisonException(TrahisonException.NOT_IN_CABIN, "a vote is cast from inside a cabin"));
 		Cabin mine = myCabin(plan, r, p).orElseThrow(

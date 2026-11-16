@@ -115,7 +115,7 @@ public final class Views {
 		v.put("doors_passed", r == null ? null : ints(r.passedDoor));
 		v.put("doors_state", doorsState(g, kind == Kind.PLAYER || kind == Kind.GHOST ? g.indexOf(viewer) : -1));
 		v.put("door_hints", doorHints(g));
-		v.put("cabins_required", g.settings.cabinsRequired);
+		v.put("cabins_required", g.settings.cabinsRequired && !g.cabinIds.isEmpty());
 		v.put("cabins", cabins(g, kind == Kind.PLAYER || kind == Kind.GHOST ? g.indexOf(viewer) : -1));
 		v.put("viewer", viewer(g, r, kind, viewer));
 		v.put("results", results(g));

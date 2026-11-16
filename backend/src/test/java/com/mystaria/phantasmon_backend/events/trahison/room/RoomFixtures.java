@@ -81,8 +81,49 @@ final class RoomFixtures {
 		}
 	}
 
+	/** Solved by using the item {@code brass_key} on its {@code lock} role; any other item is not taken. */
+	static final class KeyLock implements Mechanism {
+		@Override
+		public String id() {
+			return "key_lock";
+		}
+
+		@Override
+		public int difficulty(JsonNode params) {
+			return 2;
+		}
+
+		@Override
+		public int expectedSeconds(JsonNode params) {
+			return 30;
+		}
+
+		@Override
+		public MechanismState generate(RandomGenerator rng, JsonNode params) {
+			return new MechanismState(Json.object(), List.of());
+		}
+
+		@Override
+		public InputResult onInput(MechanismState state, int player, JsonNode input) {
+			return InputResult.unchanged(state);
+		}
+
+		@Override
+		public java.util.Optional<InputResult> onItem(MechanismState state, int player, String role, String item) {
+			if (role.equals("lock") && item.equals("brass_key")) {
+				return java.util.Optional.of(new InputResult(state, List.of(), true));
+			}
+			return java.util.Optional.empty();
+		}
+
+		@Override
+		public JsonNode view(MechanismState state, ViewerKind viewer) {
+			return Json.object();
+		}
+	}
+
 	static MechanismRegistry registry() {
-		return new MechanismRegistry(List.of(new DebugButton(), new ThreeDials(), new KeyBox()));
+		return new MechanismRegistry(List.of(new DebugButton(), new ThreeDials(), new KeyBox(), new KeyLock()));
 	}
 
 	static Slot slot(String id, String kind, int x, int y, int z) {

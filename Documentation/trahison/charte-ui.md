@@ -322,3 +322,13 @@ puis carillon d'améthyste), `open`. Remplacer un son = changer cette classe seu
 4. Essayer sans backend : `/phantasmon event trahison minigame xxx` (admins). L'écran s'ouvre en mode hors ligne : les
    gestes ne partent pas, la pastille « Essai local » est visible, deux joueurs fictifs agissent de temps en temps pour
    montrer les curseurs distants.
+
+## 13. Pupitre de vote (T2.4)
+
+`screen/VoteScreen`, en mode **fenêtre** (340 x 180, 308 x 168 à 320 x 180) : barre de titre avec le chrono et la pastille « Cabine
+fermée », une ligne d'identité (pastille de la couleur du bracelet, pastille paire ou solo, noms du groupe), deux grandes cartes, une
+ligne d'état et deux boutons (« Fermer » à gauche, « Confirmer » `PRIMARY` à droite). Une carte seulement **sélectionne** (cadre de sa
+teinte allumé) ; le vote part avec « Confirmer » (ou Entrée), puis le choix reste allumé et l'autre carte s'assombrit en 150 ms. Or
+`ALLY` pour « S'allier » (symbole `Glyph.ALLY`), violet `BETRAY` pour « Trahir » (symbole `Glyph.BETRAY`) ; flèches gauche et droite
+choisissent. Aucun jeton nouveau. Le tableau des résultats du monde (`world/ResultsBoardWorld`) reprend `BG_DEEP`, `PANEL`, les pastilles de
+vote et les glyphes de la palette, sans les formes des écrans ; son repli HUD (`hud/ResultsHud`) utilise `TrahisonUi.panel` et `glyphPill`.
