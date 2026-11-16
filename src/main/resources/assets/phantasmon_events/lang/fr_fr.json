@@ -488,6 +488,8 @@
   "phantasmon_events.trahison.away.name": "%s (déconnecté)",
   "phantasmon_events.trahison.body.name": "Corps de %s",
   "phantasmon_events.trahison.body.prompt": "Clic droit : prendre le bracelet de %s",
+  "phantasmon_events.trahison.ghost.mark": "(fantôme)",
+  "phantasmon_events.trahison.ghost.reminder": "Tu es un fantôme : tu traverses les portes mais tu ne joues plus.",
   "phantasmon_events.trahison.hud.ghost": "Fantôme",
   "phantasmon_events.trahison.hud.registered": "Inscrits : %s",
   "phantasmon_events.trahison.hud.step_round": "%s - manche %s",

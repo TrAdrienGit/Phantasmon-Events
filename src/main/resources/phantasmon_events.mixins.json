@@ -5,8 +5,11 @@
 	"client": [
 		"ClientLevelMirrorMixin",
 		"ClientPacketListenerMirrorMixin",
+		"AbstractClientPlayerGhostMixin",
 		"EntityGlowOpponentMixin",
+		"EntityRenderDispatcherGhostMixin",
 		"LevelGhostEditMixin",
+		"PlayerRendererGhostNameMixin",
 		"MultiPlayerGameModeGhostMixin",
 		"ServerPlayerGameModeGhostMixin"
 	],

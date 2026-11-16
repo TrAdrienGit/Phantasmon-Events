@@ -302,3 +302,9 @@
 - Réglage `announceDeaths` vrai : tous apprennent un meurtre tout de suite.
 - Couper la connexion d'un joueur vivant : chez les autres, un mannequin debout « (déconnecté) » à sa dernière position ; en mode automatique l'horloge attend 5 minutes au plus ; au retour le mannequin disparaît, la vue complète revient, la salle et l'inventaire sont intacts.
 - Tuer un maître du jeu qui joue : la partie finit, les huit autres gagnent.
+
+## T6.3 : fantômes (à deux comptes, un mort)
+- Mode `SILHOUETTE` : le mort, vu par un vivant, a un skin en niveaux de gris et « (fantôme) » après son pseudo ; son corps couché garde ses couleurs. Le mort traverse les portes fermées et ne peut cliquer aucun objet.
+- Mode `HIDDEN` : le vivant ne voit plus du tout le fantôme (ni corps, ni pseudo, ni ombre) ; un autre fantôme le voit encore en gris.
+- Chez le fantôme : voile gris léger et rappel « Tu es un fantôme » en haut de l'écran.
+- Vérifier que le jeu ne plante pas au lancement (les trois mixins sont nouveaux) et que le skin gris ne se fabrique qu'une fois (pas de ralentissement).

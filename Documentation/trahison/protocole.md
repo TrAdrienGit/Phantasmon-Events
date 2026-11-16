@@ -151,6 +151,9 @@ Champs (la colonne « Null » dit quand la valeur est `null`) :
 - `viewer.carried` : les index des bracelets que ce joueur a pris sur des corps.
 - `disconnected` : les joueurs vivants dont la connexion est coupée, `{player, zone, x, y, z}` (dernière position) ; ni bots, ni fantômes, ni le destinataire. Le client y pose un mannequin « déconnecté ».
 
+- `ghost_display` (T6.3) : `SILHOUETTE` (les vivants voient les fantômes en noir et blanc, avec la marque « (fantôme) » sous le pseudo) ou `HIDDEN` (ils ne les voient pas du tout). Réglage `Settings.ghostDisplay`, même valeur pour tous. Les clients n'ont pas de liste de fantômes à part : ils lisent `players[].alive`, déjà filtré par destinataire.
+- Un fantôme reçoit une vue de type `GHOST` : comme un spectateur (D16), sans bloc `gm`, sans maître du jeu qui joue (D12).
+
 Une mort (`GameService.kill` ou fin de manche) garde les points et la place dans le groupe (D13), fait voter le bracelet « Allier » par défaut, et rappelle `endIfGameMasterKilled` (D12).
 
 `groups[]` (une fois la répartition connue) : le groupe qui passe la porte `door`.

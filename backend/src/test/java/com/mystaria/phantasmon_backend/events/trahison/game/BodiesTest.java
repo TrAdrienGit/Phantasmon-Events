@@ -277,4 +277,19 @@ class BodiesTest {
 		service.setConnected(HUB, ids[3], false);
 		assertThat(view(0).get("disconnected")).isEqualTo(List.of());
 	}
+
+	@Test
+	void aGhostSeesLikeAnOutsiderAndNeverLearnsWhoPlaysAsGameMaster() {
+		service.addGameMaster(HUB, ids[6]);
+		at(3, "hall", 1, 1);
+		service.kill(HUB, 3, "knife");
+		Map<String, Object> ghost = view(3);
+		assertThat(((Map<?, ?>) ghost.get("viewer")).get("kind")).isEqualTo("GHOST");
+		assertThat(ghost.get("gm")).isNull(); // D12: the block is the game masters'
+		assertThat(((Map<?, ?>) ghost.get("viewer")).get("is_game_master")).isEqualTo(false);
+		assertThat(ghost.get("game_masters")).isEqualTo(List.of());
+		assertThat(ghost.get("ghost_display")).isEqualTo("SILHOUETTE");
+		service.find(HUB).settings.ghostDisplay = Settings.GhostDisplay.HIDDEN;
+		assertThat(view(0).get("ghost_display")).isEqualTo("HIDDEN");
+	}
 }

@@ -182,7 +182,7 @@ Choix appliqué : l'indice `scheme_text` est un document dont les lignes portent
 - [ ] Texte fixe en français écrit par le backend
 - [ ] Le concepteur de la salle écrit lui-même le texte (paramètre `schemeText`), sans lien avec la graine
 
-Ta réponse :
+Ta réponse : fait
 
 ## D64. Salles : ce que la mesure change à la difficulté affichée
 Choix appliqué : dès 3 mesures d'une étape, le **temps attendu** affiché (`expected_seconds` de la liste des salles) prend la médiane mesurée de cette étape ; la **difficulté** (1 à 3 par mécanisme, sommée) ne change pas et un champ `measured` dit que le temps est mesuré.
@@ -190,7 +190,7 @@ Choix appliqué : dès 3 mesures d'une étape, le **temps attendu** affiché (`e
 - [ ] La difficulté affichée est aussi déduite du temps mesuré (par seuils, ex. moins de 5 min = 1, plus de 12 min = 3)
 - [ ] La mesure remplace aussi les valeurs enregistrées dans la définition à chaque enregistrement
 
-Ta réponse :
+Ta réponse : fait
 
 ## D65. Aides : où se règlent les délais
 Choix appliqué : les délais (10, 18, 25 minutes sans progrès) sont une propriété du backend (`phantasmon.trahison.hint-minutes`), valable pour toutes les parties ; pas un réglage de partie.
@@ -198,23 +198,23 @@ Choix appliqué : les délais (10, 18, 25 minutes sans progrès) sont une propri
 - [ ] Réglage de la partie (comme `door_open_seconds`), modifiable par l'organisateur avant la partie
 - [ ] Délai propre à chaque salle (champ de la définition)
 
-Ta réponse :
+Ta réponse : fait
 
 ## D66. Aides : pause et maître du jeu
 Choix appliqué : le compteur d'aide est celui des salles (heure du dernier progrès) : une partie mise en pause **n'arrête pas** le compte, et un maître du jeu ne peut pas donner une aide à la main (le moteur sait le faire, aucune action ne l'expose).
-- [x] Le compte continue pendant la pause ; pas d'aide manuelle *(par défaut)*
-- [ ] Le compte s'arrête pendant la pause (le délai de pause est ajouté à l'heure du dernier progrès)
+- [ ] Le compte continue pendant la pause ; pas d'aide manuelle *(par défaut)*
+- [x] Le compte s'arrête pendant la pause (le délai de pause est ajouté à l'heure du dernier progrès)
 - [ ] Une action MJ `give_hint` donne l'aide suivante à un groupe tout de suite
 
-Ta réponse :
+Ta réponse : fait
 
 ## D67. Fin de `ROOMS` : qui perd le point
 Choix appliqué : chaque membre du groupe (vivant ou non) d'une salle non finie perd 1 point, jamais sous 0 ; un bracelet à 0 tue son propriétaire comme après un vote. Aucune mesure de temps n'est enregistrée pour ces salles.
-- [x] Tous les membres, mort possible à 0 *(par défaut)*
-- [ ] Tous les membres, mais le point perdu ne peut pas faire tomber un bracelet à 0 (reste à 1)
+- [ ] Tous les membres, mort possible à 0 *(par défaut)*
+- [x] Tous les membres, mais le point perdu ne peut pas faire tomber un bracelet à 0 (reste à 1)
 - [ ] Seulement les membres encore vivants
 
-Ta réponse :
+Ta réponse : fait
 
 ## D68. Mesures : « médiane d'une salle »
 Choix appliqué : la table garde une ligne par étape ; la médiane d'une salle est la **somme des médianes de ses étapes mesurées** (pas la médiane des durées totales des parties).
@@ -222,15 +222,15 @@ Choix appliqué : la table garde une ligne par étape ; la médiane d'une salle 
 - [ ] Une ligne de plus par salle jouée (durée totale), médiane réelle des parties
 - [ ] Ne compter que les parties sans aucune aide donnée
 
-Ta réponse :
+Ta réponse : fait
 
 ## D69. Aides : à qui et comment
 Choix appliqué : l'aide va à la première étape ouverte non résolue (ordre de la définition) qui en a encore une ; elle voyage dans la vue de la salle (`steps[].hints`) donc seul le groupe la reçoit (plus les spectateurs et le maître du jeu, comme toute vue de salle), et le client de ses membres la fait lire par l'hôtesse. Elle n'est pas relue à la reconnexion.
 - [x] Aide dans la vue de la salle, lue par l'hôtesse chez les membres *(par défaut)*
-- [ ] Aussi une liste « aides reçues » relisible dans l'inventaire
+- [x] Aussi une liste « aides reçues » relisible dans l'inventaire
 - [ ] Une annonce `say.*` du backend (comme les portes), en plus
 
-Ta réponse :
+Ta réponse : fait
 
 ## D70. Tirage : la taille des groupes et `three_levers`
 Constat : chaque groupe de manche est toujours un trio (une paire plus un solo = 3 bracelets, neuf joueurs en tout), donc `three_levers` peut aller partout aujourd'hui. Choix appliqué : le tirage sait quand même qu'une salle demande un groupe d'au moins `n` joueurs (`RoomDraw.MIN_GROUP`, `three_levers` : 3) et ne la met jamais là où le groupe est plus petit ; il reçoit les tailles par manche et par place (3 partout par défaut) et ne relâche jamais cette règle.
@@ -238,7 +238,7 @@ Constat : chaque groupe de manche est toujours un trio (une paire plus un solo =
 - [ ] Rien : les groupes sont toujours des trios
 - [ ] Aussi refuser dans la validation d'une salle qu'elle serve à moins de 3
 
-Ta réponse :
+Ta réponse : fait
 
 ## D71. Tirage : le « mécanisme principal » d'une salle
 Choix appliqué : celui qui compte le plus d'étapes dans la salle, le premier rencontré en cas d'égalité ; une salle sans étape n'en a pas (jamais en conflit de variété).
@@ -246,7 +246,7 @@ Choix appliqué : celui qui compte le plus d'étapes dans la salle, le premier r
 - [ ] Celui de la première étape
 - [ ] Celui de la plus grosse difficulté (demande la difficulté des mécanismes dans le tirage)
 
-Ta réponse :
+Ta réponse : fait
 
 ## D72. Tirage : dans quel ordre relâcher les contraintes
 Choix appliqué : montée de difficulté, puis variété des mécanismes, puis salles récentes, puis écart de difficulté (élargi au minimum nécessaire), puis salles toutes différentes. Le résultat dit lesquelles il rompt vraiment.
@@ -254,15 +254,15 @@ Choix appliqué : montée de difficulté, puis variété des mécanismes, puis s
 - [ ] récentes avant la variété (on préfère rejouer une salle récente qu'avoir deux mécanismes pareils)
 - [ ] l'écart de difficulté en premier
 
-Ta réponse :
+Ta réponse : fait
 
 ## D73. Tirage : banque trop petite
 Choix appliqué : avec moins de neuf salles utilisables, le tirage rejoue des salles (jamais deux fois la même dans une manche si la banque en a trois ou plus) et le signale (`repeat`). Seule une banque vide ne tire rien : la partie joue alors la salle d'essai ou la salle intégrée.
-- [x] Répéter des salles et le dire *(par défaut)*
-- [ ] Refuser la création de la partie tant que la banque a moins de neuf salles
+- [ ] Répéter des salles et le dire *(par défaut)*
+- [x] Refuser la création de la partie tant que la banque a moins de neuf salles
 - [ ] Compléter avec la salle intégrée
 
-Ta réponse :
+Ta réponse : fait
 
 ## D74. Tirage : réglages par défaut
 Choix appliqué : écart maximal 1 entre les trois salles d'une manche, montée 0 (aucune contrainte), 3 parties passées évitées. Réglables à la création (`draw_max_spread`, `draw_rise`, `draw_avoid_games`).
@@ -270,30 +270,30 @@ Choix appliqué : écart maximal 1 entre les trois salles d'une manche, montée 
 - [ ] Montée 1 (la manche 3 plus dure que la 1) par défaut
 - [ ] Écart 0 (difficultés identiques)
 
-Ta réponse :
+Ta réponse : fait
 
 ## D75. Tirage : qui le voit, quand il est tiré
 Choix appliqué : le tirage se fait à la création de la partie (`create`), se refait avec « Tirer à nouveau » avant la manche 1, et la salle d'une place se remplace tant que sa manche n'a pas démarré. Seuls les maîtres du jeu nommés le voient (bloc `gm`) : un admin qui n'est pas maître du jeu ne voit pas le tirage dans le lobby.
 - [x] Maîtres du jeu seulement *(par défaut)*
-- [ ] Les admins aussi, dans le lobby
+- [x] Les admins aussi, dans le lobby
 - [ ] Tirer seulement au démarrage (`start`), pas à la création
 
-Ta réponse :
+Ta réponse : fait
 
 ## D77. Places : qui convertit les positions des emplacements
 Choix appliqué : la conversion « relatif à la salle vers coordonnées de hub » reste faite par le client (`world/RoomFrame`, déjà en jeu depuis T3) ; le backend garde seulement le couple (place, orientation) dans le tirage et une copie testée de la règle (`RoomPlace.toHub`). `RoomInstance` ne change pas.
 - [x] Client convertit, backend garde place et orientation *(par défaut)*
 - [ ] Le backend convertit et envoie des positions de hub dans `EventsTrahisonRoom`
 
-Ta réponse :
+Ta réponse : fait
 
 ## D78. Vérification du collage : échantillon et seuils
 Choix appliqué : le client du maître du jeu compare jusqu'à 600 blocs non vides par place (répartis sur toute la salle tournée), état de bloc seulement (pas les données des panneaux ni des têtes). Place « bien collée » si tout concorde, « pas collée » si moins de 5 % concordent, « mal collée » entre les deux, « chunks non chargés » si plus de la moitié des blocs sont hors des chunks chargés (il faut aller près des places).
 - [x] 600 blocs, état seulement, seuil 5 % *(par défaut)*
 - [ ] Tous les blocs (plus lent, plus sûr)
-- [ ] Comparer aussi les données de bloc (texte des panneaux)
+- [x] Comparer aussi les données de bloc (texte des panneaux)
 
-Ta réponse :
+Ta réponse : fait
 
 ## D79. Vérification du collage : quand
 Choix appliqué : à la demande (bouton « Vérifier le collage » du lobby et commande `check`), jamais bloquant : `start` ne la lance pas et ne la refuse pas.
@@ -301,7 +301,7 @@ Choix appliqué : à la demande (bouton « Vérifier le collage » du lobby et c
 - [ ] `start` refuse tant que la dernière vérification n'est pas entièrement bonne
 - [ ] Vérification automatique à chaque ouverture du lobby
 
-Ta réponse :
+Ta réponse : fait
 
 ## D90. Soirée : l'outil de collage
 Choix appliqué : la procédure demande à l'admin de coller avec Axiom un fichier par place, `.schem` (ou `.litematic`), sans rotation ni miroir, coin minimum sur le coin de la fiche ; le fichier unique `all_places` est donné comme raccourci.
@@ -309,14 +309,14 @@ Choix appliqué : la procédure demande à l'admin de coller avec Axiom un fichi
 - [ ] Fichier unique d'abord
 - [ ] WorldEdit en plus d'Axiom
 
-Ta réponse :
+Ta réponse : fait
 
 ## D91. Soirée : quand tirer et coller
 Choix appliqué : la procédure fait tirer et coller la veille ou au moins une heure avant, puis vérifier le jour même ; le lobby n'est ouvert qu'une fois la vérification bonne.
 - [x] Tirer et coller à l'avance, vérifier le jour même *(par défaut)*
 - [ ] Tout le même soir, juste avant le lobby
 
-Ta réponse :
+Ta réponse : fait
 
 ## Tranché
 
@@ -402,5 +402,33 @@ Ta réponse :
 Choix appliqué : `Settings.autoPauseSeconds` (300 par défaut, réglable à la création) remplace la constante de 5 minutes. Pas de champ dans l'écran du maître du jeu.
 - [x] Réglage de création *(par défaut)*
 - [ ] Champ de l'écran du maître du jeu
+
+Ta réponse :
+
+## D102. Spectateurs : action `spectate` et étiquette
+Choix appliqué : pas fait en T6.3. Un membre du hub non inscrit reçoit déjà une vue `SPECTATOR` (comme un fantôme, D16), traverse les portes et ne clique rien, mais aucune action `spectate` ni étiquette « spectateur » n'existe : le client ne sait pas qui est spectateur (la liste des membres du hub n'est pas dans la vue).
+- [x] Reporté à une étape suivante *(par défaut)*
+- [ ] Le backend envoie aux seuls fantômes, spectateurs et maîtres du jeu la liste des spectateurs, pour l'étiquette
+
+Ta réponse :
+
+## D103. Réglage de l'affichage des fantômes
+Choix appliqué : `Settings.ghostDisplay` (`SILHOUETTE` par défaut, ou `HIDDEN`), fixé à la création ; pas de bouton dans l'écran du maître du jeu.
+- [x] Réglage de création *(par défaut)*
+- [ ] Bouton dans l'écran du maître du jeu, changeable en cours de partie
+
+Ta réponse :
+
+## D104. Fantôme en mode caché : se voit-il lui-même et voit-il les autres ?
+Choix appliqué : `HIDDEN` ne cache les fantômes qu'aux vivants. Un fantôme, un spectateur et un maître du jeu voient les autres fantômes en noir et blanc.
+- [x] Cachés aux vivants seulement *(par défaut)*
+- [ ] Cachés aussi aux spectateurs
+
+Ta réponse :
+
+## D105. Marque « (fantôme) » visible de tous
+Choix appliqué : la marque sous le pseudo s'affiche pour tous ceux qui voient le fantôme (en mode silhouette, les vivants aussi), pour qu'on ne le prenne jamais pour un joueur.
+- [x] Pour tous ceux qui le voient *(par défaut)*
+- [ ] Seulement pour les fantômes et spectateurs
 
 Ta réponse :

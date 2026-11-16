@@ -38,6 +38,12 @@ public class Settings {
 	 * (the plan's default): the death is discovered by seeing the body.
 	 */
 	public boolean announceDeaths = false;
+	/** T6.3: how the living see a ghost: a black and white silhouette, or not at all (body, name and shadow gone). */
+	public enum GhostDisplay {
+		SILHOUETTE, HIDDEN
+	}
+
+	public GhostDisplay ghostDisplay = GhostDisplay.SILHOUETTE;
 	/** T6.4: how long the clock waits for a disconnected living player in AUTO mode (seconds). */
 	public int autoPauseSeconds = DEFAULT_AUTO_PAUSE_SECONDS;
 	public static final int DEFAULT_AUTO_PAUSE_SECONDS = 300;

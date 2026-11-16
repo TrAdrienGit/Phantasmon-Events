@@ -110,6 +110,7 @@ public final class Views {
 		v.put("bracelets", bracelets);
 		v.put("bodies", bodies(g, kind, me, sees));
 		v.put("disconnected", disconnected(g, me));
+		v.put("ghost_display", g.settings.ghostDisplay.name());
 
 		List<Object> doors = new ArrayList<>();
 		for (int k = 0; k < Door.ALL.size(); k++) {

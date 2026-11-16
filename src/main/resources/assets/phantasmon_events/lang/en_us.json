@@ -488,6 +488,8 @@
   "phantasmon_events.trahison.away.name": "%s (disconnected)",
   "phantasmon_events.trahison.body.name": "Body of %s",
   "phantasmon_events.trahison.body.prompt": "Right click: take %s's bracelet",
+  "phantasmon_events.trahison.ghost.mark": "(ghost)",
+  "phantasmon_events.trahison.ghost.reminder": "You are a ghost: you can walk through the doors but no longer play.",
   "phantasmon_events.trahison.hud.ghost": "Ghost",
   "phantasmon_events.trahison.hud.registered": "Registered: %s",
   "phantasmon_events.trahison.hud.step_round": "%s - round %s",

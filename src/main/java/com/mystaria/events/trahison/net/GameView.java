@@ -236,6 +236,7 @@ public final class GameView {
 	private static List<Body> bodiesState = List.of();
 	private static List<Integer> carriedState = List.of();
 	private static List<Away> awayState = List.of();
+	private static String ghostDisplayState = "SILHOUETTE";
 	/** {@code server time - local time} when the last view arrived. */
 	private static long clockOffset;
 	private static long phaseTotalMs;
@@ -262,6 +263,25 @@ public final class GameView {
 	/** The bodies the backend lets this viewer know of (T6.1); empty when he knows none. */
 	public static List<Body> bodies() {
 		return bodiesState;
+	}
+
+	/** T6.3: how the living see a ghost, {@code SILHOUETTE} (black and white) or {@code HIDDEN}; the game master's setting. */
+	public static boolean ghostsHidden() {
+		return "HIDDEN".equals(ghostDisplayState);
+	}
+
+	/** T6.3: the accounts this viewer knows to be dead (the view already hides the deaths he must not know yet). */
+	public static java.util.Set<UUID> ghosts() {
+		View v = current;
+		java.util.Set<UUID> out = new java.util.HashSet<>();
+		if (v != null && v.hasGame()) {
+			for (Player p : v.players()) {
+				if (!p.alive() && p.uuid() != null) {
+					out.add(p.uuid());
+				}
+			}
+		}
+		return out;
 	}
 
 	/** The players whose connection dropped (T6.4), each to be shown as a mannequin where he stood. */
@@ -346,6 +366,7 @@ public final class GameView {
 		bodiesState = List.of();
 		carriedState = List.of();
 		awayState = List.of();
+		ghostDisplayState = "SILHOUETTE";
 		phaseKey = "";
 		phaseTotalMs = 0;
 		pointsChangedAt = new long[9];
@@ -371,6 +392,7 @@ public final class GameView {
 		lobbyState = next.hasGame() ? parseLobby(data) : Lobby.NONE;
 		bodiesState = next.hasGame() ? parseBodies(data) : List.of();
 		awayState = next.hasGame() ? parseAway(data) : List.of();
+		ghostDisplayState = "HIDDEN".equals(str(data, "ghost_display")) ? "HIDDEN" : "SILHOUETTE";
 		carriedState = next.hasGame() ? ints(map(data, "viewer"), "carried") : List.of();
 		String key = next.gameId() + "/" + next.phase() + "/" + next.round() + "/" + next.finalLoop() + "/" + next.finalLoops();
 		long remaining = next.remainingMs() == null ? -1 : next.remainingMs();
