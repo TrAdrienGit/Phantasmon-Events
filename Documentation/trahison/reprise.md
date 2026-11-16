@@ -120,3 +120,29 @@ Rien n'a encore tourné **en jeu** : aucun déploiement n'a été fait (ni mod, 
   - le plan se dessine dans l'éditeur sur les mêmes blocs que les faux blocs (ancre à origine fractionnaire, le cas de l'ancienne
     erreur d'un bloc) ;
   - la zone de chaque joueur apparaît dans la vue du maître du jeu (`gm.zones`, pas encore affichée par l'écran provisoire).
+
+## Notes de contrôle de l'orchestrateur (2026-11-16, après 27b1d8c)
+
+- **Points en suspens** :
+  - ajouter `Mechanism.slotRoles()` au backend, pour que le catalogue des mécanismes du client n'ait plus de table
+    écrite en dur (à faire avec les mécanismes suivants) ;
+  - vérifier que les étiquettes flottantes de l'éditeur (`edit/WorldDraw.label`, `scale(s,-s,s)`) ne sont pas en
+    miroir, à comparer avec `world/DoorPanels` ;
+  - un joueur qui se trouve dans la boîte d'une porte au moment où elle se ferme n'est pas repoussé.
+- **Tests humains en plus** :
+  - **T3.2 éditeur de salle** (suivre `guide-editeur-salle.md`) :
+    - construire une petite salle (panneau, bannière, escalier), poser 3 emplacements et une chaîne de 2 étapes, puis
+      enregistrer : version 1 attendue ;
+    - `room list`, puis `room load` dans un autre monde, face à une autre direction : vérifier l'orientation des
+      blocs, et que les emplacements et la chaîne sont intacts ;
+    - les refus : pas admin, pas en solo, pas en créatif, entrée ou sortie bouchée, pas d'étape de sortie, emplacement
+      hors gabarit ;
+    - la schématique s'ouvre dans Axiom ;
+    - il faut un bâton en main pour sélectionner.
+  - **`ring_dial`** (`/phantasmon event trahison minigame ring_dial`) :
+    - la lisibilité des 20 symboles entre 9 et 16 pixels ;
+    - 5 anneaux de 12 symboles ;
+    - le rayon marqué en haut ;
+    - la rotation des anneaux à l'ouverture ;
+    - les anneaux liés ;
+    - le clavier et les sons.
