@@ -261,6 +261,23 @@ Rien n'a encore tourné **en jeu** : aucun déploiement n'a été fait (ni mod, 
     résout l'étape ; le document (paramètre `document`) se lit sur son emplacement dès le début.
   - **`ring_dial` en jeu** : l'écran s'ouvre maintenant par un clic sur son emplacement (il n'était pas enregistré dans le routeur des écrans avant ce lot).
 
+- **Tests humains T3.5 code_breaker/wiring** (backend déployé avec le mod ; hors ligne : `/phantasmon event trahison minigame code_breaker` et `... wiring`, puis une partie avec une salle d'essai qui a un
+  `terminal` pour le décodeur, un `terminal` pour le câblage et un `wall_clue` ; **la définition doit se laisser enregistrer** : l'indice `scheme` du câblage donné dès l'ouverture) :
+  - **Éditeur** : le choix de mécanisme liste `wiring` et `code_breaker` sans « prévu » ; les rôles `panel` et `terminal` viennent du backend ; un câblage dont le schéma n'est donné nulle part est refusé à
+    l'enregistrement ; un décodeur sans emplacement lié aussi ; paramètres hors intervalle en rouge (`length` 6, `alphabet` 10, `maxTries` 3).
+  - **`code_breaker` hors ligne** : fenêtre 400 x 240 lisible, six touches de glyphes avec leur numéro dans le coin (1 à 6 au clavier), Retour arrière, Suppr, Entrée ; la ligne de saisie avec son curseur ;
+    un essai s'ajoute à l'historique avec une courte lueur, disque plein (bien placé) et anneau (mal placé) chacun avec son nombre ; la combinaison d'essai (orange) ouvre le cadenas ; un jeton déjà tapé est
+    grisé et refusé (répétitions interdites) ; l'aide (H) ; les curseurs des deux joueurs fictifs sur les touches.
+  - **`code_breaker` en jeu** : cliquer le terminal ouvre l'écran ; deux joueurs voient la même ligne de saisie et le même historique ; un essai n'est envoyé qu'avec la bonne longueur ; avec `kind: digits`
+    les touches sont des chiffres ; avec `maxTries: 6` le terminal se réinitialise au sixième essai raté (secousse, « Terminal réinitialisé ! », historique vide) ; avec `repeats: true` un jeton peut revenir ;
+    rien dans la vue réseau ne contient la combinaison ; une partie rejouée (« Rejouer ») tire une autre combinaison.
+  - **`wiring` hors ligne** : quatre bornes numérotées à gauche, quatre bornes colorées à droite avec leur symbole (triangle, disque, carré : lisibles sans la couleur) ; glisser d'une borne à l'autre pose un fil à la
+    couleur de la borne de droite ; cliquer une borne puis l'autre aussi ; tirer un fil par son bout le déplace, le lâcher dans le vide l'enlève ; clic droit enlève ; une borne ne tient qu'un fil ; le schéma d'essai
+    (orange) donne la bonne solution (la couleur seule compte : deux bornes de droite rouges conviennent) ; un panneau plein mais faux fait trembler l'écran et monter « Courts-circuits » sans enlever les fils ;
+    une solution juste ouvre le cadenas.
+  - **`wiring` en jeu** : le schéma (carrés de couleur avec symboles) se lit sur le panneau mural et dans l'écran de lecture, dans l'ordre des bornes de gauche ; deux joueurs voient les fils de l'autre et son
+    curseur à sa couleur ; un panneau juste résout l'étape et la suite de la chaîne s'ouvre ; la vue réseau ne contient pas le schéma ; une partie rejouée donne un autre schéma et d'autres couleurs à droite.
+
 ## Notes de contrôle de l'orchestrateur (2026-11-16, après 27b1d8c)
 
 - **Points en suspens** :

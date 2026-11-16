@@ -57,8 +57,8 @@ final class MechanismCatalog {
 			new Info("keypad", true, 2, 78),
 			new Info("pickup_set", true, 2, 135),
 			new Info("ring_dial", true, 2, 240),
-			new Info("wiring", false, 2, 180),
-			new Info("code_breaker", false, 3, 300),
+			new Info("wiring", true, 2, 140),
+			new Info("code_breaker", true, 2, 220),
 			new Info("three_levers", false, 2, 120));
 
 	/** The backend's answer, null until a call succeeds. */

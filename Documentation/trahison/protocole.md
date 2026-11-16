@@ -647,6 +647,43 @@ d'entité cliquable).
 - Geste : aucun (`puzzle_input` est ignoré). Événement : `{ "type": "deposit", "item": "gear" }`.
 - Écran : `PickupSetScreen` (un compteur, ouvert en utilisant l'emplacement de dépôt les mains vides) ; hors ligne : `/phantasmon event trahison minigame pickup_set`.
 
+#### Vue du mécanisme `code_breaker` (décodeur « bien placé / mal placé »)
+
+Un terminal cache une combinaison (jetons tirés par la graine) ; le groupe tape un essai, le terminal répond combien de jetons sont **bien placés** (bon jeton, bonne place) et **mal placés** (bon jeton, mauvaise place), et
+l'historique des essais reste à l'écran. Aucun indice : la logique suffit.
+
+- Paramètres : `length` 3 à 5 (défaut 4) : jetons de la combinaison ; `alphabet` 4 à 9 (défaut 6) : jetons différents (au moins `length` si les répétitions sont interdites) ; `kind` `symbols` (défaut : des glyphes de
+  `SymbolSet`, tirés par la graine) ou `digits` (0 à `alphabet - 1`) ; `repeats` (défaut `false`) : un jeton peut revenir ; `maxTries` 0 (défaut, aucune limite) ou 6 à 30 : à l'épuisement le terminal tire une nouvelle combinaison et efface
+  l'historique (décision D36).
+- Rôle d'emplacement : `terminal` (genre `terminal` ou `pedestal`). Aucun indice. Le validateur n'exige qu'un emplacement lié (`missing=slot:terminal`).
+- Vue : `{ "alphabet": ["eye","key",...], "kind": "symbols", "length": 4, "repeats": false, "maxTries": 0, "entry": "01", "history": [{ "guess": [0,3,1,2], "exact": 1, "misplaced": 2 }], "tries": 1, "resets": 0, "solved": false }`.
+  Un jeton est son rang dans `alphabet` ; `entry` = les rangs déjà tapés (partagés). **Jamais la combinaison** (ni la graine) dans la vue d'un joueur ni d'un spectateur ; le maître du jeu reçoit en plus `code`
+  (les rangs).
+- Geste (`puzzle_input`) : `{ "key": "0".."9" | "del" | "clear" | "enter" }` : un chiffre est le rang d'un jeton, ajouté à `entry` (ignoré si elle est pleine, ou si le jeton y est déjà et que les répétitions sont interdites ;
+  un rang hors de l'alphabet : `ERROR_TRAHISON_BAD_INPUT`), `del` et `clear` corrigent, `enter` envoie (ignoré si `entry` est plus courte que la combinaison). Réponse : `exact` = positions au même jeton,
+  `misplaced` = jetons en commun (multiplicité comprise) moins `exact`. `exact == length` résout. Une étape résolue ignore les gestes.
+- Événements : `{ "type": "key", "key": "3" }` (aussi `del`, `clear`), `{ "type": "feedback", "exact": 1, "misplaced": 2 }`, `{ "type": "reset", ... }` (essais épuisés, même contenu que `feedback`), `{ "type": "unlock" }`.
+- Écran : `CodeBreakerScreen` (fenêtre 400 x 240) : à gauche l'écran du terminal (historique tapé, ligne de saisie partagée, disque plein = bien placé, anneau = mal placé, chacun avec son nombre), à droite les touches
+  de jetons (au clavier : 1 à 9 pour des symboles, 0 à 9 pour des chiffres) ; hors ligne : `/phantasmon event trahison minigame code_breaker` (combinaison d'essai affichée en orange).
+
+#### Vue du mécanisme `wiring` (câblage)
+
+Un panneau de bornes à relier par des fils. Les bornes de gauche sont numérotées de 1 à `wires` ; celles de droite portent une couleur et son symbole (triangle rouge, disque vert, carré bleu : jamais la couleur seule).
+La graine tire le **schéma** : la couleur de la borne de droite que chaque borne de gauche doit atteindre. Ce schéma est un indice que la salle place ailleurs (décision D37).
+
+- Paramètres : `wires` 3 à 6 (défaut 4) : bornes de chaque côté ; `colors` 2 à 3 (défaut 3) : combien de couleurs le schéma emploie (chacune au moins une fois ; plus de fils que de couleurs : des couleurs répétées, décision D38).
+- Rôle d'emplacement : `panel` (genre `terminal` ou `pedestal`). Indice : rôle `scheme`, type `colors`, valeur `["blue","red","red","green"]` : la n-ième couleur est celle de la borne de gauche n° n ; à placer par `gives` dès
+  l'ouverture de l'étape (`when: open`).
+- Vue : `{ "wires": 4, "right": ["green","red","blue","red"], "links": [-1,2,-1,0], "wrong": 0, "solved": false }` : `right` = les couleurs des bornes de droite (publiques), `links[i]` = la borne de droite où arrive le fil de
+  la borne de gauche `i` (-1 : aucun), `wrong` = courts-circuits. **Jamais le schéma** dans la vue d'un joueur ni d'un spectateur ; le maître du jeu reçoit en plus `scheme`.
+- Gestes (`puzzle_input`) : `{ "op": "connect", "left": 0, "right": 2 }` pose un fil (une borne tient un fil : ceux qu'elle avait sautent) ; `{ "op": "disconnect", "left": 0 }` ou `{ "op": "disconnect", "right": 2 }` en
+  enlève un. Quand tous les fils sont posés : chaque borne de gauche reliée à une borne de droite de la couleur demandée résout l'étape ; sinon `wrong` monte de 1 et les fils restent (décision D39). Hors intervalle ou mal
+  formé : `ERROR_TRAHISON_BAD_INPUT`. Une étape résolue ignore les gestes.
+- Événements : `{ "type": "connect", "left": 0, "right": 2 }`, `{ "type": "disconnect", "left": 0, "right": 2 }`, puis `{ "type": "wrong" }` ou `{ "type": "unlock" }` quand le panneau est plein.
+- Écran : `WiringScreen` (fenêtre 400 x 240) : fils qu'on tire d'une borne à l'autre (ou clic sur deux bornes), un fil repris par son bout se déplace ou s'enlève (lâché dans le vide), clic droit sur une borne enlève
+  son fil ; le fil prend la couleur de sa borne de droite ; les fils des autres joueurs arrivent par la vue et leur curseur s'allume à leur couleur ; hors ligne :
+  `/phantasmon event trahison minigame wiring` (schéma d'essai affiché en orange).
+
 ### `EventsTrahisonZone`
 
 - Sens : C2S.
@@ -754,7 +791,7 @@ change cela pour tout le monde (D8, plus bas).
 | Action | Champs | Effet | Réponse |
 |---|---|---|---|
 | `use_slot` | `slot` (texte) | Utiliser un emplacement actif. Si une étape ouverte et non résolue y est liée, son écran s'ouvre : `EventsTrahisonPuzzle` (`reason: open`) à ce joueur seul ; un mécanisme qui réagit à l'usage direct (levier, bouton) est actionné | Aucune réponse propre : `EventsTrahisonPuzzle` et `EventsTrahisonRoom` |
-| `puzzle_input` | `step` (texte), `input` (objet propre au mécanisme) | Un geste sur l'écran du mini-jeu : `three_dials` attend `{ "dial": 0..2, "delta": -9..9 }`, `ring_dial` `{ "ring": 0..4, "delta": 1 | -1 }`, `keypad` `{ "key": "0".."9" | "del" | "clear" | "enter" }`, `pickup_set` aucun geste. Appliqué dans l'ordre d'arrivée | `EventsTrahisonPuzzle` (`input`, puis `solved` si résolu) à tous ceux qui regardent ; `EventsTrahisonRoom` si une étape est résolue |
+| `puzzle_input` | `step` (texte), `input` (objet propre au mécanisme) | Un geste sur l'écran du mini-jeu : `three_dials` attend `{ "dial": 0..2, "delta": -9..9 }`, `ring_dial` `{ "ring": 0..4, "delta": 1 | -1 }`, `keypad` `{ "key": "0".."9" | "del" | "clear" | "enter" }`, `pickup_set` aucun geste, `code_breaker` `{ "key": "0".."9" | "del" | "clear" | "enter" }`, `wiring` `{ "op": "connect", "left": 0..5, "right": 0..5 }` ou `{ "op": "disconnect", "left" | "right": 0..5 }`. Appliqué dans l'ordre d'arrivée | `EventsTrahisonPuzzle` (`input`, puis `solved` si résolu) à tous ceux qui regardent ; `EventsTrahisonRoom` si une étape est résolue |
 | `pick_up` | `slot` (texte) | Ramasser les objets (`type: item`) visibles dans l'emplacement : ils vont dans le sac de la salle, **au nom de celui qui ramasse** (`items[].holder`) | `EventsTrahisonRoom` |
 | `give_item` | `item` (texte), `to` (indice de joueur) | Remettre un objet qu'on porte à un autre joueur. Le backend vérifie la portée : 4 blocs (plus 1 de tolérance pour l'âge des positions) d'après les positions que les clients envoient (`EventsTrahisonZone`) ; sans position, être dans la même zone connue suffit ; sinon `ERROR_TRAHISON_TOO_FAR`. Le destinataire doit être vivant et, hors temps libre, membre du groupe | `EventsTrahisonRoom` (le porteur change) |
 | `use_item` | `item`, `slot` | Utiliser un objet qu'on porte sur un emplacement actif : l'étape ouverte qui y est liée doit le prendre (`Mechanism.onItem`), l'objet est alors consommé et l'étape peut se résoudre. Sinon `ERROR_TRAHISON_ITEM_REFUSED` et l'objet reste | `EventsTrahisonPuzzle` / `EventsTrahisonRoom` |
@@ -951,10 +988,10 @@ section 5. Mécanismes connus à ce jour (rôle d'emplacement : genres acceptés
 `plate`, `pedestal`, `secret`, `inner_door`), `three_dials` (trois molettes de 0 à 9 ; indice `code` de type `digits` ; `dials` : `terminal`, `pedestal`),
 `ring_dial` (anneaux de symboles liés ; indice `symbols` de type `symbols`, voir la vue plus haut ; `terminal` : `terminal`, `pedestal`), `keypad` (digicode mural ;
 indice `code` de type `digits` ; `keypad` : `keypad`, `terminal` ; voir plus haut), `pickup_set` (objets cachés ; indices `spot_1`..`spot_6` de type `item` et `document` de type
-`document` ; `deposit` : `pedestal`, `terminal`, `plate`, `secret`, `inner_door` ; voir plus haut).
+`document` ; `deposit` : `pedestal`, `terminal`, `plate`, `secret`, `inner_door` ; voir plus haut), `code_breaker` (décodeur ; aucun indice ; `terminal` : `terminal`, `pedestal` ; voir plus haut), `wiring` (câblage ; indice `scheme` de type `colors` ; `panel` : `terminal`, `pedestal` ; voir plus haut).
 
 Le validateur contrôle en plus les liaisons des rôles : un rôle que le mécanisme ne déclare pas (hors `exit`), ou lié à un emplacement d'un genre qu'il n'accepte pas, donne
-`ERROR_TRAHISON_ROOM_BAD_KIND` (`info` : `role=<rôle>;unknown` ou `role=<rôle>;needs=<genre>|<genre>`) ; et `keypad` et `pickup_set` refusent une étape dont un indice dont les joueurs
+`ERROR_TRAHISON_ROOM_BAD_KIND` (`info` : `role=<rôle>;unknown` ou `role=<rôle>;needs=<genre>|<genre>`) ; et `keypad`, `pickup_set` et `wiring` refusent une étape dont un indice dont les joueurs
 ont besoin n'est placé nulle part ou seulement à la résolution (`ERROR_TRAHISON_ROOM_BAD_GIVE`, `info` : `missing=<indice>;when=open`, `missing=slot:<rôle>` ou `missing=param:document`).
 
 ## 5. Codes d'erreur

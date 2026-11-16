@@ -6,6 +6,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomFixtures.TestClock;
+import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.CodeBreaker;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.DebugButton;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.Json;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.Keypad;
@@ -14,6 +15,7 @@ import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.PickupSet;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.RingDial;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.ThreeDials;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.ViewerKind;
+import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.Wiring;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
@@ -30,7 +32,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class NewMechanismsRoomTest {
 
 	static final MechanismRegistry REGISTRY = new MechanismRegistry(
-			List.of(new DebugButton(), new ThreeDials(), new RingDial(), new Keypad(), new PickupSet()));
+			List.of(new DebugButton(), new ThreeDials(), new RingDial(), new Keypad(), new PickupSet(),
+					new Wiring(), new CodeBreaker()));
 
 	static ObjectNode hunt() {
 		ObjectNode p = Json.object();
@@ -108,6 +111,71 @@ class NewMechanismsRoomTest {
 		ObjectNode in = Json.object();
 		in.put("key", key);
 		return in;
+	}
+
+	/** wiring (scheme on the wall) -> code_breaker (nothing to find) -> exit button. */
+	static RoomDefinition terminalsRoom() {
+		return new RoomDefinition("terminals_room", "Terminals", "tester", 1, 3, 100,
+				List.of(RoomFixtures.slot("panel", "terminal", 2, 1, 2), RoomFixtures.slot("wall", "wall_clue", 20, 2, 0),
+						RoomFixtures.slot("console", "terminal", 10, 1, 4), RoomFixtures.slot("exit", "exit", 40, 0, 20)),
+				List.of(new Step("wires", "wiring", null, Map.of("panel", "panel"), List.of(), List.of(new Give("scheme", "wall", null)), List.of()),
+						new Step("breaker", "code_breaker", null, Map.of("terminal", "console"), List.of("wires"), List.of(), List.of()),
+						new Step("out", "debug_button", null, Map.of("exit", "exit"), List.of("breaker"), List.of(), List.of())),
+				null);
+	}
+
+	@Test
+	void aGroupPlaysTheWiringThenTheCodeBreaker() {
+		assertEquals(List.of(), RoomValidator.validate(terminalsRoom(), REGISTRY::find));
+		RoomService rooms = new RoomService(REGISTRY, new TestClock());
+		rooms.start("hub", 0, List.of(0, 1), terminalsRoom(), 99L);
+		JsonNode view = rooms.roomView("hub", 0, ViewerKind.PLAYER);
+		List<String> scheme = new java.util.ArrayList<>();
+		for (JsonNode slot : view.get("slots")) {
+			if (slot.get("id").asString().equals("wall")) {
+				slot.get("shows").get(0).get("clue").get("value").forEach(v -> scheme.add(v.asString()));
+			}
+		}
+		assertEquals(4, scheme.size());
+		JsonNode puzzle = rooms.puzzleView("hub", 0, "wires", ViewerKind.PLAYER);
+		assertFalse(Json.write(puzzle).contains("scheme"));
+		List<String> right = new java.util.ArrayList<>();
+		puzzle.get("view").get("right").forEach(v -> right.add(v.asString()));
+		boolean[] used = new boolean[4];
+		ActionResult last = null;
+		for (int left = 0; left < 4; left++) {
+			int target = -1;
+			for (int j = 0; j < 4 && target < 0; j++) {
+				if (!used[j] && right.get(j).equals(scheme.get(left))) {
+					target = j;
+				}
+			}
+			used[target] = true;
+			ObjectNode in = Json.object();
+			in.put("op", "connect");
+			in.put("left", left);
+			in.put("right", target);
+			last = rooms.apply("hub", 0, left % 2, new RoomAction.PuzzleInput("wires", in));
+		}
+		assertTrue(last.stepSolved());
+		// The terminal opens: a logic puzzle with no clue. Typing the whole alphabet order never leaks the combination.
+		JsonNode terminal = rooms.puzzleView("hub", 0, "breaker", ViewerKind.PLAYER);
+		assertFalse(Json.write(terminal).contains("\"code\""));
+		for (String k : new String[] { "0", "1", "2", "3", "enter" }) {
+			rooms.apply("hub", 0, 1, new RoomAction.PuzzleInput("breaker", key(k)));
+		}
+		assertEquals(1, rooms.puzzleView("hub", 0, "breaker", ViewerKind.PLAYER).get("view").get("history").size());
+	}
+
+	@Test
+	void theValidatorAsksForTheWiringScheme() {
+		RoomDefinition bad = new RoomDefinition("bad2", "Bad", "t", 1, 1, 1,
+				List.of(RoomFixtures.slot("panel", "terminal", 2, 1, 1), RoomFixtures.slot("exit", "exit", 40, 0, 20)),
+				List.of(new Step("w", "wiring", null, Map.of("panel", "panel"), List.of(), List.of(), List.of()),
+						new Step("out", "debug_button", null, Map.of("exit", "exit"), List.of("w"), List.of(), List.of())),
+				null);
+		var issues = RoomValidator.validate(bad, REGISTRY::find);
+		assertTrue(issues.stream().anyMatch(i -> i.code().equals(RoomValidator.BAD_GIVE) && i.info().equals("missing=scheme;when=open")), issues.toString());
 	}
 
 	@Test

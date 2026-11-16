@@ -190,6 +190,10 @@ class RoomIntegrationTest {
 				.andExpect(jsonPath("$[?(@.id == 'pickup_set')].slot_roles[0].role").value(hasItem("deposit")))
 				.andExpect(jsonPath("$[?(@.id == 'pickup_set')].clue_roles[0]").value(hasItem("spot_1")))
 				.andExpect(jsonPath("$[?(@.id == 'ring_dial')].slot_roles[0].role").value(hasItem("terminal")))
+				.andExpect(jsonPath("$[?(@.id == 'wiring')].slot_roles[0].role").value(hasItem("panel")))
+				.andExpect(jsonPath("$[?(@.id == 'wiring')].clue_roles[0]").value(hasItem("scheme")))
+				.andExpect(jsonPath("$[?(@.id == 'code_breaker')].slot_roles[0].role").value(hasItem("terminal")))
+				.andExpect(jsonPath("$[?(@.id == 'code_breaker')].params[0].name").value(hasItem("length")))
 				.andExpect(jsonPath("$[0].params").isArray());
 	}
 

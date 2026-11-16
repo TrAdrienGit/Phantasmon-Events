@@ -54,6 +54,8 @@ public final class PuzzleScreens {
 		register("ring_dial", RingDialScreen::new);
 		register("keypad", KeypadScreen::new);
 		register("pickup_set", PickupSetScreen::new);
+		register("code_breaker", CodeBreakerScreen::new);
+		register("wiring", WiringScreen::new);
 	}
 
 	private PuzzleScreens() {

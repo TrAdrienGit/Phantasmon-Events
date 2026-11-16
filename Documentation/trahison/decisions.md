@@ -168,6 +168,44 @@ d'un genre non accepté (`ERROR_TRAHISON_ROOM_BAD_KIND`) et, pour `keypad` et `p
 
 Ta réponse :
 
+## D36. Décodeur (`code_breaker`) : que se passe-t-il quand les essais sont épuisés
+Choix appliqué : le paramètre `maxTries` (0 = aucune limite, par défaut ; sinon 6 à 30) ne perd jamais la partie : quand le dernier essai est raté, la combinaison est **retirée** (déduite de la graine de l'étape et du nombre de
+réinitialisations, donc rejouable à l'identique), l'historique est effacé et le terminal l'annonce (« Terminal réinitialisé ! »). Pas d'impasse : l'étape reste toujours résoluble, sans horloge dans le mécanisme (comme D30).
+- [x] Nouvelle combinaison et historique effacé *(par défaut)*
+- [ ] Même combinaison, historique effacé (les essais ne servent qu'à ralentir)
+- [ ] Verrouillage du terminal : l'étape ne se résout plus (demande un moyen de la rouvrir : levier, autre étape)
+
+Ta réponse :
+
+## D37. Câblage (`wiring`) : comment le schéma est communiqué, et ce que « relié correctement » veut dire
+Choix appliqué : le schéma est un **indice `scheme` de type `colors`** (la n-ième couleur de l'indice = la borne gauche n° n) que la salle place où elle veut (`gives`, dès l'ouverture : le validateur refuse un câblage dont le schéma n'est montré
+nulle part), comme le code du digicode (D31). Les bornes de gauche sont numérotées ; celles de droite portent une couleur **et son symbole** (triangle rouge, disque vert, carré bleu). Une borne de gauche est correcte si son fil arrive à une
+borne de droite **de la couleur demandée** ; avec plus de fils que de couleurs, plusieurs bornes de droite partagent une couleur et n'importe laquelle convient (chacune ne tient qu'un fil). Un indice `document` n'est pas produit : l'indice
+`colors` se dessine déjà sur un panneau mural et dans l'écran de lecture.
+- [x] Indice `colors` ; relié correctement = la bonne couleur à droite *(par défaut)*
+- [ ] Indice `colors` ; relié correctement = exactement la borne tirée par la graine (une seule solution, bornes de droite repérées aussi par leur rang)
+- [ ] Un document en texte (« 1 : rouge, 2 : bleu... ») à la place, ou en plus
+
+Ta réponse :
+
+## D38. Câblage : seulement les trois couleurs du jeu ?
+Choix appliqué : le schéma n'emploie que `red`, `green` et `blue`, avec leurs symboles de la charte (le paramètre `colors` de 2 à 3 dit combien en sont utilisées, chacune au moins une fois) ; `wires` va de 3 à 6, les couleurs se répètent donc dès
+qu'il y a plus de fils que de couleurs. Cela évite d'ajouter des teintes à la charte (habillage Feu / Plante / Eau prévu) et garde la lisibilité pour le daltonisme.
+- [x] Trois couleurs et leurs symboles, couleurs répétées au-delà de 3 fils *(par défaut)*
+- [ ] Ajouter deux couleurs de fil (jaune, blanc) avec leurs propres symboles, dans la charte, l'écran de lecture et l'indice mural
+- [ ] Limiter `wires` à 3 (une couleur par fil)
+
+Ta réponse :
+
+## D39. Câblage : un panneau plein mais faux
+Choix appliqué : quand tous les fils sont posés et que ce n'est pas bon, c'est un « court-circuit » : le compteur monte, l'écran tremble pour tout le monde, mais **les fils restent** pour être corrigés un par un (le panneau ne dit pas lesquels
+sont bons). Le panneau démarre sans aucun fil.
+- [x] Les fils restent, le compteur de courts-circuits est affiché *(par défaut)*
+- [ ] Les fils sautent tous (on recommence) à chaque court-circuit
+- [ ] Le panneau dit combien de fils sont bons (comme « bien placé » du décodeur)
+
+Ta réponse :
+
 ## Tranché
 
 - **D1 (votes de la boucle finale)** : nouvelle répartition tirée par la graine, sans étape des portes. Vérifié dans le code (`GameService.advance`, cas `FINAL` : `startRound(g, true)` fixe `splitIndex` par `seedSplit`, puis entrée directe en `VOTE`) : rien à changer.

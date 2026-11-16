@@ -90,7 +90,7 @@ Bouton **Chaîne** du panneau (ou un clic sur un problème qui nomme une étape)
 Bas) ; à droite, l'étape choisie :
 
 - **Id** de l'étape (renommable) ; **Mécanisme** (liste, lue sur le backend à l'ouverture de l'éditeur). Le backend a aujourd'hui `debug_button`,
-  `three_dials`, `ring_dial`, `keypad` et `pickup_set` ; les autres de la liste (`wiring`, `code_breaker`, `three_levers`) sont **prévus** (T3.5) : on peut
+  `three_dials`, `ring_dial`, `keypad`, `pickup_set`, `wiring` et `code_breaker` ; `three_levers` est **prévu** (T3.5) : on peut
   les poser, mais le backend refusera l'enregistrement tant qu'il ne les a pas.
 - **Paramètres** : des lignes clé / valeur (entier, `true` ou `false`, ou texte). Une valeur hors de l'intervalle connu s'affiche
   en rouge. Changer de mécanisme remet les paramètres à leurs valeurs par défaut.
@@ -115,6 +115,12 @@ Bas) ; à droite, l'étape choisie :
   par la graine à chaque partie) et `items` (la réserve d'objets). Pour joindre un document, remplissez le paramètre `document` (pages séparées par une ligne `---`) et
   donnez l'indice `document` à un emplacement `document`. Les joueurs ramassent les objets là où la graine les a mis, puis les utilisent sur le dépôt : l'étape est
   résolue quand ils sont tous revenus.
+- **Câblage** (`wiring`) : un emplacement `terminal` ou `pedestal` lié au rôle `panel`, une étape `wiring` (paramètres `wires` de 3 à 6 et `colors` de 2 à 3), et un **indice donné** `scheme` « dès que l'étape est
+  ouverte » sur un `wall_clue` ou un `document` : l'indice montre les couleurs dans l'ordre, la n-ième est celle de la borne de gauche n° n (chaque couleur a son symbole). Sans lui le schéma n'est montré
+  nulle part et le backend refuse l'enregistrement. Les joueurs lisent le schéma, retournent au panneau et tirent les fils : une borne de gauche doit arriver à une borne de droite de la bonne couleur.
+- **Décodeur** (`code_breaker`) : un emplacement `terminal` ou `pedestal` lié au rôle `terminal`, une étape `code_breaker` (paramètres `length` 3 à 5, `alphabet` 4 à 9, `kind` `symbols` ou `digits`, `repeats`, `maxTries`).
+  **Aucun indice** : la logique suffit, les joueurs déduisent la combinaison des réponses « bien placé / mal placé » (les essais restent à l'écran). Avec `maxTries` (6 à 30), un terminal qui manque d'essais
+  tire une nouvelle combinaison.
 
 Règles que la salle doit tenir : une étape qui ouvre la sortie, toutes les autres mènent à elle (rien ne mène nulle part), pas de
 cycle de prérequis, rien ne dépasse de la boîte, un emplacement ne sert qu'une seule énigme.
