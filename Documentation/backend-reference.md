@@ -49,9 +49,9 @@ Toutes demandent un jeton de joueur, sauf la page publique des tournois et la co
 | `GET` / `POST` | `/server/mirror/...` | Jeton du serveur | Copie du serveur dédié (§2.2) |
 | `GET` | `/events/trahison/layout/{hub}` | Joueur | Plan fixe du jeu de trahison, dernière version (`version: 0` si le hub n'en a pas) |
 | `PUT` / `POST` | `/events/trahison/layout/{hub}` | Admin | Enregistrer une nouvelle version du plan (`POST` : même effet, pour le client qui n'a pas de `PUT`). Validation `ERROR_TRAHISON_LAYOUT_*` ; corps et règles : [`trahison/protocole.md`](trahison/protocole.md) section 4.1 |
-| `GET` | `/events/trahison/rooms`, `/events/trahison/rooms/{id}` | Joueur | Liste (résumés) et définition d'une salle du jeu de trahison |
+| `GET` | `/events/trahison/rooms`, `/events/trahison/rooms/{id}` | Admin | Liste (résumés) et définition d'une salle du jeu de trahison (réservé aux admins : une définition contient les aides et la chaîne) |
 | `PUT` / `POST` / `DELETE` | `/events/trahison/rooms/{id}` | Admin | Créer ou remplacer (le serveur numérote la version et calcule difficulté et durée ; `POST` = `PUT`), supprimer. Validation `ERROR_TRAHISON_ROOM_*` ; corps et règles : [`trahison/protocole.md`](trahison/protocole.md) section 4.3 |
-| `GET` / `POST` / `PUT` | `/events/trahison/rooms/{id}/schematic` | Joueur (lecture), Admin (écriture) | Les blocs de la salle, corps binaire (`application/octet-stream`, 16 Mio au plus), fichier `<phantasmon.hub.schematics-dir>/trahison_rooms/<id>/room.bin` |
+| `GET` / `POST` / `PUT` | `/events/trahison/rooms/{id}/schematic` | Admin | Les blocs de la salle, corps binaire (`application/octet-stream`, 16 Mio au plus), fichier `<phantasmon.hub.schematics-dir>/trahison_rooms/<id>/room.bin` |
 
 Un hub miroir se crée par la route du cœur : `POST /admin/hubs` `{ "name", "mirror": true, "radius" }` ; ses Anchors
 par `POST /hub/anchors` avec `"role": "SOURCE"` (une par hub, `ERROR_HUB_SOURCE_TAKEN`) ou `"COPY"` (une par admin,

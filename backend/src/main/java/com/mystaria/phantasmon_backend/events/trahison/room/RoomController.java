@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.mystaria.phantasmon_backend.admin.AdminService;
 
 /**
- * The room bank's routes (Documentation/trahison/protocole.md section 4.3): reading for any signed-in player, writing
- * for admins. {@code POST} does what {@code PUT} does, for the client's HTTP helper that has no PUT.
+ * The room bank's routes (Documentation/trahison/protocole.md section 4.3): admins only, reading as well as writing (a
+ * definition holds the hint texts and the chain: a spoiler for the players). {@code POST} does what {@code PUT} does, for the client's HTTP helper that has no PUT.
  */
 @RestController
 public class RoomController {
@@ -33,12 +33,14 @@ public class RoomController {
 	}
 
 	@GetMapping("/events/trahison/rooms")
-	public List<RoomSummary> list() {
+	public List<RoomSummary> list(Authentication authentication) {
+		adminService.requireAdmin((UUID) authentication.getPrincipal());
 		return rooms.list();
 	}
 
 	@GetMapping("/events/trahison/rooms/{id}")
-	public RoomDefinition get(@PathVariable String id) {
+	public RoomDefinition get(@PathVariable String id, Authentication authentication) {
+		adminService.requireAdmin((UUID) authentication.getPrincipal());
 		return rooms.get(id);
 	}
 
@@ -60,7 +62,8 @@ public class RoomController {
 	}
 
 	@GetMapping(value = "/events/trahison/rooms/{id}/schematic", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-	public ResponseEntity<byte[]> schematic(@PathVariable String id) {
+	public ResponseEntity<byte[]> schematic(@PathVariable String id, Authentication authentication) {
+		adminService.requireAdmin((UUID) authentication.getPrincipal());
 		return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).body(rooms.readSchematic(id));
 	}
 

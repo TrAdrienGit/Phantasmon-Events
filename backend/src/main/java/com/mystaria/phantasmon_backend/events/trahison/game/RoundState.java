@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import tools.jackson.databind.JsonNode;
+
 import com.mystaria.phantasmon_backend.events.trahison.rules.Assignment;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Door;
 import com.mystaria.phantasmon_backend.events.trahison.rules.DoorGroup;
@@ -27,6 +29,11 @@ public class RoundState {
 	public int[] passedDoor = new int[9];
 	public List<Integer> penalized = new ArrayList<>();
 	public boolean[] roomSolved = new boolean[3];
+	/**
+	 * The saved state of the room of each group (index as {@link Door#ALL}), written by {@link GameRooms}: this is what
+	 * brings the rooms back after a restart. Empty before the rooms start. Secrets inside: never sent as is.
+	 */
+	public List<JsonNode> rooms = new ArrayList<>();
 	public Vote[] pairVote = new Vote[3];
 	/** Player index whose vote counted for the pair of each group, -1 when none. */
 	public int[] pairVoter = new int[] { -1, -1, -1 };

@@ -17,6 +17,9 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.mystaria.phantasmon_backend.events.trahison.room.ActionResult;
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomAction;
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomException;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Assignment;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Door;
 import com.mystaria.phantasmon_backend.events.trahison.rules.DoorGroup;
@@ -57,6 +60,8 @@ public class GameService {
 	private final Map<UUID, GameScheduler.Handle> timers = new ConcurrentHashMap<>();
 	private final Map<UUID, GameScheduler.Handle> autoTimers = new ConcurrentHashMap<>();
 	private final List<GameListener> listeners = new CopyOnWriteArrayList<>();
+	/** The room engine link; null in tests that play the game alone (then {@code debug_solve} is the only way). */
+	private volatile GameRooms rooms;
 
 	public GameService(GameStore store, Clock clock, GameScheduler scheduler) {
 		this.store = store;
@@ -66,6 +71,11 @@ public class GameService {
 
 	public void addListener(GameListener listener) {
 		listeners.add(listener);
+	}
+
+	/** Plugs the room engine in (before games are reloaded). */
+	public void useRooms(GameRooms gameRooms) {
+		this.rooms = gameRooms;
 	}
 
 	// ------------------------------------------------------------------ lookup
@@ -473,19 +483,57 @@ public class GameService {
 		}
 	}
 
-	/** Test/provisional: the player's group solves its simulated room (the real rooms come in T3). */
+	/**
+	 * Test/provisional (and the bots): the player's group solves its room at once: every step is solved and the exit
+	 * opens, exactly as if the players had done it.
+	 */
 	public Game debugSolve(String hub, UUID uuid) {
 		Game g = require(hub);
 		synchronized (g) {
 			int p = playerAction(g, uuid, Phase.ROOMS);
 			RoundState r = g.currentRound();
 			int k = r.groupOf(p);
-			r.roomSolved[k] = true;
-			event(g, "room_solved", Map.of("group", k, "by", p));
+			if (rooms != null) {
+				rooms.forceSolve(g, r, k);
+			}
+			markRoomSolved(g, r, k, p);
 			persist(g);
-			notifyChanged(g, "room");
 			return g;
 		}
+	}
+
+	/**
+	 * A room action of a player ({@code use_slot}, {@code puzzle_input}, {@code pick_up}): in {@code ROOMS} only, not
+	 * paused, by a living player, in the room of his group. When it finishes the room, the group's room is solved (as with
+	 * {@link #debugSolve}). The room engine is called with the game locked (game, then room), so the room's saved state
+	 * stays consistent with the game's, and a room failure leaves both untouched.
+	 */
+	public ActionResult roomAction(String hub, UUID uuid, RoomAction action) {
+		Game g = require(hub);
+		synchronized (g) {
+			int p = playerAction(g, uuid, Phase.ROOMS);
+			if (rooms == null) {
+				throw new TrahisonException(RoomException.NO_ROOM, "no room engine");
+			}
+			RoundState r = g.currentRound();
+			int k = r.groupOf(p);
+			ActionResult result = rooms.apply(g, r, k, p, action);
+			if (result.roomFinished()) {
+				markRoomSolved(g, r, k, p);
+			}
+			persist(g);
+			return result;
+		}
+	}
+
+	/** The group's room is done: remembers it (once), logs it and tells the listeners. The caller persists. */
+	private void markRoomSolved(Game g, RoundState r, int group, int by) {
+		if (r.roomSolved[group]) {
+			return;
+		}
+		r.roomSolved[group] = true;
+		event(g, "room_solved", Map.of("group", group, "by", by));
+		notifyChanged(g, "room");
 	}
 
 	/** The player votes for his wrist bracelet's side of his group. A pair has one vote: its first voter's. */
@@ -547,6 +595,9 @@ public class GameService {
 				byId.put(g.id, g);
 			}
 			synchronized (g) {
+				if (rooms != null) {
+					rooms.restore(g);
+				}
 				if (g.phase.timed() && !g.paused && g.deadline != null) {
 					scheduleTimer(g);
 				}
@@ -598,6 +649,10 @@ public class GameService {
 			case DOORS -> {
 				closeDoors(g);
 				enterPhase(g, Phase.ROOMS);
+				if (rooms != null) {
+					// After the stage view went out, so a client gets ROOMS first, then its room.
+					rooms.startRound(g, g.currentRound());
+				}
 			}
 			// T3 adds the timeout penalty of an unsolved room here.
 			case ROOMS -> enterPhase(g, Phase.FREE_TIME);
@@ -629,6 +684,9 @@ public class GameService {
 
 	/** Draws the assignment of a new round (or final loop) from the game seed and the history. */
 	private void startRound(Game g, boolean finalLoop) {
+		if (rooms != null) {
+			rooms.clear(g.hub); // the rooms of the previous round are gone with it
+		}
 		RoundState r = new RoundState();
 		r.finalLoop = finalLoop;
 		r.number = finalLoop ? 3 + g.finalLoops : g.round;
@@ -750,6 +808,9 @@ public class GameService {
 	}
 
 	private void finish(Game g, String cause) {
+		if (rooms != null) {
+			rooms.clear(g.hub);
+		}
 		g.phase = Phase.ENDED;
 		g.endedAt = clock.instant();
 		g.deadline = null;

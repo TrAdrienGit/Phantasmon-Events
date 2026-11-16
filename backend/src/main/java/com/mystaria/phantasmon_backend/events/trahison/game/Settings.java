@@ -13,6 +13,11 @@ public class Settings {
 	public Mode mode = Mode.AUTO;
 	/** Points added (a negative number) to a living player who passed no door when the doors close. */
 	public int noDoorPenalty = Scoring.NO_DOOR_PENALTY;
+	/**
+	 * Id of a room of the bank that every group plays in every round (trials, until the draw of T4); null or unknown: the
+	 * built-in fallback room (one button).
+	 */
+	public String testRoom;
 
 	public static int defaultDuration(Phase phase) {
 		return switch (phase) {

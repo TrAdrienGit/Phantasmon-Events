@@ -8,6 +8,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomCatalog;
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomService;
+
 /** Wires the game engine: real clock, timer thread, database store; reloads unfinished games once the app is up. */
 @Configuration(proxyBeanMethods = false)
 public class TrahisonGameConfig {
@@ -23,8 +26,16 @@ public class TrahisonGameConfig {
 	}
 
 	@Bean
-	GameService trahisonGameService(GameStore store, GameScheduler scheduler) {
-		return new GameService(store, Clock.systemUTC(), scheduler);
+	GameService trahisonGameService(GameStore store, GameScheduler scheduler, GameRooms rooms) {
+		GameService service = new GameService(store, Clock.systemUTC(), scheduler);
+		service.useRooms(rooms);
+		return service;
+	}
+
+	/** The rooms of a round come from the room bank (a test room id in the settings) or the built-in fallback. */
+	@Bean
+	GameRooms trahisonGameRooms(RoomService roomService, RoomCatalog catalog) {
+		return new GameRooms(roomService, catalog::find);
 	}
 
 	/** The bots play through the service and listen to it; created before the games are reloaded. */

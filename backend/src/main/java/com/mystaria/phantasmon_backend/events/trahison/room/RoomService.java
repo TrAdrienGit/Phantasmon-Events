@@ -21,13 +21,18 @@ import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.Mechanism;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.MechanismRegistry;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.ViewerKind;
 
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
  * The rooms being played: one {@link RoomInstance} per (hub, group). Started with a definition and a seed (same seed,
  * same solutions), it applies the players' actions, opens the steps whose {@code needs} are done, detects the end and
- * tells the {@link RoomListener}s. Memory only; independent of {@code GameService} (it does not know the game: the
- * caller gives the group's player indices and checks the stage). Thread-safe: each instance is guarded by its own lock.
+ * tells the {@link RoomListener}s. Memory only (the game keeps a {@link #snapshot} of each room in its own state and
+ * {@link #restore}s them after a restart); independent of {@code GameService} (it does not know the game: the caller
+ * gives the group's player indices and checks the stage). Thread-safe: each instance is guarded by its own lock.
+ * <p>
+ * Lock order: {@code GameService} (the game) first, then the room. This service never calls the game, and its listeners
+ * must not take the game's lock (they work from a snapshot of the audience).
  */
 public class RoomService {
 
@@ -91,6 +96,70 @@ public class RoomService {
 
 	public void remove(String hub, int group) {
 		rooms.remove(key(hub, group));
+	}
+
+	/** Drops every room of a hub (a new round starts, or the game ended). Nobody is told. */
+	public void removeAll(String hub) {
+		rooms.values().removeIf(r -> r.hub.equals(hub));
+	}
+
+	/** True when the group's room exists and its exit is open. */
+	public boolean isFinished(String hub, int group) {
+		RoomInstance room = rooms.get(key(hub, group));
+		if (room == null) {
+			return false;
+		}
+		synchronized (room) {
+			return room.exitOpen;
+		}
+	}
+
+	/**
+	 * Solves every remaining step and opens the exit at once (the provisional {@code debug_solve}, bots). Does nothing
+	 * when the room is already finished. Tells the listeners like a real finish would.
+	 */
+	public RoomInstance forceSolve(String hub, int group) {
+		RoomInstance room = require(hub, group);
+		synchronized (room) {
+			if (room.exitOpen) {
+				return room;
+			}
+			Instant now = clock.instant();
+			for (StepRuntime s : room.steps.values()) {
+				if (s.solved) {
+					continue;
+				}
+				if (!s.open) {
+					s.open = true;
+					s.openedAt = now;
+				}
+				s.solved = true;
+				s.solvedAt = now;
+				notifyPuzzle(room, new PuzzleUpdate(s.step.id(), "solved", null, List.of(), null));
+			}
+			room.lastProgressAt = now;
+			room.finishedAt = now;
+			room.exitOpen = true;
+			notifyRoom(room);
+			return room;
+		}
+	}
+
+	// ---------------------------------------------------------------- persistence
+
+	/** The JSON form of a room (everything needed to resume it, solution included: it never leaves the backend). */
+	public ObjectNode snapshot(String hub, int group) {
+		RoomInstance room = require(hub, group);
+		synchronized (room) {
+			return RoomSnapshot.write(room);
+		}
+	}
+
+	/** Puts back a room saved by {@link #snapshot} (replacing the group's room). Nobody is told. */
+	public RoomInstance restore(JsonNode snapshot) {
+		RoomInstance room = RoomSnapshot.read(snapshot, registry);
+		rooms.put(key(room.hub, room.group), room);
+		return room;
 	}
 
 	public Optional<RoomInstance> find(String hub, int group) {

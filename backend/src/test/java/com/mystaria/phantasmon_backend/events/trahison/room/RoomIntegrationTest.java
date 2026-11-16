@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** The room bank's routes: read by players, written by admins, validated, blocks kept in a file. */
+/** The room bank's routes: admins only (definitions are spoilers), validated, blocks kept in a file. */
 @Import(TestcontainersConfiguration.class)
 // Same properties as LayoutIntegrationTest: one shared Spring context.
 @SpringBootTest(properties = { "phantasmon.logging.enabled=false", "phantasmon.admin.file=build/test-admins.txt" })
@@ -78,7 +78,7 @@ class RoomIntegrationTest {
 	}
 
 	@Test
-	void adminsSaveAndEveryoneReadsWithServerComputedFields() throws Exception {
+	void adminsSaveAndReadWithServerComputedFieldsAndPlayersSeeNothing() throws Exception {
 		save(playerToken, true, RoomFixtures.chain()).andExpect(status().isForbidden());
 		save(adminToken, true, RoomFixtures.chain()).andExpect(status().isOk())
 				.andExpect(jsonPath("$.id").value(id))
@@ -86,13 +86,18 @@ class RoomIntegrationTest {
 				.andExpect(jsonPath("$.difficulty").value(3))
 				.andExpect(jsonPath("$.expected_seconds").value(80));
 		save(adminToken, false, RoomFixtures.chain()).andExpect(status().isOk()).andExpect(jsonPath("$.version").value(2));
-		mockMvc.perform(get("/events/trahison/rooms/" + id).header("Authorization", playerToken))
+		mockMvc.perform(get("/events/trahison/rooms/" + id).header("Authorization", adminToken))
 				.andExpect(status().isOk()).andExpect(jsonPath("$.steps.length()").value(3))
 				.andExpect(jsonPath("$.steps[1].needs[0]").value("s1"));
-		mockMvc.perform(get("/events/trahison/rooms").header("Authorization", playerToken))
+		mockMvc.perform(get("/events/trahison/rooms").header("Authorization", adminToken))
 				.andExpect(status().isOk()).andExpect(jsonPath("$[*].id").value(hasItem(id)));
-		mockMvc.perform(get("/events/trahison/rooms/nope_" + id).header("Authorization", playerToken))
+		mockMvc.perform(get("/events/trahison/rooms/nope_" + id).header("Authorization", adminToken))
 				.andExpect(status().isNotFound()).andExpect(jsonPath("$.error_code").value(RoomCatalog.NOT_FOUND));
+		// A definition holds the hints and the chain: a spoiler, so a player may read none of it.
+		mockMvc.perform(get("/events/trahison/rooms/" + id).header("Authorization", playerToken)).andExpect(status().isForbidden());
+		mockMvc.perform(get("/events/trahison/rooms").header("Authorization", playerToken)).andExpect(status().isForbidden());
+		mockMvc.perform(get("/events/trahison/rooms/" + id + "/schematic").header("Authorization", playerToken))
+				.andExpect(status().isForbidden());
 	}
 
 	@Test
@@ -106,21 +111,21 @@ class RoomIntegrationTest {
 	}
 
 	@Test
-	void schematicIsUploadedByAdminsAndDownloadedByAnyone() throws Exception {
+	void schematicIsUploadedAndDownloadedByAdmins() throws Exception {
 		byte[] blocks = { 1, 2, 3, 4, 5, (byte) 200 };
 		mockMvc.perform(post("/events/trahison/rooms/" + id + "/schematic").header("Authorization", adminToken)
 				.contentType(MediaType.APPLICATION_OCTET_STREAM).content(blocks)).andExpect(status().isNotFound());
 		save(adminToken, true, RoomFixtures.chain()).andExpect(status().isOk());
-		mockMvc.perform(get("/events/trahison/rooms/" + id + "/schematic").header("Authorization", playerToken))
+		mockMvc.perform(get("/events/trahison/rooms/" + id + "/schematic").header("Authorization", adminToken))
 				.andExpect(status().isNotFound()).andExpect(jsonPath("$.error_code").value(RoomCatalog.SCHEMATIC_MISSING));
 		mockMvc.perform(post("/events/trahison/rooms/" + id + "/schematic").header("Authorization", playerToken)
 				.contentType(MediaType.APPLICATION_OCTET_STREAM).content(blocks)).andExpect(status().isForbidden());
 		mockMvc.perform(post("/events/trahison/rooms/" + id + "/schematic").header("Authorization", adminToken)
 				.contentType(MediaType.APPLICATION_OCTET_STREAM).content(blocks)).andExpect(status().isOk());
-		byte[] back = mockMvc.perform(get("/events/trahison/rooms/" + id + "/schematic").header("Authorization", playerToken))
+		byte[] back = mockMvc.perform(get("/events/trahison/rooms/" + id + "/schematic").header("Authorization", adminToken))
 				.andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray();
 		assertArrayEquals(blocks, back);
-		mockMvc.perform(get("/events/trahison/rooms").header("Authorization", playerToken))
+		mockMvc.perform(get("/events/trahison/rooms").header("Authorization", adminToken))
 				.andExpect(jsonPath("$[?(@.id == '" + id + "')].has_schematic").value(hasItem(true)));
 	}
 
@@ -131,13 +136,13 @@ class RoomIntegrationTest {
 				.contentType(MediaType.APPLICATION_OCTET_STREAM).content(new byte[] { 9 })).andExpect(status().isOk());
 		mockMvc.perform(delete("/events/trahison/rooms/" + id).header("Authorization", playerToken)).andExpect(status().isForbidden());
 		mockMvc.perform(delete("/events/trahison/rooms/" + id).header("Authorization", adminToken)).andExpect(status().isOk());
-		mockMvc.perform(get("/events/trahison/rooms/" + id).header("Authorization", playerToken)).andExpect(status().isNotFound());
+		mockMvc.perform(get("/events/trahison/rooms/" + id).header("Authorization", adminToken)).andExpect(status().isNotFound());
 		mockMvc.perform(delete("/events/trahison/rooms/" + id).header("Authorization", adminToken)).andExpect(status().isNotFound());
 	}
 
 	@Test
 	void aBadIdIsRefused() throws Exception {
-		mockMvc.perform(get("/events/trahison/rooms/bad.id").header("Authorization", playerToken))
+		mockMvc.perform(get("/events/trahison/rooms/bad.id").header("Authorization", adminToken))
 				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.error_code").value(RoomCatalog.BAD_ID));
 	}
 }

@@ -43,7 +43,7 @@ Backend, paquets `room` et `room.mechanism`.
 - `RoomService` : démarrer une instance pour un groupe, appliquer une action (`use_slot`, `puzzle_input`,
   `pick_up`), diffuser `EventsTrahisonRoom` et `EventsTrahisonPuzzle` aux membres et aux spectateurs, détecter la
   fin (dernière étape résolue → ouverture de la porte de sortie), remettre à zéro.
-- Branchement sur le moteur de T1 : en `ROOMS`, chaque groupe reçoit son instance ; `debug_solve` reste pour les
+- Branchement sur le moteur de T1 (fait : voir `protocole.md`, « Salles d'une manche ») : en `ROOMS`, chaque groupe reçoit son instance ; `debug_solve` reste pour les
   essais.
 - Tests : une chaîne de 3 étapes factices ; déterminisme par graine ; la vue ne contient jamais la solution.
 - **Fini quand :** un test déroule une salle factice de bout en bout et la rejoue avec une autre graine.

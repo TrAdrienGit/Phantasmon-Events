@@ -1,0 +1,134 @@
+package com.mystaria.phantasmon_backend.events.trahison.game;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.SplittableRandom;
+import java.util.function.Function;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.mystaria.phantasmon_backend.events.trahison.layout.Pos;
+import com.mystaria.phantasmon_backend.events.trahison.room.ActionResult;
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomAction;
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomDefinition;
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomService;
+import com.mystaria.phantasmon_backend.events.trahison.room.Slot;
+import com.mystaria.phantasmon_backend.events.trahison.room.Step;
+import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.DebugButton;
+import com.mystaria.phantasmon_backend.events.trahison.rules.Door;
+
+import tools.jackson.databind.JsonNode;
+
+/**
+ * The link between a game and the room engine ({@link RoomService}): starts the three rooms of a round, forwards the
+ * players' room actions, keeps each room's saved state in the round ({@link RoundState#rooms}) and puts the rooms back
+ * after a restart. Every method is called by {@link GameService} <b>with the game locked</b> (lock order: game, then
+ * room), which also makes the saved state consistent with the game's.
+ */
+public final class GameRooms {
+
+	private static final Logger log = LoggerFactory.getLogger(GameRooms.class);
+	private static final long GOLDEN = 0x9E3779B97F4A7C15L;
+	private static final long SALT = 0x524F4F4DL;
+	/** The id of the built-in room used when none is chosen. */
+	public static final String FALLBACK_ID = "fallback";
+
+	private final RoomService rooms;
+	private final Function<String, Optional<RoomDefinition>> definitions;
+
+	/** @param definitions looks a room up in the bank by id (empty when unknown) */
+	public GameRooms(RoomService rooms, Function<String, Optional<RoomDefinition>> definitions) {
+		this.rooms = rooms;
+		this.definitions = definitions;
+	}
+
+	/** One button to press, and the exit: the room used when none is chosen, so a game always works. */
+	public static RoomDefinition fallbackDefinition() {
+		return new RoomDefinition(FALLBACK_ID, "Fallback room", null, 1, 1, 10,
+				List.of(new Slot("btn", "terminal", new Pos(2, 1, 2), "north", null),
+						new Slot("exit", "exit", new Pos(40, 0, 20), "north", null)),
+				List.of(new Step("press", DebugButton.ID, null, Map.of("exit", "exit"), List.of(), List.of(), List.of())),
+				null);
+	}
+
+	/** The seed of the room of group {@code group} in a round: stable, different for each group. */
+	static long roomSeed(long roundSeed, int group) {
+		return new SplittableRandom(roundSeed ^ ((group + 1) * GOLDEN) ^ SALT).nextLong();
+	}
+
+	private RoomDefinition definitionFor(Settings settings) {
+		String id = settings.testRoom;
+		if (id != null && !id.isBlank()) {
+			try {
+				Optional<RoomDefinition> found = definitions.apply(id);
+				if (found.isPresent()) {
+					return found.get();
+				}
+				log.warn("Trahison: test room {} not found, using the fallback room", id);
+			} catch (RuntimeException ex) {
+				log.warn("Trahison: could not load test room {}, using the fallback room", id, ex);
+			}
+		}
+		return fallbackDefinition();
+	}
+
+	/** The doors just closed: starts the room of each group of the round (the split is known). */
+	void startRound(Game g, RoundState r) {
+		RoomDefinition definition = definitionFor(g.settings);
+		r.rooms = new ArrayList<>();
+		for (int k = 0; k < 3; k++) {
+			List<Integer> members = List.copyOf(r.split().group(Door.ALL.get(k)).members());
+			rooms.start(g.hub, k, members, definition, roomSeed(r.seed, k));
+			r.rooms.add(rooms.snapshot(g.hub, k));
+		}
+	}
+
+	/** Forgets the hub's rooms (a new round starts, or the game ended). */
+	void clear(String hub) {
+		rooms.removeAll(hub);
+	}
+
+	/** Applies a room action of player {@code player} in the room of his group, and saves the room in the round. */
+	ActionResult apply(Game g, RoundState r, int group, int player, RoomAction action) {
+		ActionResult result = rooms.apply(g.hub, group, player, action);
+		save(g, r, group);
+		return result;
+	}
+
+	/** Solves the group's room at once (the provisional {@code debug_solve}, bots); no room: nothing happens. */
+	void forceSolve(Game g, RoundState r, int group) {
+		if (rooms.find(g.hub, group).isEmpty()) {
+			return;
+		}
+		rooms.forceSolve(g.hub, group);
+		save(g, r, group);
+	}
+
+	private void save(Game g, RoundState r, int group) {
+		while (r.rooms.size() <= group) {
+			r.rooms.add(null);
+		}
+		r.rooms.set(group, rooms.snapshot(g.hub, group));
+	}
+
+	/** After a restart: brings back the rooms saved in the current round (nobody is told; clients ask for a view). */
+	void restore(Game g) {
+		RoundState r = g.currentRound();
+		if (r == null) {
+			return;
+		}
+		for (JsonNode saved : r.rooms) {
+			if (saved == null || saved.isNull()) {
+				continue;
+			}
+			try {
+				rooms.restore(saved);
+			} catch (RuntimeException ex) {
+				log.error("Trahison game {}: could not restore a room", g.id, ex);
+			}
+		}
+	}
+}

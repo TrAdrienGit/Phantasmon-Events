@@ -27,6 +27,14 @@ import com.mystaria.phantasmon_backend.TestcontainersConfiguration;
 import com.mystaria.phantasmon_backend.events.trahison.game.Game;
 import com.mystaria.phantasmon_backend.events.trahison.game.GameService;
 import com.mystaria.phantasmon_backend.events.trahison.game.Phase;
+import com.mystaria.phantasmon_backend.events.trahison.layout.Pos;
+import com.mystaria.phantasmon_backend.events.trahison.room.Give;
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomCatalog;
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomDefinition;
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomService;
+import com.mystaria.phantasmon_backend.events.trahison.room.Slot;
+import com.mystaria.phantasmon_backend.events.trahison.room.Step;
+import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.ViewerKind;
 import com.mystaria.phantasmon_backend.player.PlayerService;
 import com.mystaria.phantasmon_backend.websocket.SessionRegistry;
 
@@ -61,6 +69,10 @@ class TrahisonGameIntegrationTest {
 	private PlayerService playerService;
 	@Autowired
 	private HubGate realGate;
+	@Autowired
+	private RoomService rooms;
+	@Autowired
+	private RoomCatalog catalog;
 	@Autowired
 	private ObjectMapper mapper;
 
@@ -420,5 +432,120 @@ class TrahisonGameIntegrationTest {
 		assertThat(admin.errors()).doesNotContain("ERROR_TRAHISON_NO_GAME");
 		// The game is persisted: the row exists.
 		assertThat(this.<Integer>game(g -> g.settings.durations.size())).isGreaterThan(0);
+	}
+
+	/** press -> three dials (clue on the wall) -> exit; every step carries a hint text that must never leave the bank. */
+	private static RoomDefinition chain(String id) {
+		List<String> hints = List.of("secret hint");
+		return new RoomDefinition(id, "Chain", "t", 0, 0, 0,
+			List.of(new Slot("btn", "terminal", new Pos(2, 1, 2), "north", null),
+				new Slot("dials", "terminal", new Pos(10, 1, 4), "north", null),
+				new Slot("wall", "wall_clue", new Pos(20, 2, 0), "north", null),
+				new Slot("exit", "exit", new Pos(40, 0, 20), "north", null)),
+			List.of(new Step("s1", "debug_button", null, java.util.Map.of("press", "btn"), List.of(), List.of(), hints),
+				new Step("s2", "three_dials", null, java.util.Map.of("dials", "dials"), List.of("s1"),
+					List.of(new Give("code", "wall", null)), hints),
+				new Step("s3", "debug_button", null, java.util.Map.of("exit", "exit"), List.of("s2"), List.of(), hints)),
+			null);
+	}
+
+	@Test
+	void aGroupSolvesItsRoomThroughTheHandlerAndNobodyButTheGameMasterSeesASolution() throws Exception {
+		String roomId = "chain_" + UUID.randomUUID().toString().substring(0, 8);
+		catalog.save(admin.uuid, roomId, chain(roomId));
+		try {
+			// A long ROOMS stage: the bots only "solve" after at least a tenth of it, long after this test is done.
+			gm("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":2,\"seed\":11,\"test_room\":\"" + roomId
+				+ "\",\"settings\":{\"durations\":{\"ROOMS\":600}}}");
+			assertThat(this.<String>game(g -> g.settings.testRoom)).isEqualTo(roomId);
+			act(a, "{\"action\":\"join\"}");
+			act(b, "{\"action\":\"join\"}");
+			gm("{\"action\":\"add_bots\",\"count\":7}");
+			gm("{\"action\":\"start\"}");
+			toNextStage(Phase.DOORS);
+			passADoor(a);
+			passADoor(b);
+			await("every door taken", () -> game(g -> {
+				for (int d : g.currentRound().passedDoor) {
+					if (d < 0) {
+						return false;
+					}
+				}
+				return true;
+			}));
+			toNextStage(Phase.ROOMS);
+			int me = a.index();
+			int group = this.<Integer>game(g -> g.currentRound().groupOf(me));
+			await("the rooms reach the spectator", () -> roomGroups(spectator).size() == 3);
+			assertThat(roomGroups(a)).contains(group);
+
+			// A group-mate of another room cannot act in it; the actions are refused outside the stage.
+			act(a, "{\"action\":\"use_slot\",\"slot\":\"nowhere\"}");
+			act(a, "{\"action\":\"puzzle_input\",\"step\":\"s2\",\"input\":{\"dial\":0,\"delta\":1}}");
+			assertThat(a.errors()).contains("ERROR_TRAHISON_SLOT_INACTIVE", "ERROR_TRAHISON_STEP_NOT_OPEN");
+			act(a, "{\"action\":\"pick_up\",\"slot\":\"wall\"}");
+			assertThat(a.errors()).contains("ERROR_TRAHISON_NOTHING_TO_PICK");
+
+			act(a, "{\"action\":\"use_slot\",\"slot\":\"btn\"}");
+			assertThat(this.<Boolean>game(g -> g.currentRound().roomSolved[group])).isFalse();
+			act(a, "{\"action\":\"use_slot\",\"slot\":\"dials\"}"); // opens the screen: to him alone
+			assertThat(a.ofType("EventsTrahisonPuzzle").stream().anyMatch(p -> "open".equals(p.get("reason").asString()))).isTrue();
+			assertThat(spectator.ofType("EventsTrahisonPuzzle").stream().noneMatch(p -> "open".equals(p.get("reason").asString())))
+				.isTrue();
+			JsonNode view = rooms.puzzleView(hub, group, "s2", ViewerKind.GAME_MASTER).get("view");
+			for (int d = 0; d < 3; d++) {
+				int delta = Math.floorMod(view.get("target").get(d).asInt() - view.get("dials").get(d).asInt(), 10);
+				if (delta != 0) {
+					act(a, "{\"action\":\"puzzle_input\",\"step\":\"s2\",\"input\":{\"dial\":" + d + ",\"delta\":" + delta + "}}");
+				}
+			}
+			assertThat(this.<Boolean>game(g -> g.currentRound().roomSolved[group])).isFalse();
+			act(a, "{\"action\":\"use_slot\",\"slot\":\"exit\"}");
+			assertThat(this.<Boolean>game(g -> g.currentRound().roomSolved[group])).isTrue();
+			act(a, "{\"action\":\"use_slot\",\"slot\":\"exit\"}");
+			assertThat(a.errors()).contains("ERROR_TRAHISON_ROOM_FINISHED");
+			assertThat(a.ofType("EventsTrahisonRoom").stream().anyMatch(r -> r.get("exit_open").asBoolean())).isTrue();
+
+			// Reconnection: a view brings back the rooms the viewer may see.
+			int before = spectator.ofType("EventsTrahisonRoom").size();
+			spectator.act("{\"action\":\"view\",\"hub\":\"" + hub + "\"}");
+			assertThat(spectator.ofType("EventsTrahisonRoom").size() - before).isEqualTo(3);
+			int beforeA = a.ofType("EventsTrahisonRoom").size();
+			a.act("{\"action\":\"view\"}");
+			assertThat(a.ofType("EventsTrahisonRoom").size() - beforeA).isEqualTo(1);
+
+			// Who saw what: only the game master ever got a solution, nobody got a hint text; players see their room only.
+			assertThat(admin.ofType("EventsTrahisonPuzzle").stream().anyMatch(p -> p.toString().contains("\"target\""))).isTrue();
+			for (Client c : List.of(a, b, spectator)) {
+				for (String type : List.of("EventsTrahisonRoom", "EventsTrahisonPuzzle")) {
+					for (JsonNode m : c.ofType(type)) {
+						assertThat(m.toString()).as(type + " of " + c.uuid).doesNotContain("\"target\"").doesNotContain("secret hint");
+					}
+				}
+			}
+			assertThat(roomGroups(a).stream().distinct().toList()).containsExactly(group);
+			assertThat(roomGroups(spectator).stream().distinct().toList()).containsExactlyInAnyOrder(0, 1, 2);
+			assertThat(admin.ofType("EventsTrahisonRoom").stream().anyMatch(r -> r.get("steps").get(0).has("mechanism"))).isTrue();
+			assertThat(spectator.ofType("EventsTrahisonRoom").stream().noneMatch(r -> r.get("steps").get(0).has("mechanism"))).isTrue();
+
+			// The rooms stay readable after their stage, and go with the game.
+			toNextStage(Phase.FREE_TIME);
+			assertThat(rooms.rooms(hub)).hasSize(3);
+			act(a, "{\"action\":\"use_slot\",\"slot\":\"exit\"}");
+			assertThat(a.errors()).contains("ERROR_TRAHISON_WRONG_PHASE");
+			gm("{\"action\":\"end\"}");
+			assertThat(rooms.rooms(hub)).isEmpty();
+		} finally {
+			catalog.delete(roomId);
+		}
+	}
+
+	/** The group of every {@code EventsTrahisonRoom} the client received. */
+	private static List<Integer> roomGroups(Client c) {
+		List<Integer> out = new ArrayList<>();
+		for (JsonNode r : c.ofType("EventsTrahisonRoom")) {
+			out.add(r.get("group").asInt());
+		}
+		return out;
 	}
 }

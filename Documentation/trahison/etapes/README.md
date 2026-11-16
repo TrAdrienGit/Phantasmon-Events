@@ -15,9 +15,9 @@ T0 socle ─► T1 moteur ─► T2 plan, portes, cabines ─► T3 salles ─�
 | Étape | Fiche | Dépend de | Peut se faire en même temps que | État |
 |---|---|---|---|---|
 | T0 | [Le socle dans Events](T0-socle.md) | — | — | À faire |
-| T1 | [Le moteur de partie](T1-moteur.md) | T0 | — | À faire |
+| T1 | [Le moteur de partie](T1-moteur.md) | T0 | — | Backend fait (partie, vues, factices, tests) ; client à faire |
 | T2 | [Le plan, les portes, les cabines](T2-plan-portes.md) | T1 | — | En cours : T2.1 écrite, à valider en jeu |
-| T3 | [Le cadre des salles](T3-salles.md) | T2 | T5, T6 | À faire |
+| T3 | [Le cadre des salles](T3-salles.md) | T2 | T5, T6 | En cours : T3.1 faite et branchée sur le moteur de partie (une salle par groupe, actions, diffusion, reprise après redémarrage) ; T3.2 à T3.5 à faire |
 | T4 | [Le tirage et le collage](T4-tirage-collage.md) | T3 | T5, T6, T7 | À faire |
 | T5 | [Le vocal par zones](T5-vocal.md) | T2 | T3, T4, T6 | À faire |
 | T6 | [La mort, les bracelets, les fantômes](T6-mort-fantomes.md) | T2 | T3, T4, T5 | À faire |

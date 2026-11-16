@@ -2,7 +2,7 @@
 
 > Référence unique de tous les messages et actions du jeu. Chaque étape y **ajoute** ce qu'elle crée (une section par
 > message, une section par action) ; elle ne la contourne jamais. Vue d'ensemble : [`architecture.md`](architecture.md)
-> section 5. État : étape T0 (Ping et Pong), T1.3 (View, Say, Action, Gm : moteur de partie), T2.1 (routes du plan). Patch, Room, Puzzle et Zone restent à venir.
+> section 5. État : étape T0 (Ping et Pong), T1.3 (View, Say, Action, Gm : moteur de partie), T2.1 (routes du plan), T3.1 (Room, Puzzle, actions de salle, branchées sur le moteur de partie). Patch et Zone restent à venir.
 
 ## 1. Conventions
 
@@ -320,10 +320,16 @@ Genres prévus pour plus tard : `whisper` (chuchotement privé, étapes T6 et T7
 ### `EventsTrahisonRoom`
 
 - Sens : S2C.
-- Qui le reçoit : les membres du groupe qui joue la salle, les spectateurs et fantômes, les maîtres du jeu. Les deux premiers
-  reçoivent le même contenu ; il ne contient jamais une solution.
-- Quand : au début de la salle, à chaque étape ouverte ou résolue, à chaque objet ramassé, à l'ouverture de la sortie, à la
-  remise à zéro.
+- Qui le reçoit : les membres **vivants** du groupe qui joue la salle (vue joueur), les maîtres du jeu qui ne jouent pas (vue
+  maître du jeu), les fantômes et tous ceux qui ne jouent pas, spectateurs du hub compris (vue spectateur, **de toutes les
+  salles**). Un joueur vivant d'un autre groupe ne reçoit rien de cette salle. Joueurs et spectateurs reçoivent le même
+  contenu ; il ne contient jamais une solution ni un texte d'aide. Un maître du jeu qui joue est un joueur (même règle que
+  pour `EventsTrahisonView`). Les factices n'en reçoivent aucun.
+- Quand : au début de la salle (à la fermeture des portes, juste après la `View` de l'étape `ROOMS`), à chaque étape ouverte ou
+  résolue, à chaque objet ramassé, à l'ouverture de la sortie, à la remise à zéro ; et en réponse à l'action `view` (une
+  `Room` par salle que le destinataire a le droit de voir : reconnexion). Il n'y a pas de message de fin : les salles
+  disparaissent au début de la manche suivante (la `View` de l'étape `DOORS` le dit) et à la fin de la partie ; le client
+  les oublie alors.
 - Champs :
 
 | Champ | Type | Notes |
@@ -368,8 +374,10 @@ ramassé disparaît de l'emplacement.
 ### `EventsTrahisonPuzzle`
 
 - Sens : S2C.
-- Qui le reçoit : selon `reason` (ci-dessous). Les clients qui ont l'écran du mini-jeu ouvert se recalent dessus ; les autres
-  ignorent le message.
+- Qui le reçoit : selon `reason` (ci-dessous). `open` : au seul joueur qui a ouvert l'écran (vue joueur). Les autres raisons :
+  comme `EventsTrahisonRoom` (membres vivants du groupe, maîtres du jeu, fantômes et spectateurs de toutes les salles), chacun avec
+  sa vue ; seul le maître du jeu reçoit les solutions (`target`). Les clients qui ont l'écran du mini-jeu ouvert se recalent
+  dessus ; les autres ignorent le message.
 - Quand : un joueur ouvre l'écran (`open`, à lui seul), un geste est appliqué (`input`), l'étape est résolue (`solved`), la salle
   est remise à zéro (`reset`).
 - Champs :
@@ -415,7 +423,8 @@ voyagent dans `EventsTrahisonGm`. Dans les deux cas, `hub` suit les conventions 
 | `pass_door` | `door` : 0 à 2 | Un joueur vivant, en `DOORS`, qui n'a pas encore passé de porte | Passe cette porte avec son bracelet de poignet. Elle doit porter la couleur du bracelet et ne pas contredire les portes déjà prises (une seule porte suffit à décider de la répartition) |
 | `vote` | `vote` : `ally` ou `betray` | Un joueur vivant, en `VOTE`, dont le groupe est connu | Vote pour son camp. **Une paire n'a qu'un vote** : le premier de ses membres qui vote engage les deux, le second reçoit `ERROR_TRAHISON_ALREADY_VOTED`. Le solo vote une fois. L'expéditeur voit son vote dans `viewer.own_vote` ; les autres n'apprennent que `side_voted` |
 | `open_final_door` | | Un joueur vivant, en `FINAL`, dont le bracelet de poignet lit 9 points ou plus | Ouvre la porte finale : la partie passe à `ENDED`, `winners` = tous les vivants dont le bracelet lit 9 ou plus |
-| `debug_solve` | | Un joueur vivant, en `ROOMS` | Provisoire (jusqu'à l'étape T3) : le groupe de l'expéditeur résout sa salle simulée |
+| `debug_solve` | | Un joueur vivant, en `ROOMS` | Pour les essais et les factices : la salle du groupe de l'expéditeur est résolue d'un coup (toutes ses étapes, sortie ouverte, `EventsTrahisonRoom` et `EventsTrahisonPuzzle` envoyés) et le groupe est marqué résolu, comme si les joueurs l'avaient fait |
+| `use_slot`, `puzzle_input`, `pick_up` | voir « Actions de salle » ci-dessous | Un joueur vivant, en `ROOMS`, membre du groupe de la salle | Actions dans la salle du groupe de l'expéditeur |
 
 Toutes les actions de jeu sont refusées en pause (`ERROR_TRAHISON_PAUSED`), aux fantômes (`ERROR_TRAHISON_DEAD`) et à qui ne
 joue pas (`ERROR_TRAHISON_NOT_A_PLAYER`), hors de l'étape prévue (`ERROR_TRAHISON_WRONG_PHASE`).
@@ -424,7 +433,7 @@ joue pas (`ERROR_TRAHISON_NOT_A_PLAYER`), hors de l'étape prévue (`ERROR_TRAHI
 
 | `action` | Champs | Effet |
 |---|---|---|
-| `create` | `hub` ; facultatifs : `seed` (entier), `mode` (`AUTO` ou `GAME_MASTER`), `fast` (entier : toutes les étapes durent ce nombre de secondes ; `true` = 10), `settings` (`{ mode, durations: { "VOTE": 120, ... }, no_door_penalty }`, durées en secondes par étape, `no_door_penalty` ≤ 0) | Crée la partie du hub en `LOBBY` et en fait le maître du jeu. Refusée si le hub a une partie non finie. Graine tirée au hasard si absente. Une partie finie ne bloque pas une nouvelle |
+| `create` | `hub` ; facultatifs : `seed` (entier), `mode` (`AUTO` ou `GAME_MASTER`), `fast` (entier : toutes les étapes durent ce nombre de secondes ; `true` = 10), `test_room` (identifiant d'une salle de la banque, voir ci-dessous), `settings` (`{ mode, durations: { "VOTE": 120, ... }, no_door_penalty, test_room }`, durées en secondes par étape, `no_door_penalty` ≤ 0) | Crée la partie du hub en `LOBBY` et en fait le maître du jeu. Refusée si le hub a une partie non finie. Graine tirée au hasard si absente. Une partie finie ne bloque pas une nouvelle |
 | `start` | | `LOBBY` → `PROLOGUE`. Exactement 9 inscrits (les factices comptent) |
 | `pause` / `resume` | | Gèle / relance le chrono. `pause` sur une pause automatique la reprend à son compte (seul `resume` la lève ensuite) |
 | `next` | | Force l'étape suivante tout de suite |
@@ -450,10 +459,29 @@ cinq minutes au plus : la pause se lève dès que tous les joueurs vivants sont 
 partie repart même si le joueur est encore absent, sans nouvelle pause pour lui). Un maître du jeu peut reprendre la main
 (`pause` puis `resume`). En mode `GAME_MASTER`, aucune pause automatique.
 
+### Salles d'une manche (branchement sur le moteur de partie)
+
+Quand les portes se ferment (passage de `DOORS` à `ROOMS`), le backend démarre **une salle par groupe** (les trois groupes de la
+répartition de la manche) : membres = les indices de joueur du groupe (le bracelet de poignet `i` est celui du joueur `i`),
+graine = tirée de la graine de la manche et du numéro du groupe (les trois salles ont des solutions différentes, et une
+manche rejouée avec la même graine de partie retrouve les mêmes). Le choix de la salle par groupe viendra du tirage (étape
+T4) ; en attendant, tous les groupes jouent la salle du réglage **`test_room`** (identifiant d'une salle de la banque,
+réglage de `create`, valide s'il suit `[A-Za-z0-9_-]{1,40}`), ou, quand il n'y en a pas (ou que la salle est introuvable),
+une **salle intégrée** : une seule étape `debug_button` et la sortie, de sorte qu'une partie marche toujours.
+
+- Une salle dont la sortie s'ouvre marque le groupe « résolu » (`roomSolved`, entrée `room_solved` du journal, `changed` `room`),
+  comme `debug_solve`. Les factices continuent de « résoudre » par `debug_solve` après leur délai.
+- Les actions de salle ne sont acceptées qu'en `ROOMS`, hors pause, d'un joueur vivant membre du groupe ; en `FREE_TIME` (et
+  ailleurs) elles reçoivent `ERROR_TRAHISON_WRONG_PHASE`. Les salles restent lisibles (messages, `view`) pendant `FREE_TIME`,
+  `VOTE` et `RESULTS` de leur manche ; une salle finie refuse toute action (`ERROR_TRAHISON_ROOM_FINISHED`).
+- L'état de chaque salle (définition utilisée, graine, état de chaque étape avec ses solutions, inventaire, heures) est
+  enregistré dans la partie (`rounds[].rooms`, jamais envoyé tel quel) à chaque action : un redémarrage du backend la remet
+  telle quelle. Une salle déjà démarrée garde la définition d'origine même si la banque est modifiée ensuite.
+
 ### Actions de salle (étape T3.1)
 
-Dans `EventsTrahisonAction` (`hub` comme pour les autres actions). Seuls les joueurs du groupe qui joue la salle (étape `ROOMS`) peuvent les envoyer ; une salle
-finie (sortie ouverte) n'en accepte plus.
+Dans `EventsTrahisonAction` (`hub` comme pour les autres actions). Seuls les joueurs vivants du groupe qui joue la salle
+(étape `ROOMS`, partie non en pause) peuvent les envoyer ; une salle finie (sortie ouverte) n'en accepte plus.
 
 | Action | Champs | Effet | Réponse |
 |---|---|---|---|
@@ -553,14 +581,18 @@ simultanés donnent un `409 ERROR_TRAHISON_LAYOUT_CONFLICT` au second.
 
 ### 4.3 Les salles (étape T3.1)
 
+Toutes les routes de la banque sont **réservées aux admins**, lecture comprise : une définition contient les textes d'aide et
+toute la chaîne (spoilers). Un joueur n'en reçoit rien : il n'a besoin que des messages `EventsTrahisonRoom` de sa salle (403
+pour un non-admin).
+
 | Méthode | Route | Accès | Effet |
 |---|---|---|---|
-| `GET` | `/events/trahison/rooms` | Tout joueur connecté | Liste : `[{ id, name, author, version, difficulty, expected_seconds, step_count, slot_count, has_schematic, updated_at }]` |
-| `GET` | `/events/trahison/rooms/{id}` | Tout joueur connecté | La définition (404 `ERROR_TRAHISON_ROOM_NOT_FOUND`) |
+| `GET` | `/events/trahison/rooms` | Admin | Liste : `[{ id, name, author, version, difficulty, expected_seconds, step_count, slot_count, has_schematic, updated_at }]` |
+| `GET` | `/events/trahison/rooms/{id}` | Admin | La définition (404 `ERROR_TRAHISON_ROOM_NOT_FOUND`) |
 | `PUT` | `/events/trahison/rooms/{id}` | Admin | Crée ou remplace la salle. Le serveur numérote `version` (+1 à chaque enregistrement) et calcule `difficulty` et `expected_seconds` (sommes sur les étapes) : ceux du corps sont ignorés |
 | `POST` | `/events/trahison/rooms/{id}` | Admin | Identique au `PUT` (le client n'a pas de `put`) |
 | `DELETE` | `/events/trahison/rooms/{id}` | Admin | Supprime la définition et le fichier des blocs |
-| `GET` | `/events/trahison/rooms/{id}/schematic` | Tout joueur connecté | Les blocs (`application/octet-stream`, format libre du client) ; 404 `ERROR_TRAHISON_ROOM_SCHEMATIC_MISSING` s'il n'y en a pas |
+| `GET` | `/events/trahison/rooms/{id}/schematic` | Admin | Les blocs (`application/octet-stream`, format libre du client) ; 404 `ERROR_TRAHISON_ROOM_SCHEMATIC_MISSING` s'il n'y en a pas |
 | `POST` / `PUT` | `/events/trahison/rooms/{id}/schematic` | Admin | Remplace les blocs (corps binaire, 16 Mio au plus, non vide ; la définition doit exister). `{ id, size }` |
 
 Les blocs sont un fichier `<phantasmon.hub.schematics-dir>/trahison_rooms/<id>/room.bin` (écrit dans un fichier temporaire

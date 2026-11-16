@@ -21,11 +21,17 @@ import com.mystaria.phantasmon_backend.events.trahison.game.Phase;
 import com.mystaria.phantasmon_backend.events.trahison.game.Settings;
 import com.mystaria.phantasmon_backend.events.trahison.game.TrahisonException;
 import com.mystaria.phantasmon_backend.events.trahison.game.Views;
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomAction;
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomService;
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomValidator;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Vote;
 import com.mystaria.phantasmon_backend.player.Player;
 import com.mystaria.phantasmon_backend.player.PlayerService;
 import com.mystaria.phantasmon_backend.websocket.SessionRegistry;
 import com.mystaria.phantasmon_backend.websocket.WsMessage;
+
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * The betrayal game's WebSocket messages (Documentation/trahison/protocole.md), a second {@link WsMessageHandler} next
@@ -33,7 +39,7 @@ import com.mystaria.phantasmon_backend.websocket.WsMessage;
  * <ul>
  *   <li>{@code EventsTrahisonPing}: answered by a Pong;</li>
  *   <li>{@code EventsTrahisonAction}: what a player (or a spectator) does: join, leave, pass_door, vote, open_final_door,
- *       debug_solve, view;</li>
+ *       debug_solve, view, and the room actions use_slot, puzzle_input, pick_up;</li>
  *   <li>{@code EventsTrahisonGm}: what the game master does, admins only.</li>
  * </ul>
  * A refused request is answered to its sender only, by an {@code EventsTrahisonSay} of kind {@code error}. Views go out
@@ -52,6 +58,8 @@ public class TrahisonWsHandler implements WsMessageHandler {
 	static final String ACTION = "EventsTrahisonAction";
 	static final String GM = "EventsTrahisonGm";
 
+	private static final JsonMapper MAPPER = JsonMapper.builder().build();
+
 	private final SessionRegistry sessionRegistry;
 	private final GameService games;
 	private final AdminService admins;
@@ -60,14 +68,15 @@ public class TrahisonWsHandler implements WsMessageHandler {
 	private volatile HubGate hubGate;
 
 	public TrahisonWsHandler(SessionRegistry sessionRegistry, GameService games, AdminService admins, PlayerService players,
-			HubGate hubGate) {
+			HubGate hubGate, RoomService rooms) {
 		this.sessionRegistry = sessionRegistry;
 		this.games = games;
 		this.admins = admins;
 		this.players = players;
 		this.hubGate = hubGate;
-		this.broadcaster = new Broadcaster(sessionRegistry, Clock.systemUTC(), () -> this.hubGate);
+		this.broadcaster = new Broadcaster(sessionRegistry, Clock.systemUTC(), () -> this.hubGate, rooms);
 		games.addListener(broadcaster);
+		rooms.addListener(broadcaster);
 	}
 
 	/** Test seam: replaces how hubs and their members are looked up. */
@@ -131,6 +140,7 @@ public class TrahisonWsHandler implements WsMessageHandler {
 				}
 				games.read(hub, g -> {
 					broadcaster.sendView(g, who);
+					broadcaster.sendRooms(g, who);
 					return null;
 				});
 			}
@@ -147,6 +157,11 @@ public class TrahisonWsHandler implements WsMessageHandler {
 			}
 			case "open_final_door" -> games.openFinalDoor(hubOf(who, in, false), who);
 			case "debug_solve" -> games.debugSolve(hubOf(who, in, false), who);
+			case "use_slot", "puzzle_input", "pick_up" -> {
+				ObjectNode data = MAPPER.valueToTree(in);
+				data.put("action", action);
+				games.roomAction(hubOf(who, in, false), who, RoomAction.parse(data));
+			}
 			default -> throw new TrahisonException(TrahisonException.UNKNOWN_ACTION, String.valueOf(action));
 		}
 	}
@@ -209,7 +224,7 @@ public class TrahisonWsHandler implements WsMessageHandler {
 		throw new TrahisonException(TrahisonException.NO_HUB, "hub required");
 	}
 
-	/** {@code {settings?: {mode, durations: {PHASE: seconds}, no_door_penalty}, mode?, fast?: seconds}}. */
+	/** {@code {settings?: {mode, durations: {PHASE: seconds}, no_door_penalty, test_room}, mode?, test_room?, fast?: seconds}}. */
 	private static Settings settingsOf(Map<String, Object> in) {
 		Settings s = new Settings();
 		Object fast = in.get("fast");
@@ -246,6 +261,14 @@ public class TrahisonWsHandler implements WsMessageHandler {
 		}
 		if (in.get("mode") != null) {
 			s.mode = parseMode(in.get("mode"));
+		}
+		Object testRoom = in.get("test_room") != null ? in.get("test_room")
+			: in.get("settings") instanceof Map<?, ?> m ? m.get("test_room") : null;
+		if (testRoom != null) {
+			if (!(testRoom instanceof String id) || !RoomValidator.validId(id)) {
+				throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "test_room: a room id");
+			}
+			s.testRoom = id;
 		}
 		return s;
 	}
