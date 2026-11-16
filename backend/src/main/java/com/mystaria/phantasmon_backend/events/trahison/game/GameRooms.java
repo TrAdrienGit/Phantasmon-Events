@@ -176,6 +176,16 @@ public final class GameRooms {
 		return opened;
 	}
 
+	/** The game was paused: the rooms' hint countdown stops (D66). */
+	void pauseHints(Game g) {
+		rooms.pauseHints(g.hub);
+	}
+
+	/** The game resumed: the pause time is added to the rooms' last-progress times (D66). */
+	void resumeHints(Game g) {
+		rooms.resumeHints(g.hub);
+	}
+
 	/** Solves the group's room at once (the provisional {@code debug_solve}, bots); no room: nothing happens. */
 	void forceSolve(Game g, RoundState r, int group) {
 		if (rooms.find(g.hub, r.number, group).isEmpty()) {

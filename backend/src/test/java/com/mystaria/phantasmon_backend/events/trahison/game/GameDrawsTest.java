@@ -93,10 +93,11 @@ class GameDrawsTest {
 	}
 
 	@Test
-	void anEmptyBankMeansNoDrawAndTheGameStillRuns() {
+	void aBankUnderNineRoomsRefusesTheGameUnlessATestRoomIsSet() {
 		bank.clear();
-		service.create(HUB, settings(), 7L);
-		assertThat(drawOf(service)).isNull();
+		org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.create(HUB, settings(), 7L))
+			.isInstanceOfSatisfying(TrahisonException.class, ex -> assertThat(ex.code()).isEqualTo(TrahisonException.BANK_TOO_SMALL)); // D73
+		assertThat(service.find(HUB)).isNull();
 	}
 
 	@Test

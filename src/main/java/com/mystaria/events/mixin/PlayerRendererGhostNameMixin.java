@@ -17,6 +17,9 @@ abstract class PlayerRendererGhostNameMixin {
 	@ModifyVariable(method = "renderNameTag(Lnet/minecraft/client/player/AbstractClientPlayer;Lnet/minecraft/network/chat/Component;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IF)V",
 			at = @At("HEAD"), argsOnly = true, ordinal = 0, require = 0)
 	private Component phantasmonEvents$ghostMark(Component name, AbstractClientPlayer player) {
+		if (GhostLook.isSpectator(player)) {
+			return Component.empty().append(name).append(" ").append(Component.translatable("phantasmon_events.trahison.spectator.mark"));
+		}
 		return GhostLook.isGhost(player) ? Component.empty().append(name).append(" ").append(Component.translatable("phantasmon_events.trahison.ghost.mark")) : name;
 	}
 }

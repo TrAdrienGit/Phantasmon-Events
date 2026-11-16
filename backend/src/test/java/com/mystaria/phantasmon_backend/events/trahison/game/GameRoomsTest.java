@@ -232,6 +232,23 @@ class GameRoomsTest {
 		assertThat(roomSolvedEvents()).isEqualTo(3L);
 	}
 
+	/** D67: the timeout point never takes a bracelet to 0, so it kills nobody. */
+	@Test
+	void theTimeoutPointNeverKills() {
+		roomTimeout = true;
+		toRooms(null);
+		int low = membersOf(0).get(0);
+		service.read(HUB, g -> {
+			g.bracelets.get(low).points = 1;
+			return null;
+		});
+		clock.advanceSeconds(SECONDS); // end of ROOMS, nobody solved
+		int[] after = service.read(HUB, g -> g.points());
+		assertThat(after[low]).isEqualTo(1);
+		boolean alive = service.read(HUB, g -> g.players.get(low).alive);
+		assertThat(alive).isTrue();
+	}
+
 	@Test
 	void aGroupReallySolvesItsRoomAndTheGameSeesIt() {
 		toRooms("chain");

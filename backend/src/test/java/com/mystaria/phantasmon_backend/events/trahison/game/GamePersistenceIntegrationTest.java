@@ -30,7 +30,9 @@ class GamePersistenceIntegrationTest {
 	@Test
 	void aGameIsWrittenAtEachChangeAndReloadedWhileUnfinished() {
 		String hub = "persist-" + UUID.randomUUID();
-		Game g = service.create(hub, Settings.fast(60), 77L);
+		Settings withRoom = Settings.fast(60);
+		withRoom.testRoom = "room0"; // D73: a game needs nine rooms in the bank, or a test room
+		Game g = service.create(hub, withRoom, 77L);
 		for (int i = 0; i < 9; i++) {
 			service.join(hub, new UUID(1, i), "p" + i);
 		}

@@ -57,7 +57,26 @@ public final class BraceletHud {
 			top = draw(g, view, sw, sh);
 		}
 		if (!screenDraws) {
+			stepCounters(g, sw);
 			Announcer.render(g, sw, sh, top);
+		}
+	}
+
+	/** D61: the counters of the open steps of the player's own room, top right ("Objects: 2 / 3"). */
+	private static void stepCounters(GuiGraphics g, int sw) {
+		com.mystaria.events.trahison.room.RoomView room = com.mystaria.events.trahison.room.Rooms.mine();
+		if (room == null || room.finished() || room.progress().isEmpty() || com.mystaria.events.trahison.minigame.MiniGameScreen.isOpen()) {
+			return;
+		}
+		int y = TrahisonUi.SAFE_MARGIN;
+		for (com.mystaria.events.trahison.room.RoomView.Progress p : room.progress()) {
+			Component line = Component.translatable(T + "hud.objects", p.done(), p.total());
+			int w = TrahisonUi.width(line) + 12;
+			int x = sw - TrahisonUi.SAFE_MARGIN - w;
+			g.fill(x, y, x + w, y + 14, TrahisonUi.withAlpha(TrahisonPalette.PANEL, 0xE0));
+			MenuUi.outline(g, x, y, x + w, y + 14, TrahisonPalette.EDGE);
+			MenuUi.text(g, line, x + 6, y + 3, w - 8, p.done() >= p.total() ? TrahisonPalette.SUCCESS : TrahisonPalette.TEXT);
+			y += 16;
 		}
 	}
 

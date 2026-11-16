@@ -587,6 +587,48 @@ public class RoomService {
 		return Optional.empty();
 	}
 
+	/** D66: when each hub's game was paused (memory only), so {@link #tickHints} waits and {@link #resumeHints} can add the time. */
+	private final Map<String, Instant> pausedAt = new ConcurrentHashMap<>();
+
+	/** The hub's game is paused: its rooms get no automatic hint until {@link #resumeHints}. */
+	public void pauseHints(String hub) {
+		pausedAt.putIfAbsent(hub, clock.instant());
+	}
+
+	/**
+	 * The hub's game resumed: the time it was paused is added to the last-progress time of its rooms (and to the opening time of
+	 * their open steps, so measures leave the pause out), so the pause does not count towards the next hint.
+	 */
+	public void resumeHints(String hub) {
+		Instant since = pausedAt.remove(hub);
+		if (since == null) {
+			return;
+		}
+		java.time.Duration paused = java.time.Duration.between(since, clock.instant());
+		for (RoomInstance room : rooms.values()) {
+			if (!room.hub.equals(hub)) {
+				continue;
+			}
+			synchronized (room) {
+				if (room.exitOpen) {
+					continue;
+				}
+				boolean same = room.lastProgressAt != null && room.lastProgressAt.equals(room.autoHintMark);
+				if (room.lastProgressAt != null) {
+					room.lastProgressAt = room.lastProgressAt.plus(paused);
+				}
+				if (same) {
+					room.autoHintMark = room.lastProgressAt;
+				}
+				for (StepRuntime s : room.steps.values()) {
+					if (s.open && !s.solved && s.openedAt != null) {
+						s.openedAt = s.openedAt.plus(paused);
+					}
+				}
+			}
+		}
+	}
+
 	/** The default automatic delays, in seconds without progress: 10, 18 and 25 minutes (T3.6). */
 	public static final long[] DEFAULT_HINT_DELAYS = { 600, 1080, 1500 };
 
@@ -601,7 +643,7 @@ public class RoomService {
 		List<GivenHint> given = new ArrayList<>();
 		for (RoomInstance room : rooms.values()) {
 			synchronized (room) {
-				if (room.exitOpen || room.replays > 0 || room.lastProgressAt == null) {
+				if (room.exitOpen || room.replays > 0 || room.lastProgressAt == null || pausedAt.containsKey(room.hub)) {
 					continue;
 				}
 				if (!room.lastProgressAt.equals(room.autoHintMark)) {

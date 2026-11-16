@@ -30,12 +30,15 @@
    - un fichier par place, `place_<nom>.schem` et `.litematic`, **déjà tourné** pour sa place ;
    - `all_places.schem` et `.litematic` : les neuf places en un seul fichier (raccourci, s'il n'est pas trop grand) ;
    - `paste_sheet.txt` : la fiche de collage.
+   - Les fichiers sont aussi envoyés au backend : un admin les télécharge avec `/phantasmon event trahison exports` (menu :
+     choisir la partie, puis un fichier ou « Tout télécharger »). Pas besoin de transmettre le dossier à la main.
+   - La fiche est en français avec accents (UTF-8) et, si tu étais dans le hub à l'export, donne aussi les coordonnées du monde.
 7. **Envoyer le dossier à l'admin du serveur** avec cette consigne : « Colle chaque fichier avec Axiom, **sans rotation ni miroir**,
    le coin minimum du fichier (x, y et z les plus petits) sur le coin écrit dans `paste_sheet.txt`. » La fiche dit, pour chaque place,
    la salle, le coin où coller, le coin opposé et l'orientation. En cas de doute sur un décalage, essayer d'abord une seule place.
 8. **Vérifier le collage.** Quand l'admin dit avoir fini, va près des places (pour que leurs chunks soient chargés) et clique
    « Vérifier le collage » (ou `/phantasmon event trahison check`). Le chat liste chaque place : bien collée, pas collée, mal collée
-   (mauvaise salle, mauvaise rotation ou décalage) ou chunks non chargés. Corrige avec l'admin, puis revérifie jusqu'à
+   (mauvaise salle, mauvaise rotation ou décalage, ou texte de panneau différent) ou chunks non chargés. Corrige avec l'admin, puis revérifie jusqu'à
    « Toutes les places sont bien collées ». La vérification regarde un échantillon de blocs : elle ne remplace pas un tour en jeu des
    places qui ont un doute.
 9. **Faire un tour de contrôle** : entre dans une place et regarde que les emplacements (terminaux, indices) s'affichent là où la

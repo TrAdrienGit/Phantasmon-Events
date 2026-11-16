@@ -74,6 +74,10 @@ public class Game {
 	public List<PlayerState> players = new ArrayList<>();
 	public List<BraceletState> bracelets = new ArrayList<>();
 	public List<RoundState> rounds = new ArrayList<>();
+	/** D102: the accounts that registered as spectators (account to name); shown only to ghosts, spectators and game masters. */
+	public java.util.Map<UUID, String> spectators = new java.util.LinkedHashMap<>();
+	/** D50: the seats of the playing game masters whose own powers set their bracelet to 0; if that kills them, nobody wins by it. */
+	public List<Integer> selfDestined = new ArrayList<>();
 	/** The bodies of the dead players (T6.1), in order of death. */
 	public List<Body> bodies = new ArrayList<>();
 	/** Couples of bracelet indices {lo, hi} (see {@link History}). */

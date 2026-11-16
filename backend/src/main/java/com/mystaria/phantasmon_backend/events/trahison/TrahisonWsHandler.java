@@ -78,6 +78,7 @@ public class TrahisonWsHandler implements WsMessageHandler {
 		this.players = players;
 		this.hubGate = hubGate;
 		this.broadcaster = new Broadcaster(sessionRegistry, Clock.systemUTC(), () -> this.hubGate, rooms, this::nameOf);
+		broadcaster.useAdmins(admins::isAdmin);
 		games.addListener(broadcaster);
 		rooms.addListener(broadcaster);
 	}
@@ -162,7 +163,13 @@ public class TrahisonWsHandler implements WsMessageHandler {
 			}
 			case "close_cabin" -> games.closeCabin(hubOf(who, in, false), who);
 			case "open_final_door" -> games.openFinalDoor(hubOf(who, in, false), who);
-			case "take_bracelet" -> games.takeBracelet(hubOf(who, in, false), who, intArg(in, "body"));
+			case "take_bracelet" -> games.takeBracelet(hubOf(who, in, false), who, intArg(in, "body"),
+				in.get("bracelet") instanceof Number n ? n.intValue() : null);
+			case "spectate" -> {
+				String hub = hubOf(who, in, true);
+				broadcaster.watch(hub, who);
+				games.spectate(hub, who, nameOf(who), !Boolean.FALSE.equals(in.get("on")));
+			}
 			case "body_seen" -> games.bodySeen(hubOf(who, in, false), who, intArg(in, "body"));
 			case "debug_solve" -> games.debugSolve(hubOf(who, in, false), who);
 			case "use_slot", "puzzle_input", "pick_up", "give_item", "use_item", "combine", "replay" -> {
@@ -238,7 +245,7 @@ public class TrahisonWsHandler implements WsMessageHandler {
 				}
 				games.setDoor(hub, doorId(in), open);
 			}
-			case "set_points" -> games.setPoints(hub, intArg(in, "bracelet"), intArg(in, "points"));
+			case "set_points" -> games.setPoints(hub, intArg(in, "bracelet"), intArg(in, "points"), who);
 			case "set_game_master" -> {
 				if (!admin) {
 					throw new TrahisonException(TrahisonException.ADMIN_REQUIRED, "only admins assign game masters");
@@ -321,7 +328,16 @@ public class TrahisonWsHandler implements WsMessageHandler {
 				s.doorOpenSeconds = Math.max(1, Math.min(60, n.intValue()));
 			}
 			if (m.get("final_door_seconds") instanceof Number n) {
-				s.finalDoorSeconds = Math.max(1, Math.min(120, n.intValue()));
+				s.finalDoorSeconds = Math.max(1, Math.min(300, n.intValue()));
+			}
+			if (m.get("announce_deaths") instanceof Boolean b) {
+				s.announceDeaths = b;
+			}
+			if ("HIDDEN".equals(m.get("ghost_display"))) {
+				s.ghostDisplay = Settings.GhostDisplay.HIDDEN;
+			}
+			if (m.get("auto_pause_seconds") instanceof Number n) {
+				s.autoPauseSeconds = Math.max(1, Math.min(1800, n.intValue()));
 			}
 			if (m.get("draw_max_spread") instanceof Number n) {
 				s.drawMaxSpread = Math.max(0, Math.min(20, n.intValue()));

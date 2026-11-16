@@ -22,10 +22,17 @@ public class Body {
 	public boolean braceletOnBody = true;
 	/** True when every living player knows about the death without finding the body. */
 	public boolean announced;
+	/** D97: the bracelets of other players this one carried when he died; they lie on his body and can be taken again. */
+	public List<Integer> dropped = new ArrayList<>();
 	/** The seats of the living players who saw the body. */
 	public List<Integer> seenBy = new ArrayList<>();
 
 	public Body() {
+	}
+
+	/** Whether any bracelet (his own or a dropped one) is still on the body. */
+	public boolean hasBracelets() {
+		return braceletOnBody || !dropped.isEmpty();
 	}
 
 	/** Whether this living player may know about the death. */

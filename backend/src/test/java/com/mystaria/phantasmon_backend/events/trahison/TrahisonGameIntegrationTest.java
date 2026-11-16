@@ -316,7 +316,7 @@ class TrahisonGameIntegrationTest {
 		spectator.act("{\"action\":\"view\",\"hub\":\"" + hub + "\"}");
 		assertThat(spectator.view().get("phase").asString()).isEqualTo("NONE"); // no game yet
 
-		createGame("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":2,\"seed\":7,\"settings\":{\"cabins_required\":false,\"final_door_seconds\":2}}");
+		createGame("{\"action\":\"create\",\"test_room\":\"room0\",\"mode\":\"GAME_MASTER\",\"fast\":2,\"seed\":7,\"settings\":{\"cabins_required\":false,\"final_door_seconds\":2}}");
 		assertThat(admin.view().get("phase").asString()).isEqualTo("LOBBY");
 		assertThat(admin.view().get("viewer").get("kind").asString()).isEqualTo("GM");
 		assertThat(admin.view().get("gm").get("seed").asLong()).isEqualTo(7L);
@@ -417,10 +417,10 @@ class TrahisonGameIntegrationTest {
 
 	@Test
 	void theGameMasterCanPauseExtendAndEndAndOnlyAnAdminMay() throws Exception {
-		createGame("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":60}");
+		createGame("{\"action\":\"create\",\"test_room\":\"room0\",\"mode\":\"GAME_MASTER\",\"fast\":60}");
 		gm("{\"action\":\"add_bots\",\"count\":0}");
 		assertThat(admin.view().get("players")).hasSize(9);
-		gm("{\"action\":\"create\"}");
+		gm("{\"action\":\"create\",\"test_room\":\"room0\"}");
 		assertThat(admin.errors()).containsExactly("ERROR_TRAHISON_GAME_EXISTS");
 		gm("{\"action\":\"start\"}");
 		gm("{\"action\":\"pause\"}");
@@ -444,7 +444,7 @@ class TrahisonGameIntegrationTest {
 
 	@Test
 	void gameMastersAreAssignedInTheLobbyAndOnlyTheyRunTheGame() throws Exception {
-		gm("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":60,\"settings\":{\"cabins_required\":false}}");
+		gm("{\"action\":\"create\",\"test_room\":\"room0\",\"mode\":\"GAME_MASTER\",\"fast\":60,\"settings\":{\"cabins_required\":false}}");
 		// nobody is game master by default, not even the admin who created the game: he only sees the lobby
 		assertThat(admin.view().get("viewer").get("kind").asString()).isEqualTo("SPECTATOR");
 		assertThat(admin.view().get("game_masters")).isEmpty();
@@ -481,7 +481,7 @@ class TrahisonGameIntegrationTest {
 
 	@Test
 	void aGameWithoutAnyGameMasterRunsOnItsOwn() throws Exception {
-		gm("{\"action\":\"create\",\"mode\":\"AUTO\",\"fast\":1,\"settings\":{\"cabins_required\":false}}");
+		gm("{\"action\":\"create\",\"test_room\":\"room0\",\"mode\":\"AUTO\",\"fast\":1,\"settings\":{\"cabins_required\":false}}");
 		gm("{\"action\":\"add_bots\",\"count\":0}");
 		gm("{\"action\":\"start\"}");
 		assertThat(this.<Boolean>game(g -> g.gameMasters.isEmpty())).isTrue();
@@ -498,7 +498,7 @@ class TrahisonGameIntegrationTest {
 		var zone = new com.mystaria.phantasmon_backend.events.trahison.layout.LayoutZone("hall", "hall", List.of(box));
 		int version = layouts.save(admin.uuid, hub, new com.mystaria.phantasmon_backend.events.trahison.layout.LayoutRequest(null, true,
 			List.of(zone), List.of(door, color), List.of(), List.of(), List.of())).version();
-		createGame("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":60}");
+		createGame("{\"action\":\"create\",\"test_room\":\"room0\",\"mode\":\"GAME_MASTER\",\"fast\":60}");
 		act(a, "{\"action\":\"join\"}");
 		act(b, "{\"action\":\"join\"}");
 		gm("{\"action\":\"add_bots\",\"count\":0}");
@@ -560,7 +560,7 @@ class TrahisonGameIntegrationTest {
 		catalog.save(admin.uuid, roomId, chain(roomId));
 		try {
 			// A long ROOMS stage: the bots only "solve" after at least a tenth of it, long after this test is done.
-			createGame("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":2,\"seed\":11,\"test_room\":\"" + roomId
+			createGame("{\"action\":\"create\",\"test_room\":\"room0\",\"mode\":\"GAME_MASTER\",\"fast\":2,\"seed\":11,\"test_room\":\"" + roomId
 				+ "\",\"settings\":{\"durations\":{\"ROOMS\":600},\"cabins_required\":false}}");
 			assertThat(this.<String>game(g -> g.settings.testRoom)).isEqualTo(roomId);
 			act(a, "{\"action\":\"join\"}");

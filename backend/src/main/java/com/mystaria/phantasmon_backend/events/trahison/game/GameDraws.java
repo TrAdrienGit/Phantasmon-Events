@@ -45,6 +45,11 @@ public final class GameDraws {
 		this.history = history;
 	}
 
+	/** How many rooms the bank can offer to the draw (D73: a game needs nine). */
+	int bankSize() {
+		return bank.get().size();
+	}
+
 	/**
 	 * Draws the game's nine rooms and stores them in {@link Game#draw}. Nothing is drawn (the field is left null) when the
 	 * settings name a test room, and an empty bank leaves it null too, so that a game with no bank still runs on the

@@ -76,6 +76,11 @@ public final class Messages {
 		send(ACTION, "vote", Map.of("vote", ally ? "ally" : "betray"), true);
 	}
 
+	/** D102: registers (or, with false, unregisters) this account as a spectator of the hub's game. */
+	public static void spectate(boolean on) {
+		send(ACTION, "spectate", Map.of("on", on), true);
+	}
+
 	/** T6: takes the bracelet off the body of player {@code body}; the backend checks the zone and the 3 blocks. */
 	public static void takeBracelet(int body) {
 		send(ACTION, "take_bracelet", Map.of("body", body), true);

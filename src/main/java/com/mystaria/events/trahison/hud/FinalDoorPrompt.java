@@ -34,21 +34,19 @@ public final class FinalDoorPrompt {
 		HudRenderCallback.EVENT.register((graphics, tickCounter) -> render(graphics));
 	}
 
-	private static final int[] CALLS = { 5, 10, 30 };
 	/** Seconds left at the previous frame, to say each call of the final countdown once (client display only). */
 	private static int lastSeconds = Integer.MAX_VALUE;
 
-	/** D18: the hostess calls the final countdown for everyone, at 30, 10 and 5 seconds. */
+	/** D53: the hostess calls the final countdown for everyone every 10 seconds, then every second for the last 5. */
 	private static void announceCountdown() {
 		if (GameView.finalDoor() == null) {
 			lastSeconds = Integer.MAX_VALUE;
 			return;
 		}
 		int seconds = GameView.finalDoorSeconds();
-		for (int mark : CALLS) {
-			if (seconds <= mark && lastSeconds > mark) {
-				Announcer.say(Component.translatable(T + "say.final_countdown", Math.max(1, seconds)));
-				break;
+		for (int s = lastSeconds == Integer.MAX_VALUE ? seconds : lastSeconds - 1; s >= seconds && s >= 1; s--) {
+			if (s <= 5 || s % 10 == 0) {
+				Announcer.say(Component.translatable(T + "say.final_countdown", s));
 			}
 		}
 		lastSeconds = seconds;

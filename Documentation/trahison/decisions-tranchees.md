@@ -67,3 +67,25 @@
 - **D103** Réglage de l'affichage des fantômes : choix par défaut confirmé (2026-11-16).
 - **D104** Fantôme en mode caché : se voit-il lui-même et voit-il les autres ? : choix par défaut confirmé (2026-11-16).
 - **D105** Marque « (fantôme) » visible de tous : choix par défaut confirmé (2026-11-16).
+- **D61 (compteur d'objets)** : fait. `Mechanism.progress(state)` (`pickup_set` : ramassés / cachés), porté par `steps[].progress` de la vue de la salle tant que l'étape est ouverte ; ligne de HUD « Objets : 2 / 3 » (`BraceletHud`).
+- **D62 (verrou du digicode)** : fait. 10 s, puis 20 s, puis 40 s à chaque verrouillage suivant (`locks` dans l'état du mécanisme).
+- **D66 (aides et pause)** : fait. Le compte d'aide s'arrête pendant la pause ; à la reprise la durée de pause est ajoutée à `last_progress_at` (`RoomService.pauseHints` / `resumeHints`, appelés par `doPause` / `doResume`). Pas d'aide manuelle du MJ.
+- **D67 (point de fin de `ROOMS`)** : fait. Tous les membres perdent 1 point mais un bracelet à 1 reste à 1 : ce point ne tue personne.
+- **D69 (aides)** : fait. Vue de la salle lue par l'hôtesse, et liste « Indices reçus » relisible dans l'inventaire.
+- **D78 (vérification du collage)** : fait. 600 blocs, seuil 5 %, et les données de bloc (texte des panneaux, têtes) sont comparées aussi (`PlaceCheck.dataEquals` : chaque champ du fichier, sauf position et identifiant, doit se retrouver dans le bloc du monde) ; les blocs à données passent en premier dans l'échantillon, jusqu'à la moitié.
+- **D80 (où vont les fichiers)** : fait. En plus du dossier local, le client téléverse chaque fichier au backend (`POST /events/trahison/exports/{partie}/files/{nom}`), gardé par partie dans `<schematics-dir>/trahison_exports/<partie>/` (pas de base de données, pas de migration) ; un admin les télécharge depuis `/phantasmon event trahison exports`.
+- **D81 (coordonnées de la fiche)** : fait. Si le client est dans le hub, la fiche ajoute entre parenthèses les coordonnées du monde de son hub miroir à côté de celles du plan.
+- **D82 (fichier unique)** : fait. `all_places.*` est toujours écrit (la limite de 64 M blocs devient 512 M, celle des champs des formats) ; seule une boîte de plus de 65 535 blocs d'arête, ou un manque de mémoire, l'en empêche, et la fiche le dit.
+- **D83 (langue de la fiche)** : fait. Français avec accents, en UTF-8.
+- **D97 (bracelets portés par un mort)** : fait. Ils tombent sur son corps (`Body.dropped`) et se ramassent de nouveau, un à un (`take_bracelet`, champ `bracelet` facultatif).
+- **D99 (qui a pris un bracelet)** : fait. `bracelets[].holder` reste le propriétaire du poignet pour tous, sauf pour le porteur (et les fantômes, maîtres du jeu).
+- **D102 (spectateurs)** : fait, voir D110. Action `spectate`, liste `spectators` aux observateurs seulement, marque « (spectateur) ».
+- **D44 (gagnants à la mort du maître du jeu qui joue)** : fait. Seuls les autres joueurs encore vivants à ce moment gagnent (`Outcome.winnersWhenGameMasterKilled(masters, alive)`).
+- **D46 (plusieurs maîtres du jeu qui jouent)** : fait. Un seul peut jouer : `ERROR_TRAHISON_ONE_PLAYING_GAME_MASTER` à `set_game_master` ou `join` d'un deuxième.
+- **D50 (mort par ses propres pouvoirs)** : fait, voir D112. `Game.selfDestined` ; sa mort ne donne pas la victoire.
+- **D51 (maître du jeu mort)** : fait. Il devient fantôme et garde son bloc `gm` et ses pouvoirs (la partie se finit quand même dans le cas D12).
+- **D52 (plafond de la porte finale)** : fait. `final_door_seconds` borné à 1..300 (message `create` et `GameService.create`).
+- **D53 (rappels du compte à rebours)** : fait. Client : tous les 10 secondes puis chaque seconde sur les 5 dernières (`hud/FinalDoorPrompt`).
+- **D73 (banque trop petite)** : fait. `create` refuse (`ERROR_TRAHISON_BANK_TOO_SMALL`) sous neuf salles, sauf avec `test_room` ou sans moteur de tirage.
+- **D75 (qui voit le tirage)** : fait. Les maîtres du jeu, et les admins dans le lobby (`lobby_draw`, lu par le client comme un bloc `gm` réduit).
+

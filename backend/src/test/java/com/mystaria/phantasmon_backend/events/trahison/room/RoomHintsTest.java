@@ -83,6 +83,26 @@ class RoomHintsTest {
 	}
 
 	@Test
+	void thePauseStopsTheCountdownAndItsTimeIsAddedBack() {
+		rooms.start(HUB, 0, List.of(0, 1), RoomFixtures.chain(), 5L);
+		clock.now = clock.now.plusSeconds(500);
+		rooms.pauseHints(HUB);
+		clock.now = clock.now.plusSeconds(3000); // a long pause
+		assertTrue(rooms.tickHints(DELAYS).isEmpty(), "no hint while paused");
+		rooms.resumeHints(HUB);
+		assertTrue(rooms.tickHints(DELAYS).isEmpty(), "500 s of play so far, not 3500");
+		clock.now = clock.now.plusSeconds(99);
+		assertTrue(rooms.tickHints(DELAYS).isEmpty());
+		clock.now = clock.now.plusSeconds(1); // 600 s of play
+		assertEquals(1, rooms.tickHints(DELAYS).size());
+		// a pause after a hint does not repeat it
+		rooms.pauseHints(HUB);
+		clock.now = clock.now.plusSeconds(100);
+		rooms.resumeHints(HUB);
+		assertTrue(rooms.tickHints(DELAYS).isEmpty());
+	}
+
+	@Test
 	void aFinishedRoomOrAReplayGetsNoHint() {
 		rooms.start(HUB, 0, List.of(0, 1), RoomFixtures.chain(), 5L);
 		rooms.forceSolve(HUB, 0);

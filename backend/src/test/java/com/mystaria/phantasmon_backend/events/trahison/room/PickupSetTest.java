@@ -135,6 +135,15 @@ class PickupSetTest {
 	}
 
 	@Test
+	void theCounterForTheHudFollowsThePickUps() {
+		MechanismState state = set.generate(new SplittableRandom(4), params(6, 3));
+		assertEquals("[0, 3]", java.util.Arrays.toString(set.progress(state).orElseThrow()));
+		Clue first = items(state).get(0);
+		state = set.onPickUp(state, 0, first.role(), first.value().asString()).get().state();
+		assertEquals("[1, 3]", java.util.Arrays.toString(set.progress(state).orElseThrow()));
+	}
+
+	@Test
 	void solvedStepRefusesMore() {
 		MechanismState s = set.generate(new SplittableRandom(4), params(6, 1));
 		String only = items(s).get(0).value().asString();

@@ -24,6 +24,7 @@ import com.mystaria.phantasmon_backend.events.trahison.layout.LayoutContent;
 import com.mystaria.phantasmon_backend.events.trahison.layout.LayoutDoor;
 import com.mystaria.phantasmon_backend.events.trahison.room.ActionResult;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomAction;
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomDraw;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomException;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Assignment;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Door;
@@ -53,6 +54,8 @@ public class GameService {
 	private static final Logger log = LoggerFactory.getLogger(GameService.class);
 	public static final int PLAYERS = 9;
 	/** Longest automatic pause after a disconnection (AUTO mode). */
+	/** D52: the longest final-door window a game may be set to (seconds). */
+	public static final int MAX_FINAL_DOOR_SECONDS = 300;
 	public static final Duration AUTO_PAUSE_MAX = Duration.ofMinutes(5);
 	/** Zone changes reach the game masters at most this often per game. */
 	public static final long ZONE_NOTIFY_MIN_MS = 1000;
@@ -153,6 +156,12 @@ public class GameService {
 		if (hub == null || hub.isBlank()) {
 			throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "hub required");
 		}
+		Settings wanted = settings != null ? settings : new Settings();
+		wanted.finalDoorSeconds = Math.max(1, Math.min(MAX_FINAL_DOOR_SECONDS, wanted.finalDoorSeconds)); // D52
+		if (draws != null && (wanted.testRoom == null || wanted.testRoom.isBlank()) && draws.bankSize() < RoomDraw.ROUNDS * RoomDraw.PER_ROUND) {
+			// D73: no game without nine rooms to draw (a test room, or no draw wired at all, are the trial paths)
+			throw new TrahisonException(TrahisonException.BANK_TOO_SMALL, "the room bank holds " + draws.bankSize() + " rooms, 9 needed");
+		}
 		Game g = new Game();
 		synchronized (byHub) {
 			Game existing = byHub.get(hub);
@@ -162,7 +171,7 @@ public class GameService {
 			g.id = UUID.randomUUID();
 			g.hub = hub;
 			g.seed = seed != null ? seed : new SecureRandom().nextLong();
-			g.settings = settings != null ? settings : new Settings();
+			g.settings = wanted;
 			g.createdAt = clock.instant();
 			byHub.put(hub, g);
 			byId.put(g.id, g);
@@ -187,6 +196,9 @@ public class GameService {
 	public Game join(String hub, UUID uuid, String name, boolean bot) {
 		Game g = require(hub);
 		synchronized (g) {
+			if (g.gameMasters.contains(uuid) && !g.playingGameMasters().isEmpty() && g.indexOf(uuid) < 0) {
+				throw new TrahisonException(TrahisonException.ONE_PLAYING_GAME_MASTER, "only one game master may play (D46)");
+			}
 			if (g.phase != Phase.LOBBY) {
 				throw new TrahisonException(TrahisonException.NOT_IN_LOBBY, "the game already started");
 			}
@@ -203,6 +215,23 @@ public class GameService {
 			event(g, "join", Map.of("player", uuid.toString(), "name", String.valueOf(name), "bot", bot));
 			persist(g);
 			notifyChanged(g, "join");
+			return g;
+		}
+	}
+
+	/** D102: an account registers as a spectator (or stops being one); a player cannot, and the game masters already watch. */
+	public Game spectate(String hub, UUID uuid, String name, boolean on) {
+		Game g = require(hub);
+		synchronized (g) {
+			if (g.indexOf(uuid) >= 0) {
+				throw new TrahisonException(TrahisonException.ALREADY_JOINED, "a player does not spectate");
+			}
+			boolean changed = on ? g.spectators.put(uuid, name == null ? uuid.toString() : name) == null : g.spectators.remove(uuid) != null;
+			if (changed) {
+				event(g, on ? "spectate" : "unspectate", Map.of("account", uuid.toString()));
+				persist(g);
+				notifyChanged(g, "spectators");
+			}
 			return g;
 		}
 	}
@@ -344,6 +373,14 @@ public class GameService {
 
 	/** The game master corrects a bracelet's points (no death check until the next results). */
 	public Game setPoints(String hub, int bracelet, int points) {
+		return setPoints(hub, bracelet, points, null);
+	}
+
+	/**
+	 * As above, with the account that did it: a playing game master who sets his own bracelet to 0 is marked (D50), so that
+	 * dying of it later does not give the others the win.
+	 */
+	public Game setPoints(String hub, int bracelet, int points, UUID actor) {
 		Game g = require(hub);
 		synchronized (g) {
 			if (g.phase == Phase.LOBBY || g.phase == Phase.ENDED) {
@@ -353,6 +390,10 @@ public class GameService {
 				throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "bad bracelet or points");
 			}
 			g.bracelets.get(bracelet).points = points;
+			if (points == 0 && actor != null && g.indexOf(actor) == bracelet && g.gameMasters.contains(actor)
+					&& !g.selfDestined.contains(bracelet)) {
+				g.selfDestined.add(bracelet);
+			}
 			event(g, "set_points", Map.of("bracelet", bracelet, "points", points));
 			persist(g);
 			notifyChanged(g, "points");
@@ -411,6 +452,9 @@ public class GameService {
 				throw new TrahisonException(TrahisonException.NOT_IN_LOBBY, "game masters are assigned in the lobby");
 			}
 			if (on) {
+				if (g.indexOf(account) >= 0 && g.playingGameMasters().stream().anyMatch(i -> !g.players.get(i).uuid.equals(account))) {
+					throw new TrahisonException(TrahisonException.ONE_PLAYING_GAME_MASTER, "only one game master may play (D46)");
+				}
 				if (!g.gameMasters.add(account)) {
 					return g;
 				}
@@ -773,6 +817,9 @@ public class GameService {
 		g.deadline = null;
 		cancelTimer(g);
 		event(g, "pause", Map.of("remainingMs", g.remainingMs));
+		if (rooms != null) {
+			rooms.pauseHints(g); // D66: the hint countdown stops too
+		}
 	}
 
 	/** Restarts the stage's clock with the time that was left (the caller persists and notifies). */
@@ -780,6 +827,9 @@ public class GameService {
 		g.paused = false;
 		g.deadline = clock.instant().plusMillis(g.remainingMs);
 		scheduleTimer(g);
+		if (rooms != null) {
+			rooms.resumeHints(g);
+		}
 		event(g, "resume", Map.of("remainingMs", g.remainingMs, "cause", cause));
 	}
 
@@ -853,6 +903,12 @@ public class GameService {
 		body.z = p.z;
 		body.cause = cause;
 		body.announced = announced;
+		// D97: the bracelets he carried fall on his body and can be taken again.
+		for (int c : p.carried) {
+			body.dropped.add(c);
+			g.bracelets.get(c).holder = null;
+		}
+		p.carried = new ArrayList<>();
 		g.bodies.add(body);
 	}
 
@@ -888,23 +944,36 @@ public class GameService {
 	 * it keeps its colour, its points and its vote. Taking a body's bracelet shows him the body.
 	 */
 	public Game takeBracelet(String hub, UUID uuid, int dead) {
+		return takeBracelet(hub, uuid, dead, null);
+	}
+
+	/** As above, for one bracelet of the body: {@code bracelet} null takes the dead one's own first, then a dropped one (D97). */
+	public Game takeBracelet(String hub, UUID uuid, int dead, Integer bracelet) {
 		Game g = require(hub);
 		synchronized (g) {
 			int p = playerActionAnyPhase(g, uuid);
 			Body body = g.bodyOf(dead);
-			if (body == null || !body.braceletOnBody) {
+			if (body == null || !body.hasBracelets()) {
 				throw new TrahisonException(TrahisonException.NO_BODY, "no bracelet to take there");
+			}
+			int taken = bracelet != null ? bracelet : body.braceletOnBody ? dead : body.dropped.get(0);
+			if (!(taken == dead && body.braceletOnBody) && !body.dropped.contains(taken)) {
+				throw new TrahisonException(TrahisonException.NO_BODY, "that bracelet is not on the body");
 			}
 			if (!near(g.players.get(p), body, TAKE_BRACELET_RANGE)) {
 				throw new TrahisonException(TrahisonException.BODY_TOO_FAR, "too far from the body");
 			}
-			body.braceletOnBody = false;
+			if (taken == dead && body.braceletOnBody) {
+				body.braceletOnBody = false;
+			} else {
+				body.dropped.remove(Integer.valueOf(taken));
+			}
 			if (!body.seenBy.contains(p)) {
 				body.seenBy.add(p);
 			}
-			g.players.get(p).carried.add(dead);
-			g.bracelets.get(dead).holder = p;
-			event(g, "bracelet_taken", Map.of("by", p, "from", dead));
+			g.players.get(p).carried.add(taken);
+			g.bracelets.get(taken).holder = p;
+			event(g, "bracelet_taken", Map.of("by", p, "from", dead, "bracelet", taken));
 			boolean opened = g.phase == Phase.DOORS && !g.paused && updateWindows(g); // one more bracelet at the threshold
 			persist(g);
 			notifyChanged(g, opened ? "door" : "body");
@@ -1131,8 +1200,8 @@ public class GameService {
 
 	/**
 	 * End of {@code ROOMS} (T3.6): the exit of each room still unsolved opens (so does its door) and every member of its group
-	 * loses {@link Scoring#ROOM_TIMEOUT_PENALTY} point; a bracelet that reaches 0 kills its owner, as after a vote. Returns true
-	 * when that ended the game.
+	 * loses {@link Scoring#ROOM_TIMEOUT_PENALTY} point, but the point never takes a bracelet to 0 (it stays at 1, D67): this
+	 * kills nobody. Returns true when that ended the game.
 	 */
 	private boolean penalizeUnsolvedRooms(Game g) {
 		if (rooms == null || !g.settings.roomTimeout) {
@@ -1150,12 +1219,13 @@ public class GameService {
 				delta[p] += Scoring.ROOM_TIMEOUT_PENALTY;
 			}
 		}
-		int[] after = Scoring.applyAll(g.points(), delta);
+		int[] before = g.points();
+		int[] after = Scoring.applyAll(before, delta);
 		for (int i = 0; i < PLAYERS; i++) {
+			if (before[i] >= 1 && after[i] < 1) {
+				after[i] = 1; // D67: this point never kills
+			}
 			g.bracelets.get(i).points = after[i];
-		}
-		for (int i : Outcome.newlyDead(after, g.aliveFlags())) {
-			markDead(g, i, "points", true);
 		}
 		event(g, "rooms_timeout", Map.of("groups", opened, "points", toList(after)));
 		return endIfGameMasterKilled(g);
@@ -1681,10 +1751,12 @@ public class GameService {
 			return false;
 		}
 		List<Integer> masters = g.playingGameMasters();
+		// D50: a game master who dies of his own powers (his bracelet set to 0 by himself) does not hand the others the win.
+		masters = masters.stream().filter(m -> !g.selfDestined.contains(m)).toList();
 		if (!Outcome.gameMasterKilled(masters, g.aliveFlags())) {
 			return false;
 		}
-		g.winners = new ArrayList<>(Outcome.winnersWhenGameMasterKilled(masters, g.players.size()));
+		g.winners = new ArrayList<>(Outcome.winnersWhenGameMasterKilled(masters, g.aliveFlags())); // D44: the living others
 		event(g, "game_master_killed", Map.of("winners", g.winners));
 		finish(g, "game_master_killed");
 		return true;

@@ -65,11 +65,11 @@ public final class Outcome {
 		return false;
 	}
 
-	/** D12: when a playing game master is killed, every other participant (alive or not) wins. Seats 0..players-1. */
-	public static List<Integer> winnersWhenGameMasterKilled(java.util.Collection<Integer> masters, int players) {
+	/** D12, D44: when a playing game master is killed, the other participants still alive at that moment win. */
+	public static List<Integer> winnersWhenGameMasterKilled(java.util.Collection<Integer> masters, boolean[] alive) {
 		List<Integer> out = new ArrayList<>();
-		for (int i = 0; i < players; i++) {
-			if (!masters.contains(i)) {
+		for (int i = 0; i < alive.length; i++) {
+			if (!masters.contains(i) && alive[i]) {
 				out.add(i);
 			}
 		}

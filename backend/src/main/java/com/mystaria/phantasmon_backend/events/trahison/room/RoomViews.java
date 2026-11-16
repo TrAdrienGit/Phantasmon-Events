@@ -51,6 +51,13 @@ public final class RoomViews {
 			for (int h = 0; h < s.hintsGiven && h < s.step.hints().size(); h++) {
 				given.add(s.step.hints().get(h));
 			}
+			if (s.open && !s.solved) {
+				s.mechanism.progress(s.state).ifPresent(p -> { // a counter for the HUD (D61)
+					ObjectNode progress = n.putObject("progress");
+					progress.put("done", p[0]);
+					progress.put("total", p[1]);
+				});
+			}
 			if (viewer == ViewerKind.GAME_MASTER) {
 				n.put("mechanism", s.step.mechanism());
 				n.put("hints_given", s.hintsGiven);

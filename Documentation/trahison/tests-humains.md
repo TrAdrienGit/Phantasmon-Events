@@ -308,3 +308,17 @@
 - Mode `HIDDEN` : le vivant ne voit plus du tout le fantôme (ni corps, ni pseudo, ni ombre) ; un autre fantôme le voit encore en gris.
 - Chez le fantôme : voile gris léger et rappel « Tu es un fantôme » en haut de l'écran.
 - Vérifier que le jeu ne plante pas au lancement (les trois mixins sont nouveaux) et que le skin gris ne se fabrique qu'une fois (pas de ralentissement).
+
+## T3.6 retouches (D61, D62, D66, D67, D69)
+
+- **Compteur d'objets (D61)** : dans une salle d'objets cachés, une ligne « Objets : 0 / 3 » apparaît en haut à droite du HUD ; chaque objet ramassé la fait monter ; elle disparaît quand l'étape est résolue ; les autres groupes ne voient pas la tienne.
+- **Digicode (D62)** : trois erreurs de suite : verrou de 10 s ; trois nouvelles erreurs : 20 s ; puis 40 s à chaque fois.
+- **Pause (D66)** : mettre la partie en pause 5 minutes pendant un compte d'aide : à la reprise, l'aide ne tombe pas plus tôt (le temps de pause n'est pas compté).
+- **Fin de `ROOMS` (D67)** : un joueur à 1 point dans un groupe qui n'a pas fini reste à 1 point et vivant.
+- **Aides reçues (D69)** : après une aide, l'inventaire (rien de sélectionné) liste « Indices reçus » dans l'ordre ; ils restent relisibles après reconnexion.
+
+## D80 à D83 : fichiers de collage
+- Après un export, le chat dit « fichiers envoyés au backend ». `/phantasmon event trahison exports` (admin) liste la partie ; un clic sur un fichier ou « Tout télécharger » l'écrit dans `.minecraft/phantasmon_events/trahison/export/<partie>/`.
+- `paste_sheet.txt` s'ouvre avec ses accents (UTF-8) ; dans le hub, chaque coin a aussi « (monde : x=… z=…) » qui tombe bien sur le coin réel ; hors du hub, la fiche le dit.
+- Le fichier `all_places` est écrit même quand les places sont très éloignées (jusqu'à la limite des formats).
+- « Vérifier le collage » signale une place dont un panneau porte un autre texte.

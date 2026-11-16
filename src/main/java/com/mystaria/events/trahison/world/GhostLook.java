@@ -24,6 +24,7 @@ import com.mystaria.events.trahison.net.GameView.ViewerKind;
  * <ul>
  *   <li>a ghost's skin is a grey copy of his real one (made once per skin, on the render thread);</li>
  *   <li>with the setting {@code HIDDEN}, a living viewer does not render a ghost at all (body, name and shadow);</li>
+ *   <li>D102: a registered spectator gets the same treatment (hub-copy avatars included: they are players too) and a "spectator" mark;</li>
  *   <li>a ghost's name carries a "ghost" mark.</li>
  * </ul>
  * A body ({@link BodyEntity}) keeps its colours: it is the dead player's corpse, not his ghost. Client thread.
@@ -47,9 +48,15 @@ public final class GhostLook {
 		return account != null && GameView.hasGame() && GameView.ghosts().contains(account);
 	}
 
+	/** D102: whether this entity is a registered spectator (told only to ghosts, spectators and game masters). */
+	public static boolean isSpectator(Entity entity) {
+		UUID account = accountOf(entity);
+		return account != null && GameView.spectators().contains(account);
+	}
+
 	/** Whether this entity must not be drawn at all: a ghost, for a living viewer, under the {@code HIDDEN} setting. */
 	public static boolean hidden(Entity entity) {
-		return GameView.ghostsHidden() && GameView.current().viewer().kind() == ViewerKind.PLAYER && isGhost(entity);
+		return GameView.ghostsHidden() && GameView.current().viewer().kind() == ViewerKind.PLAYER && (isGhost(entity) || isSpectator(entity));
 	}
 
 	/** The skin with its texture replaced by a grey copy; the same skin when the copy cannot be made. */

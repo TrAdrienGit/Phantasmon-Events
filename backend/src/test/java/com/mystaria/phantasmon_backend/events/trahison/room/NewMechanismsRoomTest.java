@@ -80,9 +80,20 @@ class NewMechanismsRoomTest {
 		assertFalse(Json.write(view).contains("hunt_secret"));
 		// Pick everything up: that is enough (D32), the last pick up solves the step. A solved step is not notified again.
 		List<String> spots = active.stream().filter(id -> List.of("a", "b", "c").contains(id)).toList();
+		for (JsonNode step : rooms.roomView("hub", 0, ViewerKind.PLAYER).get("steps")) {
+			if (step.get("id").asString().equals("hunt")) {
+				assertEquals(0, step.get("progress").get("done").asInt()); // D61: the HUD counter rides on the step
+				assertEquals(2, step.get("progress").get("total").asInt());
+			}
+		}
 		ActionResult first = rooms.apply("hub", 0, 0, new RoomAction.PickUp(spots.get(0)));
 		assertEquals(1, first.pickedItems().size());
 		assertFalse(first.stepSolved());
+		for (JsonNode step : rooms.roomView("hub", 0, ViewerKind.PLAYER).get("steps")) {
+			if (step.get("id").asString().equals("hunt")) {
+				assertEquals(1, step.get("progress").get("done").asInt());
+			}
+		}
 		assertFalse(rooms.find("hub", 0).orElseThrow().steps.get("hunt").solved);
 		ActionResult last = rooms.apply("hub", 0, 0, new RoomAction.PickUp(spots.get(1)));
 		assertEquals(1, last.pickedItems().size());

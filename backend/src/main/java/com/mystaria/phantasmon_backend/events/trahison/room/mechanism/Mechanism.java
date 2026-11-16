@@ -86,6 +86,14 @@ public interface Mechanism {
 		return java.util.Optional.empty();
 	}
 
+	/**
+	 * A counter the players always see while the step is open ({@code {done, total}}, shown as a HUD line "objects: 2 / 3", D61),
+	 * carried by the room view; empty (the default) when the step has none. Never a secret: only how far the group is.
+	 */
+	default java.util.Optional<int[]> progress(MechanismState state) {
+		return java.util.Optional.empty();
+	}
+
 	/** What a client may see of the state: the current positions, never the solution. */
 	JsonNode view(MechanismState state, ViewerKind viewer);
 }

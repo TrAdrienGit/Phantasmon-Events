@@ -39,6 +39,14 @@ public final class EventsCommands {
 								com.mystaria.events.trahison.Trahison.ping();
 								return 1;
 							}))
+							// D102: watch the game instead of playing it ("spectate off" stops).
+							.then(ClientCommandManager.literal("spectate").executes(context -> {
+								com.mystaria.events.trahison.net.Messages.spectate(true);
+								return 1;
+							}).then(ClientCommandManager.literal("off").executes(context -> {
+								com.mystaria.events.trahison.net.Messages.spectate(false);
+								return 1;
+							})))
 							// The provisional player screen (T1.4); the chat closes after the command: the screen opens on the next tick.
 							.then(ClientCommandManager.literal("menu").executes(context -> {
 								Minecraft.getInstance().tell(com.mystaria.events.trahison.screen.GameScreen::open);
@@ -97,6 +105,12 @@ public final class EventsCommands {
 									com.mystaria.events.trahison.edit.ExportFlow.exportManual(com.mojang.brigadier.arguments.StringArgumentType.getString(context, "rooms"));
 									return 1;
 								})))
+							// D80: the paste files kept on the backend, to download (admins).
+							.then(ClientCommandManager.literal("exports").requires(source -> com.mystaria.phantasmon.client.api.PhantasmonApi.isAdmin())
+								.executes(context -> {
+									net.minecraft.client.Minecraft.getInstance().tell(com.mystaria.events.trahison.screen.ExportsScreen::open);
+									return 1;
+								}))
 							// T4.3: compares a sample of the world's blocks at each place with the drawn room.
 							.then(ClientCommandManager.literal("check").requires(source -> com.mystaria.phantasmon.client.api.PhantasmonApi.isAdmin())
 								.executes(context -> {

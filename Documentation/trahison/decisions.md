@@ -4,171 +4,58 @@
 > appliqué en attendant est marqué *(par défaut)*. Je relis ce fichier à chaque reprise ; une fois un point
 > appliqué, je le déplace dans « Tranché ».
 
-## D44. Maître du jeu qui joue : qui gagne quand les autres le tuent
-Choix appliqué : les huit autres participants gagnent, vivants ou morts (« tous les autres gagnent automatiquement »).
-- [ ] Les huit autres, vivants ou morts *(par défaut)*
-- [x] Seulement les autres encore vivants à ce moment
+## D120. Compteur d'objets : qui le voit
+Choix appliqué : le compteur « Objets : n / total » est dans la vue de la salle (`steps[].progress`) donc il arrive aussi aux spectateurs et au maître du jeu, mais le client ne le dessine que pour un joueur dans sa propre salle (en haut à droite, hors mini-jeu).
+- [x] Seulement le joueur dans sa propre salle *(par défaut)*
+- [ ] Aussi le maître du jeu et les spectateurs, pour la salle qu'ils regardent
+- [ ] Aussi pendant les visites des autres salles (temps libre)
 
-Ta réponse : fait
+Ta réponse :
 
-## D46. Maître du jeu qui joue : plusieurs maîtres du jeu qui jouent
-Choix appliqué : tout maître du jeu inscrit est un rôle secret ; la partie finit dès qu'un seul d'entre eux meurt, et les gagnants sont tous les participants qui ne sont pas maîtres du jeu.
-- [ ] La première mort d'un maître du jeu qui joue finit la partie *(par défaut)*
-- [x] Un seul maître du jeu peut jouer à la fois (refusé sinon)
-- [ ] La partie finit quand tous les maîtres du jeu qui jouent sont morts
+## D121. Pause et redémarrage du backend
+Choix appliqué : l'heure de début de pause (D66) n'est gardée qu'en mémoire : un redémarrage du backend pendant une pause fait perdre la durée écoulée (le compte d'aide reprend comme si la pause n'avait pas eu lieu).
+- [x] Mémoire seulement, cas rare *(par défaut)*
+- [ ] Enregistrer l'heure de pause dans la partie (`Game`), pour la reprise exacte
 
-Ta réponse : fait
-
-## D50. Maître du jeu qui joue : sa propre mort par ses pouvoirs
-Choix appliqué : ses pouvoirs ne peuvent pas le tuer : `set_points` à 0 sur son propre bracelet ne tue qu'au prochain vote, comme pour tout joueur, et la victoire des autres s'applique alors aussi.
-- [ ] Pas d'exception, la règle s'applique comme pour un autre mort *(par défaut)*
-- [x] Sa propre mort par ses pouvoirs ne donne pas la victoire aux autres
-- [ ] Ses pouvoirs ne peuvent pas toucher son propre bracelet
-
-Ta réponse : fait
-
-## D51. Maître du jeu qui joue : un maître du jeu mort peut-il encore agir
-Choix appliqué : la mort d'un maître du jeu qui joue finit la partie : il n'y a donc pas de fantôme-maître. Le point reste à reprendre si une autre règle (T6) le laisse en vie après sa « mort ».
-- [ ] La partie finit toujours à sa mort *(par défaut)*
-- [x] Il devient fantôme et garde ses pouvoirs, les autres ont gagné quand même
-
-Ta réponse : fait
-
-## D52. Porte finale : durée maximale du réglage
-Choix appliqué : `final_door_seconds` vaut 60 par défaut et le backend le borne à 1..120 secondes (réglage de la partie).
-- [ ] Borné à 120 secondes *(par défaut)*
-- [x] Borné à 300 secondes
-- [ ] Aucun plafond
-
-Ta réponse : fait
-
-## D53. Porte finale : les rappels du compte à rebours
-Choix appliqué : l'hôtesse rappelle le compte à rebours chez chacun à 30, 10 et 5 secondes (affichage du client, sur l'heure du serveur) en plus de l'annonce d'ouverture ; le HUD affiche les secondes tout du long.
-- [ ] 30, 10 et 5 secondes *(par défaut)*
-- [x] Tous les 10 secondes puis chaque seconde sur les 5 dernières
-- [ ] Aucun rappel, le HUD suffit
-
-Ta réponse : fait
-
-## D61. Objets cachés : un compteur sans dépôt
-Choix appliqué : sans emplacement de dépôt (D32), l'écran compteur « n / total » de `pickup_set` ne s'ouvre plus par un emplacement ; il ne reste ouvert que pour une salle ancienne qui lie encore `deposit`. Les joueurs ne voient donc plus combien d'objets restent à trouver (le total annoncé par D33 n'est plus visible).
-- [ ] Rien de plus : on cherche sans compteur *(par défaut)*
-- [x] Une ligne du bracelet / de la salle (HUD) « objets : 2 / 3 », portée par la vue de l'étape
-- [ ] L'objet ramassé s'annonce dans la discussion de la salle (« un objet de plus, il en reste 1 »)
-
-Ta réponse : fait
-
-## D62. Digicode : réglage du verrouillage
-Choix appliqué : 3 essais et 10 s sont des constantes du mécanisme (`LOCK_AFTER`, `LOCK_SECONDS`), pas des paramètres de l'étape ; le verrou est commun à tout le groupe et le compteur d'échecs repart de 0 au verrouillage.
-- [ ] Constantes, identiques pour toutes les salles *(par défaut)*
-- [ ] Paramètres `lockAfter` (2 à 6) et `lockSeconds` (5 à 60) de l'étape, pour régler la difficulté salle par salle
-- [x] Le verrou s'allonge à chaque répétition (10 s, 20 s, 40 s)
-
-Ta réponse : fait
-
-## D66. Aides : pause et maître du jeu
-Choix appliqué : le compteur d'aide est celui des salles (heure du dernier progrès) : une partie mise en pause **n'arrête pas** le compte, et un maître du jeu ne peut pas donner une aide à la main (le moteur sait le faire, aucune action ne l'expose).
-- [ ] Le compte continue pendant la pause ; pas d'aide manuelle *(par défaut)*
-- [x] Le compte s'arrête pendant la pause (le délai de pause est ajouté à l'heure du dernier progrès)
-- [ ] Une action MJ `give_hint` donne l'aide suivante à un groupe tout de suite
-
-Ta réponse : fait
-
-## D67. Fin de `ROOMS` : qui perd le point
-Choix appliqué : chaque membre du groupe (vivant ou non) d'une salle non finie perd 1 point, jamais sous 0 ; un bracelet à 0 tue son propriétaire comme après un vote. Aucune mesure de temps n'est enregistrée pour ces salles.
-- [ ] Tous les membres, mort possible à 0 *(par défaut)*
-- [x] Tous les membres, mais le point perdu ne peut pas faire tomber un bracelet à 0 (reste à 1)
-- [ ] Seulement les membres encore vivants
-
-Ta réponse : fait
-
-## D69. Aides : à qui et comment
-Choix appliqué : l'aide va à la première étape ouverte non résolue (ordre de la définition) qui en a encore une ; elle voyage dans la vue de la salle (`steps[].hints`) donc seul le groupe la reçoit (plus les spectateurs et le maître du jeu, comme toute vue de salle), et le client de ses membres la fait lire par l'hôtesse. Elle n'est pas relue à la reconnexion.
-- [x] Aide dans la vue de la salle, lue par l'hôtesse chez les membres *(par défaut)*
-- [x] Aussi une liste « aides reçues » relisible dans l'inventaire
-- [ ] Une annonce `say.*` du backend (comme les portes), en plus
-
-Ta réponse : fait
-
-## D73. Tirage : banque trop petite
-Choix appliqué : avec moins de neuf salles utilisables, le tirage rejoue des salles (jamais deux fois la même dans une manche si la banque en a trois ou plus) et le signale (`repeat`). Seule une banque vide ne tire rien : la partie joue alors la salle d'essai ou la salle intégrée.
-- [ ] Répéter des salles et le dire *(par défaut)*
-- [x] Refuser la création de la partie tant que la banque a moins de neuf salles
-- [ ] Compléter avec la salle intégrée
-
-Ta réponse : fait
-
-## D75. Tirage : qui le voit, quand il est tiré
-Choix appliqué : le tirage se fait à la création de la partie (`create`), se refait avec « Tirer à nouveau » avant la manche 1, et la salle d'une place se remplace tant que sa manche n'a pas démarré. Seuls les maîtres du jeu nommés le voient (bloc `gm`) : un admin qui n'est pas maître du jeu ne voit pas le tirage dans le lobby.
-- [x] Maîtres du jeu seulement *(par défaut)*
-- [x] Les admins aussi, dans le lobby
-- [ ] Tirer seulement au démarrage (`start`), pas à la création
-
-Ta réponse : fait
-
-## D78. Vérification du collage : échantillon et seuils
-Choix appliqué : le client du maître du jeu compare jusqu'à 600 blocs non vides par place (répartis sur toute la salle tournée), état de bloc seulement (pas les données des panneaux ni des têtes). Place « bien collée » si tout concorde, « pas collée » si moins de 5 % concordent, « mal collée » entre les deux, « chunks non chargés » si plus de la moitié des blocs sont hors des chunks chargés (il faut aller près des places).
-- [x] 600 blocs, état seulement, seuil 5 % *(par défaut)*
-- [ ] Tous les blocs (plus lent, plus sûr)
-- [x] Comparer aussi les données de bloc (texte des panneaux)
-
-Ta réponse : fait
+Ta réponse :
 
 ## Tranché
 
 Voir [`decisions-tranchees.md`](decisions-tranchees.md).
 
-## D80. Fichiers de collage : où ils sont écrits et comment l'admin les reçoit
-Choix appliqué : le client du maître du jeu écrit dans `.minecraft/phantasmon_events/trahison/export/<partie>/` ; le maître du jeu envoie le dossier à l'admin lui-même (la fiche et les fichiers y sont).
-- [ ] Dossier local, envoi à la main *(par défaut)*
-- [x] En plus, téléversement au backend et téléchargement par l'admin depuis un menu
-- [ ] En plus, une copie dans un dossier partagé (cloud du serveur)
+## D110. D102 : case cochée « reporté », consigne « faire »
+La case cochée de D102 était « Reporté à une étape suivante » (le défaut) avec « fait » en réponse ; la consigne reçue demandait de faire l'option appliquée. J'ai donc fait la seconde option (le backend envoie la liste des spectateurs aux seuls fantômes, spectateurs et maîtres du jeu) : action `spectate`, marque « (spectateur) », même traitement que les fantômes (gris, caché en mode `HIDDEN`), avatars des copies compris (ce sont des joueurs pour le rendu).
+- [x] Spectateurs inscrits par `spectate` (liste envoyée aux seuls observateurs) *(par défaut)*
+- [ ] Revenir à « reporté » (retirer `spectate` et la marque)
 
-Ta réponse : fait
+Ta réponse :
 
-## D81. Coordonnées de la fiche de collage
-Choix appliqué : la fiche donne les coordonnées du **plan (hub)**, y du monde, avec le coin minimum du fichier. L'admin doit connaître la conversion hub → monde réel de la place d'origine du hub.
-- [ ] Coordonnées du plan seulement *(par défaut)*
-- [x] Ajouter les coordonnées du monde du client qui exporte (le hub miroir), s'il est dans le hub
-- [ ] Faire saisir à l'exportateur le décalage hub → monde de l'original
+## D111. Spectateurs non inscrits
+Choix appliqué : seuls les comptes qui ont envoyé `spectate` (commande `/phantasmon event trahison spectate`, `off` pour arrêter) ont la marque et le traitement ; un membre du hub qui n'a rien fait reste un simple observateur sans marque, et les vivants ne reçoivent jamais la liste (ils ne cachent donc pas les spectateurs).
+- [x] Inscription par commande, pas de bouton *(par défaut)*
+- [ ] Tout membre du hub non inscrit est spectateur d'office (le backend lit les membres du hub)
+- [ ] Un bouton « Regarder » dans l'écran du lobby
 
-Ta réponse : fait
+Ta réponse :
 
-## D82. Fichier unique des 9 places
-Choix appliqué : `all_places.schem` et `.litematic` couvrent la boîte englobant les 9 places ; au-delà de 64 millions de blocs de boîte, il n'est pas écrit (la fiche le dit) et seuls les fichiers par place servent.
-- [ ] Limite 64 M blocs, sinon pas de fichier unique *(par défaut)*
-- [x] Toujours l'écrire, quitte à produire un très gros fichier
-- [ ] Ne jamais l'écrire
+## D112. D50 : quels pouvoirs comptent
+Choix appliqué : seule la mise à 0 de son propre bracelet par `set_points` (envoyée par lui-même) évite la victoire des autres. Un maître du jeu qui joue et qui fait avancer les portes (`next`) sans avoir passé de porte meurt d'un mécanisme normal : les autres gagnent.
+- [x] Seulement `set_points` sur son propre bracelet *(par défaut)*
+- [ ] Aussi `next` et `end` quand ils le tuent
 
-Ta réponse : fait
+Ta réponse :
 
-## D83. Langue de la fiche de collage
-Choix appliqué : `paste_sheet.txt` est en français, sans accents (lue par l'admin dans un éditeur simple).
-- [ ] Français sans accents *(par défaut)*
-- [x] Français avec accents (UTF-8)
-- [ ] Anglais
+## D113. Bracelets déposés : l'ordre du ramassage
+Choix appliqué : `take_bracelet` sans champ `bracelet` prend d'abord le bracelet du mort, puis ceux qu'il portait, dans l'ordre où il les avait pris ; avec `bracelet`, on choisit. Le client n'envoie que le corps : il les prend donc un à un.
+- [x] Un à un, le sien d'abord *(par défaut)*
+- [ ] Tous d'un coup
 
-Ta réponse : fait
+Ta réponse :
 
-## D97. Bracelets portés par un joueur qui meurt
-Choix appliqué : un mort ne rend pas les bracelets qu'il portait ; ils restent à son nom (`holder`) mais ne servent plus à personne (il ne présente plus rien aux portes). Un seul bracelet « sur le corps » par corps.
-- [ ] Ils sont perdus avec lui *(par défaut)*
-- [x] Ils retombent sur son corps et se ramassent de nouveau
-- [ ] Ils retournent sur le corps de leur propriétaire d'origine
+## D114. Réglages d'une partie venus du message `create`
+Choix appliqué : `settings.announce_deaths`, `settings.ghost_display` (`HIDDEN`) et `settings.auto_pause_seconds` (1 à 1800) sont lus par le message de création ; `final_door_seconds` est borné à 300 (D52) par le message et par `GameService.create`.
+- [x] À la création seulement *(par défaut)*
+- [ ] Changeables en cours de partie par le maître du jeu
 
-Ta réponse : fait
-
-## D99. Qui voit qui a pris un bracelet
-Choix appliqué : `bracelets[].holder` donne l'index de celui qui a pris le bracelet, à tous ceux qui connaissent déjà la mort. Le porteur est donc public (il se voit aussi sur son bracelet porté).
-- [ ] Public pour qui connaît la mort *(par défaut)*
-- [x] Caché : `holder` reste celui du poignet d'origine pour tout le monde sauf le porteur
-
-Ta réponse : fait
-
-## D102. Spectateurs : action `spectate` et étiquette
-Choix appliqué : pas fait en T6.3. Un membre du hub non inscrit reçoit déjà une vue `SPECTATOR` (comme un fantôme, D16), traverse les portes et ne clique rien, mais aucune action `spectate` ni étiquette « spectateur » n'existe : le client ne sait pas qui est spectateur (la liste des membres du hub n'est pas dans la vue).
-- [x] Reporté à une étape suivante *(par défaut)*
-- [ ] Le backend envoie aux seuls fantômes, spectateurs et maîtres du jeu la liste des spectateurs, pour l'étiquette
-
-Ta réponse : fait
+Ta réponse :
 

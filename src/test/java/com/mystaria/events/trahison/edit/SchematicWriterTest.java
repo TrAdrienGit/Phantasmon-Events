@@ -179,6 +179,19 @@ class SchematicWriterTest {
 	}
 
 	@Test
+	void theSheetIsAccentedUtf8AndGivesTheExportersWorldWhenKnown(@TempDir Path folder) throws IOException {
+		byte[] canonical = SchematicWriter.sponge(room(0), DATA_VERSION, "room", "a");
+		List<PlaceRoom> places = List.of(new PlaceRoom("place_1_a", 1, 100, 64, -200, "north", "r", "R", canonical, new RoomDto()));
+		TrahisonExport.write(folder, "g", places, DATA_VERSION, "a", RoomTurn_fake(), new int[] { 5000, -3000 });
+		String sheet = Files.readString(folder.resolve("paste_sheet.txt"), java.nio.charset.StandardCharsets.UTF_8);
+		assertTrue(sheet.contains("Coin où coller (minimum) : x=100 y=64 z=-200 (monde : x=5100 z=-3200)"), sheet);
+		assertTrue(sheet.contains("DÉJÀ tourné"), sheet);
+		TrahisonExport.write(folder, "g", places, DATA_VERSION, "a", RoomTurn_fake());
+		String without = Files.readString(folder.resolve("paste_sheet.txt"), java.nio.charset.StandardCharsets.UTF_8);
+		assertTrue(without.contains("ne sont pas données") && !without.contains("(monde :"), without);
+	}
+
+	@Test
 	void theExportWritesEveryFileForNinePlacesInAllOrientations(@TempDir Path folder) throws IOException {
 		byte[] canonical = SchematicWriter.sponge(room(0), DATA_VERSION, "room", "a");
 		RoomDto def = new RoomDto();

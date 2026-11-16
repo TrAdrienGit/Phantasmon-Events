@@ -75,8 +75,14 @@ class GameMasterPlaysTest {
 		service.setGameMaster(HUB, early, "early", true);
 		service.join(HUB, early, "early"); // named, then joins
 		service.join(HUB, ids[0], "p0");
-		service.setGameMaster(HUB, ids[0], "p0", true); // joined, then named
-		assertThat(service.find(HUB).playingGameMasters()).containsExactly(0, 1);
+		assertThat(service.find(HUB).playingGameMasters()).containsExactly(0);
+		// D46: a second game master cannot play: neither named after joining, nor joining after being named
+		UUID other = new UUID(8, 8);
+		service.setGameMaster(HUB, other, "other", true);
+		org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.join(HUB, other, "other"))
+			.isInstanceOfSatisfying(TrahisonException.class, ex -> assertThat(ex.code()).isEqualTo(TrahisonException.ONE_PLAYING_GAME_MASTER));
+		org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.setGameMaster(HUB, ids[0], "p0", true))
+			.isInstanceOfSatisfying(TrahisonException.class, ex -> assertThat(ex.code()).isEqualTo(TrahisonException.ONE_PLAYING_GAME_MASTER));
 	}
 
 	@Test
@@ -158,7 +164,54 @@ class GameMasterPlaysTest {
 		assertThat(Outcome.gameMasterKilled(List.of(), new boolean[9])).isFalse();
 		alive[3] = false;
 		assertThat(Outcome.gameMasterKilled(List.of(3), alive)).isTrue();
-		assertThat(Outcome.winnersWhenGameMasterKilled(List.of(3), 9)).containsExactly(0, 1, 2, 4, 5, 6, 7, 8);
-		assertThat(Outcome.winnersWhenGameMasterKilled(List.of(3, 5), 9)).containsExactly(0, 1, 2, 4, 6, 7, 8);
+		assertThat(Outcome.winnersWhenGameMasterKilled(List.of(3), alive)).containsExactly(0, 1, 2, 4, 5, 6, 7, 8);
+		alive[6] = false; // D44: only the others still alive win
+		assertThat(Outcome.winnersWhenGameMasterKilled(List.of(3), alive)).containsExactly(0, 1, 2, 4, 5, 7, 8);
+	}
+
+	@Test
+	void aGameMasterWhoDiesOfHisOwnPowersGivesNobodyTheWinAndStaysAGhostWithHisPowers() {
+		lobby();
+		service.start(HUB);
+		service.next(HUB);
+		passDoors(-1);
+		service.next(HUB); // ROOMS
+		service.next(HUB);
+		service.next(HUB); // VOTE
+		service.setPoints(HUB, 3, 0, ids[3]); // by himself (D50)
+		for (var group : service.read(HUB, g -> g.currentRound().split()).groups()) {
+			if (group.members().contains(3)) {
+				boolean pair = group.pair().contains(3);
+				service.vote(HUB, ids[group.pair().get(0)], pair ? Vote.ALLY : Vote.BETRAY);
+				service.vote(HUB, ids[group.solo()], pair ? Vote.BETRAY : Vote.ALLY);
+			}
+		}
+		service.next(HUB); // resolved: he dies, nobody wins by it (D50)
+		assertThat(service.find(HUB).players.get(3).alive).isFalse();
+		assertThat(phase()).isEqualTo(Phase.RESULTS);
+		assertThat(service.find(HUB).winners).isEmpty();
+		assertThat(view(ids[3]).get("gm")).isNotNull(); // D51: a ghost who keeps his powers
+		assertThat(((Map<?, ?>) view(ids[3]).get("viewer")).get("kind")).isEqualTo("GHOST");
+	}
+
+	@Test
+	void theFinalDoorWindowIsCappedAt300Seconds() {
+		Settings s = Settings.fast(SECONDS);
+		s.finalDoorSeconds = 9999;
+		service.create("hub-cap", s, 1L);
+		assertThat(service.find("hub-cap").settings.finalDoorSeconds).isEqualTo(300);
+	}
+
+	@Test
+	void spectatorsAreToldOnlyToThoseWhoWatch() {
+		service.create(HUB, Settings.fast(SECONDS).withoutCabins(), 9L);
+		for (int i = 0; i < 9; i++) {
+			service.join(HUB, ids[i], "p" + i);
+		}
+		service.spectate(HUB, watcher, "eye", true);
+		org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.spectate(HUB, ids[0], "x", true))
+			.isInstanceOf(TrahisonException.class);
+		assertThat(view(watcher).get("spectators").toString()).contains("eye");
+		assertThat(view(ids[0]).get("spectators")).isEqualTo(List.of());
 	}
 }

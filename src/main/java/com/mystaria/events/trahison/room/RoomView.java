@@ -11,7 +11,11 @@ import java.util.Set;
  * Pure: no Minecraft class.
  */
 public record RoomView(String hub, int round, int group, String room, String name, List<Integer> members, boolean exitOpen, boolean finished,
-		List<SlotView> slots, List<ItemView> items, Place place) {
+		List<SlotView> slots, List<ItemView> items, Place place, List<String> hints, List<Progress> progress) {
+
+	/** A counter an open step shows on the HUD (D61: "objects 2 / 3"). */
+	public record Progress(String step, int done, int total) {
+	}
 
 	/**
 	 * The key of the room among all those known: rooms of earlier rounds stay in the hub (D8: the free time visits every room
@@ -180,8 +184,22 @@ public record RoomView(String hub, int round, int group, String room, String nam
 			Map<String, Object> origin = map(p.get("origin"));
 			place = new Place(str(p.get("id"), ""), num(origin.get("x")), num(origin.get("y")), num(origin.get("z")), str(p.get("orientation"), "north"));
 		}
+		List<String> hints = new ArrayList<>();
+		List<Progress> progress = new ArrayList<>();
+		for (Object so : list(data.get("steps"))) {
+			Map<String, Object> step = map(so);
+			for (Object h : list(step.get("hints"))) {
+				if (h instanceof String text) {
+					hints.add(text);
+				}
+			}
+			if (step.get("progress") instanceof Map<?, ?>) {
+				Map<String, Object> p = map(step.get("progress"));
+				progress.add(new Progress(str(step.get("id"), ""), num(p.get("done")), num(p.get("total"))));
+			}
+		}
 		return new RoomView(str(data.get("hub"), ""), data.get("round") instanceof Number round ? Math.max(0, round.intValue()) : 0, group.intValue(), room, str(data.get("name"), room), List.copyOf(members),
-				Boolean.TRUE.equals(data.get("exit_open")), data.get("finished_at") != null, List.copyOf(slots), List.copyOf(items), place);
+				Boolean.TRUE.equals(data.get("exit_open")), data.get("finished_at") != null, List.copyOf(slots), List.copyOf(items), place, List.copyOf(hints), List.copyOf(progress));
 	}
 
 	/** Items the player carries (or that anybody may handle). */

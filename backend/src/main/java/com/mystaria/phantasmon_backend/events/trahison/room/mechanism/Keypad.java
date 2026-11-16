@@ -30,7 +30,7 @@ import tools.jackson.databind.node.ObjectNode;
  * long as the code), {@code del} removes the last digit, {@code clear} empties the entry, {@code enter} compares: the
  * right code solves the step; anything else (a short entry included) empties the entry and counts one error
  * ({@code wrong} in the view). <b>Lock-out</b> (decisions-tranchees.md, D30): the {@value #LOCK_AFTER}rd wrong try in a row locks the
- * keypad for {@value #LOCK_SECONDS} seconds: every key is ignored until then, the failure count starts again, the event
+ * keypad for {@value #LOCK_SECONDS} seconds (D62: each repeat doubles it, 10 s, 20 s, then 40 s): every key is ignored until then, the failure count starts again, the event
  * is {@code wrong} with {@code locked: true} and {@code ms}, and the view carries {@code lock_ms} (milliseconds left, 0 when
  * free; the client counts down from the moment it receives it). The expiry is lazy, measured on the clock this bean holds.
  *
@@ -50,6 +50,11 @@ public class Keypad implements Mechanism {
 	static final int DEFAULT_LENGTH = 4;
 	static final int LOCK_AFTER = 3;
 	static final int LOCK_SECONDS = 10;
+
+	/** How long the lock-out after {@code previousLocks} earlier ones lasts: 10 s, then 20 s, then 40 s for every one after (D62). */
+	static long lockMillis(int previousLocks) {
+		return LOCK_SECONDS * 1000L * (1L << Math.min(2, Math.max(0, previousLocks)));
+	}
 
 	private final Clock clock;
 
@@ -138,6 +143,7 @@ public class Keypad implements Mechanism {
 		data.put("entry", "");
 		data.put("wrong", 0);
 		data.put("fails", 0);
+		data.put("locks", 0);
 		data.put("lockedUntil", 0L);
 		data.put("solved", false);
 		return new MechanismState(data, List.of(Clue.digits(CODE_ROLE, code.toString())));
@@ -191,9 +197,12 @@ public class Keypad implements Mechanism {
 					int fails = old.path("fails").asInt() + 1;
 					if (fails >= LOCK_AFTER) {
 						fails = 0;
-						data.put("lockedUntil", now + LOCK_SECONDS * 1000L);
+						int locks = old.path("locks").asInt(0);
+						long ms = lockMillis(locks);
+						data.put("locks", locks + 1);
+						data.put("lockedUntil", now + ms);
 						event.put("locked", true);
-						event.put("ms", LOCK_SECONDS * 1000L);
+						event.put("ms", ms);
 					}
 					data.put("fails", fails);
 				}

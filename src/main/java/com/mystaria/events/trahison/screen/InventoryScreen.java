@@ -110,7 +110,14 @@ public final class InventoryScreen extends TrahisonScreen {
 		int rw = w - (rx - x) - 8;
 		TrahisonUi.well(g, rx, top, rw, listH);
 		if (selected == null) {
-			MenuUi.paragraph(g, Component.translatable(T + "inventory.pick"), rx + 8, top + 8, rw - 16, TrahisonPalette.TEXT_MUTED);
+			int py = top + 8 + MenuUi.paragraph(g, Component.translatable(T + "inventory.pick"), rx + 8, top + 8, rw - 16, TrahisonPalette.TEXT_MUTED) + 8;
+			if (!room.hints().isEmpty()) { // D69: the hints received, to read again
+				MenuUi.text(g, Component.translatable(T + "inventory.hints"), rx + 8, py, rw - 16, TrahisonPalette.ACCENT);
+				py += 12;
+				for (int i = 0; i < room.hints().size() && py < top + listH - 10; i++) {
+					py += MenuUi.paragraph(g, Component.literal((i + 1) + ". " + room.hints().get(i)), rx + 8, py, rw - 16, TrahisonPalette.TEXT_SECONDARY) + 4;
+				}
+			}
 		} else {
 			drawDetails(g, room, rx + 8, top + 8, rw - 16, listH - 16);
 		}

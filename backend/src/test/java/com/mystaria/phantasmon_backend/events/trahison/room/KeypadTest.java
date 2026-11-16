@@ -272,6 +272,20 @@ class KeypadTest {
 	}
 
 	@Test
+	void theLockOutDoublesOnEachRepeatUpToFortySeconds() {
+		MechanismState state = pad.generate(new SplittableRandom(12), params(3));
+		long[] expected = { 10000, 20000, 40000, 40000 };
+		for (long ms : expected) {
+			state = wrongTry(wrongTry(state));
+			InputResult third = wrongOf(state);
+			assertEquals(ms, wrongEvent(third).get("ms").asLong());
+			state = third.state();
+			assertEquals(ms, pad.view(state, ViewerKind.PLAYER).get("lock_ms").asLong());
+			clock.now = clock.now.plusMillis(ms + 1);
+		}
+	}
+
+	@Test
 	void afterTheLockTheCountStartsAgainAndTheRightCodeSolves() {
 		MechanismState state = pad.generate(new SplittableRandom(9), params(4));
 		for (int i = 0; i < 3; i++) {
@@ -284,7 +298,8 @@ class KeypadTest {
 		assertEquals(0, pad.view(state, ViewerKind.PLAYER).get("lock_ms").asLong(), "two new errors: not locked yet");
 		InputResult third = wrongOf(state);
 		assertTrue(wrongEvent(third).get("locked").asBoolean(), "the third error in the new series locks again");
-		clock.now = clock.now.plusSeconds(11);
+		assertEquals(20000, wrongEvent(third).get("ms").asLong(), "the second lock-out is twice as long (D62)");
+		clock.now = clock.now.plusSeconds(21);
 		MechanismState s = third.state();
 		for (char c : code(s).toCharArray()) {
 			s = pad.onInput(s, 0, key(String.valueOf(c))).state();

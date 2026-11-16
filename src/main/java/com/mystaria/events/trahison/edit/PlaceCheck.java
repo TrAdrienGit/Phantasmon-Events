@@ -52,18 +52,23 @@ public final class PlaceCheck {
 
 	/** Which blocks of a turned room to look at: up to {@code max}, evenly spread among the non-air blocks. Pure. */
 	static List<HubSchematic.Block> sample(List<HubSchematic.Block> blocks, int max) {
+		// D78: blocks with data (signs, heads) come first, up to half the sample, then the rest evenly spread
+		List<HubSchematic.Block> withData = new ArrayList<>();
 		List<HubSchematic.Block> solid = new ArrayList<>();
 		for (HubSchematic.Block b : blocks) {
-			if (!b.name().endsWith("air")) {
-				solid.add(b);
+			if (b.name().endsWith("air")) {
+				continue;
 			}
+			(b.blockEntity() != null ? withData : solid).add(b);
 		}
-		if (solid.size() <= max) {
-			return solid;
+		List<HubSchematic.Block> out = new ArrayList<>(Math.min(max, withData.size() + solid.size()));
+		int dataKept = Math.min(withData.size(), max / 2);
+		for (int i = 0; i < dataKept; i++) {
+			out.add(withData.get((int) ((long) i * withData.size() / dataKept)));
 		}
-		List<HubSchematic.Block> out = new ArrayList<>(max);
-		for (int i = 0; i < max; i++) {
-			out.add(solid.get((int) ((long) i * solid.size() / max)));
+		int rest = Math.min(solid.size(), max - dataKept);
+		for (int i = 0; i < rest; i++) {
+			out.add(solid.get((int) ((long) i * solid.size() / rest)));
 		}
 		return out;
 	}
@@ -170,11 +175,40 @@ public final class PlaceCheck {
 				continue;
 			}
 			BlockState expected = NbtUtils.readBlockState(level.holderLookup(Registries.BLOCK), b.state());
-			if (level.getBlockState(at) == expected) {
+			if (level.getBlockState(at) == expected && dataMatches(level, at, b.blockEntity())) {
 				matched++;
 			}
 		}
 		return classify(checked, matched, unloaded);
+	}
+
+	/**
+	 * D78: the block's data (the text of a sign, a head's owner...) is what the file says: every tag of the file's block entity
+	 * (but its position and id) is found, equal, in the world's. A block without data always matches.
+	 */
+	private static boolean dataMatches(ClientLevel level, BlockPos at, net.minecraft.nbt.CompoundTag expected) {
+		if (expected == null) {
+			return true;
+		}
+		net.minecraft.world.level.block.entity.BlockEntity entity = level.getBlockEntity(at);
+		if (entity == null) {
+			return false;
+		}
+		net.minecraft.nbt.CompoundTag actual = entity.saveWithoutMetadata(level.registryAccess());
+		return dataEquals(expected, actual);
+	}
+
+	/** Every key of {@code expected} except {@code x y z id Pos} is in {@code actual} with an equal value. Pure. */
+	static boolean dataEquals(net.minecraft.nbt.CompoundTag expected, net.minecraft.nbt.CompoundTag actual) {
+		for (String key : expected.getAllKeys()) {
+			if (key.equals("x") || key.equals("y") || key.equals("z") || key.equals("id") || key.equals("Pos")) {
+				continue;
+			}
+			if (!expected.get(key).equals(actual.get(key))) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private static void chat(Component message) {

@@ -104,6 +104,14 @@ public final class ExportFlow {
 		}
 		busy = true;
 		chat(Component.translatable(T + "working"));
+		// D81: where the hub's block (0, 0) stands in this world, when this client is in the hub
+		var anchor = PhantasmonApi.hubs() == null ? null : PhantasmonApi.hubs().joinedAnchor();
+		int[] world = null;
+		if (anchor != null && hub.equals(anchor.hub())) {
+			com.mystaria.events.trahison.world.HubBlocks blocks = com.mystaria.events.trahison.world.HubBlocks.of(anchor);
+			world = new int[] { blocks.worldX(0), blocks.worldZ(0) };
+		}
+		final int[] worldOffset = world;
 		PhantasmonApi.get("/events/trahison/layout/" + URLEncoder.encode(hub, StandardCharsets.UTF_8), LayoutDto.class)
 				.thenCompose(layout -> source.roomsByPlace(gameId, layout.normalized()).thenCompose(byPlace -> fetch(layout.normalized(), byPlace)))
 				.thenApply(places -> {
@@ -111,7 +119,7 @@ public final class ExportFlow {
 						Path folder = FabricLoader.getInstance().getGameDir().resolve("phantasmon_events").resolve("trahison").resolve("export")
 								.resolve(safe(gameId));
 						return TrahisonExport.write(folder, gameId, places, SharedConstants.getCurrentVersion().getDataVersion().getVersion(),
-								"Phantasmon Events", RoomTurn::minecraftStates);
+								"Phantasmon Events", RoomTurn::minecraftStates, worldOffset);
 					} catch (java.io.IOException e) {
 						throw new CompletionException(e);
 					}
@@ -126,7 +134,25 @@ public final class ExportFlow {
 							.withStyle(Style.EMPTY.withUnderlined(true).withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, written.folder().toString())));
 					chat(Component.translatable(T + "done", written.files().size(), folder));
 					written.notes().forEach(n -> chat(Component.literal(n)));
+					upload(written, safe(gameId));
 				}));
+	}
+
+	/** D80: sends every written file to the backend, where an admin can download it from the exports menu. */
+	private static void upload(TrahisonExport.Written written, String game) {
+		CompletableFuture.runAsync(() -> {
+			for (String name : written.files()) {
+				try {
+					byte[] bytes = java.nio.file.Files.readAllBytes(written.folder().resolve(name));
+					PhantasmonApi.post("/events/trahison/exports/" + game + "/files/" + name,
+							java.util.Map.of("data", java.util.Base64.getEncoder().encodeToString(bytes)), java.util.Map.class).join();
+				} catch (Exception e) {
+					throw new CompletionException(e);
+				}
+			}
+		}).whenComplete((v, failure) -> Minecraft.getInstance().execute(() -> chat(failure == null
+				? Component.translatable(T + "uploaded", written.files().size())
+				: Component.translatable(T + "upload_failed", String.valueOf(failure.getCause() != null ? failure.getCause().getMessage() : failure.getMessage())))));
 	}
 
 	/** Pairs the plan's places with the room ids by place id and fetches each room's definition and blocks. */

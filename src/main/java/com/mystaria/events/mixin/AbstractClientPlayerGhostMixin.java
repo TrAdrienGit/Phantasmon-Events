@@ -16,7 +16,7 @@ abstract class AbstractClientPlayerGhostMixin {
 
 	@Inject(method = "getSkin", at = @At("RETURN"), cancellable = true, require = 0)
 	private void phantasmonEvents$gray(CallbackInfoReturnable<PlayerSkin> cir) {
-		if (GhostLook.isGhost((AbstractClientPlayer) (Object) this)) {
+		if (GhostLook.isGhost((AbstractClientPlayer) (Object) this) || GhostLook.isSpectator((AbstractClientPlayer) (Object) this)) {
 			cir.setReturnValue(GhostLook.gray(cir.getReturnValue()));
 		}
 	}

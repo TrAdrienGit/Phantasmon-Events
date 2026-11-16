@@ -52,6 +52,8 @@ Toutes demandent un jeton de joueur, sauf la page publique des tournois et la co
 | `GET` | `/events/trahison/rooms`, `/events/trahison/rooms/{id}` | Admin | Liste (résumés) et définition d'une salle du jeu de trahison (réservé aux admins : une définition contient les aides et la chaîne) |
 | `PUT` / `POST` / `DELETE` | `/events/trahison/rooms/{id}` | Admin | Créer ou remplacer (le serveur numérote la version et calcule difficulté et durée ; `POST` = `PUT`), supprimer. Validation `ERROR_TRAHISON_ROOM_*` ; corps et règles : [`trahison/protocole.md`](trahison/protocole.md) section 4.3 |
 | `GET` | `/events/trahison/telemetry/step-times` | Admin | Les médianes des temps d'étape, par mécanisme et par salle (T3.6, §5.8) |
+| `GET` | `/events/trahison/exports` | Admin | Les parties qui ont des fichiers de collage (D80) : `{ game, files, updatedAt }` |
+| `POST` / `GET` | `/events/trahison/exports/{game}/files/{name}` | Admin | Téléverser (`{ data }` base64) ou télécharger (`{ game, name, size, data }`) un fichier de collage, 256 Mio au plus ; fichiers `<phantasmon.hub.schematics-dir>/trahison_exports/<game>/`, sans base de données. Erreurs `ERROR_TRAHISON_EXPORT_*` |
 | `GET` | `/events/trahison/mechanisms` | Admin | Les mécanismes (id, rôles d'indices, paramètres, difficulté et durée par défaut) pour l'éditeur de salle |
 | `GET` / `POST` | `/events/trahison/rooms/{id}/schematic.json` | Admin | Les mêmes blocs en JSON `{ id, version, data }` / `{ data }`, `data` en base64 (16 Mio décodés au plus) |
 | `GET` / `POST` / `PUT` | `/events/trahison/rooms/{id}/schematic` | Admin | Les blocs de la salle, corps binaire (`application/octet-stream`, 16 Mio au plus), fichier `<phantasmon.hub.schematics-dir>/trahison_rooms/<id>/room.bin` |

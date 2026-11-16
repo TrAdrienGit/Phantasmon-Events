@@ -71,4 +71,31 @@ class PlaceCheckTest {
 		assertEquals(100, sample.size());
 		assertTrue(sample.stream().noneMatch(b -> b.name().endsWith("air")));
 	}
+
+	@Test
+	void blockDataIsComparedWithoutPositionAndId() {
+		CompoundTag expected = new CompoundTag();
+		expected.putString("id", "minecraft:sign");
+		expected.putInt("x", 1);
+		expected.putString("text", "Exit");
+		CompoundTag actual = expected.copy();
+		actual.putInt("x", 99);
+		actual.putString("extra", "ignored");
+		assertTrue(PlaceCheck.dataEquals(expected, actual));
+		actual.putString("text", "Other");
+		assertEquals(false, PlaceCheck.dataEquals(expected, actual));
+	}
+
+	@Test
+	void sampleKeepsBlocksWithDataFirst() {
+		List<HubSchematic.Block> blocks = new ArrayList<>();
+		for (int i = 0; i < 1000; i++) {
+			CompoundTag state = new CompoundTag();
+			state.putString("Name", "minecraft:stone");
+			blocks.add(new HubSchematic.Block(i % 48, 0, i / 48, state, i % 100 == 0 ? new CompoundTag() : null));
+		}
+		List<HubSchematic.Block> sample = PlaceCheck.sample(blocks, 100);
+		assertEquals(100, sample.size());
+		assertEquals(10, sample.stream().filter(b -> b.blockEntity() != null).count());
+	}
 }

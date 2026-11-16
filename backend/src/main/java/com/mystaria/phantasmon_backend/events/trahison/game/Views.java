@@ -103,7 +103,8 @@ public final class Views {
 			m.put("color", pl == null ? null : pl.color().name());
 			m.put("status", pl == null ? null : pl.status().name());
 			boolean cloak = hidden(g, b.index, me, sees);
-			m.put("holder", cloak ? Integer.valueOf(b.index) : b.holder);
+			// D99: who took a bracelet stays hidden: everybody but the carrier (and the game masters, ghosts) reads the wrist owner.
+			m.put("holder", sees || b.holder != null && b.holder == me ? b.holder : Integer.valueOf(b.index));
 			m.put("owner_alive", b.ownerAlive || cloak);
 			bracelets.add(m);
 		}
@@ -111,6 +112,9 @@ public final class Views {
 		v.put("bodies", bodies(g, kind, me, sees));
 		v.put("disconnected", disconnected(g, me));
 		v.put("ghost_display", g.settings.ghostDisplay.name());
+		// D102: who watches is told to those who watch (ghosts, spectators, game masters), never to a living player.
+		v.put("spectators", kind == Kind.PLAYER ? new ArrayList<>() : spectators(g));
+		v.put("viewer_spectating", g.spectators.containsKey(viewer));
 
 		List<Object> doors = new ArrayList<>();
 		for (int k = 0; k < Door.ALL.size(); k++) {
@@ -154,6 +158,21 @@ public final class Views {
 		return out;
 	}
 
+	private static List<Object> spectators(Game g) {
+		List<Object> out = new ArrayList<>();
+		g.spectators.forEach((u, n) -> out.add(orderedMap("uuid", u.toString(), "name", n)));
+		return out;
+	}
+
+	private static List<Object> braceletsOn(Body b) {
+		List<Object> out = new ArrayList<>();
+		if (b.braceletOnBody) {
+			out.add(b.player);
+		}
+		out.addAll(b.dropped);
+		return out;
+	}
+
 	/** True when player {@code i} is dead but the viewer must not know it yet. */
 	private static boolean hidden(Game g, int i, int me, boolean sees) {
 		if (sees || g.players.get(i).alive) {
@@ -174,7 +193,7 @@ public final class Views {
 				continue;
 			}
 			out.add(orderedMap("player", b.player, "zone", b.zone, "x", b.x, "y", b.y, "z", b.z,
-				"bracelet_on_body", b.braceletOnBody, "cause", kind == Kind.GM ? b.cause : null));
+				"bracelet_on_body", b.hasBracelets(), "bracelets_on_body", braceletsOn(b), "cause", kind == Kind.GM ? b.cause : null));
 		}
 		return out;
 	}
@@ -382,7 +401,7 @@ public final class Views {
 	}
 
 	/** The drawn rooms (T4.1): null without a draw; the picks round by round with their place and the constraints relaxed. */
-	private static Map<String, Object> drawBlock(Game g) {
+	public static Map<String, Object> drawBlock(Game g) {
 		if (g.draw == null) {
 			return null;
 		}

@@ -292,4 +292,33 @@ class BodiesTest {
 		service.find(HUB).settings.ghostDisplay = Settings.GhostDisplay.HIDDEN;
 		assertThat(view(0).get("ghost_display")).isEqualTo("HIDDEN");
 	}
+
+	@Test
+	void aDeadCarrierDropsWhatHeCarriedOnHisBodyAndTheHolderStaysHidden() {
+		everyonePasses();
+		service.next(HUB); // ROOMS
+		at(3, "slot_1", 5, 7);
+		service.kill(HUB, 3, "knife");
+		at(0, "slot_1", 5, 7);
+		service.takeBracelet(HUB, ids[0], 3);
+		// D99: only the carrier reads himself as holder
+		assertThat(bracelet(view(0), 3).get("holder")).isEqualTo(0);
+		assertThat(bracelet(view(5), 3).get("holder")).isEqualTo(3);
+		at(1, "slot_1", 5, 8);
+		service.bodySeen(HUB, ids[1], 3);
+		at(0, "slot_2", 20, 20);
+		at(4, "slot_2", 20, 20);
+		service.kill(HUB, 0, "knife"); // D97: bracelet 3 falls on body 0
+		assertThat(service.find(HUB).players.get(0).carried).isEmpty();
+		assertThat(service.find(HUB).bodyOf(0).dropped).containsExactly(3);
+		service.takeBracelet(HUB, ids[4], 0); // his own bracelet first
+		service.takeBracelet(HUB, ids[4], 0, 3);
+		assertThat(service.find(HUB).players.get(4).carried).containsExactly(0, 3);
+		assertCode(() -> service.takeBracelet(HUB, ids[4], 0), TrahisonException.NO_BODY);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Map<String, Object> bracelet(Map<String, Object> v, int i) {
+		return ((List<Map<String, Object>>) v.get("bracelets")).get(i);
+	}
 }

@@ -107,7 +107,7 @@ Bas) ; à droite, l'étape choisie :
 
 - **Digicode** : un emplacement `keypad` au mur, une étape `keypad` (paramètre `length`, 3 à 6) liée à lui par le rôle `keypad`, et un **indice donné** `code`
   « dès que l'étape est ouverte » sur un emplacement `wall_clue` ou `document` : sans lui le code n'est montré nulle part et le backend refuse l'enregistrement.
-  Les joueurs trouvent le code, reviennent au digicode et le tapent. Trois mauvais essais de suite le verrouillent 10 secondes (l'afficheur le dit).
+  Les joueurs trouvent le code, reviennent au digicode et le tapent. Trois mauvais essais de suite le verrouillent 10 secondes, puis 20, puis 40 à chaque nouvelle série (l'afficheur le dit).
 - **Objets cachés** : autant d'emplacements `pickup` que de rôles d'indice `spot_1`..`spot_n` (réglez `spots` sur ce nombre : **chaque** `spot_n` doit être donné à un
   emplacement, dès l'ouverture), et les paramètres `filled` (combien de cases garnies, tirées
   par la graine à chaque partie) et `items` (la réserve d'objets). Pour joindre un document, remplissez le paramètre `document` (pages séparées par une ligne `---`) et

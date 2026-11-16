@@ -280,6 +280,13 @@ public class PickupSet implements Mechanism {
 
 	// ---------------------------------------------------------------- view
 
+	/** The HUD counter "objects: picked up / hidden" (D61). */
+	@Override
+	public Optional<int[]> progress(MechanismState state) {
+		ObjectNode d = state.data();
+		return Optional.of(new int[] { d.get("delivered").size(), d.get("required").size() });
+	}
+
 	/** How many objects there are and which are picked up (field {@code delivered}); never the ones still hidden (the game master sees them). */
 	@Override
 	public JsonNode view(MechanismState state, ViewerKind viewer) {

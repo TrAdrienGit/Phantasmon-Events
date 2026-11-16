@@ -237,6 +237,7 @@ public final class GameView {
 	private static List<Integer> carriedState = List.of();
 	private static List<Away> awayState = List.of();
 	private static String ghostDisplayState = "SILHOUETTE";
+	private static java.util.Set<UUID> spectatorsState = java.util.Set.of();
 	/** {@code server time - local time} when the last view arrived. */
 	private static long clockOffset;
 	private static long phaseTotalMs;
@@ -268,6 +269,11 @@ public final class GameView {
 	/** T6.3: how the living see a ghost, {@code SILHOUETTE} (black and white) or {@code HIDDEN}; the game master's setting. */
 	public static boolean ghostsHidden() {
 		return "HIDDEN".equals(ghostDisplayState);
+	}
+
+	/** D102: the registered spectators, as told to ghosts, spectators and game masters (empty for a living player). */
+	public static java.util.Set<UUID> spectators() {
+		return spectatorsState;
 	}
 
 	/** T6.3: the accounts this viewer knows to be dead (the view already hides the deaths he must not know yet). */
@@ -367,6 +373,7 @@ public final class GameView {
 		carriedState = List.of();
 		awayState = List.of();
 		ghostDisplayState = "SILHOUETTE";
+		spectatorsState = java.util.Set.of();
 		phaseKey = "";
 		phaseTotalMs = 0;
 		pointsChangedAt = new long[9];
@@ -393,6 +400,14 @@ public final class GameView {
 		bodiesState = next.hasGame() ? parseBodies(data) : List.of();
 		awayState = next.hasGame() ? parseAway(data) : List.of();
 		ghostDisplayState = "HIDDEN".equals(str(data, "ghost_display")) ? "HIDDEN" : "SILHOUETTE";
+		java.util.Set<UUID> spectators = new java.util.HashSet<>();
+		for (Map<String, Object> sp : maps(data, "spectators")) {
+			UUID u = uuid(str(sp, "uuid"));
+			if (u != null) {
+				spectators.add(u);
+			}
+		}
+		spectatorsState = spectators;
 		carriedState = next.hasGame() ? ints(map(data, "viewer"), "carried") : List.of();
 		String key = next.gameId() + "/" + next.phase() + "/" + next.round() + "/" + next.finalLoop() + "/" + next.finalLoops();
 		long remaining = next.remainingMs() == null ? -1 : next.remainingMs();
@@ -509,6 +524,10 @@ public final class GameView {
 			}
 			gm = new Gm(votes, str(settings, "mode") == null ? "AUTO" : str(settings, "mode"), durations, integer(settings, "cabin_partner_seconds", 30),
 					str(g, "bot_policy") == null ? "RANDOM" : str(g, "bot_policy"), lng(g, "seed", 0), Collections.unmodifiableList(zones), draw(g));
+		}
+		if (gm == null && d.get("lobby_draw") instanceof Map<?, ?>) {
+			// D75: an admin who runs the lobby without being a game master gets the draw alone (the panel reads it from the gm block).
+			gm = new Gm(List.of(), "AUTO", new java.util.LinkedHashMap<>(), 30, "RANDOM", 0, List.of(), draw(Map.of("draw", d.get("lobby_draw"))));
 		}
 		Map<String, Boolean> doorsOpen = new java.util.LinkedHashMap<>();
 		map(d, "doors_state").forEach((id, state) -> doorsOpen.put(id, "OPEN".equalsIgnoreCase(String.valueOf(state))));

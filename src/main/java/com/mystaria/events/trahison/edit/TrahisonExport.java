@@ -45,6 +45,15 @@ public final class TrahisonExport {
 	 */
 	public static Written write(Path folder, String gameId, List<PlaceRoom> places, int dataVersion, String author,
 			java.util.function.IntFunction<UnaryOperator<CompoundTag>> turner) throws IOException {
+		return write(folder, gameId, places, dataVersion, author, turner, null);
+	}
+
+	/**
+	 * As above; {@code world} (D81) is {@code {worldX, worldZ}} of hub block (0, 0) in the exporting client's world (its mirror
+	 * hub), or null when the client is not in the hub: the sheet then also gives each corner in that world's coordinates.
+	 */
+	public static Written write(Path folder, String gameId, List<PlaceRoom> places, int dataVersion, String author,
+			java.util.function.IntFunction<UnaryOperator<CompoundTag>> turner, int[] world) throws IOException {
 		if (places.isEmpty()) {
 			throw new IOException("no place");
 		}
@@ -55,8 +64,14 @@ public final class TrahisonExport {
 		Map<String, Integer> used = new HashMap<>();
 		StringBuilder sheet = new StringBuilder();
 		sheet.append("Partie : ").append(gameId).append("\n");
-		sheet.append("Fiche de collage Axiom, une section par place. Coordonnees = celles du plan (hub), y = celui du monde.\n");
-		sheet.append("Chaque fichier est DEJA tourne pour sa place : colle-le sans rotation ni miroir, avec le coin minimum du\n");
+		sheet.append("Fiche de collage Axiom, une section par place. Coordonnées = celles du plan (hub), y = celui du monde.\n");
+		if (world != null) {
+			sheet.append("Entre parenthèses : les coordonnées du monde du hub miroir du client qui a exporté (le bloc x=0, z=0 du hub est le bloc x=")
+					.append(world[0]).append(", z=").append(world[1]).append(" de ce monde).\n");
+		} else {
+			sheet.append("Les coordonnées du monde du hub miroir ne sont pas données : le client n'était pas dans le hub à l'export.\n");
+		}
+		sheet.append("Chaque fichier est DÉJÀ tourné pour sa place : colle-le sans rotation ni miroir, avec le coin minimum du\n");
 		sheet.append("fichier (x, y et z les plus petits) sur le coin indique. Taille : 48 x 24 x 48 (x, y, z).\n\n");
 		for (PlaceRoom p : places) {
 			HubSchematic canonical = HubSchematic.read(p.file(), false);
@@ -81,14 +96,16 @@ public final class TrahisonExport {
 			sheet.append("Salle : ").append(title).append(" [").append(p.roomId()).append("]\n");
 			sheet.append("Orientation de la place : ").append(p.orientation()).append(" (").append(k).append(" quart(s) de tour horaire ; le nord de la salle, sa sortie, regarde ")
 					.append(p.orientation()).append(")\n");
-			sheet.append("Coin ou coller (minimum) : x=").append(p.originX()).append(" y=").append(p.originY()).append(" z=").append(p.originZ()).append("\n");
-			sheet.append("Coin oppose (maximum) : x=").append(p.originX() + placed.sizeX() - 1).append(" y=").append(p.originY() + placed.sizeY() - 1)
-					.append(" z=").append(p.originZ() + placed.sizeZ() - 1).append("\n");
+			sheet.append("Coin où coller (minimum) : x=").append(p.originX()).append(" y=").append(p.originY()).append(" z=").append(p.originZ())
+					.append(world(world, p.originX(), p.originZ())).append("\n");
+			sheet.append("Coin opposé (maximum) : x=").append(p.originX() + placed.sizeX() - 1).append(" y=").append(p.originY() + placed.sizeY() - 1)
+					.append(" z=").append(p.originZ() + placed.sizeZ() - 1)
+					.append(world(world, p.originX() + placed.sizeX() - 1, p.originZ() + placed.sizeZ() - 1)).append("\n");
 			sheet.append("Fichiers : ").append(base).append(".schem ou ").append(base).append(".litematic\n");
 			sheet.append("Blocs : ").append(placed.blocks().size()).append(", dont ")
-					.append(placed.blocks().stream().filter(b -> b.blockEntity() != null).count()).append(" avec donnees (panneaux, tetes...)\n");
+					.append(placed.blocks().stream().filter(b -> b.blockEntity() != null).count()).append(" avec données (panneaux, têtes...)\n");
 			if (p.room() != null && p.room().slots != null && !p.room().slots.isEmpty()) {
-				sheet.append("Emplacements apres rotation (coin minimum, hub) :\n");
+				sheet.append("Emplacements après rotation (coin minimum, hub) :\n");
 				for (RoomDto.SlotDto slot : p.room().slots) {
 					RoomDto.P at = slot.position == null ? new RoomDto.P() : slot.position;
 					RoomDto.P size = slot.size == null ? new RoomDto.P(1, 1, 1) : slot.size;
@@ -101,9 +118,14 @@ public final class TrahisonExport {
 			sheet.append("\n");
 		}
 
-		combined(folder, places, turned, dataVersion, author, files, notes, sheet);
-		sheet.append("A confirmer en jeu avec l'admin : qu'Axiom colle le coin minimum du fichier sur le coin indique, sans decalage,\n");
-		sheet.append("pour les deux formats (a essayer sur une seule salle avant la premiere soiree).\n");
+		try {
+			combined(folder, places, turned, dataVersion, author, files, notes, sheet, world);
+		} catch (OutOfMemoryError e) {
+			notes.add("all_places: not enough memory, skipped");
+			sheet.append("== Fichier unique ==\nNon écrit : pas assez de mémoire pour une boîte aussi grande. Utilise les fichiers par place.\n\n");
+		}
+		sheet.append("À confirmer en jeu avec l'admin : qu'Axiom colle le coin minimum du fichier sur le coin indiqué, sans décalage,\n");
+		sheet.append("pour les deux formats (à essayer sur une seule salle avant la première soirée).\n");
 		Files.writeString(folder.resolve("paste_sheet.txt"), sheet.toString(), StandardCharsets.UTF_8);
 		files.add("paste_sheet.txt");
 		return new Written(folder, List.copyOf(files), List.copyOf(notes));
@@ -111,7 +133,7 @@ public final class TrahisonExport {
 
 	/** The single file of every place at its relative position, when it is not too big. */
 	private static void combined(Path folder, List<PlaceRoom> places, List<HubSchematic> turned, int dataVersion, String author,
-			List<String> files, List<String> notes, StringBuilder sheet) throws IOException {
+			List<String> files, List<String> notes, StringBuilder sheet, int[] world) throws IOException {
 		int minX = Integer.MAX_VALUE;
 		int minY = Integer.MAX_VALUE;
 		int minZ = Integer.MAX_VALUE;
@@ -128,10 +150,9 @@ public final class TrahisonExport {
 			maxY = Math.max(maxY, p.originY() + s.sizeY());
 			maxZ = Math.max(maxZ, p.originZ() + s.sizeZ());
 		}
-		long volume = (long) (maxX - minX) * (maxY - minY) * (maxZ - minZ);
-		if (volume > SchematicWriter.MAX_VOLUME || maxX - minX > 65535 || maxY - minY > 65535 || maxZ - minZ > 65535) {
-			notes.add("all_places: box of " + (maxX - minX) + " x " + (maxY - minY) + " x " + (maxZ - minZ) + " is too big, skipped");
-			sheet.append("== Fichier unique ==\nNon ecrit : les places sont trop eloignees (").append(maxX - minX).append(" x ").append(maxY - minY)
+		if (maxX - minX > 65535 || maxY - minY > 65535 || maxZ - minZ > 65535) {
+			notes.add("all_places: box of " + (maxX - minX) + " x " + (maxY - minY) + " x " + (maxZ - minZ) + " is past the formats' 65535 limit, skipped");
+			sheet.append("== Fichier unique ==\nNon écrit : les places sont trop éloignées pour le format (").append(maxX - minX).append(" x ").append(maxY - minY)
 					.append(" x ").append(maxZ - minZ).append(" blocs). Utilise les fichiers par place.\n\n");
 			return;
 		}
@@ -152,9 +173,15 @@ public final class TrahisonExport {
 		files.add("all_places.schem");
 		files.add("all_places.litematic");
 		sheet.append("== Fichier unique des places (all_places.schem ou all_places.litematic) ==\n");
-		sheet.append("Les ").append(places.size()).append(" places a leurs positions relatives, deja tournees.\n");
-		sheet.append("Coin ou coller (minimum) : x=").append(minX).append(" y=").append(minY).append(" z=").append(minZ).append("\n");
+		sheet.append("Les ").append(places.size()).append(" places à leurs positions relatives, déjà tournées.\n");
+		sheet.append("Coin où coller (minimum) : x=").append(minX).append(" y=").append(minY).append(" z=").append(minZ).append(world(world, minX, minZ))
+				.append("\n");
 		sheet.append("Taille : ").append(maxX - minX).append(" x ").append(maxY - minY).append(" x ").append(maxZ - minZ).append(" (x, y, z)\n\n");
+	}
+
+	/** " (monde : x=.., z=..)" for a hub block, or nothing without the exporter's world (D81). */
+	static String world(int[] world, int hubX, int hubZ) {
+		return world == null ? "" : " (monde : x=" + (world[0] + hubX) + " z=" + (world[1] + hubZ) + ")";
 	}
 
 	/** {@code place_<id>}, the id made safe for a file name and kept unique. */

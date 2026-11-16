@@ -257,8 +257,18 @@ class Broadcaster implements GameListener, RoomListener {
 		sendView(g, account, g.phase == com.mystaria.phantasmon_backend.events.trahison.game.Phase.LOBBY ? lobbyMembers(g) : null);
 	}
 
+	/** D75: who is an admin, to show the draw to the admins who run the lobby without being game masters. */
+	private volatile java.util.function.Predicate<UUID> admins = a -> false;
+
+	void useAdmins(java.util.function.Predicate<UUID> admins) {
+		this.admins = admins;
+	}
+
 	private void sendView(Game g, UUID account, List<Object> lobbyMembers) {
 		Map<String, Object> view = Views.build(g, account, clock.instant());
+		if (g.phase == com.mystaria.phantasmon_backend.events.trahison.game.Phase.LOBBY && view.get("gm") == null && admins.test(account)) {
+			view.put("lobby_draw", Views.drawBlock(g)); // D75: the admins who set the lobby up see the draw too
+		}
 		if (lobbyMembers != null) {
 			view.put("lobby_members", lobbyMembers);
 		}

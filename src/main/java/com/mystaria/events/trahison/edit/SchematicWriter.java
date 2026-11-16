@@ -30,8 +30,12 @@ import com.mystaria.phantasmon.client.hub.HubSchematic;
  */
 public final class SchematicWriter {
 
-	/** The largest box either format is asked to hold (blocks in the box, air included). */
-	public static final long MAX_VOLUME = 64L * 1024 * 1024;
+	/**
+	 * The largest box either format is asked to hold (blocks in the box, air included): what the formats' int fields and Java
+	 * arrays can address (D82: the combined file is always written, however big). Memory is the real limit: the caller catches
+	 * {@link OutOfMemoryError}.
+	 */
+	public static final long MAX_VOLUME = 512L * 1024 * 1024;
 
 	private SchematicWriter() {
 	}
