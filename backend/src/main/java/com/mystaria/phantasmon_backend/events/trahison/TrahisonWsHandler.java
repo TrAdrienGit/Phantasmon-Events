@@ -38,8 +38,8 @@ import tools.jackson.databind.node.ObjectNode;
  * to {@code EventsWsHandler}. It takes every type starting with {@code EventsTrahison}:
  * <ul>
  *   <li>{@code EventsTrahisonPing}: answered by a Pong;</li>
- *   <li>{@code EventsTrahisonAction}: what a player (or a spectator) does: join, leave, pass_door, vote, open_final_door,
- *       debug_solve, view, and the room actions use_slot, puzzle_input, pick_up;</li>
+ *   <li>{@code EventsTrahisonAction}: what a player (or a spectator) does: join, leave, pass_door, close_cabin, vote, open_final_door,
+ *       debug_solve, view, and the room actions use_slot, puzzle_input, pick_up and the inventory's give_item, use_item, combine;</li>
  *   <li>{@code EventsTrahisonGm}: what the game master does, admins only;</li>
  *   <li>{@code EventsTrahisonZone}: where a player stands (zone and position), sent by his client.</li>
  * </ul>
@@ -159,9 +159,10 @@ public class TrahisonWsHandler implements WsMessageHandler {
 				Vote vote = parseVote(in.get("vote"));
 				games.vote(hubOf(who, in, false), who, vote);
 			}
+			case "close_cabin" -> games.closeCabin(hubOf(who, in, false), who);
 			case "open_final_door" -> games.openFinalDoor(hubOf(who, in, false), who);
 			case "debug_solve" -> games.debugSolve(hubOf(who, in, false), who);
-			case "use_slot", "puzzle_input", "pick_up" -> {
+			case "use_slot", "puzzle_input", "pick_up", "give_item", "use_item", "combine" -> {
 				ObjectNode data = MAPPER.valueToTree(in);
 				data.put("action", action);
 				games.roomAction(hubOf(who, in, false), who, RoomAction.parse(data));
@@ -254,7 +255,7 @@ public class TrahisonWsHandler implements WsMessageHandler {
 		throw new TrahisonException(TrahisonException.NO_HUB, "hub required");
 	}
 
-	/** {@code {settings?: {mode, durations: {PHASE: seconds}, no_door_penalty, door_open_seconds, test_room}, mode?, test_room?, fast?: seconds}}. */
+	/** {@code {settings?: {mode, durations: {PHASE: seconds}, no_door_penalty, door_open_seconds, cabins_required, test_room}, mode?, test_room?, fast?: seconds}}. */
 	private static Settings settingsOf(Map<String, Object> in) {
 		Settings s = new Settings();
 		Object fast = in.get("fast");
@@ -273,6 +274,9 @@ public class TrahisonWsHandler implements WsMessageHandler {
 			}
 			if (m.get("no_door_penalty") instanceof Number n) {
 				s.noDoorPenalty = Math.min(0, n.intValue());
+			}
+			if (m.get("cabins_required") instanceof Boolean b) {
+				s.cabinsRequired = b;
 			}
 			if (m.get("door_open_seconds") instanceof Number n) {
 				s.doorOpenSeconds = Math.max(1, Math.min(60, n.intValue()));

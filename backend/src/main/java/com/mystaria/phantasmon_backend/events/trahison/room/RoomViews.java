@@ -74,6 +74,24 @@ public final class RoomViews {
 		}
 		ArrayNode inventory = out.putArray("inventory");
 		room.inventory.forEach(inventory::add);
+		ArrayNode items = out.putArray("items");
+		for (int i = 0; i < room.inventory.size(); i++) {
+			ObjectNode item = items.addObject();
+			item.put("id", room.inventory.get(i));
+			item.put("holder", i < room.holders.size() ? room.holders.get(i) : -1);
+		}
+		RoomPlace place = room.place;
+		if (place == null) {
+			out.putNull("place");
+		} else {
+			ObjectNode p = out.putObject("place");
+			p.put("id", place.id());
+			ObjectNode origin = p.putObject("origin");
+			origin.put("x", place.origin().x());
+			origin.put("y", place.origin().y());
+			origin.put("z", place.origin().z());
+			p.put("orientation", place.orientation());
+		}
 		return out;
 	}
 

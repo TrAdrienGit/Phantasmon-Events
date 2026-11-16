@@ -24,6 +24,10 @@ public class TrahisonException extends RuntimeException {
 	public static final String ADMIN_REQUIRED = "ERROR_TRAHISON_ADMIN_REQUIRED";
 	public static final String NO_HUB = "ERROR_TRAHISON_NO_HUB";
 	public static final String NOT_IN_HUB = "ERROR_TRAHISON_NOT_IN_HUB";
+	public static final String NOT_IN_CABIN = "ERROR_TRAHISON_NOT_IN_CABIN";
+	public static final String WRONG_CABIN = "ERROR_TRAHISON_WRONG_CABIN";
+	public static final String CABIN_NOT_CLOSED = "ERROR_TRAHISON_CABIN_NOT_CLOSED";
+	public static final String CABIN_TAKEN = "ERROR_TRAHISON_CABIN_TAKEN";
 	public static final String UNKNOWN_ACTION = "ERROR_TRAHISON_UNKNOWN_ACTION";
 
 	private final String code;

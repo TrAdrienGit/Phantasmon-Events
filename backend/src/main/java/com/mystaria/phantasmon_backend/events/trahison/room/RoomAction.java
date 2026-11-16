@@ -6,12 +6,13 @@ import tools.jackson.databind.JsonNode;
 
 /**
  * An action a player sends from inside a room ({@code EventsTrahisonAction}, protocole.md section 3):
- * {@code use_slot {slot}}, {@code puzzle_input {step, input}}, {@code pick_up {slot}}.
+ * {@code use_slot {slot}}, {@code puzzle_input {step, input}}, {@code pick_up {slot}}, and the inventory's
+ * {@code give_item {item, to}}, {@code use_item {item, slot}}, {@code combine {a, b}}.
  */
 public sealed interface RoomAction {
 
 	/** The action names {@link #parse} understands, so a handler can route them to the room service. */
-	Set<String> NAMES = Set.of("use_slot", "puzzle_input", "pick_up");
+	Set<String> NAMES = Set.of("use_slot", "puzzle_input", "pick_up", "give_item", "use_item", "combine");
 
 	record UseSlot(String slot) implements RoomAction {
 	}
@@ -22,12 +23,33 @@ public sealed interface RoomAction {
 	record PickUp(String slot) implements RoomAction {
 	}
 
+	/** Hand an item the actor carries to the group member with index {@code to}. */
+	record GiveItem(String item, int to) implements RoomAction {
+	}
+
+	/** Use an item the actor carries on an active slot. */
+	record UseItem(String item, String slot) implements RoomAction {
+	}
+
+	/** Combine two items the actor carries, following a recipe of the room. */
+	record CombineItems(String a, String b) implements RoomAction {
+	}
+
 	/** Reads the {@code data} of an {@code EventsTrahisonAction}; a malformed one raises {@code ERROR_TRAHISON_BAD_ACTION}. */
 	static RoomAction parse(JsonNode data) {
 		String action = data == null ? "" : data.path("action").asString("");
 		return switch (action) {
 			case "use_slot" -> new UseSlot(text(data, "slot"));
 			case "pick_up" -> new PickUp(text(data, "slot"));
+			case "give_item" -> {
+				JsonNode to = data.get("to");
+				if (to == null || !to.isNumber() || to.asInt() < 0) {
+					throw new RoomException(RoomException.BAD_ACTION, "give_item needs a player index in to");
+				}
+				yield new GiveItem(text(data, "item"), to.asInt());
+			}
+			case "use_item" -> new UseItem(text(data, "item"), text(data, "slot"));
+			case "combine" -> new CombineItems(text(data, "a"), text(data, "b"));
 			case "puzzle_input" -> {
 				JsonNode input = data.get("input");
 				if (input == null || input.isNull()) {

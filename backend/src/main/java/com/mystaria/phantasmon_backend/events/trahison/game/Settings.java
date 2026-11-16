@@ -17,6 +17,11 @@ public class Settings {
 	public int doorOpenSeconds = DEFAULT_DOOR_OPEN_SECONDS;
 	public static final int DEFAULT_DOOR_OPEN_SECONDS = 6;
 	/**
+	 * Whether a human must close his cabin and vote from inside it (T2.4). False: the old free vote, anywhere, for games
+	 * played without a built map. Bots are exempt either way.
+	 */
+	public boolean cabinsRequired = true;
+	/**
 	 * Id of a room of the bank that every group plays in every round (trials, until the draw of T4); null or unknown: the
 	 * built-in fallback room (one button).
 	 */
@@ -47,6 +52,12 @@ public class Settings {
 				durations.put(p, seconds);
 			}
 		}
+		return this;
+	}
+
+	/** Test helper: the free vote, no cabins needed. */
+	public Settings withoutCabins() {
+		cabinsRequired = false;
 		return this;
 	}
 

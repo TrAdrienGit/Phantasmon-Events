@@ -18,6 +18,7 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.mystaria.phantasmon_backend.events.trahison.layout.Cabin;
 import com.mystaria.phantasmon_backend.events.trahison.layout.Layout;
 import com.mystaria.phantasmon_backend.events.trahison.layout.LayoutContent;
 import com.mystaria.phantasmon_backend.events.trahison.room.ActionResult;
@@ -621,8 +622,18 @@ public class GameService {
 		LayoutContent plan = planOf(g);
 		long now = clock.millis();
 		g.doors = new java.util.LinkedHashMap<>(DoorStates.compute(plan, g.phase, g.round, r == null ? null : r.roomSolved,
-			g.doorOverrides, openWindows(g, now)));
+			g.doorOverrides, openWindows(g, now), g.closedCabins.keySet()));
 		g.doorHints = DoorThresholds.hints(g, plan);
+		g.cabinIds = plan.cabins().stream().map(Cabin::id).toList();
+		g.myCabins = new java.util.LinkedHashMap<>();
+		if (r != null && r.splitIndex != null) {
+			for (int p = 0; p < g.players.size(); p++) {
+				Cabin mine = myCabin(plan, r, p).orElse(null);
+				if (mine != null) {
+					g.myCabins.put(p, mine.id());
+				}
+			}
+		}
 	}
 
 	private static boolean anyLivingDisconnected(Game g) {
@@ -767,6 +778,15 @@ public class GameService {
 			}
 			RoundState r = g.currentRound();
 			int k = r.groupOf(p);
+			if (action instanceof RoomAction.GiveItem give) {
+				// The room only knows indices; where the players stand is the game's (EventsTrahisonZone).
+				if (give.to() < 0 || give.to() >= g.players.size() || !g.players.get(give.to()).alive) {
+					throw new TrahisonException(RoomException.BAD_ACTION, "player " + give.to() + " cannot receive the item");
+				}
+				if (!GiveRange.near(g.players.get(p), g.players.get(give.to()))) {
+					throw new TrahisonException(RoomException.TOO_FAR, "player " + give.to() + " is too far");
+				}
+			}
 			ActionResult result = rooms.apply(g, r, k, p, action);
 			if (result.roomFinished()) {
 				markRoomSolved(g, r, k, p);
@@ -786,6 +806,74 @@ public class GameService {
 		notifyChanged(g, "room");
 	}
 
+	/**
+	 * The cabin of player {@code p} in the round: the one that serves the colour pair of his group's door, on his side
+	 * (pair or solo). Empty when the plan has no such cabin or the round's split is not known.
+	 */
+	private static java.util.Optional<Cabin> myCabin(LayoutContent plan, RoundState r, int p) {
+		if (r.splitIndex == null) {
+			return java.util.Optional.empty();
+		}
+		int k = r.groupOf(p);
+		boolean pair = r.split().group(Door.ALL.get(k)).pair().contains(p);
+		return Cabins.of(plan, Door.ALL.get(k), pair);
+	}
+
+	/**
+	 * VOTE: the player closes his cabin from inside (T2.4). It must be the cabin of his group's door and side; its door then
+	 * closes for everyone until the stage ends, and only he may vote from it. Closing again his own cabin does nothing; a
+	 * cabin closed by somebody else (his partner, for a pair) is taken.
+	 */
+	public Game closeCabin(String hub, UUID uuid) {
+		Game g = require(hub);
+		synchronized (g) {
+			int p = playerAction(g, uuid, Phase.VOTE);
+			LayoutContent plan = planOf(g);
+			RoundState r = g.currentRound();
+			Cabin inside = Cabins.ofZone(plan, g.players.get(p).zone).orElseThrow(
+				() -> new TrahisonException(TrahisonException.NOT_IN_CABIN, "not inside a cabin"));
+			Cabin mine = myCabin(plan, r, p).orElseThrow(
+				() -> new TrahisonException(TrahisonException.WRONG_CABIN, "the plan has no cabin for him"));
+			if (!inside.id().equals(mine.id())) {
+				throw new TrahisonException(TrahisonException.WRONG_CABIN, "that is not his cabin");
+			}
+			Integer by = g.closedCabins.get(mine.id());
+			if (by != null) {
+				if (by == p) {
+					return g;
+				}
+				throw new TrahisonException(TrahisonException.CABIN_TAKEN, "the cabin is already closed");
+			}
+			g.closedCabins.put(mine.id(), p);
+			event(g, "close_cabin", Map.of("player", p, "cabin", mine.id()));
+			persist(g);
+			notifyChanged(g, "cabin");
+			return g;
+		}
+	}
+
+	/** Refuses a vote from outside his own closed cabin (humans only; bots and {@code cabins_required=false} are exempt). */
+	private void requireOwnClosedCabin(Game g, RoundState r, int p) {
+		if (!g.settings.cabinsRequired || g.players.get(p).bot) {
+			return;
+		}
+		LayoutContent plan = planOf(g);
+		Cabin inside = Cabins.ofZone(plan, g.players.get(p).zone).orElseThrow(
+			() -> new TrahisonException(TrahisonException.NOT_IN_CABIN, "a vote is cast from inside a cabin"));
+		Cabin mine = myCabin(plan, r, p).orElseThrow(
+			() -> new TrahisonException(TrahisonException.WRONG_CABIN, "the plan has no cabin for him"));
+		if (!inside.id().equals(mine.id())) {
+			throw new TrahisonException(TrahisonException.WRONG_CABIN, "that is not his cabin");
+		}
+		Integer by = g.closedCabins.get(mine.id());
+		if (by == null) {
+			throw new TrahisonException(TrahisonException.CABIN_NOT_CLOSED, "close the cabin first");
+		}
+		if (by != p) {
+			throw new TrahisonException(TrahisonException.CABIN_TAKEN, "the cabin was closed by somebody else");
+		}
+	}
+
 	/** The player votes for his wrist bracelet's side of his group. A pair has one vote: its first voter's. */
 	public Game vote(String hub, UUID uuid, Vote side) {
 		Game g = require(hub);
@@ -795,6 +883,7 @@ public class GameService {
 				throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "vote required");
 			}
 			RoundState r = g.currentRound();
+			requireOwnClosedCabin(g, r, p);
 			int k = r.groupOf(p);
 			DoorGroup group = r.split().group(Door.ALL.get(k));
 			if (group.pair().contains(p)) {
@@ -902,7 +991,7 @@ public class GameService {
 				enterPhase(g, Phase.ROOMS);
 				if (rooms != null) {
 					// After the stage view went out, so a client gets ROOMS first, then its room.
-					rooms.startRound(g, g.currentRound());
+					rooms.startRound(g, g.currentRound(), planOf(g));
 				}
 			}
 			// T3 adds the timeout penalty of an unsolved room here.
@@ -1065,6 +1154,7 @@ public class GameService {
 		g.phase = Phase.ENDED;
 		g.doorOverrides.clear();
 		g.doorWindows.clear();
+		g.closedCabins.clear();
 		g.endedAt = clock.instant();
 		g.deadline = null;
 		g.paused = false;
@@ -1079,6 +1169,7 @@ public class GameService {
 		g.phase = phase;
 		g.doorOverrides.clear(); // a manual door holds for the stage only
 		g.doorWindows.clear();
+		g.closedCabins.clear(); // every cabin reopens when VOTE ends (and starts closed)
 		g.remainingMs = g.settings.durationSeconds(phase) * 1000L;
 		if (g.paused) {
 			g.deadline = null;

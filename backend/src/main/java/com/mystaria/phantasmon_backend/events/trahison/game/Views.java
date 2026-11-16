@@ -115,6 +115,8 @@ public final class Views {
 		v.put("doors_passed", r == null ? null : ints(r.passedDoor));
 		v.put("doors_state", doorsState(g, kind == Kind.PLAYER || kind == Kind.GHOST ? g.indexOf(viewer) : -1));
 		v.put("door_hints", doorHints(g));
+		v.put("cabins_required", g.settings.cabinsRequired);
+		v.put("cabins", cabins(g, kind == Kind.PLAYER || kind == Kind.GHOST ? g.indexOf(viewer) : -1));
 		v.put("viewer", viewer(g, r, kind, viewer));
 		v.put("results", results(g));
 		v.put("winners", g.phase == Phase.ENDED ? new ArrayList<>(g.winners) : null);
@@ -149,6 +151,19 @@ public final class Views {
 			m.put("missing", needs(h.missing()));
 			m.put("alt_missing", h.altMissing() == null ? null : needs(h.altMissing()));
 			out.add(m);
+		}
+		return out;
+	}
+
+	/**
+	 * The cabins of the plan and whether each is closed, the same for every recipient (a closed cabin door is visible to all);
+	 * {@code closed_by_me}: the viewer is the one who closed it. Who is inside is never given.
+	 */
+	private static List<Object> cabins(Game g, int viewerIndex) {
+		List<Object> out = new ArrayList<>();
+		for (String id : g.cabinIds) {
+			Integer by = g.closedCabins.get(id);
+			out.add(orderedMap("id", id, "closed", by != null, "closed_by_me", by != null && by == viewerIndex));
 		}
 		return out;
 	}
@@ -197,6 +212,7 @@ public final class Views {
 		Integer passed = null;
 		boolean sideVoted = false;
 		String ownVote = null;
+		String myCabin = index >= 0 ? g.myCabins.get(index) : null;
 		if (index >= 0 && r != null) {
 			passed = r.passedDoor[index] >= 0 ? r.passedDoor[index] : null;
 			if (r.splitIndex != null) {
@@ -216,7 +232,7 @@ public final class Views {
 		boolean canOpenFinal = index >= 0 && Outcome.canOpenFinalDoor(g.bracelets.size() > index ? g.bracelets.get(index).points : 0,
 			g.players.get(index).alive) && kind == Kind.PLAYER;
 		return orderedMap("kind", kind.name(), "index", index >= 0 ? index : null, "group", group, "side", side,
-			"door_passed", passed, "side_voted", sideVoted, "own_vote", ownVote, "can_open_final_door", canOpenFinal);
+			"door_passed", passed, "side_voted", sideVoted, "own_vote", ownVote, "my_cabin", myCabin, "can_open_final_door", canOpenFinal);
 	}
 
 	/**
@@ -272,7 +288,8 @@ public final class Views {
 		}
 		return orderedMap("votes", votes, "zones", zones,
 			"settings", orderedMap("mode", g.settings.mode.name(), "durations", durations,
-				"no_door_penalty", g.settings.noDoorPenalty, "door_open_seconds", g.settings.doorOpenSeconds),
+				"no_door_penalty", g.settings.noDoorPenalty, "door_open_seconds", g.settings.doorOpenSeconds,
+				"cabins_required", g.settings.cabinsRequired),
 			"bot_policy", g.botPolicy.name(), "seed", g.seed, "game_masters", masters);
 	}
 

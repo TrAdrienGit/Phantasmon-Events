@@ -18,7 +18,7 @@ import com.mystaria.phantasmon_backend.events.trahison.rules.GameColor;
  * <ul>
  *   <li>{@code color}: closed, except during DOORS while the bracelets at its threshold open it for a few seconds (T2.3);</li>
  *   <li>{@code room_exit}: during ROOMS, closed until the room of its group is solved; open in any other stage;</li>
- *   <li>{@code cabin}: open (T2.4 closes one on demand);</li>
+ *   <li>{@code cabin}: open, closed for everyone while a player holds its cabin closed (T2.4);</li>
  *   <li>{@code final}: closed (T2.5 opens it for the players who read 9);</li>
  *   <li>{@code plain}: open;</li>
  *   <li>after the game, every door is open.</li>
@@ -51,6 +51,20 @@ public final class DoorStates {
 	 */
 	public static Map<String, DoorState> compute(LayoutContent layout, Phase phase, int round, boolean[] roomSolved,
 			Map<String, Boolean> overrides, Set<String> thresholdOpen) {
+		return compute(layout, phase, round, roomSolved, overrides, thresholdOpen, Set.of());
+	}
+
+	/**
+	 * @param closedCabins the ids of the cabins a player closed (T2.4): their {@code cabin} door is closed for everyone
+	 */
+	public static Map<String, DoorState> compute(LayoutContent layout, Phase phase, int round, boolean[] roomSolved,
+			Map<String, Boolean> overrides, Set<String> thresholdOpen, Set<String> closedCabins) {
+		Set<String> closedDoors = new java.util.HashSet<>();
+		for (var cabin : layout.cabins()) {
+			if (closedCabins.contains(cabin.id()) && cabin.door() != null) {
+				closedDoors.add(cabin.door());
+			}
+		}
 		Map<String, DoorState> out = new LinkedHashMap<>();
 		Map<String, ExitOf> exits = exitsOf(layout);
 		for (LayoutDoor door : layout.doors()) {
@@ -60,7 +74,8 @@ public final class DoorStates {
 					yield phase != Phase.ROOMS || exit == null || exit.round() != round
 						|| roomSolved != null && exit.group() < roomSolved.length && roomSolved[exit.group()];
 				}
-				case "cabin", "plain" -> true;
+				case "cabin" -> !closedDoors.contains(door.id());
+				case "plain" -> true;
 				case "color" -> phase == Phase.DOORS && thresholdOpen.contains(door.id());
 				default -> false; // final
 			};

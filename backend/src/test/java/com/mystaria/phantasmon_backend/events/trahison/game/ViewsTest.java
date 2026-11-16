@@ -32,7 +32,7 @@ class ViewsTest {
 	void setUp() {
 		clock = new ManualClock();
 		service = new GameService(new MemoryStore(), clock, clock);
-		service.create(HUB, Settings.fast(10), 99L);
+		service.create(HUB, Settings.fast(10).withoutCabins(), 99L);
 		service.addGameMaster(HUB, gm);
 		for (int i = 0; i < 9; i++) {
 			ids[i] = new UUID(0, i + 1);

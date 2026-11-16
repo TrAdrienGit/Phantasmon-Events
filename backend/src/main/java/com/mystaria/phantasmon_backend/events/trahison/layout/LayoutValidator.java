@@ -125,6 +125,18 @@ public final class LayoutValidator {
 				issues.add(new Issue(BAD_COLORS, l(door.id()), null));
 			}
 		}
+		ResultsBoard board = layout.resultsBoard();
+		if (board != null) {
+			if (board.facing() != null && !ORIENTATIONS.contains(board.facing())) {
+				issues.add(new Issue(BAD_TYPE, l("results_board"), "orientation:" + board.facing()));
+			}
+			if (board.width() != null && (board.width() < ResultsBoard.MIN_SIZE || board.width() > ResultsBoard.MAX_SIZE)) {
+				issues.add(new Issue(BAD_BOX, l("results_board"), "width=" + board.width()));
+			}
+			if (board.height() != null && (board.height() < ResultsBoard.MIN_SIZE || board.height() > ResultsBoard.MAX_SIZE)) {
+				issues.add(new Issue(BAD_BOX, l("results_board"), "height=" + board.height()));
+			}
+		}
 		for (RoomSlot slot : layout.roomSlots()) {
 			if (slot.round() != null && (slot.round() < 1 || slot.round() > ROUNDS)) {
 				issues.add(new Issue(BAD_ROUND, l(slot.id()), "round=" + slot.round()));
@@ -217,6 +229,21 @@ public final class LayoutValidator {
 			}
 			if (slot.orientation() == null) {
 				issues.add(new Issue(MISSING_FIELD, l(slot.id()), "field=orientation"));
+			}
+		}
+		if (layout.resultsBoard() != null) {
+			ResultsBoard board = layout.resultsBoard();
+			if (board.position() == null) {
+				issues.add(new Issue(MISSING_FIELD, l("results_board"), "field=position"));
+			}
+			if (board.facing() == null) {
+				issues.add(new Issue(MISSING_FIELD, l("results_board"), "field=facing"));
+			}
+			if (board.width() == null) {
+				issues.add(new Issue(MISSING_FIELD, l("results_board"), "field=width"));
+			}
+			if (board.height() == null) {
+				issues.add(new Issue(MISSING_FIELD, l("results_board"), "field=height"));
 			}
 		}
 		for (HidingSpot spot : layout.hidingSpots()) {

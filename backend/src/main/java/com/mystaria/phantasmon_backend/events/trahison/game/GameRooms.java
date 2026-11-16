@@ -10,10 +10,13 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.mystaria.phantasmon_backend.events.trahison.layout.LayoutContent;
 import com.mystaria.phantasmon_backend.events.trahison.layout.Pos;
+import com.mystaria.phantasmon_backend.events.trahison.layout.RoomSlot;
 import com.mystaria.phantasmon_backend.events.trahison.room.ActionResult;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomAction;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomDefinition;
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomPlace;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomService;
 import com.mystaria.phantasmon_backend.events.trahison.room.Slot;
 import com.mystaria.phantasmon_backend.events.trahison.room.Step;
@@ -77,13 +80,38 @@ public final class GameRooms {
 
 	/** The doors just closed: starts the room of each group of the round (the split is known). */
 	void startRound(Game g, RoundState r) {
+		startRound(g, r, LayoutContent.empty());
+	}
+
+	/**
+	 * As {@link #startRound(Game, RoundState)}, putting each room in a place of the plan: the places of the round, in plan
+	 * order ({@code roomSlots} whose {@code round} is the round's, a final-loop round counting as the cycle of three), the
+	 * k-th for group k; a group without a place has none.
+	 */
+	void startRound(Game g, RoundState r, LayoutContent plan) {
 		RoomDefinition definition = definitionFor(g.settings);
 		r.rooms = new ArrayList<>();
+		List<RoomSlot> places = placesOf(plan, r.number);
 		for (int k = 0; k < 3; k++) {
 			List<Integer> members = List.copyOf(r.split().group(Door.ALL.get(k)).members());
-			rooms.start(g.hub, k, members, definition, roomSeed(r.seed, k));
+			RoomSlot place = k < places.size() ? places.get(k) : null;
+			rooms.start(g.hub, k, members, definition, roomSeed(r.seed, k),
+					place == null || place.origin() == null ? null
+							: new RoomPlace(place.id(), place.origin(), place.orientation() == null ? "north" : place.orientation()));
 			r.rooms.add(rooms.snapshot(g.hub, k));
 		}
+	}
+
+	/** The plan's room places of a round, in plan order (rounds past the third reuse the cycle: 4 as 1...). */
+	static List<RoomSlot> placesOf(LayoutContent plan, int roundNumber) {
+		int cycle = (Math.max(1, roundNumber) - 1) % 3 + 1;
+		List<RoomSlot> out = new ArrayList<>();
+		for (RoomSlot s : plan.roomSlots()) {
+			if (s.round() != null && s.round() == cycle) {
+				out.add(s);
+			}
+		}
+		return out;
 	}
 
 	/** Forgets the hub's rooms (a new round starts, or the game ended). */

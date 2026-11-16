@@ -69,7 +69,14 @@ public class RoomService {
 
 	/** Starts (or replaces) the room of a group. {@code members}: the player indices of the group. */
 	public RoomInstance start(String hub, int group, Collection<Integer> members, RoomDefinition definition, long seed) {
+		return start(hub, group, members, definition, seed, null);
+	}
+
+	/** As {@link #start(String, int, Collection, RoomDefinition, long)}, with the place of the hub the room stands in. */
+	public RoomInstance start(String hub, int group, Collection<Integer> members, RoomDefinition definition, long seed,
+			RoomPlace place) {
 		RoomInstance room = build(hub, group, members, definition, seed);
+		room.place = place;
 		rooms.put(key(hub, group), room);
 		synchronized (room) {
 			notifyRoom(room);
@@ -83,6 +90,7 @@ public class RoomService {
 		RoomInstance room;
 		synchronized (old) {
 			room = build(hub, group, old.members, old.definition, newSeed);
+			room.place = old.place;
 			rooms.put(key(hub, group), room);
 		}
 		synchronized (room) {
@@ -235,6 +243,9 @@ public class RoomService {
 				case RoomAction.UseSlot a -> useSlot(room, player, a.slot());
 				case RoomAction.PuzzleInput a -> puzzleInput(room, player, a.step(), a.input());
 				case RoomAction.PickUp a -> pickUp(room, player, a.slot());
+				case RoomAction.GiveItem a -> giveItem(room, player, a.item(), a.to());
+				case RoomAction.UseItem a -> useItem(room, player, a.item(), a.slot());
+				case RoomAction.CombineItems a -> combine(room, player, a.a(), a.b());
 			};
 		}
 	}
@@ -321,7 +332,7 @@ public class RoomService {
 					if (clue.role().equals(g.clue()) && clue.type() == ClueType.ITEM && !room.picked.contains(k)) {
 						room.picked.add(k);
 						String item = clue.value().asString("");
-						room.inventory.add(item);
+						room.addItem(item, player);
 						taken.add(item);
 					}
 				}
@@ -333,6 +344,82 @@ public class RoomService {
 		room.lastProgressAt = clock.instant();
 		notifyRoom(room);
 		return new ActionResult(null, false, false, taken);
+	}
+
+	/** Hands an item over to another member of the group: only the holder gives. (Distance is the game's to check.) */
+	private ActionResult giveItem(RoomInstance room, int player, String item, int to) {
+		if (!room.members.contains(to) || to == player) {
+			throw new RoomException(RoomException.BAD_ACTION, "player " + to + " cannot receive the item");
+		}
+		int at = room.indexOfHeld(item, player);
+		if (at < 0) {
+			throw new RoomException(RoomException.NO_SUCH_ITEM, "player " + player + " does not carry " + item);
+		}
+		room.holders.set(at, to);
+		notifyRoom(room);
+		return new ActionResult(null, false, false, List.of());
+	}
+
+	/** Uses an item on an active slot: the open step bound to it must take it, and then the item is consumed. */
+	private ActionResult useItem(RoomInstance room, int player, String item, String slotId) {
+		Slot slot = room.definition.slot(slotId).orElseThrow(
+				() -> new RoomException(RoomException.SLOT_INACTIVE, "unknown slot " + slotId));
+		if (RoomViews.shows(room, slot).isEmpty()) {
+			throw new RoomException(RoomException.SLOT_INACTIVE, "slot " + slotId + " shows nothing");
+		}
+		int at = room.indexOfHeld(item, player);
+		if (at < 0) {
+			throw new RoomException(RoomException.NO_SUCH_ITEM, "player " + player + " does not carry " + item);
+		}
+		for (StepRuntime s : room.steps.values()) {
+			if (!s.open || s.solved) {
+				continue;
+			}
+			for (var role : s.step.slots().entrySet()) {
+				if (!role.getValue().equals(slotId)) {
+					continue;
+				}
+				Optional<InputResult> handled = runItem(() -> s.mechanism.onItem(s.state, player, role.getKey(), item));
+				if (handled.isPresent()) {
+					room.removeItemAt(at);
+					room.lastProgressAt = clock.instant();
+					boolean solved = commit(room, s, player, handled.get());
+					if (!solved) {
+						notifyRoom(room); // the bag changed
+					}
+					return new ActionResult(s.step.id(), solved, room.exitOpen, List.of());
+				}
+			}
+		}
+		throw new RoomException(RoomException.ITEM_REFUSED, item + " does nothing at " + slotId);
+	}
+
+	private static Optional<InputResult> runItem(java.util.function.Supplier<Optional<InputResult>> gesture) {
+		try {
+			return gesture.get();
+		} catch (IllegalArgumentException ex) {
+			throw new RoomException(RoomException.BAD_INPUT, String.valueOf(ex.getMessage()));
+		}
+	}
+
+	/** Combines two items the actor carries (a recipe of the room): both are consumed, the result is his. */
+	private ActionResult combine(RoomInstance room, int player, String a, String b) {
+		Combine recipe = room.definition.combine(a, b).orElseThrow(
+				() -> new RoomException(RoomException.NO_COMBINATION, a + " and " + b + " do not combine"));
+		int first = room.indexOfHeld(a, player);
+		if (first < 0) {
+			throw new RoomException(RoomException.NO_SUCH_ITEM, "player " + player + " does not carry " + a);
+		}
+		int second = room.indexOfHeld(b, player, first); // another copy when both items are the same
+		if (second < 0) {
+			throw new RoomException(RoomException.NO_SUCH_ITEM, "player " + player + " does not carry " + b);
+		}
+		room.removeItemAt(Math.max(first, second));
+		room.removeItemAt(Math.min(first, second));
+		room.addItem(recipe.result(), player);
+		room.lastProgressAt = clock.instant();
+		notifyRoom(room);
+		return new ActionResult(null, false, false, List.of(recipe.result()));
 	}
 
 	/**

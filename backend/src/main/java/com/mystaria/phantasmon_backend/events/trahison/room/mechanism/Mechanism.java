@@ -50,6 +50,15 @@ public interface Mechanism {
 		return InputResult.unchanged(state);
 	}
 
+	/**
+	 * A player used an item on one of the step's slots ({@code role}: the role the slot has in the step). Empty means the
+	 * mechanism does not take items there: nothing happens and the item stays. A handled use consumes the item. Default:
+	 * not handled.
+	 */
+	default java.util.Optional<InputResult> onItem(MechanismState state, int player, String role, String item) {
+		return java.util.Optional.empty();
+	}
+
 	/** What a client may see of the state: the current positions, never the solution. */
 	JsonNode view(MechanismState state, ViewerKind viewer);
 }

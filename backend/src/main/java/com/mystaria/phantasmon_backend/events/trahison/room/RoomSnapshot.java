@@ -42,6 +42,11 @@ final class RoomSnapshot {
 		out.put("exitOpen", room.exitOpen);
 		ArrayNode inventory = out.putArray("inventory");
 		room.inventory.forEach(inventory::add);
+		ArrayNode holders = out.putArray("holders");
+		room.holders.forEach(holders::add);
+		if (room.place != null) {
+			out.set("place", MAPPER.valueToTree(room.place));
+		}
 		ArrayNode picked = out.putArray("picked");
 		room.picked.forEach(picked::add);
 		ObjectNode steps = out.putObject("steps");
@@ -70,6 +75,13 @@ final class RoomSnapshot {
 		room.finishedAt = time(in, "finishedAt");
 		room.exitOpen = in.path("exitOpen").asBoolean(false);
 		in.path("inventory").forEach(i -> room.inventory.add(i.asString()));
+		JsonNode holders = in.path("holders");
+		for (int i = 0; i < room.inventory.size(); i++) {
+			room.holders.add(holders.has(i) ? holders.get(i).asInt(-1) : -1);
+		}
+		if (in.hasNonNull("place")) {
+			room.place = MAPPER.treeToValue(in.get("place"), RoomPlace.class);
+		}
 		in.path("picked").forEach(i -> room.picked.add(i.asString()));
 		JsonNode steps = in.get("steps");
 		for (Step step : definition.steps()) {

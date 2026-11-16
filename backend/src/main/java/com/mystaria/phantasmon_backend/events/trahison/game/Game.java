@@ -31,6 +31,17 @@ public class Game {
 	 * DOORS only (T2.3). Kept with the game so a restart brings them back.
 	 */
 	public java.util.Map<String, DoorWindow> doorWindows = new java.util.LinkedHashMap<>();
+	/**
+	 * The cabins closed right now (cabin id to the index of the player who closed it), VOTE only (T2.4). Cleared when a
+	 * stage starts, so every cabin reopens when VOTE ends. Kept with the game so a restart brings them back.
+	 */
+	public java.util.Map<String, Integer> closedCabins = new java.util.LinkedHashMap<>();
+	/** The ids of the plan's cabins, derived like {@link #doors} and sent as {@code cabins}; not stored. */
+	@com.fasterxml.jackson.annotation.JsonIgnore
+	public java.util.List<String> cabinIds = new java.util.ArrayList<>();
+	/** The cabin each player may close and vote in (player index to cabin id), derived; not stored. */
+	@com.fasterxml.jackson.annotation.JsonIgnore
+	public java.util.Map<Integer, String> myCabins = new java.util.LinkedHashMap<>();
 	/** The threshold hints of the colour doors, derived like {@link #doors} and sent as {@code door_hints}; not stored. */
 	@com.fasterxml.jackson.annotation.JsonIgnore
 	public java.util.List<DoorHint> doorHints = new java.util.ArrayList<>();

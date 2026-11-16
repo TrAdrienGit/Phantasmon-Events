@@ -14,6 +14,10 @@ public class RoomException extends TrahisonException {
 	public static final String STEP_SOLVED = "ERROR_TRAHISON_STEP_SOLVED";
 	public static final String NOTHING_TO_PICK = "ERROR_TRAHISON_NOTHING_TO_PICK";
 	public static final String ROOM_FINISHED = "ERROR_TRAHISON_ROOM_FINISHED";
+	public static final String NO_SUCH_ITEM = "ERROR_TRAHISON_NO_SUCH_ITEM";
+	public static final String TOO_FAR = "ERROR_TRAHISON_TOO_FAR";
+	public static final String NO_COMBINATION = "ERROR_TRAHISON_NO_COMBINATION";
+	public static final String ITEM_REFUSED = "ERROR_TRAHISON_ITEM_REFUSED";
 
 	public RoomException(String code, String message) {
 		super(code, message);

@@ -310,7 +310,7 @@ class TrahisonGameIntegrationTest {
 		spectator.act("{\"action\":\"view\",\"hub\":\"" + hub + "\"}");
 		assertThat(spectator.view().get("phase").asString()).isEqualTo("NONE"); // no game yet
 
-		gm("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":2,\"seed\":7}");
+		gm("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":2,\"seed\":7,\"settings\":{\"cabins_required\":false}}");
 		assertThat(admin.view().get("phase").asString()).isEqualTo("LOBBY");
 		assertThat(admin.view().get("viewer").get("kind").asString()).isEqualTo("GM");
 		assertThat(admin.view().get("gm").get("seed").asLong()).isEqualTo(7L);
@@ -508,7 +508,7 @@ class TrahisonGameIntegrationTest {
 		try {
 			// A long ROOMS stage: the bots only "solve" after at least a tenth of it, long after this test is done.
 			gm("{\"action\":\"create\",\"mode\":\"GAME_MASTER\",\"fast\":2,\"seed\":11,\"test_room\":\"" + roomId
-				+ "\",\"settings\":{\"durations\":{\"ROOMS\":600}}}");
+				+ "\",\"settings\":{\"durations\":{\"ROOMS\":600},\"cabins_required\":false}}");
 			assertThat(this.<String>game(g -> g.settings.testRoom)).isEqualTo(roomId);
 			act(a, "{\"action\":\"join\"}");
 			act(b, "{\"action\":\"join\"}");

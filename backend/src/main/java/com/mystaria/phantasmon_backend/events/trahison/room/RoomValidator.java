@@ -53,6 +53,8 @@ public final class RoomValidator {
 	public static final String CYCLE = "ERROR_TRAHISON_ROOM_CYCLE";
 	public static final String UNREACHABLE = "ERROR_TRAHISON_ROOM_UNREACHABLE";
 	public static final String NO_EXIT = "ERROR_TRAHISON_ROOM_NO_EXIT";
+	public static final String BAD_COMBINE = "ERROR_TRAHISON_ROOM_BAD_COMBINE";
+	public static final int MAX_COMBINES = 32;
 
 	private static final Pattern ID = Pattern.compile("[A-Za-z0-9_-]{1,40}");
 
@@ -84,7 +86,28 @@ public final class RoomValidator {
 		if (!steps.isEmpty()) {
 			checkChain(room, slots, steps, out);
 		}
+		checkCombines(room, out);
 		return out;
+	}
+
+	/** Recipes: valid item ids, a result that is neither ingredient, no pair declared twice (in either order). */
+	private static void checkCombines(RoomDefinition room, List<Issue> out) {
+		Set<String> seen = new HashSet<>();
+		if (room.combines().size() > MAX_COMBINES) {
+			out.add(new Issue(BAD_COMBINE, List.of(), "count=" + room.combines().size()));
+		}
+		for (Combine c : room.combines()) {
+			if (c == null || !validId(c.a()) || !validId(c.b()) || !validId(c.result())) {
+				out.add(new Issue(BAD_COMBINE, List.of(c == null ? "null" : c.a() + "+" + c.b()), "id"));
+				continue;
+			}
+			String pair = c.a().compareTo(c.b()) <= 0 ? c.a() + "+" + c.b() : c.b() + "+" + c.a();
+			if (c.result().equals(c.a()) || c.result().equals(c.b())) {
+				out.add(new Issue(BAD_COMBINE, List.of(pair), "result_is_ingredient"));
+			} else if (!seen.add(pair)) {
+				out.add(new Issue(BAD_COMBINE, List.of(pair), "duplicate"));
+			}
+		}
 	}
 
 	private static Map<String, Slot> checkSlots(RoomDefinition room, List<Issue> out) {
