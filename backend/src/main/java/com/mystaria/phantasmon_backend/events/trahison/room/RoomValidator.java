@@ -32,7 +32,7 @@ import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.SlotRole;
 public final class RoomValidator {
 
 	public static final Set<String> KINDS = Set.of("terminal", "keypad", "pickup", "wall_clue", "document", "lever", "plate",
-			"pedestal", "inner_door", "exit", "secret");
+			"pedestal", "inner_door", "exit", "secret", "power_spot");
 	public static final Set<String> ORIENTATIONS = Set.of("north", "east", "south", "west");
 	public static final int WIDTH = 48;
 	public static final int HEIGHT = 24;
@@ -56,6 +56,8 @@ public final class RoomValidator {
 	public static final String NO_EXIT = "ERROR_TRAHISON_ROOM_NO_EXIT";
 	public static final String BAD_COMBINE = "ERROR_TRAHISON_ROOM_BAD_COMBINE";
 	public static final int MAX_COMBINES = 32;
+	/** Distinct powers a room may ask for (T8.3). */
+	public static final int MAX_POWERS = 3;
 
 	private static final Pattern ID = Pattern.compile("[A-Za-z0-9_-]{1,40}");
 
@@ -88,7 +90,25 @@ public final class RoomValidator {
 			checkChain(room, slots, steps, out);
 		}
 		checkCombines(room, out);
+		checkPowers(room, out);
 		return out;
+	}
+
+	/** T8.3: a group has at most three members and every power goes to a different one, so a room asks for at most three powers. */
+	private static void checkPowers(RoomDefinition room, List<Issue> out) {
+		Set<com.mystaria.phantasmon_backend.events.trahison.pokemon.Power> asked = new LinkedHashSet<>();
+		List<String> ids = new ArrayList<>();
+		for (Step st : room.steps()) {
+			if (st != null && com.mystaria.phantasmon_backend.events.trahison.room.mechanism.PowerSpot.ID.equals(st.mechanism())) {
+				com.mystaria.phantasmon_backend.events.trahison.room.mechanism.PowerSpot.power(st.params()).ifPresent(p -> {
+					asked.add(p);
+					ids.add(st.id());
+				});
+			}
+		}
+		if (asked.size() > MAX_POWERS) {
+			out.add(new Issue(BAD_PARAMS, ids, "powers=" + asked.size() + ";max=" + MAX_POWERS));
+		}
 	}
 
 	/** Recipes: valid item ids, a result that is neither ingredient, no pair declared twice (in either order). */

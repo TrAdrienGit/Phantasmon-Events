@@ -191,6 +191,9 @@ public final class PuzzleScreens {
 		if ("three_levers".equals(m.mechanism())) {
 			com.mystaria.events.trahison.world.LeverState.onMessage(m);
 		}
+		if ("power_spot".equals(m.mechanism())) {
+			com.mystaria.events.trahison.world.PowerWorld.onMessage(m);
+		}
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.screen instanceof MiniGameScreen open && open.step().equals(m.step()) && (open.group() < 0 || open.group() == m.group() && open.round() == m.round())) {
 			open.onPuzzle(m);

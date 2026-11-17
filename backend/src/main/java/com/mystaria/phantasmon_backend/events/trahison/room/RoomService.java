@@ -19,6 +19,7 @@ import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.ClueType;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.InputResult;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.Mechanism;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.MechanismRegistry;
+import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.MechanismState;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.ViewerKind;
 
 import tools.jackson.databind.JsonNode;
@@ -243,14 +244,27 @@ public class RoomService {
 	private RoomInstance build(String hub, int round, int group, Collection<Integer> members, RoomDefinition definition, long seed) {
 		Instant now = clock.instant();
 		RoomInstance room = new RoomInstance(hub, round, group, definition, seed, List.copyOf(members));
+		room.partners.addAll(com.mystaria.phantasmon_backend.events.trahison.pokemon.Partners.draw(seed, room.members, requiredPowers(definition)));
 		for (Step step : definition.steps()) {
 			Mechanism m = registry.get(step.mechanism());
-			room.steps.put(step.id(), new StepRuntime(step, m, m.generate(rngFor(seed, step.id()), step.params())));
+			MechanismState generated = m.generate(rngFor(seed, step.id()), step.params());
+			room.steps.put(step.id(), new StepRuntime(step, m, m.bind(generated, room.partners)));
 		}
 		room.startedAt = now;
 		room.lastProgressAt = now;
 		openReady(room, now);
 		return room;
+	}
+
+	/** The powers the room's {@code power_spot} steps ask for, in step order (T8.3). */
+	static List<com.mystaria.phantasmon_backend.events.trahison.pokemon.Power> requiredPowers(RoomDefinition definition) {
+		List<com.mystaria.phantasmon_backend.events.trahison.pokemon.Power> out = new ArrayList<>();
+		for (Step step : definition.steps()) {
+			if (com.mystaria.phantasmon_backend.events.trahison.room.mechanism.PowerSpot.ID.equals(step.mechanism())) {
+				com.mystaria.phantasmon_backend.events.trahison.room.mechanism.PowerSpot.power(step.params()).ifPresent(out::add);
+			}
+		}
+		return out;
 	}
 
 	/** Opens every unsolved step whose needs are all solved. */

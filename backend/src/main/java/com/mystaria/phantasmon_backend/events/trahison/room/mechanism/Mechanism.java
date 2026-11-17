@@ -94,6 +94,22 @@ public interface Mechanism {
 		return java.util.Optional.empty();
 	}
 
+	/**
+	 * The group's partner Pokemon, known once the room is built (T8.3): lets a mechanism that depends on who holds which power
+	 * keep it in its state. Called by {@code RoomService} after {@link #generate}, again for a replayed room. Default: nothing to bind.
+	 */
+	default MechanismState bind(MechanismState state, List<com.mystaria.phantasmon_backend.events.trahison.pokemon.Partner> partners) {
+		return state;
+	}
+
+	/**
+	 * What the world around the slot needs to show, carried by the room view next to the step ({@code world}): never a secret, only
+	 * what every player can already see happen (T8.3: which power is asked and how far it got). Empty (the default): nothing.
+	 */
+	default java.util.Optional<JsonNode> world(MechanismState state) {
+		return java.util.Optional.empty();
+	}
+
 	/** What a client may see of the state: the current positions, never the solution. */
 	JsonNode view(MechanismState state, ViewerKind viewer);
 }

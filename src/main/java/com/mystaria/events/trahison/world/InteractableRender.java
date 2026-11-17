@@ -22,7 +22,9 @@ import net.minecraft.world.phys.Vec3;
 
 import com.mystaria.events.trahison.minigame.Glyphs;
 import com.mystaria.events.trahison.room.Inventory;
+import com.mystaria.events.trahison.room.Powers;
 import com.mystaria.events.trahison.room.RoomView;
+import com.mystaria.events.trahison.room.Rooms;
 import com.mystaria.events.trahison.room.RoomView.Clue;
 import com.mystaria.events.trahison.room.RoomView.Show;
 import com.mystaria.events.trahison.room.RoomView.SlotView;
@@ -137,6 +139,7 @@ final class InteractableRender {
 			}
 			case "plate" -> plate(vc, camera, item, puzzle, solved);
 			case "pedestal" -> pedestal(vc, camera, item, puzzle, solved, now);
+			case "power_spot" -> powerSpot(vc, camera, item, solved, now);
 			case "document" -> document(vc, camera, item, now);
 			case "pickup" -> {
 				// the floating item below is the object
@@ -324,6 +327,20 @@ final class InteractableRender {
 		box(vc, m, -hw, 0, -hd, hw, height, hd, TrahisonPalette.PANEL_RAISED);
 		int glow = solved ? TrahisonPalette.SUCCESS : puzzle ? TrahisonPalette.ACCENT : TrahisonPalette.TEXT_DISABLED;
 		box(vc, m, -hw + 0.12f, height, -hd + 0.12f, hw - 0.12f, height + 0.005f, hd - 0.12f, glow);
+	}
+
+	/** T8.3: a flat pad with a floating orb in the tone of the power the spot asks for (the name is on the label, the colour is never alone). */
+	private static void powerSpot(VertexConsumer vc, Vec3 camera, Item item, boolean solved, long now) {
+		AABB b = item.box();
+		RoomView room = Rooms.all().get(item.roomKey());
+		RoomView.PowerStep step = room == null ? null : room.powerOf(item.slot().id());
+		int tone = solved ? TrahisonPalette.SUCCESS : step == null ? TrahisonPalette.ACCENT : Powers.color(step.power());
+		Matrix4f m = rel(camera, b.getCenter().x, b.minY, b.getCenter().z);
+		float hw = (float) Math.min(0.5, b.getXsize() / 2);
+		float hd = (float) Math.min(0.5, b.getZsize() / 2);
+		box(vc, m, -hw, 0, -hd, hw, 0.05f, hd, TrahisonPalette.PANEL_RAISED);
+		box(vc, m, -hw + 0.1f, 0.05f, -hd + 0.1f, hw - 0.1f, 0.06f, hd - 0.1f, tone);
+		floating(vc, camera, new Vec3(b.getCenter().x, b.minY + 0.7, b.getCenter().z), 0.16f, tone, now);
 	}
 
 	private static void pedestal(VertexConsumer vc, Vec3 camera, Item item, boolean puzzle, boolean solved, long now) {
@@ -574,6 +591,13 @@ final class InteractableRender {
 		}
 		if ("use_item".equals(item.action(Inventory.held())) && Inventory.held() != null) {
 			return Inventory.name(Inventory.held());
+		}
+		if ("power_spot".equals(slot.kind())) {
+			RoomView room = Rooms.all().get(item.roomKey());
+			RoomView.PowerStep step = room == null ? null : room.powerOf(slot.id());
+			if (step != null) {
+				return Component.translatable(T + "power.spot", Powers.name(step.power()));
+			}
 		}
 		String key = T + "slot." + slot.kind();
 		return net.minecraft.client.resources.language.I18n.exists(key) ? Component.translatable(key) : null;

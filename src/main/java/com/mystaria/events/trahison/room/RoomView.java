@@ -11,7 +11,52 @@ import java.util.Set;
  * Pure: no Minecraft class.
  */
 public record RoomView(String hub, int round, int group, String room, String name, List<Integer> members, boolean exitOpen, boolean finished,
-		List<SlotView> slots, List<ItemView> items, Place place, List<String> hints, List<Progress> progress) {
+		List<SlotView> slots, List<ItemView> items, Place place, List<String> hints, List<Progress> progress, List<Partner> partners, String ghostPartner,
+		List<PowerStep> powers) {
+
+	/** The partner Pokemon of a member (T8.3): a Cobblemon species id and the power it holds ({@code FLASH}, {@code STRENGTH}, {@code CUT}, {@code SURF}). */
+	public record Partner(int player, String species, String power) {
+	}
+
+	/** What the world shows of a {@code power_spot} step (T8.3): the power asked, how far it got, who may act. {@code anyone}: nobody holds it, every member may. */
+	public record PowerStep(String step, String power, int done, int total, int radius, List<Integer> holders, boolean anyone, boolean solved, boolean open, Spot spot) {
+
+		public boolean mayAct(int player) {
+			return anyone || holders.contains(player);
+		}
+	}
+
+	/** The slot a {@code power_spot} step is bound to, in the room's own frame: it is known before the step opens (an obstacle stands there from the start). */
+	public record Spot(String id, int x, int y, int z, int sx, int sy, int sz, String orientation) {
+	}
+
+	/** The partner of {@code player}, or null. */
+	public Partner partnerOf(int player) {
+		for (Partner p : partners) {
+			if (p.player() == player) {
+				return p;
+			}
+		}
+		return null;
+	}
+
+	/** The {@code power_spot} step whose {@code spot} role is bound to {@code slotId}, or null. */
+	public PowerStep powerOf(String slotId) {
+		SlotView slot = slot(slotId);
+		if (slot == null) {
+			return null;
+		}
+		for (Show show : slot.shows()) {
+			if (show.isPuzzle() && "power_spot".equals(show.mechanism())) {
+				for (PowerStep p : powers) {
+					if (p.step().equals(show.step())) {
+						return p;
+					}
+				}
+			}
+		}
+		return null;
+	}
 
 	/** A counter an open step shows on the HUD (D61: "objects 2 / 3"). */
 	public record Progress(String step, int done, int total) {
@@ -186,8 +231,26 @@ public record RoomView(String hub, int round, int group, String room, String nam
 		}
 		List<String> hints = new ArrayList<>();
 		List<Progress> progress = new ArrayList<>();
+		List<PowerStep> powers = new ArrayList<>();
 		for (Object so : list(data.get("steps"))) {
 			Map<String, Object> step = map(so);
+			if (step.get("world") instanceof Map<?, ?> wm && wm.containsKey("power")) {
+				Map<String, Object> w = map(step.get("world"));
+				List<Integer> holders = new ArrayList<>();
+				for (Object h : list(w.get("holders"))) {
+					if (h instanceof Number n) {
+						holders.add(n.intValue());
+					}
+				}
+				Map<String, Object> bound = map(map(w.get("bound")).get("spot"));
+				Map<String, Object> bp = map(bound.get("position"));
+				Map<String, Object> bs = map(bound.get("size"));
+				Spot spot = bound.isEmpty() ? null : new Spot(str(bound.get("id"), ""), num(bp.get("x")), num(bp.get("y")), num(bp.get("z")),
+						Math.max(1, num(bs.get("x"))), Math.max(1, num(bs.get("y"))), Math.max(1, num(bs.get("z"))), str(bound.get("orientation"), "north"));
+				powers.add(new PowerStep(str(step.get("id"), ""), str(w.get("power"), ""), num(w.get("done")), Math.max(1, num(w.get("total"))),
+						Math.max(1, num(w.get("radius"))), List.copyOf(holders), Boolean.TRUE.equals(w.get("anyone")), Boolean.TRUE.equals(step.get("solved")),
+						Boolean.TRUE.equals(step.get("open")), spot));
+			}
 			for (Object h : list(step.get("hints"))) {
 				if (h instanceof String text) {
 					hints.add(text);
@@ -198,8 +261,15 @@ public record RoomView(String hub, int round, int group, String room, String nam
 				progress.add(new Progress(str(step.get("id"), ""), num(p.get("done")), num(p.get("total"))));
 			}
 		}
+		List<Partner> partners = new ArrayList<>();
+		for (Object o : list(data.get("partners"))) {
+			Map<String, Object> p = map(o);
+			if (p.get("player") instanceof Number n && p.get("species") instanceof String species) {
+				partners.add(new Partner(n.intValue(), species, str(p.get("power"), "")));
+			}
+		}
 		return new RoomView(str(data.get("hub"), ""), data.get("round") instanceof Number round ? Math.max(0, round.intValue()) : 0, group.intValue(), room, str(data.get("name"), room), List.copyOf(members),
-				Boolean.TRUE.equals(data.get("exit_open")), data.get("finished_at") != null, List.copyOf(slots), List.copyOf(items), place, List.copyOf(hints), List.copyOf(progress));
+				Boolean.TRUE.equals(data.get("exit_open")), data.get("finished_at") != null, List.copyOf(slots), List.copyOf(items), place, List.copyOf(hints), List.copyOf(progress), List.copyOf(partners), str(data.get("ghost_partner"), "gastly"), List.copyOf(powers));
 	}
 
 	/** Items the player carries (or that anybody may handle). */

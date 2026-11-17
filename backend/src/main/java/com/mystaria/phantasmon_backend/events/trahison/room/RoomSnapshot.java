@@ -4,6 +4,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.mystaria.phantasmon_backend.events.trahison.pokemon.Partner;
+import com.mystaria.phantasmon_backend.events.trahison.pokemon.Partners;
+import com.mystaria.phantasmon_backend.events.trahison.pokemon.Power;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.Clue;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.ClueType;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.Mechanism;
@@ -51,6 +54,13 @@ final class RoomSnapshot {
 		if (room.place != null) {
 			out.set("place", MAPPER.valueToTree(room.place));
 		}
+		ArrayNode partners = out.putArray("partners");
+		for (Partner p : room.partners) {
+			ObjectNode n = partners.addObject();
+			n.put("player", p.player());
+			n.put("species", p.species());
+			n.put("power", p.power().name());
+		}
 		ArrayNode picked = out.putArray("picked");
 		room.picked.forEach(picked::add);
 		ObjectNode steps = out.putObject("steps");
@@ -89,6 +99,14 @@ final class RoomSnapshot {
 		}
 		if (in.hasNonNull("place")) {
 			room.place = MAPPER.treeToValue(in.get("place"), RoomPlace.class);
+		}
+		if (in.has("partners")) {
+			for (JsonNode n : in.get("partners")) {
+				Power.parse(n.path("power").asString("")).ifPresent(power ->
+						room.partners.add(new Partner(n.path("player").asInt(), n.path("species").asString(""), power)));
+			}
+		} else { // saved before partners existed: the draw is a function of the seed, so it comes back the same
+			room.partners.addAll(Partners.draw(room.seed, room.members, RoomService.requiredPowers(definition)));
 		}
 		in.path("picked").forEach(i -> room.picked.add(i.asString()));
 		JsonNode steps = in.get("steps");

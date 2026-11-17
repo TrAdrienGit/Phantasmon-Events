@@ -1368,5 +1368,16 @@
   "phantasmon_events.trahison.map.legend.players": "Joueurs",
   "phantasmon_events.trahison.map.legend.all": "Barre rouge : porte fermée. Montants verts : porte ouverte. Hachures : salle où tu n'es jamais entrée. Flèche : toi, là où tu regardes.",
   "phantasmon_events.error.error_trahison_map_too_big": "Trahison : tes notes de carte sont trop grosses.",
-  "phantasmon_events.error.error_trahison_map_too_fast": "Trahison : les notes de carte ont été enregistrées trop vite ; elles suivront."
+  "phantasmon_events.error.error_trahison_map_too_fast": "Trahison : les notes de carte ont été enregistrées trop vite ; elles suivront.",
+  "phantasmon_events.trahison.room_edit.kind.power_spot": "emplacement de pouvoir",
+  "phantasmon_events.trahison.slot.power_spot": "Emplacement de pouvoir",
+  "phantasmon_events.trahison.power.flash": "Flash",
+  "phantasmon_events.trahison.power.strength": "Force",
+  "phantasmon_events.trahison.power.cut": "Coupe",
+  "phantasmon_events.trahison.power.surf": "Surf",
+  "phantasmon_events.trahison.power.spot": "Emplacement %s",
+  "phantasmon_events.trahison.power.card": "%s : %s",
+  "phantasmon_events.trahison.power.dark": "Trop sombre ici : un partenaire avec Flash doit éclairer le chemin",
+  "phantasmon_events.trahison.power.denied": "Ton partenaire ne peut pas le faire : il lui faut %s",
+  "phantasmon_events.trahison.room_edit.mechanism.power_spot": "power_spot"
 }

@@ -36,6 +36,8 @@ public final class RoomInstance {
 	 * item (a holder of -1: any member).
 	 */
 	public final List<Integer> holders = new ArrayList<>();
+	/** The partner Pokemon of each member (T8.3), drawn when the room is built; public to the group. */
+	public final List<com.mystaria.phantasmon_backend.events.trahison.pokemon.Partner> partners = new ArrayList<>();
 	/** Where the room stands in the hub (null when the plan had no place for it). */
 	public RoomPlace place;
 	/** {@code stepId/clueRole} of the item clues already picked up. */

@@ -44,6 +44,7 @@ final class RoomWorld {
 			case "inner_door" -> TrahisonPalette.GAME_MASTER;
 			case "exit" -> TrahisonPalette.SUCCESS;
 			case "secret" -> TrahisonPalette.GHOST;
+			case "power_spot" -> TrahisonPalette.YELLOW;
 			default -> TrahisonPalette.TEXT_MUTED;
 		};
 	}

@@ -1368,5 +1368,16 @@
   "phantasmon_events.trahison.map.legend.players": "Players",
   "phantasmon_events.trahison.map.legend.all": "Red bar: closed door. Green posts: open door. Hatched: room you have not entered. Arrow: you, where you look.",
   "phantasmon_events.error.error_trahison_map_too_big": "Trahison: your map notes are too big.",
-  "phantasmon_events.error.error_trahison_map_too_fast": "Trahison: the map notes were saved too quickly; they will follow."
+  "phantasmon_events.error.error_trahison_map_too_fast": "Trahison: the map notes were saved too quickly; they will follow.",
+  "phantasmon_events.trahison.room_edit.kind.power_spot": "power spot",
+  "phantasmon_events.trahison.slot.power_spot": "Power spot",
+  "phantasmon_events.trahison.power.flash": "Flash",
+  "phantasmon_events.trahison.power.strength": "Strength",
+  "phantasmon_events.trahison.power.cut": "Cut",
+  "phantasmon_events.trahison.power.surf": "Surf",
+  "phantasmon_events.trahison.power.spot": "%s spot",
+  "phantasmon_events.trahison.power.card": "%s: %s",
+  "phantasmon_events.trahison.power.dark": "Too dark here: a partner with Flash must light the way",
+  "phantasmon_events.trahison.power.denied": "Your partner cannot do that: it needs %s",
+  "phantasmon_events.trahison.room_edit.mechanism.power_spot": "power_spot"
 }

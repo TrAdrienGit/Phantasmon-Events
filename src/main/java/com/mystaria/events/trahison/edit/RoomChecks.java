@@ -32,7 +32,7 @@ final class RoomChecks {
 	}
 
 	static final List<String> KINDS = List.of("terminal", "keypad", "pickup", "wall_clue", "document", "lever", "plate", "pedestal",
-			"inner_door", "exit", "secret");
+			"inner_door", "exit", "secret", "power_spot");
 	static final int MAX_STEPS = 24;
 	static final int MAX_HINTS = 3;
 	private static final Pattern ID = Pattern.compile("[A-Za-z0-9_-]{1,40}");

@@ -572,10 +572,12 @@ avec la voix de l'animatrice, comme un `announce`.
 | `started_at`, `last_progress_at`, `finished_at` | ISO-8601, `finished_at` `null` tant que non finie | `last_progress_at` : dernière étape résolue ou objet ramassé |
 | `exit_open` | booléen | Toutes les étapes sont résolues : la sortie est ouverte |
 | `steps_done`, `steps_total` | entiers | |
-| `steps` | liste | `{ id, open, solved, hints, progress? }` : `progress` = `{ done, total }`, un compteur que le client montre sur le HUD tant que l'étape est ouverte (D61 : `pickup_set` « Objets : 2 / 3 », jamais un secret) ; `hints` : `hints` = les textes d'aide déjà donnés à l'étape, du plus vague au plus direct (T3.6, jamais une solution : c'est le texte écrit par l'auteur de la salle) ; le maître du jeu y ajoute `mechanism` et `hints_given` |
+| `steps` | liste | `{ id, open, solved, hints, progress?, world? }` : `world` (T8.3) = ce que le monde autour des emplacements montre d'une étape jouée dans le monde (`power_spot` : la vue du mécanisme plus `bound { <rôle> : { id, position, size, orientation } }`, la géométrie de ses emplacements même avant l'ouverture de l'étape, pour que l'obstacle soit déjà là ; jamais un secret) ; `progress` = `{ done, total }`, un compteur que le client montre sur le HUD tant que l'étape est ouverte (D61 : `pickup_set` « Objets : 2 / 3 », jamais un secret) ; `hints` : `hints` = les textes d'aide déjà donnés à l'étape, du plus vague au plus direct (T3.6, jamais une solution : c'est le texte écrit par l'auteur de la salle) ; le maître du jeu y ajoute `mechanism` et `hints_given` |
 | `slots` | liste | Les emplacements **actifs** seulement (voir ci-dessous) |
 | `inventory` | liste de textes | Identifiants des objets du sac commun du groupe (tous les porteurs, dans l'ordre de ramassage) |
 | `items` | liste | Le même sac avec son porteur : `{ id, holder }`, `holder` étant l'indice du joueur qui porte l'objet (`-1` : n'importe quel membre). **L'inventaire d'un joueur est la part de `items` dont il est le porteur** : lui seul donne, utilise ou combine un objet |
+| `partners` | liste | T8.3 : le Pokémon partenaire de chaque membre, `{ player, species, power }` (`species` : id d'espèce Cobblemon ; `power` : `FLASH`, `STRENGTH`, `CUT` ou `SURF`). Public pour tout le groupe, jamais un secret. Tiré au début de la salle (voir `power_spot`) |
+| `ghost_partner` | texte | T8.3 : l'espèce (type Spectre, sans pouvoir) que reçoit un fantôme ; le client la montre au seul fantôme |
 | `place` | objet ou `null` | Où la salle se tient dans le hub : `{ id, origin {x,y,z}, orientation }` (voir « Place d'une salle ») |
 
 Un emplacement : `{ id, kind, position {x,y,z}, orientation, size {x,y,z}, shows: [...] }`, la position étant relative à
@@ -768,6 +770,15 @@ Trois leviers aux trois coins d'une salle, à tenir **en même temps par trois j
   du bail), trois petites lumières sous la plaque pour le nombre de leviers tenus ensemble, tout vert une fois résolu. Sons (interface, pas de position) : cliquetis plus aigu à chaque levier, bruit sourd pour `wrong` et `slow`,
   déverrouillage. Hors ligne : `/phantasmon event trahison minigame three_levers` ouvre un **aperçu** (trois leviers, le bail, les lumières ; boutons 1 à 3 au clavier ; les deux joueurs fictifs enclenchent les autres ;
   trois tenus ensemble déverrouillent ; ni l'ordre ni le délai ne sont simulés).
+
+#### Vue du mécanisme `power_spot` (partenaire à pouvoir, T8.3)
+
+- Se joue **dans le monde** : un clic sur l'emplacement `spot` (`use_slot`), aucun écran. Genre d'emplacement : `power_spot` (ou `plate`, `pedestal`, `lever`).
+- Paramètres : `power` (`FLASH`, `STRENGTH`, `CUT`, `SURF`, obligatoire), `pushes` 1 à 3 (Force seulement, 2 par défaut : nombre de poussées du rocher), `radius` 2 à 8 (Flash seulement, 4 : rayon éclairé autour du porteur, en blocs).
+- Le tirage des partenaires (`pokemon/Partners`, graine de la salle) donne à **chaque membre** un partenaire et un pouvoir. Les pouvoirs que la salle demande vont à des membres **différents** ; les autres membres reçoivent les pouvoirs non encore pris. Une salle ne demande pas plus de 3 pouvoirs différents (`ERROR_TRAHISON_ROOM_BAD_PARAMS`, `powers=n;max=3`). Si le groupe est trop petit et que personne ne tient le pouvoir, tout membre peut agir (`anyone`) : l'étape n'est jamais impossible.
+- Vue (et `world`) : `{ power, total, done, radius, holders, anyone, denied, solved }`. `holders` : indices des membres dont le partenaire a le pouvoir. Pas de solution à cacher, elle est identique pour tous.
+- Règles : un clic d'un porteur compte une poussée (`done` + 1, événement `push`) ; la dernière résout l'étape (`unlock`). Un clic de quelqu'un d'autre ne change rien et répond l'événement `denied` `{ power }` (compté dans `denied`). `progress` `{done,total}` est publié pour Force quand `total` > 1 (« 1 / 2 »).
+- Effets dessinés par le client (rien n'est décidé là) : Flash, voile sombre sur l'écran d'un joueur qui se tient dans la zone (la boîte de l'emplacement, élargie de 2 blocs) à plus de `radius` blocs du porteur, jusqu'à la résolution ; Force, un rocher de faux blocs qui avance d'une case par poussée le long du grand côté de la boîte ; Coupe, la boîte remplie de feuilles (faux blocs) jusqu'à la résolution ; Surf, la boîte murée de barrières invisibles (faux blocs) pour tous sauf les porteurs, en permanence.
 
 #### Vues des mécanismes Pokémon (T8)
 

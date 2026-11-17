@@ -1,0 +1,519 @@
+{
+ "id": "essai_cobblemon",
+ "name": "Cobblemon trial room",
+ "author": "events",
+ "slots": [
+  {
+   "id": "pad_dex",
+   "kind": "keypad",
+   "position": {
+    "x": 3,
+    "y": 1,
+    "z": 40
+   },
+   "orientation": "east"
+  },
+  {
+   "id": "wall_dex_1",
+   "kind": "wall_clue",
+   "position": {
+    "x": 2,
+    "y": 2,
+    "z": 36
+   },
+   "orientation": "east"
+  },
+  {
+   "id": "wall_dex_2",
+   "kind": "wall_clue",
+   "position": {
+    "x": 2,
+    "y": 2,
+    "z": 34
+   },
+   "orientation": "east"
+  },
+  {
+   "id": "desk_dex",
+   "kind": "document",
+   "position": {
+    "x": 4,
+    "y": 1,
+    "z": 32
+   },
+   "orientation": "east"
+  },
+  {
+   "id": "pad_unown",
+   "kind": "keypad",
+   "position": {
+    "x": 3,
+    "y": 1,
+    "z": 26
+   },
+   "orientation": "east"
+  },
+  {
+   "id": "wall_unown",
+   "kind": "wall_clue",
+   "position": {
+    "x": 2,
+    "y": 2,
+    "z": 22
+   },
+   "orientation": "east"
+  },
+  {
+   "id": "desk_alpha",
+   "kind": "document",
+   "position": {
+    "x": 4,
+    "y": 1,
+    "z": 20
+   },
+   "orientation": "east"
+  },
+  {
+   "id": "pad_weigh",
+   "kind": "terminal",
+   "position": {
+    "x": 3,
+    "y": 1,
+    "z": 14
+   },
+   "orientation": "east"
+  },
+  {
+   "id": "ped_1",
+   "kind": "pedestal",
+   "position": {
+    "x": 8,
+    "y": 1,
+    "z": 16
+   },
+   "orientation": "east"
+  },
+  {
+   "id": "ped_2",
+   "kind": "pedestal",
+   "position": {
+    "x": 8,
+    "y": 1,
+    "z": 13
+   },
+   "orientation": "east"
+  },
+  {
+   "id": "ped_3",
+   "kind": "pedestal",
+   "position": {
+    "x": 8,
+    "y": 1,
+    "z": 10
+   },
+   "orientation": "east"
+  },
+  {
+   "id": "desk_scale",
+   "kind": "document",
+   "position": {
+    "x": 4,
+    "y": 1,
+    "z": 8
+   },
+   "orientation": "east"
+  },
+  {
+   "id": "lever_1",
+   "kind": "lever",
+   "position": {
+    "x": 12,
+    "y": 1,
+    "z": 40
+   },
+   "orientation": "north"
+  },
+  {
+   "id": "lever_2",
+   "kind": "lever",
+   "position": {
+    "x": 14,
+    "y": 1,
+    "z": 40
+   },
+   "orientation": "north"
+  },
+  {
+   "id": "lever_3",
+   "kind": "lever",
+   "position": {
+    "x": 16,
+    "y": 1,
+    "z": 40
+   },
+   "orientation": "north"
+  },
+  {
+   "id": "mark_1",
+   "kind": "wall_clue",
+   "position": {
+    "x": 12,
+    "y": 2,
+    "z": 43
+   },
+   "orientation": "north"
+  },
+  {
+   "id": "mark_2",
+   "kind": "wall_clue",
+   "position": {
+    "x": 14,
+    "y": 2,
+    "z": 43
+   },
+   "orientation": "north"
+  },
+  {
+   "id": "mark_3",
+   "kind": "wall_clue",
+   "position": {
+    "x": 16,
+    "y": 2,
+    "z": 43
+   },
+   "orientation": "north"
+  },
+  {
+   "id": "desk_types",
+   "kind": "document",
+   "position": {
+    "x": 18,
+    "y": 1,
+    "z": 41
+   },
+   "orientation": "north"
+  },
+  {
+   "id": "console_cry",
+   "kind": "terminal",
+   "position": {
+    "x": 20,
+    "y": 1,
+    "z": 30
+   },
+   "orientation": "north"
+  },
+  {
+   "id": "pad_pc",
+   "kind": "terminal",
+   "position": {
+    "x": 20,
+    "y": 1,
+    "z": 24
+   },
+   "orientation": "north"
+  },
+  {
+   "id": "arena",
+   "kind": "terminal",
+   "position": {
+    "x": 20,
+    "y": 1,
+    "z": 18
+   },
+   "orientation": "north"
+  },
+  {
+   "id": "wall_reward",
+   "kind": "wall_clue",
+   "position": {
+    "x": 20,
+    "y": 2,
+    "z": 12
+   },
+   "orientation": "north"
+  },
+  {
+   "id": "lamp",
+   "kind": "power_spot",
+   "position": {
+    "x": 32,
+    "y": 1,
+    "z": 36
+   },
+   "orientation": "west",
+   "size": {
+    "x": 5,
+    "y": 3,
+    "z": 5
+   }
+  },
+  {
+   "id": "rock",
+   "kind": "power_spot",
+   "position": {
+    "x": 36,
+    "y": 1,
+    "z": 28
+   },
+   "orientation": "west",
+   "size": {
+    "x": 4,
+    "y": 1,
+    "z": 1
+   }
+  },
+  {
+   "id": "bush",
+   "kind": "power_spot",
+   "position": {
+    "x": 36,
+    "y": 1,
+    "z": 20
+   },
+   "orientation": "west",
+   "size": {
+    "x": 2,
+    "y": 2,
+    "z": 2
+   }
+  },
+  {
+   "id": "exit",
+   "kind": "exit",
+   "position": {
+    "x": 23,
+    "y": 1,
+    "z": 0
+   },
+   "orientation": "south",
+   "size": {
+    "x": 3,
+    "y": 3,
+    "z": 1
+   }
+  }
+ ],
+ "steps": [
+  {
+   "id": "dex",
+   "mechanism": "dex_code",
+   "params": {
+    "count": 2
+   },
+   "slots": {
+    "terminal": "pad_dex"
+   },
+   "needs": [],
+   "gives": [
+    {
+     "clue": "portrait_1",
+     "slot": "wall_dex_1"
+    },
+    {
+     "clue": "portrait_2",
+     "slot": "wall_dex_2"
+    },
+    {
+     "clue": "dex_page",
+     "slot": "desk_dex"
+    }
+   ],
+   "hints": []
+  },
+  {
+   "id": "unown",
+   "mechanism": "unown_text",
+   "params": {},
+   "slots": {
+    "terminal": "pad_unown"
+   },
+   "needs": [],
+   "gives": [
+    {
+     "clue": "wall_text",
+     "slot": "wall_unown"
+    },
+    {
+     "clue": "alphabet",
+     "slot": "desk_alpha"
+    }
+   ],
+   "hints": []
+  },
+  {
+   "id": "weigh",
+   "mechanism": "weigh_in",
+   "params": {
+    "count": 3
+   },
+   "slots": {
+    "row": "pad_weigh"
+   },
+   "needs": [],
+   "gives": [
+    {
+     "clue": "pedestal_1",
+     "slot": "ped_1"
+    },
+    {
+     "clue": "pedestal_2",
+     "slot": "ped_2"
+    },
+    {
+     "clue": "pedestal_3",
+     "slot": "ped_3"
+    },
+    {
+     "clue": "scale_sheet",
+     "slot": "desk_scale"
+    }
+   ],
+   "hints": []
+  },
+  {
+   "id": "types",
+   "mechanism": "type_chain",
+   "params": {
+    "count": 3
+   },
+   "slots": {
+    "lever_1": "lever_1",
+    "lever_2": "lever_2",
+    "lever_3": "lever_3"
+   },
+   "needs": [],
+   "gives": [
+    {
+     "clue": "mark_1",
+     "slot": "mark_1"
+    },
+    {
+     "clue": "mark_2",
+     "slot": "mark_2"
+    },
+    {
+     "clue": "mark_3",
+     "slot": "mark_3"
+    },
+    {
+     "clue": "type_sheet",
+     "slot": "desk_types"
+    }
+   ],
+   "hints": []
+  },
+  {
+   "id": "cries",
+   "mechanism": "cry_match",
+   "params": {
+    "count": 3
+   },
+   "slots": {
+    "console": "console_cry"
+   },
+   "needs": [],
+   "gives": [],
+   "hints": []
+  },
+  {
+   "id": "pcbox",
+   "mechanism": "pc_box",
+   "params": {
+    "count": 5
+   },
+   "slots": {
+    "terminal": "pad_pc"
+   },
+   "needs": [],
+   "gives": [],
+   "hints": []
+  },
+  {
+   "id": "duel",
+   "mechanism": "battle_puzzle",
+   "params": {
+    "turns": 2,
+    "mons": 1,
+    "moves": 3
+   },
+   "slots": {
+    "arena": "arena"
+   },
+   "needs": [],
+   "gives": [
+    {
+     "clue": "reward",
+     "slot": "wall_reward",
+     "when": "solved"
+    }
+   ],
+   "hints": []
+  },
+  {
+   "id": "flash",
+   "mechanism": "power_spot",
+   "params": {
+    "power": "FLASH",
+    "radius": 4
+   },
+   "slots": {
+    "spot": "lamp"
+   },
+   "needs": [],
+   "gives": [],
+   "hints": []
+  },
+  {
+   "id": "push",
+   "mechanism": "power_spot",
+   "params": {
+    "power": "STRENGTH",
+    "pushes": 2
+   },
+   "slots": {
+    "spot": "rock"
+   },
+   "needs": [],
+   "gives": [],
+   "hints": []
+  },
+  {
+   "id": "cut",
+   "mechanism": "power_spot",
+   "params": {
+    "power": "CUT"
+   },
+   "slots": {
+    "spot": "bush"
+   },
+   "needs": [],
+   "gives": [],
+   "hints": []
+  },
+  {
+   "id": "out",
+   "mechanism": "debug_button",
+   "params": {},
+   "slots": {
+    "exit": "exit"
+   },
+   "needs": [
+    "dex",
+    "unown",
+    "weigh",
+    "types",
+    "cries",
+    "pcbox",
+    "duel",
+    "flash",
+    "push",
+    "cut"
+   ],
+   "gives": [],
+   "hints": []
+  }
+ ],
+ "secret": null,
+ "combines": []
+}

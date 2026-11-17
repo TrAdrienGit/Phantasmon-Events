@@ -6,6 +6,7 @@ import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.ClueType;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.Json;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.ViewerKind;
 
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
@@ -58,11 +59,20 @@ public final class RoomViews {
 					progress.put("total", p[1]);
 				});
 			}
+			s.mechanism.world(s.state).ifPresent(w -> n.set("world", withBound(room, s, w))); // what the world around the slots shows (T8.3)
 			if (viewer == ViewerKind.GAME_MASTER) {
 				n.put("mechanism", s.step.mechanism());
 				n.put("hints_given", s.hintsGiven);
 			}
 		}
+		ArrayNode partners = out.putArray("partners"); // T8.3: public, every client draws them next to their trainer
+		for (var p : room.partners) {
+			ObjectNode n = partners.addObject();
+			n.put("player", p.player());
+			n.put("species", p.species());
+			n.put("power", p.power().name());
+		}
+		out.put("ghost_partner", com.mystaria.phantasmon_backend.events.trahison.pokemon.Partners.GHOST_SPECIES);
 		ArrayNode slots = out.putArray("slots");
 		for (Slot slot : room.definition.slots()) {
 			ArrayNode shows = shows(room, slot);
@@ -105,6 +115,33 @@ public final class RoomViews {
 			p.put("orientation", place.orientation());
 		}
 		return out;
+	}
+
+	/**
+	 * T8.3: a mechanism played in the world needs the geometry of its slots even before the step opens (an obstacle stands there from the
+	 * start): {@code bound} maps each role of the step to its slot (id, position, size, orientation, in the room's own frame). Never a secret.
+	 */
+	private static JsonNode withBound(RoomInstance room, StepRuntime s, JsonNode world) {
+		if (!(world instanceof ObjectNode w)) {
+			return world;
+		}
+		ObjectNode bound = w.putObject("bound");
+		for (var role : s.step.slots().entrySet()) {
+			room.definition.slot(role.getValue()).ifPresent(slot -> {
+				ObjectNode b = bound.putObject(role.getKey());
+				b.put("id", slot.id());
+				ObjectNode pos = b.putObject("position");
+				pos.put("x", slot.position().x());
+				pos.put("y", slot.position().y());
+				pos.put("z", slot.position().z());
+				ObjectNode size = b.putObject("size");
+				size.put("x", slot.size().x());
+				size.put("y", slot.size().y());
+				size.put("z", slot.size().z());
+				b.put("orientation", slot.orientation());
+			});
+		}
+		return w;
 	}
 
 	/** What one slot shows now: the puzzles bound to it, the clues given to it, the exit. Empty: the slot is inactive. */

@@ -72,7 +72,7 @@ Même outil que l'éditeur du plan, mais avec un **bâton en main** (sinon tu co
 ## Les emplacements
 
 Un emplacement est une boîte marquée dans la salle où le jeu affichera quelque chose. Genres : `terminal`, `keypad`, `pickup`,
-`wall_clue`, `document`, `lever`, `plate`, `pedestal`, `inner_door`, `exit`, `secret`.
+`wall_clue`, `document`, `lever`, `plate`, `pedestal`, `inner_door`, `exit`, `secret`, `power_spot`.
 
 1. Sélectionne la boîte (le bloc où poser un digicode, une zone de mur pour un indice…).
 2. Panneau, onglet **Emplacements** : choisis le genre, **Nouveau**. L'emplacement prend la boîte sélectionnée (coin minimal et
@@ -118,6 +118,7 @@ Bas) ; à droite, l'étape choisie :
   « 1 : rouge, 2 : bleu… », dans la langue du joueur) sur un emplacement `document`. Vous pouvez placer l'un, l'autre ou les deux ; sans aucun des deux le schéma n'est montré
   nulle part et le backend refuse l'enregistrement. Un mauvais câblage complet est un court-circuit : tous les fils sautent. Les joueurs lisent le schéma, retournent au panneau et tirent les fils : une borne de gauche doit arriver à une borne de droite de la bonne couleur.
 - **Décodeur** (`code_breaker`) : un emplacement `terminal` ou `pedestal` lié au rôle `terminal`, une étape `code_breaker` (paramètres `length` 3 à 5, `alphabet` 4 à 9, `kind` `symbols` ou `digits`, `repeats`, `maxTries`).
+- **Pouvoir du partenaire** (`power_spot`, T8.3) : un emplacement de genre `power_spot` lié au rôle `spot`, une étape `power_spot` (`power` : `FLASH`, `STRENGTH`, `CUT` ou `SURF` ; `pushes` pour Force ; `radius` pour Flash). **La boîte de l'emplacement doit rester vide d'air dans les blocs de la salle** : le client y pose les faux blocs (Force : un rocher qui avance sur le grand côté de la boîte, qui doit avoir `pushes` + 1 cases ; Coupe : des feuilles ; Surf : un mur invisible pour qui n'a pas le pouvoir ; Flash : la boîte, élargie de 2 blocs, est la zone sombre). Au plus trois pouvoirs différents par salle ; chaque pouvoir va à un membre différent du groupe. Un exemple complet : `exemples/salle-essai-cobblemon.json`.
   **Aucun indice** : la logique suffit, les joueurs déduisent la combinaison des réponses « bien placé / mal placé » (les essais restent à l'écran). Avec `maxTries` (6 à 30), un terminal qui manque d'essais
   efface l'historique (la combinaison ne change pas).
 - **Trois leviers** (`three_levers`) : trois emplacements `lever` **aux trois coins** de la salle, liés aux rôles `lever_1`, `lever_2` et `lever_3` d'une même étape (chacun son emplacement), et les paramètres

@@ -222,3 +222,35 @@ Choix appliqué : l'écran montre, en texte, les lignes de la table utiles au du
 - [ ] Écran plus grand pour le duel
 
 Ta réponse :
+
+## D190. Partenaires : espèces imposées par pouvoir, pas l'équipe du joueur
+Choix appliqué : chaque pouvoir a trois espèces possibles (Flash : Chinchou, Lanturn, Muciole ; Force : Machoc, Racaillou, Makuhita ; Coupe : Insécateur, Farfuret... voir `Partners.SPECIES`) et la graine de la salle en tire une ; le partenaire n'a rien à voir avec les vrais Pokémon du joueur. Un nouveau tirage à chaque rejeu d'une salle (D8).
+- [x] Espèces fixes par pouvoir, tirées à la graine *(par défaut)*
+- [ ] Le joueur garde le même partenaire d'une salle à l'autre de la manche
+- [ ] Le partenaire est un des Pokémon Ghost du joueur (touche à Phantasmon : non)
+
+Ta réponse :
+
+## D191. Plus petit groupe que de pouvoirs demandés
+Choix appliqué : une salle demande au plus 3 pouvoirs différents (le validateur refuse plus). Si un groupe a moins de membres que de pouvoirs demandés, ou si un pouvoir demandé n'est tenu par personne, **tout membre peut agir** sur ce pouvoir (`anyone`) : l'étape n'est jamais impossible, et le voile de Flash disparaît dans ce cas.
+- [x] Tout membre agit quand personne ne tient le pouvoir *(par défaut)*
+- [ ] Refuser la salle pour un groupe trop petit (au tirage des salles)
+- [ ] Laisser l'étape impossible (le maître du jeu la résout)
+
+Ta réponse :
+
+## D192. Obstacles en faux blocs : la salle les laisse vides
+Choix appliqué : les obstacles de Force (rocher : 1 bloc de cobblestone moussue qui avance sur le grand côté de la boîte de l'emplacement, il faut `pushes` + 1 cases), Coupe (la boîte remplie de feuilles) et Surf (la boîte murée de barrières invisibles pour tous sauf les porteurs, **en permanence**) sont posés par le client sur l'air seulement : le décor de la salle laisse la boîte de l'emplacement vide (de l'eau décorative sous Surf est autorisée si la boîte est au-dessus). Le serveur Minecraft ne connaît pas ces blocs, comme les portes ; la boîte de l'emplacement est aussi la zone de Flash (élargie de 2 blocs).
+- [x] Faux blocs posés par le client sur de l'air *(par défaut)*
+- [ ] Le décor de la salle contient déjà le rocher et les feuilles (retirés ensuite par le client)
+- [ ] Surf : les barrières disparaissent pour tous une fois l'étape résolue
+
+Ta réponse :
+
+## D193. Partenaire : suit sans physique, visible de tous les vivants du groupe
+Choix appliqué : l'entité Cobblemon locale suit son dresseur derrière et à droite, à la hauteur du dresseur, sans collision (sur une pente ou une volée d'escaliers il flotte un peu) ; chaque client la crée seulement pour les membres vivants, connectés et non factices du groupe du joueur ; un fantôme voit son seul partenaire Spectre (Fantominus). Si Cobblemon refuse l'espèce, rien n'est dessiné et le jeu continue (l'écran de pouvoir `PartnerHud` dit toujours le nom).
+- [x] Suivi simple sans physique, groupe seulement *(par défaut)*
+- [ ] Marche au sol comme les Ghosts de Phantasmon (code de suivi à copier : long)
+- [ ] Partenaires de tous les groupes visibles dans le temps libre
+
+Ta réponse :

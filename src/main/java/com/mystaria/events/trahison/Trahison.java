@@ -58,6 +58,9 @@ public final class Trahison {
 		com.mystaria.events.trahison.world.Bodies.register();
 		com.mystaria.events.trahison.hud.BodyPrompt.register();
 		com.mystaria.events.trahison.hud.GhostOverlay.register();
+		com.mystaria.events.trahison.hud.PartnerHud.register();
+		com.mystaria.events.trahison.world.PowerWorld.register();
+		com.mystaria.events.trahison.world.PartnerEntities.register();
 		com.mystaria.events.trahison.hud.CabinPrompt.register();
 		com.mystaria.events.trahison.hud.FinalDoorPrompt.register();
 		com.mystaria.events.trahison.hud.ResultsHud.register();
