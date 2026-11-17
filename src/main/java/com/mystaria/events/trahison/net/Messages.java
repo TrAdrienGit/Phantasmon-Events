@@ -81,6 +81,50 @@ public final class Messages {
 		send(ACTION, "spectate", Map.of("on", on), true);
 	}
 
+	/** T7.2: searches the hiding spot {@code spot} of the plan (the backend checks the 3 blocks and the stage). */
+	public static void search(String spot) {
+		send(ACTION, "search", Map.of("spot", spot), true);
+	}
+
+	/** T7.2: uses a secret item. {@code target}: a seat (knife, bonds, letter); {@code where}: a door or cabin id (lock, pass, ear); {@code text}: the letter. */
+	public static void useObject(String item, Integer target, String where, String text) {
+		Map<String, Object> extra = new LinkedHashMap<>();
+		extra.put("item", item);
+		if (target != null) {
+			extra.put("target", target);
+		}
+		if (where != null) {
+			extra.put("door", where);
+		}
+		if (text != null) {
+			extra.put("text", text);
+		}
+		send(ACTION, "use_object", extra, true);
+	}
+
+	/** T7.2: reopens a door locked with the lock, from the outside. */
+	public static void unlock(String door) {
+		send(ACTION, "unlock", Map.of("door", door), true);
+	}
+
+	/** T7.2: starts untying a tied player, then finishes it after the waiting time (the second call frees him). */
+	public static void untie(int target) {
+		send(ACTION, "untie", Map.of("target", target), true);
+	}
+
+	/** T7.1, the seer: learns the vote already cast by one side of a group. */
+	public static void foresee(int group, boolean pair) {
+		Map<String, Object> extra = new LinkedHashMap<>();
+		extra.put("group", group);
+		extra.put("side", pair ? "pair" : "solo");
+		send(ACTION, "foresee", extra, true);
+	}
+
+	/** T7.1, the gambler: bets on the vote of the opposite side of his group. */
+	public static void bet(boolean ally) {
+		send(ACTION, "bet", Map.of("vote", ally ? "ally" : "betray"), true);
+	}
+
 	/** T6: takes the bracelet off the body of player {@code body}; the backend checks the zone and the 3 blocks. */
 	public static void takeBracelet(int body) {
 		send(ACTION, "take_bracelet", Map.of("body", body), true);

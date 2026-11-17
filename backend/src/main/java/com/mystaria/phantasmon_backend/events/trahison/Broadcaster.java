@@ -13,6 +13,7 @@ import java.util.function.Supplier;
 
 import com.mystaria.phantasmon_backend.events.trahison.game.Game;
 import com.mystaria.phantasmon_backend.events.trahison.game.GameListener;
+import com.mystaria.phantasmon_backend.events.trahison.game.MapViews;
 import com.mystaria.phantasmon_backend.events.trahison.game.PlayerState;
 import com.mystaria.phantasmon_backend.events.trahison.game.Views;
 import com.mystaria.phantasmon_backend.events.trahison.room.PuzzleUpdate;
@@ -179,13 +180,38 @@ class Broadcaster implements GameListener, RoomListener {
 		}
 	}
 
-	/** Zones only show in the game master's view: nobody else gets anything when a player changes zone. */
+	/** T7: a role or a letter, told to one seat only ({@code kind: whisper}); a bot has nobody to tell. */
+	@Override
+	public void whispered(Game g, int seat, String key, List<String> args) {
+		if (seat < 0 || seat >= g.players.size() || g.players.get(seat).bot) {
+			return;
+		}
+		Map<String, Object> say = new java.util.LinkedHashMap<>();
+		say.put("kind", "whisper");
+		say.put("key", key);
+		say.put("args", args);
+		say.put("phase", g.phase.name());
+		say.put("round", g.round);
+		sessions.send(g.players.get(seat).uuid, WsMessage.of(SAY, say));
+	}
+
+	/** T11.2: the new room is in the explorer's own view, nobody else's. */
+	@Override
+	public void exploredChanged(Game g, int seat) {
+		if (seat >= 0 && seat < g.players.size() && !g.players.get(seat).bot) {
+			audiences.put(g.hub, Audience.of(g));
+			sendView(g, g.players.get(seat).uuid);
+		}
+	}
+
+	/** Zones and cursors only show to those who see everything (game masters, spectators, ghosts): no living player gets anything. */
 	@Override
 	public void zonesChanged(Game g) {
 		Audience audience = Audience.of(g);
 		audiences.put(g.hub, audience);
-		for (UUID account : audience.gameMasters()) {
-			if (Views.kindOf(g, account) == Views.Kind.GM || g.indexOf(account) >= 0) { // D12: a playing game master too
+		for (UUID account : recipients(g.hub, audience)) {
+			// D12: a playing game master too. T11.2 (D14, D16): the spectators and the ghosts see the cursors on the map.
+			if (MapViews.seesAll(g, Views.kindOf(g, account), account)) {
 				sendView(g, account);
 			}
 		}

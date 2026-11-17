@@ -76,6 +76,12 @@ public final class Outcome {
 		return out;
 	}
 
+	/** T7.1: besides who got out, the seats that fulfilled their role's objective (see {@link Roles#objectivesMet}). */
+	public static List<Integer> objectivesMet(java.util.Map<Integer, Role> roles, boolean[] alive, java.util.Collection<Integer> winners,
+			java.util.Set<Integer> infiltratorBetrayed) {
+		return Roles.objectivesMet(roles, alive, winners, infiltratorBetrayed);
+	}
+
 	private static void check(int a, int b) {
 		if (a != Assignment.BRACELETS || b != Assignment.BRACELETS) {
 			throw new IllegalArgumentException("Expected arrays of length 9");

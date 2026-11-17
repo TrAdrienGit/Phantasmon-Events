@@ -110,6 +110,8 @@ public final class Views {
 		}
 		v.put("bracelets", bracelets);
 		v.put("bodies", bodies(g, kind, me, sees));
+		v.put("restrained", restrained(g, now));
+		v.put("roles", rolesRevealed(g));
 		v.put("disconnected", disconnected(g, me));
 		v.put("ghost_display", g.settings.ghostDisplay.name());
 		// D102: who watches is told to those who watch (ghosts, spectators, game masters), never to a living player.
@@ -133,6 +135,9 @@ public final class Views {
 		v.put("doors_dead", r == null ? new ArrayList<>() : new ArrayList<>(r.diedAtDoors));
 		v.put("game_masters", gameMasters(g, viewer));
 		v.put("viewer", viewer(g, r, kind, viewer));
+		boolean mapSeesAll = MapViews.seesAll(g, kind, viewer);
+		v.put("map_rooms", MapViews.rooms(g, mapSeesAll));
+		v.put("map_cursors", MapViews.cursors(g, mapSeesAll));
 		v.put("results", results(g));
 		v.put("final_door", finalDoor(g));
 		v.put("winners", g.phase == Phase.ENDED ? new ArrayList<>(g.winners) : null);
@@ -339,7 +344,62 @@ public final class Views {
 			"door_passed", passed, "side_voted", sideVoted, "own_vote", ownVote, "my_cabin", myCabin, "can_open_final_door", canOpenFinal,
 			"can_roam", index >= 0 && kind == Kind.PLAYER && GameService.canRoam(g, index),
 			"is_game_master", g.gameMasters.contains(uuid),
-			"carried", index >= 0 ? new ArrayList<>(g.players.get(index).carried) : new ArrayList<>());
+			"carried", index >= 0 ? new ArrayList<>(g.players.get(index).carried) : new ArrayList<>(),
+			"role", index >= 0 && g.roleOf(index) != null ? g.roleOf(index).name() : null,
+			"role_info", index >= 0 ? roleInfo(g, r, index) : null,
+			"items", index >= 0 ? new ArrayList<>(g.players.get(index).items) : new ArrayList<>(),
+			"restrained_until", index >= 0 ? restrainedUntil(g.players.get(index)) : null,
+			"listening", index >= 0 ? g.listening.get(index) : null,
+			"explored", MapViews.viewerExplored(g, kind, uuid), "explored_all", MapViews.seesAll(g, kind, uuid));
+	}
+
+	private static Long restrainedUntil(PlayerState p) {
+		return p.restrainedUntil;
+	}
+
+	/**
+	 * T7.1: what a role remembers, for its owner only: the seer's vision (and whether it is spent), the gambler's bet of this
+	 * round and whether he was paid, whether the infiltrator got his point. Null for a seat with no such role.
+	 */
+	private static Map<String, Object> roleInfo(Game g, RoundState r, int seat) {
+		com.mystaria.phantasmon_backend.events.trahison.rules.Role role = g.roleOf(seat);
+		if (role == null) {
+			return null;
+		}
+		RoleState st = g.roleState;
+		return switch (role) {
+			case SEER -> orderedMap("used", st.seerUsed, "group", st.seerGroup, "side", st.seerSide, "vote", st.seerVote);
+			case GAMBLER -> orderedMap("paid", st.gamblerPaid, "bet", r == null ? null : st.bets.get(r.number));
+			case INFILTRATOR -> orderedMap("done", st.infiltratorBetrayed.contains(seat));
+			default -> null;
+		};
+	}
+
+	/** The players tied up right now with the time their rope holds (epoch ms): ropes are visible to everybody. */
+	private static List<Object> restrained(Game g, Instant now) {
+		List<Object> out = new ArrayList<>();
+		for (int i = 0; i < g.players.size(); i++) {
+			Long until = g.players.get(i).restrainedUntil;
+			if (until != null && until > now.toEpochMilli() && g.players.get(i).alive) {
+				out.add(orderedMap("player", i, "until", until));
+			}
+		}
+		return out;
+	}
+
+	/** T7.1: once the game is over every role is revealed (the game master who played too, D49), with who met his objective. */
+	private static List<Object> rolesRevealed(Game g) {
+		if (g.phase != Phase.ENDED) {
+			return null;
+		}
+		List<Object> out = new ArrayList<>();
+		for (int i = 0; i < g.players.size(); i++) {
+			var role = g.roleOf(i);
+			if (role != null) {
+				out.add(orderedMap("index", i, "role", role.name(), "objective_met", g.objectivesMet.contains(i)));
+			}
+		}
+		return out;
 	}
 
 	/**
@@ -391,7 +451,21 @@ public final class Views {
 			PlayerState p = g.players.get(i);
 			zones.add(orderedMap("index", i, "zone", p.zone, "x", p.x, "y", p.y, "z", p.z));
 		}
-		return orderedMap("votes", votes, "zones", zones,
+		List<Object> roles = new ArrayList<>();
+		List<Object> carried = new ArrayList<>();
+		for (int i = 0; i < g.players.size(); i++) {
+			var role = g.roleOf(i);
+			roles.add(orderedMap("index", i, "role", role == null ? null : role.name()));
+			carried.add(orderedMap("index", i, "items", new ArrayList<>(g.players.get(i).items)));
+		}
+		List<Object> hiding = new ArrayList<>();
+		g.hiddenItems.forEach((spot, item) -> hiding.add(orderedMap("spot", spot, "item", item)));
+		Map<String, Object> itemCounts = new LinkedHashMap<>();
+		g.settings.items.forEach((item, n) -> itemCounts.put(item.name(), n));
+		return orderedMap("votes", votes, "zones", zones, "roles", roles, "player_items", carried, "hidden_items", hiding,
+			"unplaced_items", new ArrayList<>(g.unplacedItems), "role_state", roleState(g),
+			"role_settings", orderedMap("roles", new ArrayList<>(g.settings.roles), "role_count", g.settings.roleCount, "items", itemCounts,
+				"bonds_seconds", g.settings.bondsSeconds, "lock_seconds", g.settings.lockSeconds),
 			"settings", orderedMap("mode", g.settings.mode.name(), "durations", durations,
 				"door_open_seconds", g.settings.doorOpenSeconds, "final_door_seconds", g.settings.finalDoorSeconds,
 				"cabin_partner_seconds", g.settings.cabinPartnerSeconds,
@@ -412,6 +486,12 @@ public final class Views {
 				"orientation", p.orientation()));
 		}
 		return orderedMap("seed", g.draw.seed(), "picks", picks, "relaxed", new ArrayList<>(g.draw.relaxed()));
+	}
+
+	private static Map<String, Object> roleState(Game g) {
+		RoleState st = g.roleState;
+		return orderedMap("seer_used", st.seerUsed, "seer_group", st.seerGroup, "seer_side", st.seerSide, "seer_vote", st.seerVote,
+			"bets", new LinkedHashMap<>(st.bets), "gambler_paid", st.gamblerPaid, "infiltrator_betrayed", new ArrayList<>(st.infiltratorBetrayed));
 	}
 
 	private static String name(Vote v) {

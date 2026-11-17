@@ -20,6 +20,16 @@ public final class LayoutDto {
 	public List<Spot> hidingSpots = new ArrayList<>();
 	/** The big results board of the hall (T2.4); null: the plan has none, the results are drawn on the HUD instead. */
 	public ResultsBoard resultsBoard;
+	/** The floors of the map (T11.1): empty means the plan counts one floor. */
+	public List<Floor> floors = new ArrayList<>();
+
+	/** A floor: a display name and a slice of heights {@code yMin} to {@code yMax}, both included (world y). */
+	public static final class Floor {
+		public String id;
+		public String name;
+		public Integer yMin;
+		public Integer yMax;
+	}
 
 	/** A box of blocks, both corners included. */
 	public static final class Box {
@@ -122,6 +132,7 @@ public final class LayoutDto {
 		roomSlots = roomSlots == null ? new ArrayList<>() : roomSlots;
 		cabins = cabins == null ? new ArrayList<>() : cabins;
 		hidingSpots = hidingSpots == null ? new ArrayList<>() : hidingSpots;
+		floors = floors == null ? new ArrayList<>() : floors;
 		zones.forEach(z -> z.boxes = z.boxes == null ? new ArrayList<>() : z.boxes);
 		doors.forEach(d -> d.colors = d.colors == null ? new ArrayList<>() : d.colors);
 		return this;

@@ -22,4 +22,12 @@ public interface GameListener {
 	/** A player's zone changed (at most once per second per game): only the game masters' views show zones. */
 	default void zonesChanged(Game game) {
 	}
+
+	/** A player went into a zone of the plan for the first time (T11.2): only his own view changes. */
+	default void exploredChanged(Game game, int seat) {
+	}
+
+	/** A private line for one seat (a role, a letter): {@code key} is a language key, {@code args} its arguments. Never a bot. */
+	default void whispered(Game game, int seat, String key, java.util.List<String> args) {
+	}
 }

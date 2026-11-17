@@ -94,3 +94,5 @@
 - **D112** D50 : quels pouvoirs comptent : choix par défaut confirmé (2026-11-17).
 - **D113** Bracelets déposés : l'ordre du ramassage : choix par défaut confirmé (2026-11-17).
 - **D114** Réglages d'une partie venus du message `create` : choix par défaut confirmé (2026-11-17).
+- **D111 (spectateurs non inscrits)** : fait. Un bouton « Regarder » (« Arrêter de regarder » une fois inscrit) dans l'écran du lobby de `GameScreen`, en plus de la commande `spectate` ; seuls les comptes inscrits ont la marque (réponse du 2026-11-17).
+- **D120 (compteur d'objets)** : fait. `BraceletHud.stepCounters` montre aussi le compteur « Objets : n / total » au maître du jeu, aux spectateurs et aux fantômes, pour la salle dont ils occupent le carré (`Rooms.roomAtPlayer`).

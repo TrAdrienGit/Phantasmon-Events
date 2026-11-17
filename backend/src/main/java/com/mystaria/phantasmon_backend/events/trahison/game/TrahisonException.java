@@ -36,6 +36,27 @@ public class TrahisonException extends RuntimeException {
 	public static final String BANK_TOO_SMALL = "ERROR_TRAHISON_BANK_TOO_SMALL";
 	public static final String NO_BODY = "ERROR_TRAHISON_NO_BODY";
 	public static final String BODY_TOO_FAR = "ERROR_TRAHISON_BODY_TOO_FAR";
+	/** T7.1: the guardian's betray vote is refused (answered to him alone, nobody else can ever trigger it). */
+	public static final String CANNOT_BETRAY = "ERROR_TRAHISON_CANNOT_BETRAY";
+	public static final String NOT_YOUR_ROLE = "ERROR_TRAHISON_NOT_YOUR_ROLE";
+	public static final String POWER_USED = "ERROR_TRAHISON_POWER_USED";
+	public static final String ALREADY_BET = "ERROR_TRAHISON_ALREADY_BET";
+	public static final String NOT_VOTED_YET = "ERROR_TRAHISON_NOT_VOTED_YET";
+	/** T7.2: items. */
+	public static final String NO_SUCH_SECRET_ITEM = "ERROR_TRAHISON_NO_SUCH_SECRET_ITEM";
+	public static final String RESTRAINED = "ERROR_TRAHISON_RESTRAINED";
+	public static final String ALREADY_RESTRAINED = "ERROR_TRAHISON_ALREADY_RESTRAINED";
+	public static final String NOT_RESTRAINED = "ERROR_TRAHISON_NOT_RESTRAINED";
+	public static final String TARGET_TOO_FAR = "ERROR_TRAHISON_TARGET_TOO_FAR";
+	public static final String UNTYING = "ERROR_TRAHISON_UNTYING";
+	public static final String NOT_LOCKABLE = "ERROR_TRAHISON_NOT_LOCKABLE";
+	public static final String NOT_LOCKED = "ERROR_TRAHISON_NOT_LOCKED";
+	public static final String ALREADY_LOCKED = "ERROR_TRAHISON_ALREADY_LOCKED";
+	public static final String DOOR_LOCKED = "ERROR_TRAHISON_DOOR_LOCKED";
+	public static final String NO_SPOT = "ERROR_TRAHISON_NO_SPOT";
+	public static final String SPOT_EMPTY = "ERROR_TRAHISON_SPOT_EMPTY";
+	public static final String SPOT_TOO_FAR = "ERROR_TRAHISON_SPOT_TOO_FAR";
+	public static final String CANNOT_SEARCH_NOW = "ERROR_TRAHISON_CANNOT_SEARCH_NOW";
 	public static final String UNKNOWN_ACTION = "ERROR_TRAHISON_UNKNOWN_ACTION";
 
 	private final String code;

@@ -58,6 +58,9 @@ public class Game {
 	 */
 	public RoomDraw.Result draw;
 
+	/** T11.2: the zones of the plan each seat has been in (seat to zone ids, in order of first visit). Private to the seat. */
+	public java.util.Map<Integer, List<String>> explored = new java.util.LinkedHashMap<>();
+
 	public Phase phase = Phase.LOBBY;
 	/** 1..3, stays 3 during the final. */
 	public int round;
@@ -78,6 +81,20 @@ public class Game {
 	public java.util.Map<UUID, String> spectators = new java.util.LinkedHashMap<>();
 	/** D50: the seats of the playing game masters whose own powers set their bracelet to 0; if that kills them, nobody wins by it. */
 	public List<Integer> selfDestined = new ArrayList<>();
+	/** T7.1: what the secret roles remember (the roles themselves are {@code players[i].role}). */
+	public RoleState roleState = new RoleState();
+	/** T7.1: the seats that fulfilled their role's objective, set when the game ends. */
+	public List<Integer> objectivesMet = new ArrayList<>();
+	/** T7.2: the items still hidden in the plan's hiding spots (spot id to {@code Item} name). Secret. */
+	public java.util.Map<String, String> hiddenItems = new java.util.LinkedHashMap<>();
+	/** T7.2: items the draw found no hiding spot for (the plan has too few). Secret, game masters only. */
+	public List<String> unplacedItems = new ArrayList<>();
+	/** T7.2: the doors locked by the lock item (door id to its lock). */
+	public java.util.Map<String, LockedDoor> lockedDoors = new java.util.LinkedHashMap<>();
+	/** T7.2: the cabin each player listens to with the ear this VOTE (seat to cabin id); T5.4 plays the sound. */
+	public java.util.Map<Integer, String> listening = new java.util.LinkedHashMap<>();
+	/** T7.2: the untying in progress (target seat to who is untying him). */
+	public java.util.Map<Integer, Untying> untying = new java.util.LinkedHashMap<>();
 	/** The bodies of the dead players (T6.1), in order of death. */
 	public List<Body> bodies = new ArrayList<>();
 	/** Couples of bracelet indices {lo, hi} (see {@link History}). */
@@ -113,6 +130,17 @@ public class Game {
 			}
 		}
 		return out;
+	}
+
+	/** The role of this seat, or null (the game master who plays has {@code GAME_MASTER}, D12). */
+	public com.mystaria.phantasmon_backend.events.trahison.rules.Role roleOf(int seat) {
+		if (seat < 0 || seat >= players.size()) {
+			return null;
+		}
+		if (gameMasters.contains(players.get(seat).uuid)) {
+			return com.mystaria.phantasmon_backend.events.trahison.rules.Role.GAME_MASTER;
+		}
+		return com.mystaria.phantasmon_backend.events.trahison.rules.Role.parse(players.get(seat).role);
 	}
 
 	/** The body of this dead player, or null. */

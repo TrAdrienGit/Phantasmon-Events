@@ -4,6 +4,8 @@ import java.util.EnumMap;
 import java.util.Map;
 
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomDraw;
+import com.mystaria.phantasmon_backend.events.trahison.rules.Item;
+import com.mystaria.phantasmon_backend.events.trahison.rules.Role;
 
 /** What the organiser can tune before a game. Plain data, serialized with the game. */
 public class Settings {
@@ -59,6 +61,42 @@ public class Settings {
 	/** T4.1: rooms played in this many past games are avoided while the bank allows. */
 	public int drawAvoidGames = RoomDraw.Params.DEFAULT.avoidGames();
 
+	/** T7.1: the roles the draw may hand out (names of {@code Role}); the default is the six of the plan. */
+	public java.util.List<String> roles = new java.util.ArrayList<>(Role.drawable().stream().map(Enum::name).toList());
+	/** T7.1: how many roles are drawn (0 to 6, the plan says 2 or 3); the game master who plays and the bots get none. */
+	public int roleCount = DEFAULT_ROLE_COUNT;
+	public static final int DEFAULT_ROLE_COUNT = 3;
+	/** T7.2: how many of each item are hidden (0 to 2; the plan's default is 1 of each, so the lone explorers are not too strong). */
+	public Map<Item, Integer> items = defaultItems();
+	/** T7.2: how long bonds hold at most (plan: 10 minutes) and how long a lock holds (5 minutes), in seconds. */
+	public int bondsSeconds = DEFAULT_BONDS_SECONDS;
+	public static final int DEFAULT_BONDS_SECONDS = 600;
+	public int lockSeconds = DEFAULT_LOCK_SECONDS;
+	public static final int DEFAULT_LOCK_SECONDS = 300;
+	/** T7.2: how long somebody must stay next to a tied player to untie him (seconds). */
+	public int untieSeconds = DEFAULT_UNTIE_SECONDS;
+	public static final int DEFAULT_UNTIE_SECONDS = 5;
+
+	public static Map<Item, Integer> defaultItems() {
+		Map<Item, Integer> out = new EnumMap<>(Item.class);
+		for (Item item : Item.values()) {
+			out.put(item, 1);
+		}
+		return out;
+	}
+
+	/** The roles of {@link #roles} that exist (an unknown name is ignored). */
+	public java.util.Set<Role> activeRoles() {
+		java.util.Set<Role> out = java.util.EnumSet.noneOf(Role.class);
+		for (String name : roles) {
+			Role r = Role.parse(name);
+			if (r != null && r != Role.GAME_MASTER) {
+				out.add(r);
+			}
+		}
+		return out;
+	}
+
 	public RoomDraw.Params drawParams() {
 		return new RoomDraw.Params(drawMaxSpread, drawRise, drawAvoidGames);
 	}
@@ -94,6 +132,12 @@ public class Settings {
 	/** Test helper: the free vote, no cabins needed. */
 	public Settings withoutCabins() {
 		cabinsRequired = false;
+		return this;
+	}
+
+	/** No secret role is drawn (tests whose votes must not meet a role rule). */
+	public Settings withoutRoles() {
+		roleCount = 0;
 		return this;
 	}
 

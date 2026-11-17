@@ -322,3 +322,42 @@
 - `paste_sheet.txt` s'ouvre avec ses accents (UTF-8) ; dans le hub, chaque coin a aussi « (monde : x=… z=…) » qui tombe bien sur le coin réel ; hors du hub, la fiche le dit.
 - Le fichier `all_places` est écrit même quand les places sont très éloignées (jusqu'à la limite des formats).
 - « Vérifier le collage » signale une place dont un panneau porte un autre texte.
+
+## T7.1 et T7.2 : rôles secrets et objets cachés (2026-11-17)
+
+À faire avec 9 comptes (ou des factices), un plan qui a des cachettes et une porte ordinaire.
+
+- Démarrer la partie : au prologue, chaque joueur qui a un rôle reçoit une ligne privée de l'animatrice avec son rôle (3 joueurs par défaut). Le maître du jeu qui joue reçoit « Tu es le maître du jeu ». Les autres ne reçoivent rien.
+- Écran du joueur : un bloc « Ton rôle secret » avec le nom et le texte du rôle. Aucun autre joueur ne le voit ; seuls les maîtres du jeu (superviseur ou qui joue) ont tous les rôles, dans leur bloc `gm`.
+- Gardien : cliquer « Trahir » est refusé avec un message privé ; « Allier » passe.
+- Infiltré : trahir à la manche 1 donne +1 aux résultats (le tableau montre +4 face à un « Allier »), pas à la manche 2.
+- Voyant (en `VOTE`) : après qu'un camp a voté, un bouton « Porte n, paire/solo » lui montre ce vote, une seule fois ; refus avant le vote de ce camp.
+- Parieur : un pari par manche avant le vote du camp d'en face ; un pari juste donne +1, une seule fois dans la partie.
+- Fin de partie (porte finale, ou le maître du jeu termine) : l'écran liste tous les rôles avec « (objectif atteint) » pour ceux qui l'ont rempli.
+- Cachettes : en temps libre, près d'une cachette, « Fouiller ici » donne un objet (visible seulement de soi). Une cachette vide est refusée. Trop loin est refusé.
+- Couteau : choisir la cible dans la liste ; à moins de 3 blocs dans la même zone, elle meurt (corps, cause `knife` chez le maître du jeu) ; derrière une porte fermée (autre zone), refusé et le couteau reste.
+- Liens : la cible attachée ne peut plus marcher ni sauter (mixin), peut tourner la tête ; un bandeau rouge avec les secondes ; un autre joueur à côté clique « Détacher » et reste 5 secondes : libérée. Sinon libérée seule après 10 minutes. Un attaché au vote vote « Allier » par défaut.
+- Verrou : près d'une porte ordinaire, « Utiliser » le ferme pour tous ; de l'extérieur, « Déverrouiller la porte proche » la rouvre ; la Passe la rouvre de partout ; sinon elle s'ouvre seule après 5 minutes. Verrou sur la cabine d'un groupe : ses membres ne peuvent pas voter (« Allier »).
+- Bouclier : le prochain -2 est annulé, l'objet disparaît. Lettre : `/phantasmon event trahison letter 3 coucou` arrive à la place 3 sans nom.
+- Lobby : le bouton « Regarder » inscrit comme spectateur (comme la commande), « Arrêter de regarder » le retire.
+- D120 : un maître du jeu ou un spectateur qui se tient dans le carré d'une salle voit « Objets : n / total » en haut à droite.
+
+## T11 : la carte du lieu
+
+À faire avec deux joueurs, un maître du jeu et un spectateur, après un tirage des salles. Plan : au moins deux étages déclarés dans l'onglet « Étages » de l'éditeur (par exemple y 60 à 69 et y 70 à 79).
+
+1. **Étages.** Éditeur du plan, onglet « Étages » : créer deux étages, essayer de les chevaucher (par exemple 60..70 et 70..80) puis enregistrer : la liste des erreurs cite « Des étages se chevauchent ». Corriger, enregistrer, recharger (`reload`) : les deux étages sont identiques.
+2. **Ouverture.** Dans une partie sortie du lobby, appuyer sur Z (touche réglable) : la carte s'ouvre sur l'étage où l'on se tient, avec une flèche à la couleur de son bracelet, orientée comme le regard (nord en haut). Dans le lobby, Z affiche seulement « La carte n'est pas encore disponible ». Z (ou Échap) la referme.
+3. **Étages.** Cliquer les onglets d'étage, puis tourner la molette sur eux : l'étage change. Un escalier à cheval sur deux étages apparaît sur les deux. « Suivre » recentre la carte sur soi et prend l'étage où l'on est.
+4. **Exploration.** Au début, les places de salle sont hachurées et nommées ; entrer dans une place : elle perd ses hachures. L'autre joueur voit **les siennes** seulement. Se déconnecter, revenir : l'exploration est restée. Redémarrer le backend en pleine partie : elle est restée aussi.
+5. **Noms.** Les noms des salles de la manche en cours sont affichés, ceux des manches suivantes ne le sont pas (D151). Le maître du jeu et le spectateur voient tous les noms.
+6. **Portes.** Ouvrir une porte (par la barre des bracelets ou `set_door` du maître du jeu) : sur la carte ouverte, elle passe de la barre rouge pleine à deux montants verts, sans rouvrir l'écran. Une porte de couleur montre les symboles de ses deux couleurs quand on zoome. Survol : « Porte rouge et verte : ouverte ».
+7. **Zoom et déplacement.** Molette sur la carte : zoom autour du curseur ; clic droit tiré : déplacement ; « Cadrer » : tout l'étage. Les noms trop petits disparaissent, l'infobulle les donne.
+8. **Dessin.** Crayon : tracer, changer d'encre ; zoomer : les traits restent à leur place. Gomme : effacer un trait. « Tout effacer » demande confirmation, annuler ne perd rien. Tracer sur chaque étage : les traits sont par étage.
+9. **Bloc-notes.** Onglet « Bloc-notes » : écrire plusieurs lignes, Entrée, flèches, Début, Fin, Suppr, coller (Ctrl+V), cliquer pour placer le curseur. À 8 000 signes la saisie s'arrête.
+10. **Persistance.** Dessiner et écrire, attendre 3 secondes, se déconnecter, revenir (ou se connecter depuis un autre ordinateur) : traits et notes sont revenus.
+11. **Secret.** L'autre joueur n'a ni ton curseur, ni tes traits, ni tes notes. Le maître du jeu, le spectateur et le fantôme voient les curseurs de tous (disques à la couleur du bracelet, sans direction), toutes les salles sans hachures, et gardent leurs propres traits. Un joueur vivant ne voit aucun autre curseur.
+12. **Bilan (D15).** À la fin de la partie, ouvrir la carte : le bouton « Mes notes / Notes de … » fait défiler les traits et les notes de tout le monde ; on ne peut plus écrire.
+13. **Limites.** Dessiner longtemps sur un étage : à 2 000 points la pastille « Limite de dessin atteinte » apparaît et le crayon s'arrête.
+14. **Petits écrans.** Vérifier à 320 x 180 et 854 x 480 pixels d'interface (taille de l'interface réglée dans les options) : la barre d'outils passe sur deux lignes, rien ne déborde, la légende devient le « ? ».
+15. **Fond fait à la main.** Copier `textures/trahison/map/example.png` en `<id d'étage>.png` (par exemple `main.png`) dans un pack : il remplace les aplats de cet étage (calé sur la boîte englobante, D153).

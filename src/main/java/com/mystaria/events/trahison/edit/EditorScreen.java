@@ -17,6 +17,7 @@ import com.mystaria.events.trahison.edit.EditKinds.Kind;
 import com.mystaria.events.trahison.edit.LayoutDto.Box;
 import com.mystaria.events.trahison.edit.LayoutDto.Cabin;
 import com.mystaria.events.trahison.edit.LayoutDto.Door;
+import com.mystaria.events.trahison.edit.LayoutDto.Floor;
 import com.mystaria.events.trahison.edit.LayoutDto.Pos;
 import com.mystaria.events.trahison.edit.LayoutDto.ResultsBoard;
 import com.mystaria.events.trahison.edit.LayoutDto.Slot;
@@ -36,7 +37,7 @@ import com.mystaria.phantasmon.client.gui.menu.MenuUi;
 public final class EditorScreen extends Screen {
 
 	private static final String T = "phantasmon_events.trahison.edit.";
-	private static final int PANEL_W = 248;
+	private static final int PANEL_W = 272;
 	private static final int PAD = 8;
 	private static final int ROW_H = 18;
 	private static final int ROW_PITCH = 20;
@@ -61,6 +62,7 @@ public final class EditorScreen extends Screen {
 	private final PanelUi ui = new PanelUi();
 	private final PanelUi modalUi = new PanelUi();
 	private final PanelUi.Field idField = new PanelUi.Field(40);
+	private final PanelUi.Field floorNameField = new PanelUi.Field(40, true);
 	private String formKey;
 	private Confirm confirm;
 	private int listScroll;
@@ -253,11 +255,13 @@ public final class EditorScreen extends Screen {
 			case CABIN -> TrahisonPalette.BETRAY;
 			case SPOT -> EditKinds.SPOT_COLOR;
 			case BOARD -> EditKinds.BOARD_COLOR;
+			case FLOOR -> TrahisonPalette.ACCENT;
 		};
 		g.fill(x + 7, y + 4, x + 17, y + 14, TrahisonPalette.BORDER);
 		g.fill(x + 8, y + 5, x + 16, y + 13, chip);
 		Component pillText = switch (kind) {
 			case SLOT -> t("round_short", TrahisonEditor.slot(id).round == null ? "?" : TrahisonEditor.slot(id).round);
+			case FLOOR -> Component.literal(floorRange(TrahisonEditor.floor(id)));
 			case CABIN -> TrahisonEditor.cabin(id).side == null ? null : t("side." + TrahisonEditor.cabin(id).side);
 			default -> null;
 		};
@@ -304,6 +308,13 @@ public final class EditorScreen extends Screen {
 		formScroll = 0;
 		formKey = TrahisonEditor.selectedKind + ":" + id;
 		idField.value = id;
+		if (TrahisonEditor.selectedKind == Kind.FLOOR) {
+			floorNameField.value = TrahisonEditor.floor(id).name == null ? "" : TrahisonEditor.floor(id).name;
+		}
+	}
+
+	private static String floorRange(Floor floor) {
+		return floor == null ? "" : (floor.yMin == null ? "?" : floor.yMin) + ".." + (floor.yMax == null ? "?" : floor.yMax);
 	}
 
 	/** Applies the id typed in the form: renames the element, or puts the old id back when it is refused. */
@@ -513,6 +524,28 @@ public final class EditorScreen extends Screen {
 				y += FORM_PITCH;
 				y += MenuUi.paragraph(g, t("board.help"), x + 2, y, w - 4, TrahisonPalette.TEXT_MUTED) + 4;
 			}
+			case FLOOR -> {
+				Floor floor = TrahisonEditor.floor(id);
+				label(g, x, y, "floor_name");
+				ui.field(g, floorNameField, cxl, y, cw2, ROW_H, false);
+				if (!floorNameField.value.equals(floor.name == null ? "" : floor.name)) {
+					floor.name = floorNameField.value;
+					TrahisonEditor.changed();
+				}
+				y += FORM_PITCH;
+				y = cycleRow(g, x, y, w, "y_min", Component.literal(floor.yMin == null ? "-" : Integer.toString(floor.yMin)), dir -> {
+					floor.yMin = (floor.yMin == null ? 64 : floor.yMin) + dir * (Screen.hasShiftDown() ? 8 : 1);
+					TrahisonEditor.changed();
+				});
+				y = cycleRow(g, x, y, w, "y_max", Component.literal(floor.yMax == null ? "-" : Integer.toString(floor.yMax)), dir -> {
+					floor.yMax = (floor.yMax == null ? 64 : floor.yMax) + dir * (Screen.hasShiftDown() ? 8 : 1);
+					TrahisonEditor.changed();
+				});
+				ui.button(g, x, y, w, ROW_H, t("floor.from_selection"), ButtonKind.PRIMARY, t("floor.from_selection.tip"),
+						TrahisonEditor.selectionLocal() == null ? null : () -> TrahisonEditor.setHeights(floor));
+				y += FORM_PITCH;
+				y += MenuUi.paragraph(g, t("floor.help"), x + 2, y, w - 4, TrahisonPalette.TEXT_MUTED) + 4;
+			}
 			case SPOT -> {
 				Spot spot = TrahisonEditor.spot(id);
 				label(g, x, y, "position");
@@ -640,7 +673,7 @@ public final class EditorScreen extends Screen {
 	/** A click on a problem selects the first element it names, when it still exists. */
 	private void jumpTo(TrahisonEditor.Issue issue) {
 		for (String id : issue.ids()) {
-			for (Kind kind : List.of(Kind.DOOR, Kind.ZONE, Kind.SLOT, Kind.CABIN, Kind.SPOT, Kind.BOARD)) {
+			for (Kind kind : List.of(Kind.DOOR, Kind.ZONE, Kind.SLOT, Kind.CABIN, Kind.SPOT, Kind.BOARD, Kind.FLOOR)) {
 				if (TrahisonEditor.exists(kind, id)) {
 					TrahisonEditor.select(kind, id);
 					view = View.LIST;

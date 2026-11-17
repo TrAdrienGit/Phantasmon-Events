@@ -4,7 +4,13 @@ import java.util.List;
 
 /** The fixed plan of the complex, without its version: what is stored as JSON and what the validator checks. */
 public record LayoutContent(List<LayoutZone> zones, List<LayoutDoor> doors, List<RoomSlot> roomSlots, List<Cabin> cabins,
-		List<HidingSpot> hidingSpots, ResultsBoard resultsBoard) {
+		List<HidingSpot> hidingSpots, ResultsBoard resultsBoard, List<Floor> floors) {
+
+	/** A plan without floors (one implicit floor). */
+	public LayoutContent(List<LayoutZone> zones, List<LayoutDoor> doors, List<RoomSlot> roomSlots, List<Cabin> cabins,
+			List<HidingSpot> hidingSpots, ResultsBoard resultsBoard) {
+		this(zones, doors, roomSlots, cabins, hidingSpots, resultsBoard, null);
+	}
 
 	/** A plan without a results board. */
 	public LayoutContent(List<LayoutZone> zones, List<LayoutDoor> doors, List<RoomSlot> roomSlots, List<Cabin> cabins,
@@ -18,9 +24,10 @@ public record LayoutContent(List<LayoutZone> zones, List<LayoutDoor> doors, List
 		roomSlots = roomSlots == null ? List.of() : List.copyOf(roomSlots);
 		cabins = cabins == null ? List.of() : List.copyOf(cabins);
 		hidingSpots = hidingSpots == null ? List.of() : List.copyOf(hidingSpots);
+		floors = floors == null ? List.of() : List.copyOf(floors);
 	}
 
 	public static LayoutContent empty() {
-		return new LayoutContent(null, null, null, null, null, null);
+		return new LayoutContent(null, null, null, null, null, null, null);
 	}
 }

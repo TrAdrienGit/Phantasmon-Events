@@ -11,7 +11,8 @@
 		"LevelGhostEditMixin",
 		"PlayerRendererGhostNameMixin",
 		"MultiPlayerGameModeGhostMixin",
-		"ServerPlayerGameModeGhostMixin"
+		"ServerPlayerGameModeGhostMixin",
+		"KeyboardInputRestrainMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

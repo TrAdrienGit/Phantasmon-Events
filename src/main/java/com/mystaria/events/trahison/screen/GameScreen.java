@@ -51,6 +51,8 @@ public final class GameScreen extends TrahisonScreen {
 	private long pendingAt;
 	private Vote shownVote;
 	private long shownVoteAt;
+	/** T7: the role, the items and what they allow. */
+	private final SecretsPanel secrets = new SecretsPanel(ui);
 
 	private GameScreen() {
 		super(Component.translatable(T + "title"), TrahisonPalette.ACCENT);
@@ -195,6 +197,8 @@ public final class GameScreen extends TrahisonScreen {
 		ctxScroll = clamp(ctxScroll, ctxContent - viewH);
 		ui.clip(g, x - 1, cy, x + w + 1, bottom);
 		int ay = cy - ctxScroll;
+		int secretH = secrets.draw(g, v, x, ay, w);
+		ay += secretH;
 		int used = switch (v.phase()) {
 			case LOBBY -> drawLobby(g, v, x, ay, w);
 			case PROLOGUE, FREE_TIME -> hint(g, T + "hint." + v.phase().key(), x, ay, w);
@@ -207,6 +211,7 @@ public final class GameScreen extends TrahisonScreen {
 			default -> 0;
 		};
 		ui.unclip(g);
+		used += secretH;
 		ctxContent = used;
 		if (used > viewH) {
 			int[] thumb = MenuUi.thumb(cy, viewH, used, ctxScroll);
@@ -255,7 +260,16 @@ public final class GameScreen extends TrahisonScreen {
 		} else {
 			ui.button(g, x, y + used, w, TrahisonUi.BUTTON_H, Component.translatable(T + "join"), ButtonKind.PRIMARY, null, Messages::join);
 		}
-		return used + TrahisonUi.BUTTON_H;
+		used += TrahisonUi.BUTTON_H;
+		if (!registered && v.viewer().kind() != ViewerKind.GM) {
+			// D111: the "spectate" command as a button; "Stop watching" once registered as a spectator.
+			boolean watching = com.mystaria.events.trahison.net.Secrets.spectating();
+			used += 4;
+			ui.button(g, x, y + used, w, TrahisonUi.BUTTON_H, Component.translatable(T + (watching ? "spectate.off" : "spectate")), ButtonKind.DEFAULT,
+					Component.translatable(T + "spectate.tip"), () -> Messages.spectate(!watching));
+			used += TrahisonUi.BUTTON_H;
+		}
+		return used;
 	}
 
 	private int drawDoors(GuiGraphics g, View v, int x, int y, int w) {

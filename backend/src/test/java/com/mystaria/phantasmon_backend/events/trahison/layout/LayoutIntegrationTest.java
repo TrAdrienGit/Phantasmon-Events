@@ -4,6 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -129,5 +130,24 @@ class LayoutIntegrationTest {
 				.andExpect(status().isConflict())
 				.andExpect(jsonPath("$.error_code").value("ERROR_TRAHISON_LAYOUT_CONFLICT"))
 				.andExpect(jsonPath("$.details.version").value(1));
+	}
+
+	@Test
+	void aPlanWithTwoFloorsIsSavedAndReadBackIdentically() throws Exception {
+		LayoutContent base = LayoutFixtures.complete();
+		List<Floor> floors = List.of(new Floor("ground", "Ground", 60, 69), new Floor("upper", "Upper", 70, 79));
+		var body = new LayoutRequest(0, false, base.zones(), base.doors(), base.roomSlots(), base.cabins(), base.hidingSpots(),
+				null, floors);
+		mockMvc.perform(post("/events/trahison/layout/" + hub).header("Authorization", adminToken)
+				.contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(body)))
+				.andExpect(status().isOk()).andExpect(jsonPath("$.floors.length()").value(2));
+		String json = mockMvc.perform(get("/events/trahison/layout/" + hub).header("Authorization", playerToken))
+				.andExpect(jsonPath("$.floors[1].y_min").value(70)).andReturn().getResponse().getContentAsString();
+		org.assertj.core.api.Assertions.assertThat(mapper.readValue(json, Layout.class).floors()).isEqualTo(floors);
+		var overlapping = new LayoutRequest(1, false, base.zones(), base.doors(), base.roomSlots(), base.cabins(),
+				base.hidingSpots(), null, List.of(new Floor("a", "A", 1, 5), new Floor("b", "B", 5, 9)));
+		mockMvc.perform(post("/events/trahison/layout/" + hub).header("Authorization", adminToken)
+				.contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(overlapping)))
+				.andExpect(status().isBadRequest());
 	}
 }

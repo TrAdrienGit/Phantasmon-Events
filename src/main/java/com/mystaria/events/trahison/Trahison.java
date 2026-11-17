@@ -29,6 +29,10 @@ public final class Trahison {
 	public static final KeyMapping CABIN_KEY = new KeyMapping("key.phantasmon_events.trahison_cabin",
 			InputConstants.Type.KEYSYM, org.lwjgl.glfw.GLFW.GLFW_KEY_V, "key.categories.phantasmon_events");
 
+	/** Opens the map of the complex (T11). Z, because M is the Cobblemon summary and N, O, P, J, H are taken by the modpack. Rebindable. */
+	public static final KeyMapping MAP_KEY = new KeyMapping("key.phantasmon_events.trahison_map",
+			InputConstants.Type.KEYSYM, org.lwjgl.glfw.GLFW.GLFW_KEY_Z, "key.categories.phantasmon_events");
+
 	private Trahison() {
 	}
 
@@ -37,6 +41,7 @@ public final class Trahison {
 		com.mystaria.events.trahison.edit.TrahisonEditor.register();
 		com.mystaria.events.trahison.minigame.PuzzleScreens.install();
 		com.mystaria.events.trahison.net.Link.register();
+		com.mystaria.events.trahison.map.MapNotes.register();
 		com.mystaria.events.trahison.hud.BraceletHud.register();
 		com.mystaria.events.trahison.world.Zones.register();
 		com.mystaria.events.trahison.world.FakeBlocks.register();
@@ -54,7 +59,13 @@ public final class Trahison {
 		com.mystaria.events.trahison.hud.ResultsHud.register();
 		KeyBindingHelper.registerKeyBinding(MENU_KEY);
 		KeyBindingHelper.registerKeyBinding(CABIN_KEY);
+		KeyBindingHelper.registerKeyBinding(MAP_KEY);
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			while (MAP_KEY.consumeClick()) {
+				if (client.screen == null && client.player != null) {
+					com.mystaria.events.trahison.screen.MapScreen.open();
+				}
+			}
 			while (MENU_KEY.consumeClick()) {
 				if (client.screen == null && client.player != null) {
 					com.mystaria.events.trahison.screen.GameScreen.open();

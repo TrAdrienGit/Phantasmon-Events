@@ -90,6 +90,10 @@ public final class Announcer {
 		if ("announce".equals(kind) && data.get("key") != null) {
 			Object[] args = data.get("args") instanceof java.util.List<?> list ? list.stream().map(String::valueOf).toArray() : new Object[0];
 			say(Component.translatable(String.valueOf(data.get("key")), args));
+		} else if ("whisper".equals(kind) && data.get("key") != null) {
+			// T7: a role at the prologue, an anonymous letter: private, said in the hostess's voice.
+			Object[] args = data.get("args") instanceof java.util.List<?> list ? list.stream().map(String::valueOf).toArray() : new Object[0];
+			say(Component.translatable(String.valueOf(data.get("key")), args));
 		} else if ("error".equals(kind) && data.get("code") != null) {
 			String code = String.valueOf(data.get("code"));
 			error(Component.translatableWithFallback("phantasmon_events.error." + code.toLowerCase(Locale.ROOT), code));

@@ -57,14 +57,35 @@ public final class BraceletHud {
 			top = draw(g, view, sw, sh);
 		}
 		if (!screenDraws) {
+			tiedNotice(g, sw);
 			stepCounters(g, sw);
 			Announcer.render(g, sw, sh, top);
 		}
 	}
 
+	/** T7.2: a player tied up is told, with the seconds his rope still holds (top centre). */
+	private static void tiedNotice(GuiGraphics g, int sw) {
+		if (!com.mystaria.events.trahison.net.Secrets.restrained()) {
+			return;
+		}
+		long left = Math.max(0, (com.mystaria.events.trahison.net.Secrets.restrainedUntil() - GameView.serverNow()) / 1000);
+		Component line = Component.translatable(T + "secret.tied", left);
+		int w = TrahisonUi.width(line) + 12;
+		int x = (sw - w) / 2;
+		int y = TrahisonUi.SAFE_MARGIN;
+		g.fill(x, y, x + w, y + 14, TrahisonUi.withAlpha(TrahisonPalette.PANEL, 0xE0));
+		MenuUi.outline(g, x, y, x + w, y + 14, TrahisonPalette.DANGER);
+		MenuUi.text(g, line, x + 6, y + 3, w - 8, TrahisonPalette.DANGER);
+	}
+
 	/** D61: the counters of the open steps of the player's own room, top right ("Objects: 2 / 3"). */
 	private static void stepCounters(GuiGraphics g, int sw) {
 		com.mystaria.events.trahison.room.RoomView room = com.mystaria.events.trahison.room.Rooms.mine();
+		if (room == null && com.mystaria.events.trahison.room.Rooms.ownIndex() < 0) {
+			// D120: a game master, a spectator or a ghost sees the counters of the room whose square he stands in.
+			com.mystaria.events.trahison.room.RoomView at = com.mystaria.events.trahison.room.Rooms.roomAtPlayer();
+			room = at != null && com.mystaria.events.trahison.room.Rooms.currentRound(at) ? at : null;
+		}
 		if (room == null || room.finished() || room.progress().isEmpty() || com.mystaria.events.trahison.minigame.MiniGameScreen.isOpen()) {
 			return;
 		}

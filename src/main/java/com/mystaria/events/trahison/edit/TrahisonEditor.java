@@ -29,6 +29,7 @@ import com.mystaria.events.trahison.edit.EditKinds.Kind;
 import com.mystaria.events.trahison.edit.LayoutDto.Box;
 import com.mystaria.events.trahison.edit.LayoutDto.Cabin;
 import com.mystaria.events.trahison.edit.LayoutDto.Door;
+import com.mystaria.events.trahison.edit.LayoutDto.Floor;
 import com.mystaria.events.trahison.edit.LayoutDto.Pos;
 import com.mystaria.events.trahison.edit.LayoutDto.ResultsBoard;
 import com.mystaria.events.trahison.edit.LayoutDto.Slot;
@@ -231,6 +232,7 @@ public final class TrahisonEditor {
 					ids.add(EditKinds.BOARD_ID);
 				}
 			}
+			case FLOOR -> layout.floors.forEach(e -> ids.add(e.id));
 		}
 		return ids;
 	}
@@ -254,6 +256,10 @@ public final class TrahisonEditor {
 	/** The results board (its id is {@link EditKinds#BOARD_ID}), or null. */
 	static ResultsBoard board(String id) {
 		return EditKinds.BOARD_ID.equals(id) ? layout.resultsBoard : null;
+	}
+
+	static Floor floor(String id) {
+		return layout.floors.stream().filter(e -> e.id.equals(id)).findFirst().orElse(null);
 	}
 
 	static Spot spot(String id) {
@@ -317,6 +323,18 @@ public final class TrahisonEditor {
 					layout.resultsBoard = board;
 				}
 			}
+			case FLOOR -> {
+				Floor floor = new Floor();
+				floor.id = id;
+				floor.name = id;
+				// The next slice above the last floor, 16 blocks high, or the selection's heights when there is one.
+				Box sel = selectionHub();
+				int top = layout.floors.stream().filter(f -> f.yMax != null).mapToInt(f -> f.yMax).max().orElse(Integer.MIN_VALUE);
+				int base = sel != null ? sel.minY : top == Integer.MIN_VALUE ? 64 : top + 1;
+				floor.yMin = base;
+				floor.yMax = sel != null ? sel.maxY : base + 15;
+				layout.floors.add(floor);
+			}
 		}
 		select(kind, id);
 		changed();
@@ -356,6 +374,7 @@ public final class TrahisonEditor {
 			case CABIN -> layout.cabins.removeIf(e -> e.id.equals(id));
 			case SPOT -> layout.hidingSpots.removeIf(e -> e.id.equals(id));
 			case BOARD -> layout.resultsBoard = null;
+			case FLOOR -> layout.floors.removeIf(e -> e.id.equals(id));
 		}
 		if (kind == selectedKind && id.equals(selectedId)) {
 			selectedId = null;
@@ -395,6 +414,7 @@ public final class TrahisonEditor {
 			case CABIN -> cabin(from).id = to;
 			case SPOT -> spot(from).id = to;
 			case BOARD -> { }
+			case FLOOR -> floor(from).id = to;
 		}
 		if (kind == selectedKind && from.equals(selectedId)) {
 			selectedId = to;
@@ -461,6 +481,16 @@ public final class TrahisonEditor {
 		}
 	}
 
+	/** A floor takes the selection's heights. */
+	static void setHeights(Floor floor) {
+		Box sel = selectionHub();
+		if (sel != null) {
+			floor.yMin = sel.minY;
+			floor.yMax = sel.maxY;
+			changed();
+		}
+	}
+
 	static void setPosition(Spot spot) {
 		Box box = selectionHub();
 		if (box != null) {
@@ -497,7 +527,7 @@ public final class TrahisonEditor {
 
 	/** What goes to the backend: the plan and where it comes from. */
 	private record SaveBody(int baseVersion, boolean draft, List<Zone> zones, List<Door> doors, List<Slot> roomSlots,
-			List<Cabin> cabins, List<Spot> hidingSpots, ResultsBoard resultsBoard) {
+			List<Cabin> cabins, List<Spot> hidingSpots, ResultsBoard resultsBoard, List<Floor> floors) {
 	}
 
 	/** Saves a new version; {@code draft}: an incomplete plan, without the completeness checks. */
@@ -507,7 +537,7 @@ public final class TrahisonEditor {
 		}
 		busy = true;
 		setStatus(Component.translatable("phantasmon_events.trahison.edit.saving"), false);
-		SaveBody body = new SaveBody(layout.version, draft, layout.zones, layout.doors, layout.roomSlots, layout.cabins, layout.hidingSpots, layout.resultsBoard);
+		SaveBody body = new SaveBody(layout.version, draft, layout.zones, layout.doors, layout.roomSlots, layout.cabins, layout.hidingSpots, layout.resultsBoard, layout.floors);
 		PhantasmonApi.post("/events/trahison/layout/" + URLEncoder.encode(hub, StandardCharsets.UTF_8), body, LayoutDto.class)
 				.whenComplete((saved, failure) -> Minecraft.getInstance().execute(() -> {
 					busy = false;

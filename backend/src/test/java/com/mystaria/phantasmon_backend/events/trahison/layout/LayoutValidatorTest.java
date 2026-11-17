@@ -202,4 +202,43 @@ class LayoutValidatorTest {
 				.anyMatch(i -> i.code().equals(LayoutValidator.MISSING_FIELD) && i.info().equals("field=threshold"));
 		assertThat(LayoutValidator.validate(noPupitre, true)).isEmpty();
 	}
+
+	private static LayoutContent withFloors(List<Floor> floors) {
+		LayoutContent base = LayoutFixtures.complete();
+		return new LayoutContent(base.zones(), base.doors(), base.roomSlots(), base.cabins(), base.hidingSpots(), null, floors);
+	}
+
+	@Test
+	void twoFloorsWithDisjointSlicesAreValid() {
+		assertThat(LayoutValidator.validate(withFloors(List.of(new Floor("ground", "Ground", 60, 69),
+				new Floor("upper", "Upper", 70, 79))), false)).isEmpty();
+	}
+
+	@Test
+	void overlappingFloorSlicesAreRefusedEvenInADraft() {
+		LayoutContent plan = withFloors(List.of(new Floor("a", "A", 60, 70), new Floor("b", "B", 70, 80)));
+		assertThat(LayoutValidator.validate(plan, true)).anyMatch(i -> i.code().equals(LayoutValidator.FLOOR_OVERLAP)
+				&& i.ids().equals(List.of("a", "b")));
+	}
+
+	@Test
+	void aFloorNeedsAnIdAnOrderedSliceAndInACompletePlanANameAndHeights() {
+		assertThat(codes(withFloors(List.of(new Floor("a", "A", 5, 1))), true)).contains(LayoutValidator.BAD_BOX);
+		assertThat(codes(withFloors(List.of(new Floor("a", "A", 1, 2), new Floor("a", "B", 3, 4))), true))
+				.contains(LayoutValidator.DUPLICATE_ID);
+		assertThat(codes(withFloors(List.of(new Floor("a", null, null, 4))), true)).isEmpty();
+		assertThat(codes(withFloors(List.of(new Floor("a", null, null, 4))), false))
+				.containsOnly(LayoutValidator.MISSING_FIELD, LayoutValidator.MISSING_FIELD);
+	}
+
+	@Test
+	void anElementIsOnTheFloorsItsBoxTouchesAndAPlanWithoutFloorsHasOne() {
+		List<Floor> floors = List.of(new Floor("ground", "Ground", 60, 69), new Floor("upper", "Upper", 70, 79));
+		assertThat(Floor.floorsOf(floors, 62, 66)).containsExactly("ground");
+		assertThat(Floor.floorsOf(floors, 72, 75)).containsExactly("upper");
+		assertThat(Floor.floorsOf(floors, 66, 73)).containsExactly("ground", "upper");
+		assertThat(Floor.floorsOf(floors, 100, 110)).isEmpty();
+		assertThat(Floor.floorsOf(List.of(), -64, 300)).containsExactly(Floor.IMPLICIT_ID);
+		assertThat(Floor.effective(null)).hasSize(1);
+	}
 }

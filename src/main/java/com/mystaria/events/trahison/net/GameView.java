@@ -366,6 +366,8 @@ public final class GameView {
 	/** Forgets the view (left the hub, disconnected). */
 	public static void clear() {
 		current = null;
+		Secrets.clear();
+		MapData.clear();
 		cabinsState = Cabins.NONE;
 		finalDoorState = null;
 		lobbyState = Lobby.NONE;
@@ -393,6 +395,8 @@ public final class GameView {
 		long now = System.currentTimeMillis();
 		clockOffset = next.serverTime() > 0 ? next.serverTime() - now : clockOffset;
 		current = next;
+		Secrets.update(data); // T7: roles, items, ropes
+		MapData.update(data); // T11: explored rooms, room names, cursors
 		cabinsState = next.hasGame() ? parseCabins(data) : Cabins.NONE;
 		finalDoorState = next.hasGame() && data.get("final_door") instanceof Map<?, ?> fd && fd.get("open_until") instanceof Number until
 				? new FinalDoor(until.longValue(), fd.get("openers") instanceof Number n ? n.intValue() : 0) : null;

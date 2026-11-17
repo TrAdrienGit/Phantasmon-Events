@@ -53,7 +53,7 @@ class CabinsTest {
 	/** A game in VOTE (round 1), 9 humans unless {@code bots} of them are fake players. Everybody passed a colour door. */
 	private void gameInVote(Settings settings, int bots) {
 		service.useLayouts((hub, version) -> Layout.of(hub, 1, false, Instant.EPOCH, plan()));
-		service.create(HUB, settings, 5L);
+		service.create(HUB, settings.withoutRoles(), 5L);
 		for (int i = 0; i < 9; i++) {
 			ids[i] = new UUID(0, i + 1);
 			service.join(HUB, ids[i], "p" + i, i >= 9 - bots);
@@ -315,7 +315,7 @@ class CabinsTest {
 
 	@Test
 	void anAbsentVoteIsAllyForASoloAndTheOtherMemberVotesAloneForAPair() {
-		gameInVote(Settings.fast(100).withoutCabins(), 0);
+		gameInVote(Settings.fast(100).withoutCabins().withoutRoles(), 0);
 		DoorGroup g0 = group(0);
 		DoorGroup g1 = group(1);
 		// group 0: the solo does not vote (ALLY), one member of the pair votes alone for the pair
@@ -365,7 +365,7 @@ class CabinsTest {
 
 	@Test
 	void withCabinsNotRequiredTheVoteIsFreeAnywhereAndNothingLocks() {
-		gameInVote(Settings.fast(100).withoutCabins(), 0);
+		gameInVote(Settings.fast(100).withoutCabins().withoutRoles(), 0);
 		int p = group(0).solo();
 		stand(p, "vote");
 		service.vote(HUB, ids[p], Vote.BETRAY);

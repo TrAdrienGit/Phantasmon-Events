@@ -215,7 +215,7 @@ Si un artiste ajoute des textures plus tard, les mettre sous
 
 | Fichier | Taille | Usage |
 |---|---|---|
-| (aucun) | | |
+| `textures/trahison/map/<id d'étage>.png` | tout format, étiré sur la boîte englobante de l'étage | Fond de carte fait à la main, remplace les aplats de salles de cet étage (T11.3) ; `example.png` est un modèle à renommer ; l'étage implicite d'un plan sans étage s'appelle `main` |
 
 ## 11. Construire un nouvel écran : liste de contrôle
 
@@ -341,3 +341,15 @@ teinte allumé) ; le vote part avec « Confirmer » (ou Entrée), puis le choix 
 `ALLY` pour « S'allier » (symbole `Glyph.ALLY`), violet `BETRAY` pour « Trahir » (symbole `Glyph.BETRAY`) ; flèches gauche et droite
 choisissent. Aucun jeton nouveau. Le tableau des résultats du monde (`world/ResultsBoardWorld`) reprend `BG_DEEP`, `PANEL`, les pastilles de
 vote et les glyphes de la palette, sans les formes des écrans ; son repli HUD (`hud/ResultsHud`) utilise `TrahisonUi.panel` et `glyphPill`.
+
+## 14. La carte du lieu (T11)
+
+`screen/MapScreen`, en mode **fenêtre** (720 x 420 au plus, le reste de l'écran à 320 x 180) : deux onglets (« Carte », « Bloc-notes »), puis, sur la carte, les onglets d'étage (à droite, seulement s'il y en a plusieurs ; la molette dessus change d'étage), une barre d'outils qui passe sur une deuxième ligne quand la fenêtre est étroite, le dessin, et une légende (en bas quand la fenêtre a 190 pixels de haut ou plus, sinon dans l'infobulle du bouton « ? »).
+
+- **Dessin** (tout est tracé en code, à partir du plan) : fond `BG_DEEP` et `dots` ; salles en aplats teintés par leur type (`BLUE_DARK` pour les places de salle, `BETRAY_DARK` pour le vote et les cabines, `SUCCESS_DARK` pour la porte finale, `GAME_MASTER_DARK` pour le hall des portes, `PANEL_RAISED` pour le hall) ; une place de salle jamais visitée est creusée (`PANEL_SUNKEN`) et **hachurée** (traits à 45 degrés en `EDGE`) ; contour `EDGE_LIGHT` ; nom au centre (`TEXT`, `TEXT_MUTED` si inexplorée), masqué quand la salle est trop petite à l'écran ; infobulle au survol.
+- **Portes** : fermée = barre pleine `DANGER` ; ouverte = deux montants `SUCCESS` sans vantail (la forme dit l'état, pas la couleur seule) ; inconnue = `TEXT_MUTED`. Une porte de couleur porte les symboles de ses deux couleurs (`glyph`, ton clair) quand le zoom est assez grand.
+- **Curseur** : une flèche à la couleur de bracelet du joueur (ton de base, contour `BORDER`, le symbole de la couleur à côté), orientée selon le regard, nord en haut. Pour qui voit tout (maître du jeu, spectateur, fantôme), un disque par joueur vivant (fond sombre de la couleur, symbole clair).
+- **Encres** (`INKS`) : `ACCENT_HOT`, `ALLY`, `BETRAY`, `TEXT`, jamais une couleur de jeu (un dessin n'est pas une porte) ; chaque pastille a son infobulle.
+- **Bloc-notes** : `well`, texte `TEXT` en lignes de 10 pixels, curseur `ACCENT` clignotant (période 1 s), compteur de signes en `TEXT_DISABLED` (`DANGER` à la limite).
+- **Écriture** : clic gauche = crayon ou gomme, clic droit = déplacer, molette = zoom (autour du curseur). « Tout effacer » demande confirmation (`modal`, `DANGER`). Un étage plein (2 000 points) le dit par une pastille `DANGER_DARK`.
+- Un fond d'étage fait à la main remplace les aplats (voir la section 10).

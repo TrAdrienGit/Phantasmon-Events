@@ -3,6 +3,7 @@ package com.mystaria.phantasmon_backend.events.trahison;
 import java.time.Clock;
 import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -21,9 +22,12 @@ import com.mystaria.phantasmon_backend.events.trahison.game.Phase;
 import com.mystaria.phantasmon_backend.events.trahison.game.Settings;
 import com.mystaria.phantasmon_backend.events.trahison.game.TrahisonException;
 import com.mystaria.phantasmon_backend.events.trahison.game.Views;
+import com.mystaria.phantasmon_backend.events.trahison.map.MapNotesService;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomAction;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomService;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomValidator;
+import com.mystaria.phantasmon_backend.events.trahison.rules.Item;
+import com.mystaria.phantasmon_backend.events.trahison.rules.Role;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Vote;
 import com.mystaria.phantasmon_backend.player.Player;
 import com.mystaria.phantasmon_backend.player.PlayerService;
@@ -60,6 +64,7 @@ public class TrahisonWsHandler implements WsMessageHandler {
 	static final String ACTION = "EventsTrahisonAction";
 	static final String GM = "EventsTrahisonGm";
 	static final String ZONE = "EventsTrahisonZone";
+	static final String MAP = "EventsTrahisonMap";
 
 	private static final JsonMapper MAPPER = JsonMapper.builder().build();
 
@@ -69,14 +74,16 @@ public class TrahisonWsHandler implements WsMessageHandler {
 	private final PlayerService players;
 	private final Broadcaster broadcaster;
 	private volatile HubGate hubGate;
+	private final MapNotesService mapNotes;
 
 	public TrahisonWsHandler(SessionRegistry sessionRegistry, GameService games, AdminService admins, PlayerService players,
-			HubGate hubGate, RoomService rooms) {
+			HubGate hubGate, RoomService rooms, MapNotesService mapNotes) {
 		this.sessionRegistry = sessionRegistry;
 		this.games = games;
 		this.admins = admins;
 		this.players = players;
 		this.hubGate = hubGate;
+		this.mapNotes = mapNotes;
 		this.broadcaster = new Broadcaster(sessionRegistry, Clock.systemUTC(), () -> this.hubGate, rooms, this::nameOf);
 		broadcaster.useAdmins(admins::isAdmin);
 		games.addListener(broadcaster);
@@ -109,6 +116,8 @@ public class TrahisonWsHandler implements WsMessageHandler {
 				gm(playerUuid, in);
 			} else if (ZONE.equals(type)) {
 				zone(playerUuid, in);
+			} else if (MAP.equals(type)) {
+				map(playerUuid, in);
 			}
 			// Later steps add their messages here; an unknown one is ignored.
 		} catch (TrahisonException ex) {
@@ -171,6 +180,27 @@ public class TrahisonWsHandler implements WsMessageHandler {
 				games.spectate(hub, who, nameOf(who), !Boolean.FALSE.equals(in.get("on")));
 			}
 			case "body_seen" -> games.bodySeen(hubOf(who, in, false), who, intArg(in, "body"));
+			// T7: hidden items and secret roles. The room inventory's own "use_item" stays as it was: the secret ones are "use_object".
+			case "search" -> games.search(hubOf(who, in, false), who, text(in, "spot", false));
+			case "use_object" -> {
+				Item item = Item.parse(in.get("item"));
+				if (item == null) {
+					throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "item required");
+				}
+				String where = in.get("door") instanceof String d ? d : in.get("cabin") instanceof String c ? c : null;
+				games.useObject(hubOf(who, in, false), who, item, in.get("target") instanceof Number n ? n.intValue() : null, where,
+					in.get("text") instanceof String t ? t : null);
+			}
+			case "unlock" -> games.unlock(hubOf(who, in, false), who, in.get("door") instanceof String d ? d : in.get("cabin") instanceof String c ? c : null);
+			case "untie" -> games.untie(hubOf(who, in, false), who, intArg(in, "target"));
+			case "foresee" -> {
+				String side = text(in, "side", true);
+				if (!side.equals("pair") && !side.equals("solo")) {
+					throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "side: pair or solo");
+				}
+				games.foresee(hubOf(who, in, false), who, intArg(in, "group"), side.equals("pair"));
+			}
+			case "bet" -> games.bet(hubOf(who, in, false), who, parseVote(in.get("vote")));
 			case "debug_solve" -> games.debugSolve(hubOf(who, in, false), who);
 			case "use_slot", "puzzle_input", "pick_up", "give_item", "use_item", "combine", "replay" -> {
 				ObjectNode data = MAPPER.valueToTree(in);
@@ -195,6 +225,57 @@ public class TrahisonWsHandler implements WsMessageHandler {
 		String zone = in.get("zone") instanceof String s && s.length() <= 64 ? s : null;
 		games.setConnected(mine.hub, who, true);
 		games.setZone(mine.hub, who, zone, x.doubleValue(), y.doubleValue(), z.doubleValue());
+	}
+
+	/**
+	 * {@code EventsTrahisonMap {op, hub?, ...}} (T11.4): the sender's own strokes and notes on the map. {@code get} answers
+	 * {@code state}; {@code set {strokes, notes}} saves (answers {@code saved}); {@code all}, once the game has ended, answers
+	 * everybody's ({@code all}, D15). Anyone around the game may annotate: a player, a ghost, a game master, a spectator.
+	 */
+	private void map(UUID who, Map<String, Object> in) {
+		String op = text(in, "op");
+		String hub = hubOf(who, in, true);
+		if (games.find(hub) == null) {
+			throw new TrahisonException(TrahisonException.NO_GAME, "no game");
+		}
+		UUID gameId = games.read(hub, g -> g.id);
+		Phase phase = games.read(hub, g -> g.phase);
+		Map<String, Object> out = new LinkedHashMap<>();
+		out.put("hub", hub);
+		switch (op) {
+			case "get" -> {
+				MapNotesService.Notes mine = mapNotes.get(gameId, who);
+				out.put("op", "state");
+				out.put("strokes", mine.strokes());
+				out.put("notes", mine.notes());
+			}
+			case "set" -> {
+				if (phase == Phase.ENDED) {
+					throw new TrahisonException(TrahisonException.GAME_ENDED, "the game is over");
+				}
+				mapNotes.save(gameId, who, in.get("strokes"), in.get("notes"));
+				out.put("op", "saved");
+			}
+			case "all" -> {
+				if (phase != Phase.ENDED) {
+					throw new TrahisonException(TrahisonException.WRONG_PHASE, "the game is not over");
+				}
+				List<Object> people = new java.util.ArrayList<>();
+				for (MapNotesService.Row row : mapNotes.all(gameId)) {
+					Map<String, Object> p = new LinkedHashMap<>();
+					p.put("account", row.account().toString());
+					p.put("name", nameOf(row.account()));
+					p.put("index", games.read(hub, g -> g.indexOf(row.account())));
+					p.put("strokes", row.notes().strokes());
+					p.put("notes", row.notes().notes());
+					people.add(p);
+				}
+				out.put("op", "all");
+				out.put("players", people);
+			}
+			default -> throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "op: get, set or all");
+		}
+		sessionRegistry.send(who, WsMessage.of(MAP, out));
 	}
 
 	private static boolean finite(Number n) {
@@ -336,6 +417,34 @@ public class TrahisonWsHandler implements WsMessageHandler {
 			if ("HIDDEN".equals(m.get("ghost_display"))) {
 				s.ghostDisplay = Settings.GhostDisplay.HIDDEN;
 			}
+			if (m.get("roles") instanceof java.util.List<?> names) {
+				s.roles = new java.util.ArrayList<>();
+				for (Object name : names) {
+					Role role = Role.parse(name);
+					if (role == null || role == Role.GAME_MASTER) {
+						throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "unknown role " + name);
+					}
+					s.roles.add(role.name());
+				}
+			}
+			if (m.get("role_count") instanceof Number n) {
+				s.roleCount = Math.max(0, Math.min(6, n.intValue()));
+			}
+			if (m.get("items") instanceof Map<?, ?> counts) {
+				for (Map.Entry<?, ?> e : counts.entrySet()) {
+					Item item = Item.parse(e.getKey());
+					if (item == null || !(e.getValue() instanceof Number n)) {
+						throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "bad item count for " + e.getKey());
+					}
+					s.items.put(item, Math.max(0, Math.min(2, n.intValue())));
+				}
+			}
+			if (m.get("bonds_seconds") instanceof Number n) {
+				s.bondsSeconds = Math.max(5, Math.min(1800, n.intValue()));
+			}
+			if (m.get("lock_seconds") instanceof Number n) {
+				s.lockSeconds = Math.max(5, Math.min(1800, n.intValue()));
+			}
 			if (m.get("auto_pause_seconds") instanceof Number n) {
 				s.autoPauseSeconds = Math.max(1, Math.min(1800, n.intValue()));
 			}
@@ -412,11 +521,15 @@ public class TrahisonWsHandler implements WsMessageHandler {
 	}
 
 	private static String text(Map<String, Object> in, String key) {
+		return text(in, key, true);
+	}
+
+	private static String text(Map<String, Object> in, String key, boolean lower) {
 		Object v = in.get(key);
 		if (!(v instanceof String s) || s.isBlank()) {
 			throw new TrahisonException(TrahisonException.BAD_ARGUMENT, key + " required");
 		}
-		return s.trim().toLowerCase(Locale.ROOT);
+		return lower ? s.trim().toLowerCase(Locale.ROOT) : s.trim();
 	}
 
 	private static String doorId(Map<String, Object> in) {

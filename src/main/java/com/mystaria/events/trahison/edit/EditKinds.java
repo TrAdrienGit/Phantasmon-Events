@@ -8,7 +8,7 @@ import com.mystaria.events.trahison.ui.TrahisonPalette;
 final class EditKinds {
 
 	enum Kind {
-		ZONE("zone"), DOOR("door"), SLOT("slot"), CABIN("cabin"), SPOT("spot"), BOARD("board");
+		ZONE("zone"), DOOR("door"), SLOT("slot"), CABIN("cabin"), SPOT("spot"), BOARD("board"), FLOOR("floor");
 
 		final String key;
 

@@ -30,6 +30,10 @@ import com.mystaria.phantasmon_backend.events.trahison.rules.Assignment;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Door;
 import com.mystaria.phantasmon_backend.events.trahison.rules.DoorGroup;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Doors;
+import com.mystaria.phantasmon_backend.events.trahison.rules.Item;
+import com.mystaria.phantasmon_backend.events.trahison.rules.ItemDraw;
+import com.mystaria.phantasmon_backend.events.trahison.rules.Role;
+import com.mystaria.phantasmon_backend.events.trahison.rules.Roles;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Outcome;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Placement;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Scoring;
@@ -285,8 +289,10 @@ public class GameService {
 				g.draw = GameDraws.assignPlaces(g.draw, planOf(g)); // the places of the plan version the game plays on
 			}
 			event(g, "start", Map.of("layoutVersion", g.layoutVersion));
+			drawRolesAndItems(g); // T7: roles and hidden items, from the seed
 			enterPhase(g, Phase.PROLOGUE);
 			persist(g);
+			whisperRoles(g); // after the views: each holder learns his role in private
 			return g;
 		}
 	}
@@ -580,7 +586,9 @@ public class GameService {
 			PlayerState p = g.players.get(i);
 			String next = zone == null || zone.isBlank() ? null : zone;
 			boolean changed = !java.util.Objects.equals(p.zone, next);
+			boolean moved = p.x == null || Math.abs(p.x - x) + Math.abs(p.z == null ? 0 : p.z - z) >= MOVED_BLOCKS;
 			p.zone = next;
+			boolean explored = MapViews.visit(g, i, next, next != null && knownZone(g, next));
 			p.x = x;
 			p.y = y;
 			p.z = z;
@@ -609,8 +617,29 @@ public class GameService {
 			} else if (cabinsMoved) {
 				notifyChanged(g, "cabin");
 			}
-			if (changed) {
-				zoneChanged(g);
+			if (explored) {
+				persist(g);
+				notifyExplored(g, i);
+			}
+			if (changed || moved) {
+				zoneChanged(g); // the cursors of those who watch follow the players
+			}
+		}
+	}
+
+	/** A player moved this far since his last report: those who watch get his new cursor (at most once a second). */
+	private static final double MOVED_BLOCKS = 2.0;
+
+	private boolean knownZone(Game g, String zone) {
+		return planOf(g).zones().stream().anyMatch(z -> zone.equals(z.id()));
+	}
+
+	private void notifyExplored(Game g, int seat) {
+		for (GameListener l : listeners) {
+			try {
+				l.exploredChanged(g, seat);
+			} catch (RuntimeException ex) {
+				log.warn("Trahison listener failed on exploredChanged", ex);
 			}
 		}
 	}
@@ -788,6 +817,14 @@ public class GameService {
 		g.doors = new java.util.LinkedHashMap<>(DoorStates.compute(plan, g.phase, g.round, r == null ? null : r.roomSolved,
 			g.doorOverrides, openWindows(g, now), heldCabins(g, plan, r),
 			g.finalDoor == null ? java.util.Set.of() : new java.util.TreeSet<>(g.finalDoor.openers())));
+		pruneItems(g);
+		if (g.phase != Phase.ENDED) {
+			for (String id : g.lockedDoors.keySet()) { // T7.2: a locked door is shut for everybody, whatever its other state
+				if (g.doors.containsKey(id) && !g.doorOverrides.containsKey(id)) {
+					g.doors.put(id, DoorState.CLOSED);
+				}
+			}
+		}
 		g.doorHints = DoorThresholds.hints(g, plan);
 		g.cabinIds = plan.cabins().stream().map(Cabin::id).toList();
 		g.myCabins = new java.util.LinkedHashMap<>();
@@ -1043,6 +1080,7 @@ public class GameService {
 		Game g = require(hub);
 		synchronized (g) {
 			int p = playerAction(g, uuid, Phase.DOORS);
+			requireFree(g, p);
 			recordPass(g, p, door);
 			persist(g);
 			notifyChanged(g, "door");
@@ -1128,6 +1166,7 @@ public class GameService {
 			// D22: ROOMS and VOTE also take actions, from a player whose group has finished its own room of the round
 			Phase stage = freeTime || g.phase == Phase.VOTE ? g.phase : Phase.ROOMS;
 			int p = playerAction(g, uuid, stage);
+			requireFree(g, p);
 			if (rooms == null) {
 				throw new TrahisonException(RoomException.NO_ROOM, "no room engine");
 			}
@@ -1421,6 +1460,7 @@ public class GameService {
 		Game g = require(hub);
 		synchronized (g) {
 			int p = playerAction(g, uuid, Phase.VOTE);
+			requireFree(g, p);
 			LayoutContent plan = planOf(g);
 			RoundState r = g.currentRound();
 			Cabin inside = Cabins.ofZone(plan, g.players.get(p).zone).orElseThrow(
@@ -1467,6 +1507,9 @@ public class GameService {
 		if (lock == null || !lock.locked()) {
 			throw new TrahisonException(TrahisonException.CABIN_NOT_CLOSED, "the cabin is not locked yet");
 		}
+		if (mine.door() != null && g.lockedDoors.containsKey(mine.door())) {
+			throw new TrahisonException(TrahisonException.DOOR_LOCKED, "the cabin was locked from outside");
+		}
 	}
 
 	/** The group of player {@code p} has voted: its cabin opens for those inside (D5), and frees itself when they left. */
@@ -1488,6 +1531,11 @@ public class GameService {
 			int p = playerAction(g, uuid, Phase.VOTE);
 			if (side == null) {
 				throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "vote required");
+			}
+			requireFree(g, p); // T7.2: a tied player does not vote (ALLY by default)
+			if (side == Vote.BETRAY && g.roleOf(p) == Role.GUARDIAN) {
+				// T7.1: refused to him alone (errors go to the sender); nothing public tells that a guardian tried
+				throw new TrahisonException(TrahisonException.CANNOT_BETRAY, "he cannot betray");
 			}
 			RoundState r = g.currentRound();
 			requireOwnClosedCabin(g, r, p);
@@ -1852,6 +1900,7 @@ public class GameService {
 				total[i] += d[i];
 			}
 		}
+		applyRoleAndItemPoints(g, r, total); // T7: shield, infiltrator, gambler
 		int[] after = Scoring.applyAll(g.points(), total);
 		for (int i = 0; i < PLAYERS; i++) {
 			g.bracelets.get(i).points = after[i];
@@ -1889,6 +1938,8 @@ public class GameService {
 			rooms.clear(g.hub);
 		}
 		g.phase = Phase.ENDED;
+		g.objectivesMet = new ArrayList<>(Outcome.objectivesMet(drawnRoles(g), g.aliveFlags(), g.winners,
+			new java.util.HashSet<>(g.roleState.infiltratorBetrayed))); // T7.1: the roles are revealed with the result
 		g.finalDoor = null;
 		GameScheduler.Handle finalEnd = finalTimers.remove(g.id);
 		if (finalEnd != null) {
@@ -1912,6 +1963,7 @@ public class GameService {
 		g.doorOverrides.clear(); // a manual door holds for the stage only
 		g.doorWindows.clear();
 		g.cabinLocks.clear(); // every cabin reopens when VOTE ends (and starts free)
+		g.listening.clear(); // the ear lasts for one vote
 		g.remainingMs = g.settings.durationSeconds(phase) * 1000L;
 		if (g.paused) {
 			g.deadline = null;
@@ -1957,6 +2009,487 @@ public class GameService {
 			}
 		} catch (RuntimeException ex) {
 			log.error("Trahison game {}: timer failed", id, ex);
+		}
+	}
+
+	// ------------------------------------------------------------------ secret roles and hidden items (T7)
+
+	/** Range of the knife, of the bonds and of untying (T7.2, "à moins de 3 blocs"). */
+	public static final double ITEM_RANGE = 3.0;
+	/** How near a hiding spot a player must stand to search it. */
+	public static final double SEARCH_RANGE = 3.0;
+	/** An untying that was started and not finished is forgotten after this long. */
+	private static final long UNTYING_FORGET_MS = 60_000;
+	/** Longest letter, in characters. */
+	public static final int LETTER_MAX = 120;
+
+	/** The roles of the drawable kind as seats (the game master who plays is not in it: D12 derives his from the settings). */
+	private static Map<Integer, Role> drawnRoles(Game g) {
+		Map<Integer, Role> out = new java.util.TreeMap<>();
+		for (int i = 0; i < g.players.size(); i++) {
+			Role r = Role.parse(g.players.get(i).role);
+			if (r != null && r != Role.GAME_MASTER) {
+				out.put(i, r);
+			}
+		}
+		return out;
+	}
+
+	/**
+	 * Start of the game: draws the roles (never for a bot nor for the game master who plays, who already holds his own secret
+	 * role, D12) and hides the items in the plan's hiding spots. Both come from the game seed.
+	 */
+	private void drawRolesAndItems(Game g) {
+		List<Integer> eligible = new ArrayList<>();
+		for (int i = 0; i < g.players.size(); i++) {
+			PlayerState p = g.players.get(i);
+			p.role = null;
+			p.items = new ArrayList<>();
+			if (!p.bot && !g.gameMasters.contains(p.uuid)) {
+				eligible.add(i);
+			}
+		}
+		Map<Integer, Role> drawn = Roles.draw(g.seed, g.settings.activeRoles(), g.settings.roleCount, eligible);
+		drawn.forEach((seat, role) -> g.players.get(seat).role = role.name());
+		g.roleState = new RoleState();
+		List<String> spots = planOf(g).hidingSpots().stream().map(s -> s.id()).toList();
+		ItemDraw.Result items = ItemDraw.draw(g.seed, g.settings.items, spots);
+		g.hiddenItems = new LinkedHashMap<>();
+		items.placed().forEach((spot, item) -> g.hiddenItems.put(spot, item.name()));
+		g.unplacedItems = new ArrayList<>(items.unplaced().stream().map(Item::name).toList());
+		g.lockedDoors = new LinkedHashMap<>();
+		g.listening = new LinkedHashMap<>();
+		g.untying = new LinkedHashMap<>();
+		g.objectivesMet = new ArrayList<>();
+		event(g, "roles", Map.of("roles", g.players.stream().map(p -> String.valueOf(p.role)).toList(),
+			"hidden", g.hiddenItems, "unplaced", g.unplacedItems));
+	}
+
+	/** T7.1: each holder of a role learns it, in private, as the prologue starts (the game master who plays included). */
+	private void whisperRoles(Game g) {
+		for (int i = 0; i < g.players.size(); i++) {
+			Role r = g.roleOf(i);
+			if (r != null) {
+				whisper(g, i, "phantasmon_events.trahison.say.role." + r.name().toLowerCase(java.util.Locale.ROOT), List.of());
+			}
+		}
+	}
+
+	private void whisper(Game g, int seat, String key, List<String> args) {
+		for (GameListener l : listeners) {
+			try {
+				l.whispered(g, seat, key, args);
+			} catch (RuntimeException ex) {
+				log.warn("Trahison listener failed on whispered", ex);
+			}
+		}
+	}
+
+	private static boolean restrained(PlayerState p, long now) {
+		return p.restrainedUntil != null && p.restrainedUntil > now;
+	}
+
+	/** Refuses an action of a player who is tied up (he can look and talk, nothing else). */
+	private void requireFree(Game g, int p) {
+		if (restrained(g.players.get(p), clock.millis())) {
+			throw new TrahisonException(TrahisonException.RESTRAINED, "he is tied up");
+		}
+	}
+
+	/** Forgets the bonds and the locks whose time is over; true when something changed. */
+	private boolean pruneItems(Game g) {
+		long now = clock.millis();
+		boolean changed = false;
+		for (PlayerState p : g.players) {
+			if (p.restrainedUntil != null && p.restrainedUntil <= now) {
+				p.restrainedUntil = null;
+				changed = true;
+			}
+		}
+		changed |= g.lockedDoors.values().removeIf(l -> l.untilMs() <= now);
+		return changed;
+	}
+
+	/** Tells the views when a bond or a lock ends by itself. */
+	private void scheduleItemEnd(Game g, long atMs) {
+		UUID id = g.id;
+		scheduler.schedule(Instant.ofEpochMilli(atMs), () -> {
+			Game game = byId.get(id);
+			if (game == null) {
+				return;
+			}
+			synchronized (game) {
+				if (game.phase == Phase.ENDED || !pruneItems(game)) {
+					return;
+				}
+				persist(game);
+				notifyChanged(game, "door");
+			}
+		});
+	}
+
+	private static double distance(PlayerState a, PlayerState b) {
+		if (a.x == null || b.x == null || a.z == null || b.z == null) {
+			return Double.POSITIVE_INFINITY;
+		}
+		double dy = a.y == null || b.y == null ? 0 : a.y - b.y;
+		return Math.sqrt((a.x - b.x) * (a.x - b.x) + dy * dy + (a.z - b.z) * (a.z - b.z));
+	}
+
+	/** Same zone and within {@link #ITEM_RANGE} blocks: the knife does not go through a closed door (zones differ). */
+	private static boolean within(PlayerState a, PlayerState b) {
+		return java.util.Objects.equals(a.zone, b.zone) && distance(a, b) <= ITEM_RANGE;
+	}
+
+	private static double distanceToBox(PlayerState p, com.mystaria.phantasmon_backend.events.trahison.layout.Box box) {
+		if (p.x == null || p.z == null) {
+			return Double.POSITIVE_INFINITY;
+		}
+		double y = p.y == null ? box.minY() : p.y;
+		double dx = Math.max(Math.max(box.minX() - p.x, 0), p.x - (box.maxX() + 1));
+		double dy = Math.max(Math.max(box.minY() - y, 0), y - (box.maxY() + 1));
+		double dz = Math.max(Math.max(box.minZ() - p.z, 0), p.z - (box.maxZ() + 1));
+		return Math.sqrt(dx * dx + dy * dy + dz * dz);
+	}
+
+	/** A door (ordinary or a cabin's) the lock and the pass work on: {@code where} is a door id or a cabin id. */
+	private record Lockable(LayoutDoor door, Cabin cabin) {
+	}
+
+	private static Lockable lockableOf(LayoutContent plan, String where) {
+		if (where == null || where.isBlank()) {
+			throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "a door or a cabin is required");
+		}
+		for (Cabin c : plan.cabins()) {
+			if (c.id().equals(where) && c.door() != null) {
+				for (LayoutDoor d : plan.doors()) {
+					if (d.id().equals(c.door())) {
+						return new Lockable(d, c);
+					}
+				}
+			}
+		}
+		for (LayoutDoor d : plan.doors()) {
+			if (d.id().equals(where)) {
+				if (!"plain".equals(d.type()) && !"cabin".equals(d.type())) {
+					throw new TrahisonException(TrahisonException.NOT_LOCKABLE, "only an ordinary door or a cabin");
+				}
+				Cabin cabin = plan.cabins().stream().filter(c -> d.id().equals(c.door())).findFirst().orElse(null);
+				return new Lockable(d, cabin);
+			}
+		}
+		throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "no such door or cabin");
+	}
+
+	/** From the outside, next to the door: out of the cabin, and within range of the door's block. */
+	private static void requireOutsideAndNear(PlayerState p, Lockable l) {
+		if (l.cabin() != null && l.cabin().zone() != null && l.cabin().zone().equals(p.zone)) {
+			throw new TrahisonException(TrahisonException.TARGET_TOO_FAR, "from the outside of the cabin");
+		}
+		if (distanceToBox(p, l.door().block()) > ITEM_RANGE + 1) {
+			throw new TrahisonException(TrahisonException.TARGET_TOO_FAR, "too far from the door");
+		}
+	}
+
+	private int targetOf(Game g, int p, Integer target, boolean mustBeAlive) {
+		if (target == null || target < 0 || target >= g.players.size() || target == p) {
+			throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "target: another player's seat");
+		}
+		if (mustBeAlive && !g.players.get(target).alive) {
+			throw new TrahisonException(TrahisonException.DEAD, "he is already dead");
+		}
+		return target;
+	}
+
+	/**
+	 * T7.2: a living player searches the hiding spot {@code spot} of the plan: within {@link #SEARCH_RANGE} blocks of it, in the
+	 * free time (or once his own room is done). What lay there goes into his personal items, which only he sees.
+	 */
+	public Game search(String hub, UUID uuid, String spot) {
+		Game g = require(hub);
+		synchronized (g) {
+			int p = playerActionAnyPhase(g, uuid);
+			requireFree(g, p);
+			if (g.phase != Phase.FREE_TIME && !canRoam(g, p)) {
+				throw new TrahisonException(TrahisonException.CANNOT_SEARCH_NOW, "not now");
+			}
+			var found = planOf(g).hidingSpots().stream().filter(s -> s.id().equals(spot)).findFirst().orElseThrow(
+				() -> new TrahisonException(TrahisonException.NO_SPOT, "no such hiding spot"));
+			PlayerState me = g.players.get(p);
+			if (me.x == null || me.z == null || Math.hypot(me.x - (found.position().x() + 0.5), me.z - (found.position().z() + 0.5)) > SEARCH_RANGE
+					|| me.y != null && Math.abs(me.y - found.position().y()) > SEARCH_RANGE) {
+				throw new TrahisonException(TrahisonException.SPOT_TOO_FAR, "too far from the hiding spot");
+			}
+			String item = g.hiddenItems.remove(found.id());
+			if (item == null) {
+				throw new TrahisonException(TrahisonException.SPOT_EMPTY, "nothing there");
+			}
+			me.items.add(item);
+			event(g, "item_found", Map.of("player", p, "spot", found.id(), "item", item));
+			persist(g);
+			notifyChanged(g, "items");
+			return g;
+		}
+	}
+
+	/**
+	 * T7.2: a player uses one of his items. {@code target}: a seat (knife, bonds, letter); {@code where}: a door id or a cabin id
+	 * (lock, pass, ear); {@code text}: the letter. The knife kills (T6), the bonds tie, the lock shuts a plain door or a cabin from
+	 * the outside, the pass reopens a locked one (from anywhere, even from inside), the ear is noted for the vote's sound (T5.4), the
+	 * letter is whispered to its target, anonymously. The shield works by itself and cannot be used. The item is consumed once
+	 * its effect took place; a refusal keeps it.
+	 */
+	public Game useObject(String hub, UUID uuid, Item item, Integer target, String where, String text) {
+		Game g = require(hub);
+		synchronized (g) {
+			int p = playerActionAnyPhase(g, uuid);
+			requireFree(g, p);
+			pruneItems(g);
+			PlayerState me = g.players.get(p);
+			if (item == null) {
+				throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "item required");
+			}
+			if (!me.items.contains(item.name())) {
+				throw new TrahisonException(TrahisonException.NO_SUCH_SECRET_ITEM, "he does not carry that item");
+			}
+			long now = clock.millis();
+			LayoutContent plan = planOf(g);
+			switch (item) {
+				case SHIELD -> throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "the shield works by itself");
+				case KNIFE -> {
+					int t = targetOf(g, p, target, true);
+					if (!within(me, g.players.get(t))) {
+						throw new TrahisonException(TrahisonException.TARGET_TOO_FAR, "too far, or behind a door");
+					}
+					me.items.remove(item.name());
+					event(g, "item_used", Map.of("player", p, "item", item.name(), "target", t));
+					kill(hub, t, "knife"); // persists and notifies; a playing game master killed ends the game (D12)
+					return g;
+				}
+				case BONDS -> {
+					int t = targetOf(g, p, target, true);
+					PlayerState victim = g.players.get(t);
+					if (restrained(victim, now)) {
+						throw new TrahisonException(TrahisonException.ALREADY_RESTRAINED, "already tied up");
+					}
+					if (!within(me, victim)) {
+						throw new TrahisonException(TrahisonException.TARGET_TOO_FAR, "too far, or behind a door");
+					}
+					victim.restrainedUntil = now + g.settings.bondsSeconds * 1000L;
+					g.untying.remove(t);
+					scheduleItemEnd(g, victim.restrainedUntil);
+				}
+				case LOCK -> {
+					Lockable l = lockableOf(plan, where);
+					requireOutsideAndNear(me, l);
+					if (g.lockedDoors.containsKey(l.door().id())) {
+						throw new TrahisonException(TrahisonException.ALREADY_LOCKED, "already locked");
+					}
+					long until = now + g.settings.lockSeconds * 1000L;
+					g.lockedDoors.put(l.door().id(), new LockedDoor(l.door().id(), p, until));
+					scheduleItemEnd(g, until);
+				}
+				case PASS -> {
+					Lockable l = lockableOf(plan, where);
+					if (g.lockedDoors.remove(l.door().id()) == null) {
+						throw new TrahisonException(TrahisonException.NOT_LOCKED, "that door is not locked");
+					}
+				}
+				case EAR -> {
+					if (g.phase != Phase.VOTE) {
+						throw new TrahisonException(TrahisonException.WRONG_PHASE, "the ear listens during a vote");
+					}
+					Lockable l = lockableOf(plan, where);
+					if (l.cabin() == null) {
+						throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "a cabin is required");
+					}
+					g.listening.put(p, l.cabin().id());
+				}
+				case LETTER -> {
+					int t = targetOf(g, p, target, false);
+					String clean = text == null ? "" : text.replaceAll("[\\p{Cntrl}]", " ").trim();
+					if (clean.isEmpty() || clean.length() > LETTER_MAX) {
+						throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "a letter holds 1 to " + LETTER_MAX + " characters");
+					}
+					if (!g.players.get(t).bot) {
+						whisper(g, t, "phantasmon_events.trahison.say.letter", List.of(clean));
+					}
+					event(g, "letter", Map.of("from", p, "to", t, "text", clean));
+				}
+			}
+			me.items.remove(item.name());
+			event(g, "item_used", Map.of("player", p, "item", item.name()));
+			persist(g);
+			notifyChanged(g, "items");
+			return g;
+		}
+	}
+
+	/**
+	 * T7.2: a player reopens a door locked by the lock item without a pass: from the outside, next to the door.
+	 */
+	public Game unlock(String hub, UUID uuid, String where) {
+		Game g = require(hub);
+		synchronized (g) {
+			int p = playerActionAnyPhase(g, uuid);
+			requireFree(g, p);
+			pruneItems(g);
+			Lockable l = lockableOf(planOf(g), where);
+			if (!g.lockedDoors.containsKey(l.door().id())) {
+				throw new TrahisonException(TrahisonException.NOT_LOCKED, "that door is not locked");
+			}
+			requireOutsideAndNear(g.players.get(p), l);
+			g.lockedDoors.remove(l.door().id());
+			event(g, "unlock", Map.of("player", p, "door", l.door().id()));
+			persist(g);
+			notifyChanged(g, "door");
+			return g;
+		}
+	}
+
+	/**
+	 * T7.2: a player unties another one. The first call starts it; he must stay next to him (same zone, 3 blocks) for
+	 * {@link Settings#untieSeconds} and call again: the rope then comes off. Too early, the call is refused and nothing is lost.
+	 */
+	public Game untie(String hub, UUID uuid, int target) {
+		Game g = require(hub);
+		synchronized (g) {
+			int p = playerActionAnyPhase(g, uuid);
+			requireFree(g, p);
+			pruneItems(g);
+			int t = targetOf(g, p, target, true);
+			PlayerState victim = g.players.get(t);
+			if (!restrained(victim, clock.millis())) {
+				throw new TrahisonException(TrahisonException.NOT_RESTRAINED, "he is not tied up");
+			}
+			if (!within(g.players.get(p), victim)) {
+				throw new TrahisonException(TrahisonException.TARGET_TOO_FAR, "too far, or behind a door");
+			}
+			long now = clock.millis();
+			Untying u = g.untying.get(t);
+			if (u == null || u.by() != p || now - u.startedMs() > UNTYING_FORGET_MS) {
+				g.untying.put(t, new Untying(p, now));
+				persist(g);
+				return g;
+			}
+			if (now - u.startedMs() < g.settings.untieSeconds * 1000L) {
+				throw new TrahisonException(TrahisonException.UNTYING, "still untying");
+			}
+			victim.restrainedUntil = null;
+			g.untying.remove(t);
+			event(g, "untied", Map.of("by", p, "player", t));
+			persist(g);
+			notifyChanged(g, "items");
+			return g;
+		}
+	}
+
+	/**
+	 * T7.1, the seer: once in the game, during VOTE, he learns the vote already cast by one side of a group that is not his
+	 * ({@code group} 0..2, {@code pair} true for the pair). Refused, and not spent, when that side has not voted yet.
+	 */
+	public Game foresee(String hub, UUID uuid, int group, boolean pair) {
+		Game g = require(hub);
+		synchronized (g) {
+			int p = playerAction(g, uuid, Phase.VOTE);
+			requireFree(g, p);
+			if (g.roleOf(p) != Role.SEER) {
+				throw new TrahisonException(TrahisonException.NOT_YOUR_ROLE, "he is not the seer");
+			}
+			if (g.roleState.seerUsed) {
+				throw new TrahisonException(TrahisonException.POWER_USED, "already used");
+			}
+			RoundState r = g.currentRound();
+			if (group < 0 || group >= 3 || r == null || r.splitIndex == null) {
+				throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "group 0..2");
+			}
+			boolean mine = r.groupOf(p) == group && r.split().group(Door.ALL.get(group)).pair().contains(p) == pair;
+			if (mine) {
+				throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "not his own side");
+			}
+			Vote cast = pair ? r.pairVote[group] : r.soloVote[group];
+			if (cast == null) {
+				throw new TrahisonException(TrahisonException.NOT_VOTED_YET, "that side has not voted yet");
+			}
+			g.roleState.seerUsed = true;
+			g.roleState.seerGroup = group;
+			g.roleState.seerSide = pair ? "PAIR" : "SOLO";
+			g.roleState.seerVote = cast.name();
+			event(g, "foresee", Map.of("player", p, "group", group, "pair", pair));
+			persist(g);
+			notifyChanged(g, "role");
+			return g;
+		}
+	}
+
+	/**
+	 * T7.1, the gambler: before the vote of the opposite side of his group, he bets on what it will be. One bet per round.
+	 * A right bet gives +1 point at the results, once in the game.
+	 */
+	public Game bet(String hub, UUID uuid, Vote vote) {
+		Game g = require(hub);
+		synchronized (g) {
+			int p = playerAction(g, uuid, Phase.VOTE);
+			requireFree(g, p);
+			if (g.roleOf(p) != Role.GAMBLER) {
+				throw new TrahisonException(TrahisonException.NOT_YOUR_ROLE, "he is not the gambler");
+			}
+			if (vote == null) {
+				throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "vote required");
+			}
+			RoundState r = g.currentRound();
+			if (r == null || r.splitIndex == null) {
+				throw new TrahisonException(TrahisonException.WRONG_PHASE, "no groups yet");
+			}
+			if (g.roleState.bets.containsKey(r.number)) {
+				throw new TrahisonException(TrahisonException.ALREADY_BET, "already bet this round");
+			}
+			int k = r.groupOf(p);
+			boolean pair = r.split().group(Door.ALL.get(k)).pair().contains(p);
+			if ((pair ? r.soloVote[k] : r.pairVote[k]) != null) {
+				throw new TrahisonException(TrahisonException.ALREADY_VOTED, "the opponent already voted");
+			}
+			g.roleState.bets.put(r.number, vote.name());
+			event(g, "bet", Map.of("player", p, "round", r.number));
+			persist(g);
+			notifyChanged(g, "role");
+			return g;
+		}
+	}
+
+	/**
+	 * What the roles and the items add to the points of a resolved round (T7): the shield cancels a -2, the infiltrator gets his
+	 * point for betraying in round 1, the gambler his for a right bet. {@code total} is changed in place.
+	 */
+	private void applyRoleAndItemPoints(Game g, RoundState r, int[] total) {
+		for (int i = 0; i < PLAYERS; i++) {
+			PlayerState p = g.players.get(i);
+			if (total[i] == -2 && p.items.remove(Item.SHIELD.name())) {
+				total[i] = 0;
+				event(g, "shield", Map.of("player", i));
+			}
+		}
+		Split split = r.split();
+		for (int i = 0; i < PLAYERS; i++) {
+			Role role = g.roleOf(i);
+			if (role == null) {
+				continue;
+			}
+			int k = r.groupOf(i);
+			boolean pair = split.group(Door.ALL.get(k)).pair().contains(i);
+			if (role == Role.INFILTRATOR && r.number == 1 && !r.finalLoop) {
+				boolean betrayed = pair ? r.pairVote[k] == Vote.BETRAY && r.pairVoter[k] == i : r.soloVote[k] == Vote.BETRAY;
+				if (betrayed) {
+					total[i] += Roles.INFILTRATOR_BONUS;
+					g.roleState.infiltratorBetrayed.add(i);
+				}
+			} else if (role == Role.GAMBLER && !g.roleState.gamblerPaid && g.roleState.bets.containsKey(r.number)) {
+				Vote opponent = Scoring.effective(pair ? r.soloVote[k] : r.pairVote[k]);
+				if (opponent.name().equals(g.roleState.bets.get(r.number))) {
+					total[i] += Roles.GAMBLER_BONUS;
+					g.roleState.gamblerPaid = true;
+				}
+			}
 		}
 	}
 

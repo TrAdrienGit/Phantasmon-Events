@@ -47,6 +47,15 @@ public final class EventsCommands {
 								com.mystaria.events.trahison.net.Messages.spectate(false);
 								return 1;
 							})))
+							// T7.2: an anonymous letter to a seat (the words cannot be typed in the screen).
+							.then(ClientCommandManager.literal("letter")
+								.then(ClientCommandManager.argument("seat", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 8))
+									.then(ClientCommandManager.argument("text", com.mojang.brigadier.arguments.StringArgumentType.greedyString()).executes(context -> {
+										com.mystaria.events.trahison.net.Messages.useObject("LETTER",
+											com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "seat"), null,
+											com.mojang.brigadier.arguments.StringArgumentType.getString(context, "text"));
+										return 1;
+									}))))
 							// The provisional player screen (T1.4); the chat closes after the command: the screen opens on the next tick.
 							.then(ClientCommandManager.literal("menu").executes(context -> {
 								Minecraft.getInstance().tell(com.mystaria.events.trahison.screen.GameScreen::open);

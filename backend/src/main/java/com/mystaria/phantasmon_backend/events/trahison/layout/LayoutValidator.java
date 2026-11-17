@@ -42,6 +42,7 @@ public final class LayoutValidator {
 	public static final String CABINS = "ERROR_TRAHISON_LAYOUT_CABINS";
 	public static final String ROOM_SLOTS = "ERROR_TRAHISON_LAYOUT_ROOM_SLOTS";
 	public static final String FINAL_DOOR = "ERROR_TRAHISON_LAYOUT_FINAL_DOOR";
+	public static final String FLOOR_OVERLAP = "ERROR_TRAHISON_LAYOUT_FLOOR_OVERLAP";
 
 	private static final Pattern ID = Pattern.compile("[A-Za-z0-9_-]{1,40}");
 
@@ -93,6 +94,8 @@ public final class LayoutValidator {
 		ids("room_slot", layout.roomSlots().stream().map(RoomSlot::id).toList(), issues);
 		ids("cabin", layout.cabins().stream().map(Cabin::id).toList(), issues);
 		ids("hiding_spot", layout.hidingSpots().stream().map(HidingSpot::id).toList(), issues);
+		ids("floor", layout.floors().stream().map(Floor::id).toList(), issues);
+		floors(layout.floors(), issues);
 
 		for (LayoutZone zone : layout.zones()) {
 			if (zone.type() != null && !ZONE_TYPES.contains(zone.type())) {
@@ -155,6 +158,25 @@ public final class LayoutValidator {
 		}
 	}
 
+	/** Floors: ordered slices, none overlapping another; a floor missing a height is a draft's business only. */
+	private static void floors(List<Floor> floors, List<Issue> issues) {
+		for (Floor floor : floors) {
+			if (floor.yMin() != null && floor.yMax() != null && floor.yMin() > floor.yMax()) {
+				issues.add(new Issue(BAD_BOX, l(floor.id()), "floor"));
+			}
+		}
+		for (int i = 0; i < floors.size(); i++) {
+			for (int j = i + 1; j < floors.size(); j++) {
+				Floor a = floors.get(i);
+				Floor b = floors.get(j);
+				if (a.yMin() != null && a.yMax() != null && a.yMin() <= a.yMax() && b.yMin() != null && b.yMax() != null
+						&& b.yMin() <= b.yMax() && a.overlaps(b)) {
+					issues.add(new Issue(FLOOR_OVERLAP, l(a.id(), b.id()), null));
+				}
+			}
+		}
+	}
+
 	private static void ids(String kind, List<String> ids, List<Issue> issues) {
 		Set<String> seen = new HashSet<>();
 		Set<String> reported = new HashSet<>();
@@ -191,6 +213,14 @@ public final class LayoutValidator {
 		Map<String, LayoutDoor> doors = new HashMap<>();
 		layout.doors().forEach(d -> doors.putIfAbsent(d.id(), d));
 
+		for (Floor floor : layout.floors()) {
+			if (floor.name() == null || floor.name().isBlank()) {
+				issues.add(new Issue(MISSING_FIELD, l(floor.id()), "field=name"));
+			}
+			if (floor.yMin() == null || floor.yMax() == null) {
+				issues.add(new Issue(MISSING_FIELD, l(floor.id()), "field=y"));
+			}
+		}
 		for (LayoutZone zone : layout.zones()) {
 			if (zone.type() == null) {
 				issues.add(new Issue(MISSING_FIELD, l(zone.id()), "field=type"));

@@ -158,13 +158,14 @@ class DoorsAndZonesTest {
 	@Test
 	void aPlayersZoneAndPositionAreKeptButNotWritten() {
 		service.start(HUB);
-		int saves = store.saves;
 		service.setZone(HUB, ids[2], "hall", 1.5, 65, -3.25);
 		service.setZone(HUB, ids[2], "slot_1", 2, 65, -3);
+		int saves = store.saves; // a first visit is saved (T11.2), a position never is
+		service.setZone(HUB, ids[2], "slot_1", 9, 65, 9);
 		PlayerState p = service.read(HUB, g -> g.players.get(2));
 		assertThat(p.zone).isEqualTo("slot_1");
-		assertThat(p.x).isEqualTo(2.0);
-		assertThat(p.z).isEqualTo(-3.0);
+		assertThat(p.x).isEqualTo(9.0);
+		assertThat(p.z).isEqualTo(9.0);
 		assertThat(store.saves).isEqualTo(saves);
 	}
 
@@ -196,11 +197,14 @@ class DoorsAndZonesTest {
 		assertThat(zoneViews).containsExactly("a");
 		clock.advance(java.time.Duration.ofMillis(600)); // the second is over: one update with the latest zone
 		assertThat(zoneViews).containsExactly("a", "c");
-		service.setZone(HUB, ids[0], "c", 5, 64, 5); // same zone, new position: nothing to say
+		service.setZone(HUB, ids[0], "c", 0.5, 64, 0); // same zone, hardly moved: nothing to say
 		clock.advanceSeconds(5);
 		assertThat(zoneViews).containsExactly("a", "c");
+		service.setZone(HUB, ids[0], "c", 5, 64, 5); // same zone, walked on: the cursor moves for those who watch (T11.2)
+		clock.advanceSeconds(5);
+		assertThat(zoneViews).containsExactly("a", "c", "c");
 		service.setZone(HUB, ids[0], "d", 0, 64, 0); // long after: at once again
-		assertThat(zoneViews).containsExactly("a", "c", "d");
+		assertThat(zoneViews).containsExactly("a", "c", "c", "d");
 	}
 
 	@Test
