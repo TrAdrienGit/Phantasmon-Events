@@ -165,6 +165,7 @@ en V18-V19 et V22-V24), la ligne de base `0` puis les `IF NOT EXISTS` ne changen
 | 1 | `V1__tournaments.sql` | Ancien V18 + V19 : `tournaments`, `tournament_players`, `tournament_matches` (§5.2) |
 | 2 | `V2__event_npcs.sql` | Ancien V22 à V24 : `event_groups`, `event_npcs` (§5.3) |
 | 9 | `V9__trahison_step_times.sql` | `trahison_step_times` (2026-11-16) : le temps mesuré de chaque étape réellement résolue (T3.6, §5.8) |
+| 10 | `V10__trahison_map_notes.sql` | `trahison_map_notes` (2026-11-17) : traits et bloc-notes de la carte, une ligne par partie et par compte (T11.4, §5.9) |
 | 8 | `V8__trahison_rooms.sql` | `trahison_rooms` (2026-11-16) : la banque de salles du jeu de trahison, une ligne par salle (§5.7) |
 | 7 | `V7__trahison_layouts.sql` | `trahison_layouts` (2026-11-16) : les versions du plan fixe du jeu de trahison, par hub (§5.6) |
 | 6 | `V6__trahison_games.sql` | `trahison_games` (2026-11-16) : une ligne par partie du jeu de trahison (§5.5) |
@@ -286,3 +287,15 @@ Les temps mesurés du jeu de trahison (T3.6), une ligne par étape réellement r
 | `recorded_at` | TIMESTAMPTZ | NOT NULL, défaut `now()` | |
 
 Index : `(room_id, step_id)` et `(mechanism)`.
+
+### 5.9 `trahison_map_notes` (V10 du module)
+
+| Colonne | Type | Rôle |
+|---|---|---|
+| `game_id` | `UUID` | Partie (clé avec `account`) |
+| `account` | `UUID` | Joueur, fantôme, maître du jeu ou spectateur |
+| `strokes` | `JSONB` | Traits par étage, en coordonnées du hub |
+| `notes` | `TEXT` | Bloc-notes |
+| `updated_at` | `TIMESTAMPTZ` | Dernière écriture |
+
+Seul l'auteur lit et écrit sa ligne pendant la partie ; à la fin, tout le monde peut tout lire (D15).
