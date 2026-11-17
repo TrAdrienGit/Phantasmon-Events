@@ -89,3 +89,8 @@
 - **D73 (banque trop petite)** : fait. `create` refuse (`ERROR_TRAHISON_BANK_TOO_SMALL`) sous neuf salles, sauf avec `test_room` ou sans moteur de tirage.
 - **D75 (qui voit le tirage)** : fait. Les maîtres du jeu, et les admins dans le lobby (`lobby_draw`, lu par le client comme un bloc `gm` réduit).
 
+- **D121** Pause et redémarrage du backend : choix par défaut confirmé (2026-11-17).
+- **D110** D102 : case cochée « reporté », consigne « faire » : choix par défaut confirmé (2026-11-17).
+- **D112** D50 : quels pouvoirs comptent : choix par défaut confirmé (2026-11-17).
+- **D113** Bracelets déposés : l'ordre du ramassage : choix par défaut confirmé (2026-11-17).
+- **D114** Réglages d'une partie venus du message `create` : choix par défaut confirmé (2026-11-17).
