@@ -769,6 +769,13 @@ Trois leviers aux trois coins d'une salle, à tenir **en même temps par trois j
   déverrouillage. Hors ligne : `/phantasmon event trahison minigame three_levers` ouvre un **aperçu** (trois leviers, le bail, les lumières ; boutons 1 à 3 au clavier ; les deux joueurs fictifs enclenchent les autres ;
   trois tenus ensemble déverrouillent ; ni l'ordre ni le délai ne sont simulés).
 
+#### Vues des mécanismes Pokémon (T8, côté backend seulement, aucun écran client encore)
+
+- `dex_code`, `unown_text` : `{wrong, solved, length}` ; geste `{"code": "025133"}` (chiffres) ; événements `wrong`, `unlock`. Indices : `portrait_n` (texte : id d'espèce Cobblemon) et `dex_page` (document) ; `wall_text` (phrase en lettres capitales, à dessiner en Zarbi) et `alphabet` (document).
+- `weigh_in` : `{order, swaps, solved}` (`order` : ids d'espèces dans l'ordre actuel) ; geste `{"swap": [i, j]}` ; événement `swap`. Indices : `pedestal_n`, `scale_sheet`.
+- `type_chain` : `{types, progress, wrong, solved}` ; se joue sur les emplacements `lever_1..lever_5` (action `use`) ; événements `pull`, `wrong`, `unlock`. Indices : `mark_n` (id de type), `type_sheet`.
+- `battle_puzzle` : `{player, enemy, player_hp, enemy_hp, player_active, enemy_active, enemy_next_move, turns, turn, fails, solved}` ; gestes `{"move": i}` ou `{"switch": j}` ; événements `turn`, `fail` (position de départ remise), `unlock`, chacun avec `log` (lignes `P hit 20`, `E faint 1`...). Indice `reward` (4 chiffres, `when = solved`). La suite gagnante (`answer`) n'est que dans la vue du maître du jeu.
+
 ### `EventsTrahisonZone`
 
 - Sens : C2S.

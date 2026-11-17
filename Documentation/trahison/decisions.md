@@ -152,3 +152,19 @@ Choix appliqué : le panneau reste une fenêtre (`GmScreen`, 480 x 280) ouverte 
 - [ ] Réglages modifiables aussi en cours de partie
 
 Ta réponse :
+
+## D170. Espèces du catalogue Pokémon
+Choix appliqué : le catalogue (`pokemon_catalog.json`) couvre les générations 1 à 3 (386 espèces), les énigmes ne tirent que dans la liste « connues de tous » (58 espèces). Le script `tools/pokemon_data.py` se relance pour changer cela.
+- [x] Générations 1 à 3, énigmes sur les espèces célèbres *(par défaut)*
+- [ ] Jusqu'à la génération 4 ou plus
+- [ ] Énigmes sur toutes les espèces du catalogue
+
+Ta réponse :
+
+## D171. Duel tactique : attaque de l'adversaire affichée
+Choix appliqué : la vue du duel montre toujours quelle attaque l'adversaire va jouer (`enemy_next_move`), en plus de la règle écrite, pour que le puzzle se déduise sans connaître les types. Seule la suite gagnante est secrète (maître du jeu). Les attaques n'ont pas de nom : elles s'affichent « type + puissance » (aucun nom tiré des jeux).
+- [x] Attaque de l'adversaire montrée *(par défaut)*
+- [ ] Cachée, à déduire de la règle et de la table des types
+- [ ] Attaques nommées par nous
+
+Ta réponse :

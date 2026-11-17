@@ -373,3 +373,8 @@
 8. **Lobby.** Réglages : rôles (nombre et liste), objets (0 à 2 chacun), annonce des morts ; en cours de partie les boutons sont inactifs avec l'explication.
 9. **Petits écrans.** Vérifier le panneau à 320 x 180 et à 854 x 480 pixels d'interface : les onglets, les pastilles d'un joueur (elles disparaissent quand la place manque) et le défilement.
 10. **Pause.** Pendant une pause du maître du jeu, les gestes marchent encore (chuchoter, aide, points).
+
+## T8 Cobblemon (backend seulement, rien à jouer en jeu pour l'instant)
+
+- Rien n'est encore visible en jeu : les mécanismes Pokémon n'ont pas d'écran client et la salle d'essai « Cobblemon » n'existe pas.
+- Vérifier au backend (`./gradlew test --tests '*Pokemon*' --tests '*BattlePuzzleTest'`) : catalogue, quatre mécanismes et duel verts.
