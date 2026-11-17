@@ -1,19 +1,20 @@
-# Reprise du chantier (pause du 2026-11-16, soir)
+# Reprise du chantier (pause du 2026-11-17, nuit)
 
-> **État :** tout est sur `main`, poussé. Dernier contrôle de l'orchestrateur : client compilé avec ses tests,
-> tests backend verts (voir le dernier commit), clés de langue identiques. **Rien n'a encore tourné en jeu.**
+> **État :** tout est sur `main`, poussé (dernier commit af16b8d). Dernier contrôle de l'orchestrateur : build client
+> vert, 428 tests backend `*trahison*` verts, 1 381 clés de langue identiques EN/FR. **Rien n'a encore tourné en jeu.**
 >
-> - **Fait :** T0 à T4 entiers, T6.1, T6.2, T6.4 et T6 entier, T7 entier (rôles, objets, tentations, panneau du MJ), T11 carte (étages, exploration, écran Z, annotations), et les décisions
->   jusqu'à D43 appliquées.
+> - **Fait :** T0 à T4, T6, T7, T11 entiers ; T8 entier (catalogue, 7 énigmes Pokémon backend + écrans, police Zarbi
+>   provisoire `textures/trahison/zarbi/glyphs.png`, duel, partenaire à pouvoir et `power_spot`, salle d'essai
+>   `exemples/salle-essai-cobblemon.json`) ; décisions jusqu'à D120 appliquées.
 > - **Agents :** ils lisent d'abord [`contexte-agent.md`](contexte-agent.md). Les tests humains sont dans
 >   [`tests-humains.md`](tests-humains.md), les décisions réglées dans [`decisions-tranchees.md`](decisions-tranchees.md).
-> - **Questions ouvertes** dans [`decisions.md`](decisions.md) : D140 à D147 (rôles, objets), D150 à D154 (carte), D160 à D165 (tentations, MJ).
+> - **Questions ouvertes** dans [`decisions.md`](decisions.md) : D140 à D147 (rôles, objets), D150 à D154 (carte),
+>   D160 à D165 (tentations, MJ), D170 à D171 et D180 à D186 (énigmes Pokémon), D190 à D193 (partenaire).
 >
 > **Suite, dans l'ordre :**
 > 1. relire `decisions.md` et appliquer les réponses ;
-> 2. T5 vocal (greffon à confirmer en jeu), T8 Cobblemon, T9 contenu, T10 ;
-> 3. T5 vocal, T7 rôles et objets, T11 carte, T8 Cobblemon, T9 contenu, T10 ;
-> 4. la check-list cochable des tests humains au premier déploiement.
+> 2. T5 vocal (greffon à confirmer en jeu), T9 contenu, T10 répétition ;
+> 3. la check-list cochable des tests humains au premier déploiement (avec essai de la salle Cobblemon).
 
 > Point d'arrêt de l'orchestration du développement. À lire en premier à la reprise, avec
 > [`etapes/README.md`](etapes/README.md).
