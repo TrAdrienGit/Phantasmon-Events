@@ -195,6 +195,20 @@ class Broadcaster implements GameListener, RoomListener {
 		sessions.send(g.players.get(seat).uuid, WsMessage.of(SAY, say));
 	}
 
+	/** T7.3 and the game master's {@code say}: a line for everybody. */
+	@Override
+	public void announced(Game g, String key, List<String> args) {
+		Map<String, Object> say = new java.util.LinkedHashMap<>();
+		say.put("kind", "announce");
+		say.put("key", SAY_KEY + key);
+		say.put("args", args);
+		say.put("phase", g.phase.name());
+		say.put("round", g.round);
+		for (UUID account : recipients(g)) {
+			sessions.send(account, WsMessage.of(SAY, say));
+		}
+	}
+
 	/** T11.2: the new room is in the explorer's own view, nobody else's. */
 	@Override
 	public void exploredChanged(Game g, int seat) {

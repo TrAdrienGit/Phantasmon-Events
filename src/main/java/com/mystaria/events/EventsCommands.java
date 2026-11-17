@@ -56,6 +56,20 @@ public final class EventsCommands {
 											com.mojang.brigadier.arguments.StringArgumentType.getString(context, "text"));
 										return 1;
 									}))))
+							// T7.4: the game master's words (they cannot be typed in the screen).
+							.then(ClientCommandManager.literal("whisper").requires(source -> com.mystaria.phantasmon.client.api.PhantasmonApi.isAdmin())
+								.then(ClientCommandManager.argument("seat", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 8))
+									.then(ClientCommandManager.argument("text", com.mojang.brigadier.arguments.StringArgumentType.greedyString()).executes(context -> {
+										com.mystaria.events.trahison.net.Messages.whisper(
+											com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "seat"),
+											com.mojang.brigadier.arguments.StringArgumentType.getString(context, "text"));
+										return 1;
+									}))))
+							.then(ClientCommandManager.literal("say").requires(source -> com.mystaria.phantasmon.client.api.PhantasmonApi.isAdmin())
+								.then(ClientCommandManager.argument("text", com.mojang.brigadier.arguments.StringArgumentType.greedyString()).executes(context -> {
+									com.mystaria.events.trahison.net.Messages.say(com.mojang.brigadier.arguments.StringArgumentType.getString(context, "text"));
+									return 1;
+								})))
 							// The provisional player screen (T1.4); the chat closes after the command: the screen opens on the next tick.
 							.then(ClientCommandManager.literal("menu").executes(context -> {
 								Minecraft.getInstance().tell(com.mystaria.events.trahison.screen.GameScreen::open);

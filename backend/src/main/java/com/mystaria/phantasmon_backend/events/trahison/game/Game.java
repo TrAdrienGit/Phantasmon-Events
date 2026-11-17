@@ -83,6 +83,8 @@ public class Game {
 	public List<Integer> selfDestined = new ArrayList<>();
 	/** T7.1: what the secret roles remember (the roles themselves are {@code players[i].role}). */
 	public RoleState roleState = new RoleState();
+	/** T7.3: the cabin offer of the current vote. */
+	public Temptations.State temptations = new Temptations.State();
 	/** T7.1: the seats that fulfilled their role's objective, set when the game ends. */
 	public List<Integer> objectivesMet = new ArrayList<>();
 	/** T7.2: the items still hidden in the plan's hiding spots (spot id to {@code Item} name). Secret. */

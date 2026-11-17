@@ -858,6 +858,14 @@ joue pas (`ERROR_TRAHISON_NOT_A_PLAYER`), hors de l'étape prévue (`ERROR_TRAHI
 | `set_bot_policy` | `policy` : `ally`, `betray` ou `random` | Règle le vote de tous les factices (défaut `random`) |
 | `redraw` | facultatif : `seed` (entier) | Tire à nouveau les neuf salles (graine donnée, sinon la suivante). Seulement en `LOBBY` ou `PROLOGUE`, sinon `ERROR_TRAHISON_WRONG_PHASE` ; `ERROR_TRAHISON_NO_DRAW` si le backend ne tire pas |
 | `replace_room` | `round` (1 à 3), `group` (0 à 2), `room` (identifiant d'une salle de la banque) | Met cette salle à la place de la salle tirée, marquée `manual`. Refusée (`ERROR_TRAHISON_WRONG_PHASE`) si les salles de cette manche ont déjà démarré, `ERROR_TRAHISON_BAD_ARGUMENT` si la salle est inconnue ou veut un groupe plus grand que celui de la place |
+| `whisper` | `seat` (0 à 8), `text` (1 à 200 caractères) | T7.4 : une ligne privée de l'hôtesse à ce joueur (`EventsTrahisonSay`, `kind` `whisper`, clé `say.gm_whisper`). Refusé pour un factice. Journal `gm_whisper` |
+| `say` | `text` (1 à 200 caractères) | T7.4 : l'hôtesse parle à tous (`kind` `announce`, clé `say.gm`). Journal `gm_say` |
+| `offer` | `seat` | T7.3 : donne tout de suite l'offre de cabine à ce joueur, pendant un `VOTE` seulement (`ERROR_TRAHISON_WRONG_PHASE` sinon), à un humain vivant. Marquée `forced` |
+| `hint` | `group` (0 à 2) | T7.4 : donne le prochain texte d'aide à la salle de ce groupe (`ROOMS` seulement). Journal `gm_hint` (`given` faux : plus d'aide à donner) |
+| `solve_room` | `group` (0 à 2) | T7.4 : résout la salle du groupe (sortie ouverte, groupe « résolu », aucun point perdu, pas d'annonce de course). `ROOMS` seulement. Journal `gm_solve_room` |
+| `kill` | `seat` | T7.4 : tue ce joueur pour réparer une erreur (cause `gm`, corps laissé, mêmes suites qu'une mort) |
+| `revive` | `seat` | T7.4 : ressuscite un mort : vivant, bracelet de nouveau à son poignet (points au moins 1), corps retiré. Journal `revived` |
+| `set_settings` | au choix : `offers`, `leaks`, `race`, `announce_deaths` (booléens), `role_count` (0 à 6), `roles` (liste), `items` (objet `{ITEM: 0..2}`), `mode`, `durations` (objet `{PHASE: secondes}`) | T7.4 : change ces réglages **en `LOBBY` seulement** (`ERROR_TRAHISON_NOT_IN_LOBBY`) ; les champs absents ne bougent pas. `create` accepte aussi `offers`, `leaks`, `race` dans `settings` |
 
 #### Les joueurs factices
 
@@ -1250,3 +1258,26 @@ Salles (étape T3.1) :
 | `ERROR_TRAHISON_ROOM_CYCLE` | dans `details.errors` | Les `needs` forment un cycle (`ids` : les étapes du cycle) | idem |
 | `ERROR_TRAHISON_ROOM_UNREACHABLE` | dans `details.errors` | Une étape ne mène pas à la sortie | idem |
 | `ERROR_TRAHISON_ROOM_NO_EXIT` | dans `details.errors` | Aucune étape au rôle `exit` et aucun emplacement de genre `exit` pour la dernière étape | idem |
+
+### Les tentations automatiques (T7.3) et le panneau du maître du jeu (T7.4)
+
+Réglages (`offers`, `leaks`, `race`, tous vrais par défaut ; lobby, `set_settings`). Tout est tiré avec la graine de la partie
+(`rules`-like : `game/Temptations`, fonctions pures testées) et écrit dans le journal.
+
+- **Offre en cabine** : au début de chaque `VOTE` (la boucle finale comprise) un joueur humain vivant est tiré. Il reçoit en privé
+  (`say.offer`, 1 point) l'offre dès que **sa cabine est fermée** (`close_cabin`) ; sans cabine à fermer (`cabins_required` faux ou plan
+  sans cabine), dès le début du vote. Tout le monde entend `say.offer_made`, sans nom. Si le tiré **trahit lui-même** (le vote de sa paire est
+  le sien, ou il est seul) l'offre vaut +1 aux résultats (`Temptations.OFFER_BONUS`, entrée `offer_taken`) ; une seule fois. Journal `offer`
+  (`player`, `round`, `forced`). Le gardien reçoit l'offre comme les autres (son vote « Trahir » reste refusé).
+- **Fuite** : à l'entrée en `RESULTS`, un humain vivant reçoit en privé (`say.leak.<genre>`) une chose vraie du journal, jamais à propos de
+  lui : `vote_time` et `cabin_closed` (nom, secondes depuis le début du vote), `cabin_try` (nom, a tenté d'entrer dans une cabine), `item_found`
+  (nom ; sans dire l'objet). Journal `leak` (`player`, `kind`, `about`).
+- **Course** : la première salle de la manche résolue par ses joueurs (pas par le délai ni par `solve_room`) est annoncée à tous
+  (`say.race_first`, les noms du groupe). Journal `race`.
+- Le client n'a rien de nouveau à gérer : ces lignes sont des `EventsTrahisonSay` (`whisper` ou `announce`) déjà traités.
+
+La vue du maître du jeu (`gm`) gagne : `log` (les 300 dernières entrées `{at, type, data}`, **réservé aux maîtres du jeu** : aucune autre vue
+n'a de journal), `offer` (`{seat, made, round, forced}`), `settings.offers`, `leaks`, `race`, `announce_deaths`. Le panneau (`screen/GmScreen`,
+`/phantasmon event trahison gm`, touche « Trahison : panneau du maître du jeu » non liée par défaut, page « Maître du jeu Trahison » du menu pour
+les admins) a cinq onglets : Joueurs, Salles, Votes, Journal (filtrable), Réglages. Les phrases libres s'écrivent dans le chat :
+`/phantasmon event trahison whisper <place> <texte>` et `... say <texte>`.

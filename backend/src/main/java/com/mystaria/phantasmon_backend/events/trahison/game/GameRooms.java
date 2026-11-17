@@ -186,6 +186,18 @@ public final class GameRooms {
 		rooms.resumeHints(g.hub);
 	}
 
+	/** Gives the next help text to the group's room by hand; false when there is none left. */
+	boolean giveHint(Game g, RoundState r, int group) {
+		if (rooms.find(g.hub, r.number, group).isEmpty()) {
+			return false;
+		}
+		boolean given = rooms.giveHint(g.hub, group).isPresent();
+		if (given) {
+			save(g, r, group);
+		}
+		return given;
+	}
+
 	/** Solves the group's room at once (the provisional {@code debug_solve}, bots); no room: nothing happens. */
 	void forceSolve(Game g, RoundState r, int group) {
 		if (rooms.find(g.hub, r.number, group).isEmpty()) {

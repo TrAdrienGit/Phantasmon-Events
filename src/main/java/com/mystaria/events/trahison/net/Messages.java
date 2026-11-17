@@ -261,6 +261,46 @@ public final class Messages {
 		send(GM, "set_game_master", extra, true);
 	}
 
+	/** T7.4: a private line to one seat, from the hostess. */
+	public static void whisper(int seat, String text) {
+		send(GM, "whisper", Map.of("seat", seat, "text", text), true);
+	}
+
+	/** T7.4: a line to everybody, from the hostess. */
+	public static void say(String text) {
+		send(GM, "say", Map.of("text", text), true);
+	}
+
+	/** T7.3: hands the cabin offer to a seat now (during a vote). */
+	public static void offer(int seat) {
+		send(GM, "offer", Map.of("seat", seat), true);
+	}
+
+	/** T7.4: the next help text of the room of a group. */
+	public static void hint(int group) {
+		send(GM, "hint", Map.of("group", group), true);
+	}
+
+	/** T7.4: opens the exit of a stuck room (no point lost). */
+	public static void solveRoom(int group) {
+		send(GM, "solve_room", Map.of("group", group), true);
+	}
+
+	/** T7.4: repairs a mistake: a death. */
+	public static void kill(int seat) {
+		send(GM, "kill", Map.of("seat", seat), true);
+	}
+
+	/** T7.4: repairs a mistake: brings a dead player back. */
+	public static void revive(int seat) {
+		send(GM, "revive", Map.of("seat", seat), true);
+	}
+
+	/** T7.4: changes some settings of the lobby ({@code offers}, {@code leaks}, {@code race}, {@code announce_deaths}, {@code role_count}, {@code mode}...). */
+	public static void setSettings(Map<String, Object> changes) {
+		send(GM, "set_settings", changes, true);
+	}
+
 	public static void setPoints(int bracelet, int points) {
 		send(GM, "set_points", Map.of("bracelet", bracelet, "points", Math.max(0, points)), true);
 	}

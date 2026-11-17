@@ -33,6 +33,10 @@ public final class Trahison {
 	public static final KeyMapping MAP_KEY = new KeyMapping("key.phantasmon_events.trahison_map",
 			InputConstants.Type.KEYSYM, org.lwjgl.glfw.GLFW.GLFW_KEY_Z, "key.categories.phantasmon_events");
 
+	/** Opens the game master panel (T7.4); unbound by default, the panel is also a page of the Phantasmon menu and {@code /phantasmon event trahison gm}. */
+	public static final KeyMapping GM_KEY = new KeyMapping("key.phantasmon_events.trahison_gm",
+			InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), "key.categories.phantasmon_events");
+
 	private Trahison() {
 	}
 
@@ -60,10 +64,17 @@ public final class Trahison {
 		KeyBindingHelper.registerKeyBinding(MENU_KEY);
 		KeyBindingHelper.registerKeyBinding(CABIN_KEY);
 		KeyBindingHelper.registerKeyBinding(MAP_KEY);
+		KeyBindingHelper.registerKeyBinding(GM_KEY);
+		com.mystaria.events.trahison.screen.GmMenuPage.register();
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (MAP_KEY.consumeClick()) {
 				if (client.screen == null && client.player != null) {
 					com.mystaria.events.trahison.screen.MapScreen.open();
+				}
+			}
+			while (GM_KEY.consumeClick()) {
+				if (client.screen == null && client.player != null) {
+					com.mystaria.events.trahison.screen.GmScreen.open();
 				}
 			}
 			while (MENU_KEY.consumeClick()) {

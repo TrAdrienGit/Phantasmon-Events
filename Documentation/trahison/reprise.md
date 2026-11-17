@@ -1,17 +1,17 @@
 # Reprise du chantier (pause du 2026-11-16, soir)
 
 > **État :** tout est sur `main`, poussé. Dernier contrôle de l'orchestrateur : client compilé avec ses tests,
-> 396 tests backend verts, 1 196 clés de langue identiques. **Rien n'a encore tourné en jeu.**
+> tests backend verts (voir le dernier commit), clés de langue identiques. **Rien n'a encore tourné en jeu.**
 >
-> - **Fait :** T0 à T4 entiers, T6.1, T6.2, T6.4 et T6 entier, T7.1 rôles secrets, T7.2 objets cachés, T11 carte (étages, exploration, écran Z, annotations), et les décisions
+> - **Fait :** T0 à T4 entiers, T6.1, T6.2, T6.4 et T6 entier, T7 entier (rôles, objets, tentations, panneau du MJ), T11 carte (étages, exploration, écran Z, annotations), et les décisions
 >   jusqu'à D43 appliquées.
 > - **Agents :** ils lisent d'abord [`contexte-agent.md`](contexte-agent.md). Les tests humains sont dans
 >   [`tests-humains.md`](tests-humains.md), les décisions réglées dans [`decisions-tranchees.md`](decisions-tranchees.md).
-> - **Questions ouvertes** dans [`decisions.md`](decisions.md) : D140 à D147 (rôles, objets), D150 à D154 (carte).
+> - **Questions ouvertes** dans [`decisions.md`](decisions.md) : D140 à D147 (rôles, objets), D150 à D154 (carte), D160 à D165 (tentations, MJ).
 >
 > **Suite, dans l'ordre :**
 > 1. relire `decisions.md` et appliquer les réponses ;
-> 2. T7.3 tentations, T7.4 panneau du MJ, T5 vocal (greffon à confirmer en jeu), T8 Cobblemon, T9 contenu, T10 ;
+> 2. T5 vocal (greffon à confirmer en jeu), T8 Cobblemon, T9 contenu, T10 ;
 > 3. T5 vocal, T7 rôles et objets, T11 carte, T8 Cobblemon, T9 contenu, T10 ;
 > 4. la check-list cochable des tests humains au premier déploiement.
 

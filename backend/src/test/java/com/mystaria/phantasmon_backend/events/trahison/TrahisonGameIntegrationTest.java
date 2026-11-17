@@ -410,8 +410,8 @@ class TrahisonGameIntegrationTest {
 			}
 		}
 		assertThat(admin.views().stream().anyMatch(v -> v.get("gm") != null && !v.get("gm").isNull())).isTrue();
-		// Bots never get any message and the log never leaves the backend.
-		assertThat(admin.messages.stream().noneMatch(m -> m.contains("\"log\""))).isTrue();
+		// Bots never get any message and only the game master gets the log (T7.4).
+		assertThat(java.util.stream.Stream.of(a, b, spectator).flatMap(c -> c.messages.stream()).noneMatch(m -> m.contains("\"log\""))).isTrue();
 		assertThat(a.views().get(0).get("hub").asString()).isEqualTo(hub);
 	}
 

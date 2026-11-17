@@ -105,3 +105,50 @@ Choix appliqué : une fois la partie finie (`ENDED`), on ne peut plus écrire ni
 - [ ] On peut encore écrire pendant le bilan
 
 Ta réponse :
+
+## D160. Offre en cabine : ce qu'elle vaut
+Choix appliqué : l'offre promet « +1 point de plus » et le tient : si l'élu trahit lui-même (pour une paire : si c'est son vote qui compte), il gagne 1 point de plus aux résultats, une seule fois. Elle va à un humain vivant tiré à la graine, reçue quand sa cabine est fermée ; tout le monde entend qu'une offre a été faite, sans nom.
+- [x] +1 point s'il trahit, annoncée sans nom *(par défaut)*
+- [ ] Offre sans effet réel (un simple appât, l'élu n'a rien de plus)
+- [ ] +1 point qu'il trahisse ou non, s'il accepte en appuyant sur un bouton
+
+Ta réponse :
+
+## D161. Offre en cabine : le Gardien et les cases sans cabine
+Choix appliqué : le Gardien peut être tiré et reçoit l'offre comme les autres (son vote « Trahir » reste refusé, donc l'offre ne lui rapporte rien : un piège de plus). Sans cabine à fermer (réglage `cabins_required` faux, plan sans cabine), l'offre arrive dès le début du vote.
+- [x] Le Gardien peut la recevoir *(par défaut)*
+- [ ] Le Gardien est écarté du tirage de l'offre
+
+Ta réponse :
+
+## D162. Fuites : ce qu'on peut apprendre
+Choix appliqué : quatre genres de faits vrais, jamais sur le joueur qui reçoit : temps mis à voter, temps mis à fermer sa cabine, tentative d'entrer dans une cabine, objet trouvé (sans dire lequel). Un seul destinataire par manche, après les résultats. La liste est courte exprès ; d'autres genres (par exemple « X est allé dans la salle de Y ») viendront avec T8 si tu en veux.
+- [x] Ces quatre genres, un destinataire par manche *(par défaut)*
+- [ ] Aussi dire quel objet a été trouvé
+- [ ] Deux fuites par manche
+
+Ta réponse :
+
+## D163. La course : qui est annoncé
+Choix appliqué : le premier groupe dont les joueurs résolvent leur salle pendant `ROOMS` est annoncé à tous avec les noms de ses membres. Une salle résolue par le délai ou par le maître du jeu ne compte pas.
+- [x] Noms des membres, une seule annonce par manche *(par défaut)*
+- [ ] Seulement la couleur de la porte, sans noms
+- [ ] Classement complet des trois groupes
+
+Ta réponse :
+
+## D164. Le journal est réservé aux maîtres du jeu
+Choix appliqué : l'ancienne règle « le journal ne quitte jamais le backend » devient « seuls les maîtres du jeu le reçoivent » (les 300 dernières lignes dans le bloc `gm`) pour que le panneau ait un journal filtrable. Aucun joueur, spectateur ou fantôme n'en reçoit. Un maître du jeu qui joue voit donc les actions des autres : c'est déjà le cas de son bloc `gm`.
+- [x] Journal dans la vue du maître du jeu, 300 lignes *(par défaut)*
+- [ ] Journal gardé au backend, consulté par une route HTTP admin
+- [ ] 1 000 lignes
+
+Ta réponse :
+
+## D165. Panneau du maître du jeu : fenêtre, chat, réglages
+Choix appliqué : le panneau reste une fenêtre (`GmScreen`, 480 x 280) ouverte par la commande, par une touche non liée par défaut, et par une page « Maître du jeu Trahison » du menu de Phantasmon (admins) qui n'a qu'un bouton d'ouverture (une page de menu n'a pas la place d'un tel écran). Les phrases libres (chuchoter, parler à tous) se tapent dans le chat, comme la lettre, le panneau préremplissant la commande. Les réglages se changent dans le lobby seulement, y compris les durées par `set_settings` (l'écran n'édite pas encore les durées).
+- [x] Fenêtre + page de lancement + chat pour les phrases *(par défaut)*
+- [ ] Un vrai champ de texte dans le panneau (écran de saisie dédié)
+- [ ] Réglages modifiables aussi en cours de partie
+
+Ta réponse :

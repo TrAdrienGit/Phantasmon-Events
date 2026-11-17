@@ -77,6 +77,11 @@ public class Settings {
 	public int untieSeconds = DEFAULT_UNTIE_SECONDS;
 	public static final int DEFAULT_UNTIE_SECONDS = 5;
 
+	/** T7.3: the automatic temptations; each can be turned off. */
+	public boolean offers = true;
+	public boolean leaks = true;
+	public boolean race = true;
+
 	public static Map<Item, Integer> defaultItems() {
 		Map<Item, Integer> out = new EnumMap<>(Item.class);
 		for (Item item : Item.values()) {
@@ -138,6 +143,12 @@ public class Settings {
 	/** No secret role is drawn (tests whose votes must not meet a role rule). */
 	public Settings withoutRoles() {
 		roleCount = 0;
+		return this;
+	}
+
+	/** No cabin offer (tests whose points must not meet its extra point). */
+	public Settings withoutOffers() {
+		offers = false;
 		return this;
 	}
 

@@ -364,6 +364,14 @@ public class TrahisonWsHandler implements WsMessageHandler {
 				games.replaceRoom(hub, intArg(in, "round"), intArg(in, "group"), id);
 			}
 			case "set_bot_policy" -> games.setBotPolicy(hub, BotPolicy.parse(in.get("policy")));
+			case "whisper" -> games.gmWhisper(hub, intArg(in, "seat"), text(in, "text", false));
+			case "say" -> games.gmSay(hub, text(in, "text", false));
+			case "offer" -> games.offer(hub, intArg(in, "seat"));
+			case "hint" -> games.gmHint(hub, intArg(in, "group"));
+			case "solve_room" -> games.gmSolveRoom(hub, intArg(in, "group"));
+			case "kill" -> games.kill(hub, intArg(in, "seat"), "gm");
+			case "revive" -> games.revive(hub, intArg(in, "seat"));
+			case "set_settings" -> games.configure(hub, s -> applySettings(s, in));
 			default -> throw new TrahisonException(TrahisonException.UNKNOWN_ACTION, String.valueOf(action));
 		}
 	}
@@ -383,6 +391,60 @@ public class TrahisonWsHandler implements WsMessageHandler {
 	}
 
 	/** {@code {settings?: {mode, durations: {PHASE: seconds}, door_open_seconds, final_door_seconds, cabin_partner_seconds, cabins_required, test_room, draw_max_spread, draw_rise, draw_avoid_games}, mode?, test_room?, fast?: seconds}}. */
+	/** {@code set_settings} (lobby): the fields present change, the others stay. */
+	private static void applySettings(Settings s, Map<String, Object> in) {
+		if (in.get("offers") instanceof Boolean b) {
+			s.offers = b;
+		}
+		if (in.get("leaks") instanceof Boolean b) {
+			s.leaks = b;
+		}
+		if (in.get("race") instanceof Boolean b) {
+			s.race = b;
+		}
+		if (in.get("announce_deaths") instanceof Boolean b) {
+			s.announceDeaths = b;
+		}
+		if (in.get("role_count") instanceof Number n) {
+			s.roleCount = Math.max(0, Math.min(6, n.intValue()));
+		}
+		if (in.get("mode") != null) {
+			s.mode = parseMode(in.get("mode"));
+		}
+		if (in.get("roles") instanceof java.util.List<?> names) {
+			java.util.List<String> roles = new java.util.ArrayList<>();
+			for (Object name : names) {
+				Role role = Role.parse(name);
+				if (role == null || role == Role.GAME_MASTER) {
+					throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "unknown role " + name);
+				}
+				roles.add(role.name());
+			}
+			s.roles = roles;
+		}
+		if (in.get("items") instanceof Map<?, ?> counts) {
+			for (Map.Entry<?, ?> e : counts.entrySet()) {
+				Item item = Item.parse(e.getKey());
+				if (item == null || !(e.getValue() instanceof Number n)) {
+					throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "bad item count for " + e.getKey());
+				}
+				s.items.put(item, Math.max(0, Math.min(2, n.intValue())));
+			}
+		}
+		if (in.get("durations") instanceof Map<?, ?> d) {
+			for (Map.Entry<?, ?> e : d.entrySet()) {
+				try {
+					Phase phase = Phase.valueOf(String.valueOf(e.getKey()));
+					if (phase.timed() && e.getValue() instanceof Number n) {
+						s.durations.put(phase, Math.max(5, Math.min(7200, n.intValue())));
+					}
+				} catch (IllegalArgumentException ex) {
+					throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "unknown stage " + e.getKey());
+				}
+			}
+		}
+	}
+
 	private static Settings settingsOf(Map<String, Object> in) {
 		Settings s = new Settings();
 		Object fast = in.get("fast");
@@ -413,6 +475,15 @@ public class TrahisonWsHandler implements WsMessageHandler {
 			}
 			if (m.get("announce_deaths") instanceof Boolean b) {
 				s.announceDeaths = b;
+			}
+			if (m.get("offers") instanceof Boolean b) {
+				s.offers = b;
+			}
+			if (m.get("leaks") instanceof Boolean b) {
+				s.leaks = b;
+			}
+			if (m.get("race") instanceof Boolean b) {
+				s.race = b;
 			}
 			if ("HIDDEN".equals(m.get("ghost_display"))) {
 				s.ghostDisplay = Settings.GhostDisplay.HIDDEN;

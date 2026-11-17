@@ -128,7 +128,9 @@ class ViewsTest {
 		assertThat(votes.get(0).get("solo_vote").asString()).isEqualTo("BETRAY");
 		assertThat(master.get("gm").get("seed").asLong()).isEqualTo(99L);
 		assertThat(master.get("gm").get("bot_policy").asString()).isEqualTo("RANDOM");
-		assertThat(master.get("gm").has("log")).isFalse();
+		// T7.4: the game master reads the log of the game; no other view ever carries it
+		assertThat(master.get("gm").has("log")).isTrue();
+		assertThat(json(spectator)).doesNotContain("\"log\"");
 	}
 
 	@Test

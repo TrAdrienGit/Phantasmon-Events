@@ -431,6 +431,9 @@ public final class Views {
 			"newly_dead", new ArrayList<>(r.newlyDead));
 	}
 
+	/** How many of the last log entries the game master's view carries. */
+	static final int LOG_SHOWN = 300;
+
 	/** Everything the game master adds: the votes cast so far in the current round, the settings, the seed. */
 	private static Map<String, Object> gmBlock(Game g, RoundState r) {
 		List<Object> votes = new ArrayList<>();
@@ -462,14 +465,23 @@ public final class Views {
 		g.hiddenItems.forEach((spot, item) -> hiding.add(orderedMap("spot", spot, "item", item)));
 		Map<String, Object> itemCounts = new LinkedHashMap<>();
 		g.settings.items.forEach((item, n) -> itemCounts.put(item.name(), n));
-		return orderedMap("votes", votes, "zones", zones, "roles", roles, "player_items", carried, "hidden_items", hiding,
+		List<Object> journal = new ArrayList<>();
+		int first = Math.max(0, g.log.size() - LOG_SHOWN);
+		for (int i = first; i < g.log.size(); i++) {
+			LogEntry e = g.log.get(i);
+			journal.add(orderedMap("at", e.at.toEpochMilli(), "type", e.type, "data", new LinkedHashMap<>(e.data)));
+		}
+		Map<String, Object> offer = orderedMap("seat", g.temptations.offerSeat, "made", g.temptations.offerMade,
+			"round", g.temptations.offerRound, "forced", g.temptations.offerForced);
+		return orderedMap("log", journal, "offer", offer, "votes", votes, "zones", zones, "roles", roles, "player_items", carried, "hidden_items", hiding,
 			"unplaced_items", new ArrayList<>(g.unplacedItems), "role_state", roleState(g),
 			"role_settings", orderedMap("roles", new ArrayList<>(g.settings.roles), "role_count", g.settings.roleCount, "items", itemCounts,
 				"bonds_seconds", g.settings.bondsSeconds, "lock_seconds", g.settings.lockSeconds),
 			"settings", orderedMap("mode", g.settings.mode.name(), "durations", durations,
 				"door_open_seconds", g.settings.doorOpenSeconds, "final_door_seconds", g.settings.finalDoorSeconds,
 				"cabin_partner_seconds", g.settings.cabinPartnerSeconds,
-				"cabins_required", g.settings.cabinsRequired, "draw_max_spread", g.settings.drawMaxSpread,
+				"cabins_required", g.settings.cabinsRequired, "offers", g.settings.offers, "leaks", g.settings.leaks, "race", g.settings.race,
+				"announce_deaths", g.settings.announceDeaths, "draw_max_spread", g.settings.drawMaxSpread,
 				"draw_rise", g.settings.drawRise, "draw_avoid_games", g.settings.drawAvoidGames),
 			"bot_policy", g.botPolicy.name(), "seed", g.seed, "draw", drawBlock(g));
 	}

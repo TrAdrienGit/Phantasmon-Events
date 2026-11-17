@@ -396,6 +396,7 @@ public final class GameView {
 		clockOffset = next.serverTime() > 0 ? next.serverTime() - now : clockOffset;
 		current = next;
 		Secrets.update(data); // T7: roles, items, ropes
+		GmData.update(data); // T7.4: the game master's extra block
 		MapData.update(data); // T11: explored rooms, room names, cursors
 		cabinsState = next.hasGame() ? parseCabins(data) : Cabins.NONE;
 		finalDoorState = next.hasGame() && data.get("final_door") instanceof Map<?, ?> fd && fd.get("open_until") instanceof Number until

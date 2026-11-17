@@ -361,3 +361,15 @@
 13. **Limites.** Dessiner longtemps sur un étage : à 2 000 points la pastille « Limite de dessin atteinte » apparaît et le crayon s'arrête.
 14. **Petits écrans.** Vérifier à 320 x 180 et 854 x 480 pixels d'interface (taille de l'interface réglée dans les options) : la barre d'outils passe sur deux lignes, rien ne déborde, la légende devient le « ? ».
 15. **Fond fait à la main.** Copier `textures/trahison/map/example.png` en `<id d'étage>.png` (par exemple `main.png`) dans un pack : il remplace les aplats de cet étage (calé sur la boîte englobante, D153).
+
+## T7.3 et T7.4 : tentations automatiques et panneau du maître du jeu
+1. **Offre.** Partie de 9 avec au moins 3 humains, vote lancé : un seul joueur reçoit « Une offre, pour toi seul(e) » dès que sa cabine est fermée, tout le monde entend « Une offre vient d'être faite à l'un de vous », sans nom. L'élu trahit : aux résultats il a 1 point de plus que sans l'offre ; il alliait : rien de plus. Journal : `offer`, `offer_taken`.
+2. **Offre désactivée.** Dans l'onglet Réglages du lobby, « Offres de cabine » sur Non : plus aucune offre, plus d'annonce.
+3. **Fuite.** À l'écran des résultats, un seul joueur reçoit « Une rumeur, et elle est vraie » : le fait est exact (comparer avec l'onglet Journal) et ne parle jamais de lui.
+4. **Course.** La première salle résolue par ses joueurs est annoncée avec les noms de son groupe ; une salle résolue avec « Résoudre » ne déclenche pas l'annonce.
+5. **Panneau, onglets.** `/phantasmon event trahison gm` (et la page du menu, et la touche une fois liée) : cinq onglets. Joueurs : points, couleur, zone, rôle, objets (infobulle), attaché, hors ligne, factice. Salles : trois cartes, nombre d'aides données, tirage dessous. Votes : ceux qui tombent, plus l'état de l'offre. Journal : les filtres Tout, Votes, Salles, Objets, Morts, Tentations, Maître du jeu.
+6. **Gestes.** Cliquer un joueur : Chuchoter (le chat s'ouvre prérempli, le joueur reçoit la ligne en privé), Offre (pendant un vote seulement), Tuer (avec confirmation) puis Ressusciter. Salles : Aide donne le texte suivant, Résoudre ouvre la sortie sans perdre de point. « Parler à tous » : tous entendent la phrase.
+7. **Rien ne fuit.** Un joueur ordinaire ne voit ni rôle, ni objets des autres, ni journal ; seul le maître du jeu a ces onglets remplis.
+8. **Lobby.** Réglages : rôles (nombre et liste), objets (0 à 2 chacun), annonce des morts ; en cours de partie les boutons sont inactifs avec l'explication.
+9. **Petits écrans.** Vérifier le panneau à 320 x 180 et à 854 x 480 pixels d'interface : les onglets, les pastilles d'un joueur (elles disparaissent quand la place manque) et le défilement.
+10. **Pause.** Pendant une pause du maître du jeu, les gestes marchent encore (chuchoter, aide, points).

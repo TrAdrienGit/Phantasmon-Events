@@ -1275,8 +1275,12 @@ public class GameService {
 		if (r.roomSolved[group]) {
 			return;
 		}
+		boolean first = !r.roomSolved[0] && !r.roomSolved[1] && !r.roomSolved[2];
 		r.roomSolved[group] = true;
 		event(g, "room_solved", Map.of("group", group, "by", by));
+		if (first && by >= 0 && g.phase == Phase.ROOMS && g.settings.race) {
+			announceRace(g, r, group);
+		}
 		notifyChanged(g, "room");
 	}
 
@@ -1481,6 +1485,7 @@ public class GameService {
 			List<Integer> expected = lock == null ? humansOf(g, side) : lock.expected();
 			g.cabinLocks.put(mine.id(), new CabinLock(lock == null ? p : lock.first(), 0, true, false, expected));
 			event(g, "close_cabin", Map.of("player", p, "cabin", mine.id()));
+			makeOfferIfDue(g, p);
 			persist(g);
 			notifyChanged(g, "cabin");
 			return g;
@@ -1761,6 +1766,7 @@ public class GameService {
 					break;
 				}
 				enterPhase(g, Phase.RESULTS);
+				leakAfterResults(g);
 			}
 			case RESULTS -> {
 				if (!g.currentRound().finalLoop && g.round < 3) {
@@ -1974,6 +1980,9 @@ public class GameService {
 		}
 		event(g, "phase", Map.of("phase", phase.name(), "round", g.round));
 		notifyPhase(g);
+		if (phase == Phase.VOTE) {
+			prepareOffer(g);
+		}
 	}
 
 	private void scheduleTimer(Game g) {
@@ -2470,6 +2479,7 @@ public class GameService {
 			}
 		}
 		Split split = r.split();
+		applyOfferBonus(g, r, split, total);
 		for (int i = 0; i < PLAYERS; i++) {
 			Role role = g.roleOf(i);
 			if (role == null) {
@@ -2490,6 +2500,286 @@ public class GameService {
 					g.roleState.gamblerPaid = true;
 				}
 			}
+		}
+	}
+
+
+	// ------------------------------------------------------------------ T7.3 automatic temptations
+
+	/** Humans still in the game: the only ones who can be whispered to (a bot has nobody to tell). */
+	private static List<Integer> livingHumans(Game g) {
+		List<Integer> out = new ArrayList<>();
+		for (int i = 0; i < g.players.size(); i++) {
+			PlayerState p = g.players.get(i);
+			if (p.alive && !p.bot && p.uuid != null) {
+				out.add(i);
+			}
+		}
+		return out;
+	}
+
+	/** A vote starts: draws who will be offered the extra point (a pair's offer goes to the one who closes the cabin). */
+	private void prepareOffer(Game g) {
+		RoundState r = g.currentRound();
+		g.temptations = new Temptations.State();
+		if (r == null || !g.settings.offers) {
+			return;
+		}
+		g.temptations.offerRound = r.number;
+		g.temptations.offerSeat = Temptations.pickOfferee(g.seed, r.number + (r.finalLoop ? 100 : 0), livingHumans(g));
+		if (g.temptations.offerSeat < 0) {
+			return;
+		}
+		LayoutContent plan = planOf(g);
+		if (!g.settings.cabinsRequired || plan.cabins().isEmpty()) {
+			makeOffer(g, g.temptations.offerSeat, false); // no cabin to close: the offer comes with the vote
+		}
+		persist(g);
+	}
+
+	/** The offeree has closed his cabin: the offer reaches him now. */
+	private void makeOfferIfDue(Game g, int p) {
+		Temptations.State t = g.temptations;
+		if (g.settings.offers && !t.offerMade && t.offerSeat == p) {
+			makeOffer(g, p, false);
+		}
+	}
+
+	private void makeOffer(Game g, int seat, boolean forced) {
+		Temptations.State t = g.temptations;
+		RoundState r = g.currentRound();
+		t.offerSeat = seat;
+		t.offerRound = r == null ? 0 : r.number;
+		t.offerMade = true;
+		t.offerForced = forced;
+		event(g, "offer", Map.of("player", seat, "round", t.offerRound, "forced", forced));
+		whisper(g, seat, "phantasmon_events.trahison.say.offer", List.of(String.valueOf(Temptations.OFFER_BONUS)));
+		announce(g, "offer_made", List.of());
+	}
+
+	/** The game master hands an offer to a seat now (a vote must be running). */
+	public Game offer(String hub, int seat) {
+		Game g = require(hub);
+		synchronized (g) {
+			if (g.phase != Phase.VOTE) {
+				throw new TrahisonException(TrahisonException.WRONG_PHASE, "an offer is made during a vote");
+			}
+			PlayerState p = player(g, seat);
+			if (!p.alive || p.bot) {
+				throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "he cannot receive an offer");
+			}
+			makeOffer(g, seat, true);
+			persist(g);
+			notifyChanged(g, "offer");
+			return g;
+		}
+	}
+
+	/** An accepted offer (the offeree betrayed with his own vote) is worth one more point. */
+	private void applyOfferBonus(Game g, RoundState r, Split split, int[] total) {
+		Temptations.State t = g.temptations;
+		if (!t.offerMade || t.offerSeat < 0 || t.offerRound != r.number) {
+			return;
+		}
+		int i = t.offerSeat;
+		int k = r.groupOf(i);
+		boolean pair = split.group(Door.ALL.get(k)).pair().contains(i);
+		boolean betrayed = pair ? r.pairVote[k] == Vote.BETRAY && r.pairVoter[k] == i : r.soloVote[k] == Vote.BETRAY;
+		if (betrayed) {
+			total[i] += Temptations.OFFER_BONUS;
+			event(g, "offer_taken", Map.of("player", i, "round", r.number));
+		}
+		t.offerMade = false; // paid once
+		t.offerSeat = -1;
+	}
+
+	/** After the results: one living human learns a true thing taken from the log of the round. */
+	private void leakAfterResults(Game g) {
+		RoundState r = g.currentRound();
+		if (!g.settings.leaks || r == null || g.phase != Phase.RESULTS) {
+			return;
+		}
+		int from = 0;
+		long voteStart = 0;
+		for (int i = 0; i < g.log.size(); i++) {
+			LogEntry e = g.log.get(i);
+			if ("phase".equals(e.type) && "VOTE".equals(e.data.get("phase"))) {
+				from = i;
+				voteStart = e.at.toEpochMilli();
+			}
+		}
+		List<Temptations.Fact> facts = new ArrayList<>();
+		for (int i = from; i < g.log.size(); i++) {
+			LogEntry e = g.log.get(i);
+			if (!(e.data.get("player") instanceof Number n) || n.intValue() < 0 || n.intValue() >= g.players.size()) {
+				continue;
+			}
+			int who = n.intValue();
+			String name = g.players.get(who).name;
+			long seconds = Math.max(0, (e.at.toEpochMilli() - voteStart) / 1000);
+			switch (e.type) {
+				case "vote" -> facts.add(new Temptations.Fact("vote_time", who, List.of(name, String.valueOf(seconds))));
+				case "close_cabin" -> facts.add(new Temptations.Fact("cabin_closed", who, List.of(name, String.valueOf(seconds))));
+				case "cabin_enter" -> facts.add(new Temptations.Fact("cabin_try", who, List.of(name)));
+				default -> {
+				}
+			}
+		}
+		for (LogEntry e : g.log) { // objects picked up during the whole game
+			if ("item_found".equals(e.type) && e.data.get("player") instanceof Number n && n.intValue() >= 0 && n.intValue() < g.players.size()) {
+				facts.add(new Temptations.Fact("item_found", n.intValue(), List.of(g.players.get(n.intValue()).name)));
+			}
+		}
+		Temptations.Leak leak = Temptations.pickLeak(g.seed, r.number + (r.finalLoop ? 100 : 0), livingHumans(g), facts);
+		if (leak == null) {
+			return;
+		}
+		event(g, "leak", Map.of("player", leak.receiver(), "kind", leak.fact().kind(), "about", leak.fact().about(), "round", r.number));
+		whisper(g, leak.receiver(), "phantasmon_events.trahison.say.leak." + leak.fact().kind(), leak.fact().args());
+		persist(g);
+	}
+
+	/** The first group out of its room is announced to everybody. */
+	private void announceRace(Game g, RoundState r, int group) {
+		List<String> names = new ArrayList<>();
+		DoorGroup dg = r.split().group(Door.ALL.get(group));
+		for (int i : dg.pair()) {
+			names.add(g.players.get(i).name);
+		}
+		names.add(g.players.get(dg.solo()).name);
+		event(g, "race", Map.of("group", group, "round", r.number));
+		announce(g, "race_first", List.of(String.join(", ", names)));
+	}
+
+	private void announce(Game g, String key, List<String> args) {
+		for (GameListener l : listeners) {
+			try {
+				l.announced(g, key, args);
+			} catch (RuntimeException ex) {
+				log.warn("Trahison listener failed on announced", ex);
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------ T7.4 game master gestures
+
+	private static PlayerState player(Game g, int seat) {
+		if (seat < 0 || seat >= g.players.size()) {
+			throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "no such player");
+		}
+		return g.players.get(seat);
+	}
+
+	private static String cleanText(String text) {
+		String t = text == null ? "" : text.trim();
+		if (t.isEmpty() || t.length() > 200) {
+			throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "text required (1 to 200 characters)");
+		}
+		return t;
+	}
+
+	/** The game master whispers a line to one seat; the log keeps it. */
+	public Game gmWhisper(String hub, int seat, String text) {
+		Game g = require(hub);
+		synchronized (g) {
+			String clean = cleanText(text);
+			PlayerState p = player(g, seat);
+			if (p.bot) {
+				throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "a dummy player has nobody to tell");
+			}
+			event(g, "gm_whisper", Map.of("player", seat, "text", clean));
+			whisper(g, seat, "phantasmon_events.trahison.say.gm_whisper", List.of(clean));
+			persist(g);
+			return g;
+		}
+	}
+
+	/** The game master speaks to everybody, as the hostess. */
+	public Game gmSay(String hub, String text) {
+		Game g = require(hub);
+		synchronized (g) {
+			String clean = cleanText(text);
+			event(g, "gm_say", Map.of("text", clean));
+			announce(g, "gm", List.of(clean));
+			persist(g);
+			return g;
+		}
+	}
+
+	/** The game master gives a help text to the room of a group of the running round. */
+	public Game gmHint(String hub, int group) {
+		Game g = require(hub);
+		synchronized (g) {
+			RoundState r = g.currentRound();
+			if (g.phase != Phase.ROOMS || r == null || group < 0 || group > 2 || rooms == null) {
+				throw new TrahisonException(TrahisonException.WRONG_PHASE, "no room is being played");
+			}
+			boolean given = rooms.giveHint(g, r, group);
+			event(g, "gm_hint", Map.of("group", group, "given", given));
+			persist(g);
+			return g;
+		}
+	}
+
+	/** The game master solves a stuck room: its exit opens and the group counts as solved (no point lost). */
+	public Game gmSolveRoom(String hub, int group) {
+		Game g = require(hub);
+		synchronized (g) {
+			RoundState r = g.currentRound();
+			if (g.phase != Phase.ROOMS || r == null || group < 0 || group > 2) {
+				throw new TrahisonException(TrahisonException.WRONG_PHASE, "no room is being played");
+			}
+			if (rooms != null) {
+				rooms.forceSolve(g, r, group);
+			}
+			event(g, "gm_solve_room", Map.of("group", group));
+			markRoomSolved(g, r, group, -1);
+			persist(g);
+			notifyChanged(g, "room");
+			return g;
+		}
+	}
+
+	/** To repair a mistake: a dead player lives again, his body is gone and his bracelet is back on his wrist. */
+	public Game revive(String hub, int seat) {
+		Game g = require(hub);
+		synchronized (g) {
+			if (g.phase == Phase.LOBBY || g.phase == Phase.ENDED) {
+				throw new TrahisonException(TrahisonException.WRONG_PHASE, "no running game");
+			}
+			PlayerState p = player(g, seat);
+			if (p.alive) {
+				throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "he is alive");
+			}
+			p.alive = true;
+			BraceletState b = g.bracelets.get(seat);
+			b.ownerAlive = true;
+			if (b.holder == null) {
+				b.holder = seat;
+			}
+			if (b.points < 1) {
+				b.points = 1;
+			}
+			g.bodies.removeIf(body -> body.player == seat);
+			event(g, "revived", Map.of("player", seat));
+			persist(g);
+			notifyChanged(g, "death");
+			return g;
+		}
+	}
+
+	/** Settings that may change while the lobby is open (the rest is fixed at creation); returns the game. */
+	public Game configure(String hub, java.util.function.Consumer<Settings> change) {
+		Game g = require(hub);
+		synchronized (g) {
+			if (g.phase != Phase.LOBBY) {
+				throw new TrahisonException(TrahisonException.NOT_IN_LOBBY, "the settings change in the lobby");
+			}
+			change.accept(g.settings);
+			event(g, "settings", Map.of());
+			persist(g);
+			notifyChanged(g, "settings");
+			return g;
 		}
 	}
 

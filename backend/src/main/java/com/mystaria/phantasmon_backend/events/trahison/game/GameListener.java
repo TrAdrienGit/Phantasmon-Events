@@ -30,4 +30,8 @@ public interface GameListener {
 	/** A private line for one seat (a role, a letter): {@code key} is a language key, {@code args} its arguments. Never a bot. */
 	default void whispered(Game game, int seat, String key, java.util.List<String> args) {
 	}
+
+	/** A line the hostess says to everybody (no name of a secret in it): {@code key} is a language key. */
+	default void announced(Game game, String key, java.util.List<String> args) {
+	}
 }

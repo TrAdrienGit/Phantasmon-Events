@@ -52,7 +52,7 @@ class GameServiceTest {
 	}
 
 	private Game lobbyWith(int players, long seed) {
-		Game g = service.create(HUB, Settings.fast(SECONDS).withoutCabins(), seed);
+		Game g = service.create(HUB, Settings.fast(SECONDS).withoutCabins().withoutOffers(), seed);
 		for (int i = 0; i < players; i++) {
 			service.join(HUB, ids[i], "p" + i);
 		}
@@ -234,7 +234,7 @@ class GameServiceTest {
 
 	@Test
 	void gameMasterModeDoesNotAdvanceOnItsOwn() {
-		Settings s = Settings.fast(SECONDS).withoutCabins();
+		Settings s = Settings.fast(SECONDS).withoutCabins().withoutOffers();
 		s.mode = Mode.GAME_MASTER;
 		service.create(HUB, s, 5L);
 		for (int i = 0; i < 9; i++) {
@@ -319,7 +319,7 @@ class GameServiceTest {
 
 		ManualClock c2 = new ManualClock();
 		GameService other = new GameService(new MemoryStore(), c2, c2);
-		other.create("hub-b", Settings.fast(SECONDS).withoutCabins(), 2024L);
+		other.create("hub-b", Settings.fast(SECONDS).withoutCabins().withoutOffers(), 2024L);
 		for (int i = 0; i < 9; i++) {
 			other.join("hub-b", ids[i], "p" + i);
 		}
