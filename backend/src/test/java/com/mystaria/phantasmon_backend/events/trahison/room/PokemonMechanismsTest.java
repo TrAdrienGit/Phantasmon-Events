@@ -14,6 +14,8 @@ import org.junit.jupiter.api.Test;
 
 import com.mystaria.phantasmon_backend.events.trahison.pokemon.PokemonCatalog;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.Clue;
+import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.CryMatch;
+import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.PcBox;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.DexCode;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.InputResult;
 import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.Json;
@@ -26,7 +28,7 @@ import com.mystaria.phantasmon_backend.events.trahison.room.mechanism.WeighIn;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
-/** Tests of the Pokemon mechanisms of T8.2 (dex_code, unown_text, weigh_in, type_chain): 1000 generations each solve. */
+/** Tests of the Pokemon mechanisms of T8.2 (dex_code, unown_text, weigh_in, type_chain, cry_match, pc_box): 1000 generations each solve. */
 class PokemonMechanismsTest {
 
 	final PokemonCatalog catalog = new PokemonCatalog();
@@ -34,6 +36,8 @@ class PokemonMechanismsTest {
 	final UnownText unown = new UnownText();
 	final WeighIn weigh = new WeighIn(catalog);
 	final TypeChain chain = new TypeChain(catalog);
+	final CryMatch cry = new CryMatch(catalog);
+	final PcBox box = new PcBox(catalog);
 
 	static ObjectNode params(String name, int value) {
 		ObjectNode p = Json.object();
@@ -168,6 +172,110 @@ class PokemonMechanismsTest {
 			}
 			assertTrue(last.solved());
 		}
+	}
+
+	@Test
+	void cryMatchSolvesByElimination() {
+		for (long seed = 0; seed < 1000; seed++) {
+			int n = 3 + (int) (seed % 2);
+			MechanismState s = cry.generate(new SplittableRandom(seed), params("count", n));
+			JsonNode cries = s.data().get("cries");
+			JsonNode cards = s.data().get("cards");
+			JsonNode answer = s.data().get("answer");
+			assertEquals(n, cries.size());
+			for (int i = 0; i < n; i++) {
+				assertEquals(cries.get(i).asString(), cards.get(answer.get(i).asInt()).asString());
+			}
+			assertFalse(cry.view(s, ViewerKind.PLAYER).has("answer"));
+			assertTrue(cry.view(s, ViewerKind.GAME_MASTER).has("answer"));
+			// brute force: try permutations until the backend says solved, at most n! tries
+			MechanismState cur = s;
+			boolean solved = false;
+			int tries = 0;
+			for (List<Integer> perm : permutations(n)) {
+				ObjectNode in = Json.object();
+				tools.jackson.databind.node.ArrayNode arr = in.putArray("match");
+				perm.forEach(arr::add);
+				InputResult r = cry.onInput(cur, 0, in);
+				cur = r.state();
+				tries++;
+				if (r.solved()) {
+					solved = true;
+					break;
+				}
+			}
+			assertTrue(solved && tries <= (n == 3 ? 6 : 24), "seed " + seed);
+			assertEquals(tries - 1, cur.data().get("wrong").asInt());
+		}
+		assertThrows(IllegalArgumentException.class, () -> {
+			ObjectNode in = Json.object();
+			in.putArray("match").add(0).add(0).add(1);
+			cry.onInput(cry.generate(new SplittableRandom(1), null), 0, in);
+		});
+	}
+
+	static List<List<Integer>> permutations(int n) {
+		List<List<Integer>> out = new java.util.ArrayList<>();
+		permute(new java.util.ArrayList<>(), new boolean[n], n, out);
+		return out;
+	}
+
+	private static void permute(List<Integer> cur, boolean[] used, int n, List<List<Integer>> out) {
+		if (cur.size() == n) {
+			out.add(List.copyOf(cur));
+			return;
+		}
+		for (int i = 0; i < n; i++) {
+			if (!used[i]) {
+				used[i] = true;
+				cur.add(i);
+				permute(cur, used, n, out);
+				cur.remove(cur.size() - 1);
+				used[i] = false;
+			}
+		}
+	}
+
+	@Test
+	void pcBoxHasADeducibleRuleAndSolves() {
+		for (long seed = 0; seed < 1000; seed++) {
+			ObjectNode p = params("count", 5 + (int) (seed % 4));
+			p.put("fixed", 2 + (int) (seed % 3));
+			MechanismState s = box.generate(new SplittableRandom(seed), p);
+			JsonNode answer = s.data().get("answer");
+			int n = answer.size();
+			assertFalse(s.data().get("order").equals(answer), "never starts sorted");
+			assertEquals(List.of(s.data().get("rule").asString()), box.consistentRules(s), "the locked Pokemon tell the rule: seed " + seed);
+			for (JsonNode f : s.data().get("fixed")) {
+				assertEquals(answer.get(f.asInt()), s.data().get("order").get(f.asInt()));
+			}
+			MechanismState cur = s;
+			boolean solved = false;
+			for (int i = 0; i < n && !solved; i++) { // selection sort with swaps of free positions
+				if (cur.data().get("order").get(i).equals(answer.get(i))) {
+					continue;
+				}
+				int at = -1;
+				for (int j = 0; j < n; j++) {
+					if (cur.data().get("order").get(j).equals(answer.get(i))) {
+						at = j;
+					}
+				}
+				ObjectNode in = Json.object();
+				in.putArray("swap").add(i).add(at);
+				InputResult r = box.onInput(cur, 0, in);
+				cur = r.state();
+				solved = r.solved();
+			}
+			assertTrue(cur.data().get("solved").asBoolean(), "seed " + seed);
+			assertFalse(box.view(s, ViewerKind.PLAYER).has("rule"));
+			assertTrue(box.view(s, ViewerKind.GAME_MASTER).has("rule"));
+		}
+		MechanismState s = box.generate(new SplittableRandom(3), null);
+		int locked = s.data().get("fixed").get(0).asInt();
+		ObjectNode in = Json.object();
+		in.putArray("swap").add(locked).add((locked + 1) % 6);
+		assertThrows(IllegalArgumentException.class, () -> box.onInput(s, 0, in));
 	}
 
 	@Test

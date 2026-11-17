@@ -60,8 +60,16 @@ public final class PuzzleScreens {
 		register("pickup_set", PickupSetScreen::new);
 		register("code_breaker", CodeBreakerScreen::new);
 		register("wiring", WiringScreen::new);
+		register("dex_code", DexCodeScreen::new);
+		register("unown_text", UnownTextScreen::new);
+		register("weigh_in", WeighInScreen::new);
+		register("cry_match", CryMatchScreen::new);
+		register("pc_box", PcBoxScreen::new);
+		register("battle_puzzle", BattlePuzzleScreen::new);
 		// three_levers is played in the world (a click on a lever slot): no screen opens for it, only a preview offline.
 		PREVIEWS.put("three_levers", ThreeLeversScreen::new);
+		// type_chain is played in the world too (levers marked with a type): preview only.
+		PREVIEWS.put("type_chain", TypeChainScreen::new);
 	}
 
 	private PuzzleScreens() {
@@ -124,6 +132,7 @@ public final class PuzzleScreens {
 		if (phase.isEmpty() || "NONE".equals(phase) || "ENDED".equals(phase)) {
 			STATES.clear();
 			STAMPS.clear();
+			PokemonUi.clearRead();
 			PLAYERS.clear();
 			GROUP_MEMBERS.clear();
 			ownIndex = -1;
@@ -132,6 +141,7 @@ public final class PuzzleScreens {
 		}
 		if ("DOORS".equals(phase)) {
 			// A new round: the rooms of the last one are gone and nothing says so, so what we hold of them goes too.
+			PokemonUi.clearRead();
 			STATES.clear();
 			STAMPS.clear();
 			if (Minecraft.getInstance().screen instanceof MiniGameScreen) {

@@ -50,4 +50,22 @@ public final class MiniGameSounds {
 	public static void open() {
 		play(SoundEvents.UI_BUTTON_CLICK.value(), 0.8f, 0.6f);
 	}
+
+	/**
+	 * The cry of a Cobblemon species (its own sound event {@code cobblemon:pokemon.<species>.cry}); silent when the id has none.
+	 * Returns whether a sound was asked for.
+	 */
+	public static boolean cry(String species) {
+		if (species == null || !species.matches("[a-z0-9_]+")) {
+			return false;
+		}
+		try {
+			SoundEvent event = SoundEvent.createVariableRangeEvent(
+					net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("cobblemon", "pokemon." + species + ".cry"));
+			play(event, 1f, 1f);
+			return true;
+		} catch (RuntimeException e) {
+			return false;
+		}
+	}
 }

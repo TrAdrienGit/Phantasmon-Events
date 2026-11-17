@@ -39,6 +39,24 @@ public final class Documents {
 	public static List<Page> pagesOf(List<Clue> clues) {
 		List<Page> pages = new ArrayList<>();
 		for (Clue clue : clues) {
+			String role = clue.role();
+			if ("text".equals(clue.type()) && "wall_text".equals(role)) { // T8: a sentence in Zarbi, drawn with the pack's glyphs
+				com.mystaria.events.trahison.minigame.PokemonUi.noteRead(role, clue.text());
+				pages.add(new Page("zarbi", List.of(clue.text())));
+				continue;
+			}
+			if ("document".equals(clue.type()) && "alphabet".equals(role)) { // T8: the Zarbi key, glyph above its letter
+				pages.add(new Page("zarbi_key", List.of("ABCDEFGHIJKLM", "NOPQRSTUVWXYZ")));
+				continue;
+			}
+			if ("text".equals(clue.type()) && (role.startsWith("portrait_") || role.startsWith("pedestal_"))) { // T8: a species shown by its model
+				pages.add(new Page("species", List.of(clue.text())));
+				continue;
+			}
+			if ("text".equals(clue.type()) && role.startsWith("mark_")) { // T8: a type mark
+				pages.add(new Page("type", List.of(clue.text())));
+				continue;
+			}
 			switch (clue.type()) {
 				case "document" -> {
 					for (String page : clue.list()) {

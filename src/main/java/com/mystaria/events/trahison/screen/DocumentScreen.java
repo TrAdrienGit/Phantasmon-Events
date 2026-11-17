@@ -94,6 +94,42 @@ public final class DocumentScreen extends TrahisonScreen {
 				}
 			}
 			case "image" -> drawImage(g, p.lines().get(0), x, y, w, h);
+			case "zarbi" -> {
+				String text = p.lines().get(0);
+				int size = com.mystaria.events.trahison.minigame.Zarbi.fit(text, new int[] { 16, 12, 10 }, w, h - 14);
+				int th = com.mystaria.events.trahison.minigame.Zarbi.height(text, size, w);
+				com.mystaria.events.trahison.minigame.Zarbi.drawText(g, text, x, y + Math.max(0, (h - 14 - th) / 2), w, size, TrahisonPalette.ACCENT_HOT);
+				MenuUi.centered(g, Component.translatable(T + "document.zarbi"), x + w / 2, y + h - 10, w, TrahisonPalette.TEXT_MUTED);
+			}
+			case "zarbi_key" -> {
+				int cols = 13;
+				int cell = w / cols;
+				int glyph = Math.max(10, Math.min(16, cell - 2));
+				int rowH = glyph + 14;
+				int total = p.lines().size() * rowH;
+				int top = y + Math.max(0, (h - total) / 2);
+				for (int r = 0; r < p.lines().size(); r++) {
+					String letters = p.lines().get(r);
+					int left = x + (w - letters.length() * cell) / 2;
+					for (int i = 0; i < letters.length(); i++) {
+						int cx = left + i * cell + (cell - glyph) / 2;
+						com.mystaria.events.trahison.minigame.Zarbi.draw(g, letters.charAt(i), cx, top + r * rowH, glyph, TrahisonPalette.ACCENT_HOT);
+						MenuUi.centered(g, Component.literal(String.valueOf(letters.charAt(i))), left + i * cell + cell / 2, top + r * rowH + glyph + 3, cell, TrahisonPalette.TEXT_SECONDARY);
+					}
+				}
+			}
+			case "species" -> {
+				String id = p.lines().get(0);
+				int size = Math.max(24, Math.min(96, h - 22));
+				com.mystaria.events.trahison.minigame.PokemonUi.model(g, id, x + w / 2, y + (h - 14) / 2, size);
+				MenuUi.centered(g, com.mystaria.events.trahison.minigame.PokemonUi.speciesName(id), x + w / 2, y + h - 10, w, TrahisonPalette.TEXT);
+			}
+			case "type" -> {
+				String id = p.lines().get(0);
+				int size = Math.max(16, Math.min(48, h - 30));
+				Glyphs.draw(g, com.mystaria.events.trahison.minigame.PokemonUi.typeGlyph(id), x + w / 2f, y + (h - 14) / 2f, size, 0, TrahisonPalette.ACCENT_HOT);
+				MenuUi.centered(g, com.mystaria.events.trahison.minigame.PokemonUi.typeName(id), x + w / 2, y + h - 10, w, TrahisonPalette.TEXT);
+			}
 			default -> {
 				int ty = y;
 				for (String line : p.lines()) {

@@ -45,7 +45,11 @@ Sur le modèle des mécanismes de T3.5.
 | `weigh_in` | Ordonner des socles du plus léger au plus lourd | Les espèces |
 | `pc_box` | Mini-jeu : ranger une Boîte PC selon une règle à deviner | La règle et le contenu |
 
-- Le rendu Zarbi : une police dessinée par nous, lettre par lettre (aucune image tirée des jeux).
+- Le rendu Zarbi : une police dessinée par nous, lettre par lettre (aucune image tirée des jeux). **Fait (provisoire)** : le
+  fichier `src/main/resources/assets/phantasmon_events/textures/trahison/zarbi/glyphs.png` (gabarit généré par
+  `tools/zarbi_placeholder.py`) est lu par `minigame/Zarbi`. À redessiner à la main : 13 colonnes sur 2 lignes (A à M, puis N à Z),
+  cellules carrées de toute taille (16, 32 ou 64 px), traits blancs sur fond transparent ; il suffit de remplacer le fichier.
+  Utilisé par l'écran `unown_text` et par la page de lecture de `wall_text` / `alphabet`.
 - Les Pokémon montrés (statues, silhouettes) utilisent les modèles de Cobblemon, déjà présents chez les joueurs.
 - **Fini quand :** chacun se joue dans la salle d'essai, et 1 000 générations donnent toutes une énigme résoluble.
 

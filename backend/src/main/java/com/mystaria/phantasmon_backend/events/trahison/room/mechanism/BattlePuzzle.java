@@ -248,9 +248,36 @@ public class BattlePuzzle implements Mechanism {
 		view.put("turn", d.get("history").size());
 		view.put("fails", d.path("fails").asInt());
 		view.put("solved", d.path("solved").asBoolean(false));
+		view.set("table", table(d));
 		if (viewer == ViewerKind.GAME_MASTER) {
 			view.set("answer", d.get("answer").deepCopy());
 		}
 		return view;
+	}
+
+	/**
+	 * The part of the type table the duel needs: {@code {attack type: {defender type: multiplier}}} for the attack types of both
+	 * teams against the types of both teams, only where the multiplier is not 1 (so the client can show who beats whom).
+	 */
+	private ObjectNode table(ObjectNode d) {
+		java.util.Set<String> attacks = new java.util.TreeSet<>();
+		java.util.Set<String> defenders = new java.util.TreeSet<>();
+		for (String side : List.of("player", "enemy")) {
+			for (JsonNode mon : d.get(side)) {
+				mon.get("types").forEach(t -> defenders.add(t.asString()));
+				mon.get("moves").forEach(m -> attacks.add(m.get("type").asString()));
+			}
+		}
+		ObjectNode table = Json.object();
+		for (String a : attacks) {
+			ObjectNode row = table.putObject(a);
+			for (String t : defenders) {
+				double e = catalog.efficacy(a, t);
+				if (e != 1.0) {
+					row.put(t, e);
+				}
+			}
+		}
+		return table;
 	}
 }

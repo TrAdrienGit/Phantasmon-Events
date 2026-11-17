@@ -378,3 +378,18 @@
 
 - Rien n'est encore visible en jeu : les mécanismes Pokémon n'ont pas d'écran client et la salle d'essai « Cobblemon » n'existe pas.
 - Vérifier au backend (`./gradlew test --tests '*Pokemon*' --tests '*BattlePuzzleTest'`) : catalogue, quatre mécanismes et duel verts.
+
+## T8 Cobblemon : écrans des mécanismes Pokémon (non vus en jeu, à valider)
+
+Tous les écrans se testent d'abord hors ligne : `/phantasmon event trahison minigame <dex_code|unown_text|weigh_in|cry_match|pc_box|battle_puzzle|type_chain>`. Vérifier à 320 x 180 et à 854 x 480 pixels d'interface : rien ne sort du cadre, texte lisible.
+
+1. **Clavier Pokédex (`dex_code`).** Chiffres groupés par trois, neuf chiffres tiennent ; code d'essai 025133 déverrouille ; trois erreurs verrouillent.
+2. **Mur Zarbi (`unown_text`).** Hors ligne : la phrase s'affiche en signes Zarbi au-dessus du clavier, plus petite sur petit écran ; code d'essai 123. En partie : ouvrir d'abord le texte du mur (page de lecture en Zarbi), puis le terminal : la phrase y est recopiée ; sans lecture, le message « Lisez d'abord… ».
+3. **Police Zarbi.** Les 26 signes sont différents ; la page `alphabet` montre chaque signe avec sa lettre. Remplacer `glyphs.png` par une feuille dessinée (13 x 2, autre taille de cellule) : le jeu la prend sans autre changement.
+4. **Socles (`weigh_in`).** Cliquer deux socles les échange ; mis dans l'ordre : déverrouille ; « Le plus léger / le plus lourd » (ou petit / grand si `by = height`) ; les modèles Cobblemon s'affichent (sinon un « ? » : signaler).
+5. **Boîte PC (`pc_box`).** Les cartes cadenassées ne bougent pas ; la ligne du bas détaille la carte sous la souris (utile sur petit écran) ; la règle se déduit des cartes verrouillées.
+6. **Cris (`cry_match`).** Un clic sur « Cri n » joue le cri (silence : signaler, l'id de son `cobblemon:pokemon.<espèce>.cry` est peut-être différent) ; relier cris et Pokémon ; Valider affiche le nombre de paires justes ; les touches 1 à 4 jouent, Entrée valide.
+7. **Duel (`battle_puzzle`).** Équipes, PV, attaques en « type + puissance » (jamais un nom), réservistes cliquables, attaque suivante de l'adversaire, tour n sur N, échecs, lignes de la table des types. En partie : un échec remet la position de départ. Hors ligne c'est un aperçu : les boutons ne jouent rien.
+8. **Leviers de types (`type_chain`).** Aperçu hors ligne : trois leviers, ordre eau, feu, plante ; un mauvais levier remet à zéro. En jeu, pas d'écran : les marques se lisent en page (symbole et nom du type).
+9. **Pages de lecture.** Portrait ou socle : le modèle de l'espèce et son nom ; marque de type : symbole et nom. Si les modèles n'apparaissent pas, signaler (repli sur un « ? »).
+10. **Éditeur.** Les sept mécanismes Pokémon sont proposés dans l'éditeur de salle (liste de repli et réponse du backend).

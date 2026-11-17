@@ -155,6 +155,7 @@ public class WeighIn implements Mechanism {
 		ObjectNode data = Json.object();
 		data.set("order", order);
 		data.set("answer", answer);
+		data.put("by", height ? "height" : "weight");
 		data.put("swaps", 0);
 		data.put("solved", false);
 		return new MechanismState(data, clues);
@@ -197,6 +198,7 @@ public class WeighIn implements Mechanism {
 		ObjectNode d = state.data();
 		ObjectNode view = Json.object();
 		view.set("order", d.get("order").deepCopy());
+		view.put("by", d.path("by").asString("weight"));
 		view.put("swaps", d.path("swaps").asInt());
 		view.put("solved", d.path("solved").asBoolean(false));
 		if (viewer == ViewerKind.GAME_MASTER) {

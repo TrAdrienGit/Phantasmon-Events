@@ -168,3 +168,57 @@ Choix appliqué : la vue du duel montre toujours quelle attaque l'adversaire va 
 - [ ] Attaques nommées par nous
 
 Ta réponse :
+
+## D180. Cris : les ids d'espèces sont dans la vue
+Choix appliqué : pour jouer les cris (`cobblemon:pokemon.<id>.cry`) et dessiner les modèles, le client reçoit les ids d'espèces dans la vue de `cry_match` ; un client truqué pourrait donc lire la réponse. L'écran n'écrit aucun nom, et la réponse du backend ne dit que le nombre de paires justes. Les « silhouettes » sont les modèles tels quels (pas de silhouette noire : le rendu Cobblemon ne se teinte pas de façon fiable).
+- [x] Ids dans la vue, modèles sans nom *(par défaut)*
+- [ ] Jetons opaques : le backend dit au client quel son jouer par un message à part (plus de code, aucune fuite)
+- [ ] Silhouettes noires (à tester en jeu)
+
+Ta réponse :
+
+## D181. Texte Zarbi : recopié au-dessus du clavier une fois lu
+Choix appliqué : l'écran `unown_text` montre en Zarbi la phrase du mur que le joueur a déjà ouverte à la lecture (le client la retient jusqu'à la fin de la manche) ; il ne l'a pas sans l'avoir lue, pour garder la recherche dans la salle. La clé de l'alphabet reste un document de la salle, jamais dans l'écran.
+- [x] Phrase recopiée après lecture *(par défaut)*
+- [ ] Jamais recopiée : seulement dans la page de lecture
+- [ ] Toujours montrée sur l'écran
+
+Ta réponse :
+
+## D182. Boîte PC : la règle se déduit des Pokémon verrouillés
+Choix appliqué : `pc_box` verrouille 2 à 4 Pokémon déjà à leur place ; la règle (numéro de Pokédex, poids, taille, nom, dans un sens ou l'autre) est la seule qui s'accorde avec eux. Chaque carte montre numéro, types, poids et taille. Aucun indice de salle ni nombre de places justes n'est donné.
+- [x] Pokémon verrouillés comme indice, règle unique *(par défaut)*
+- [ ] Un document dans la salle nomme la règle
+- [ ] Le backend dit combien de places sont justes après chaque échange
+
+Ta réponse :
+
+## D183. Cris : sans indice de salle
+Choix appliqué : `cry_match` n'a pas d'indice écrit (on ne connaît pas un cri par un texte) ; le retour « n paires justes sur N » et au plus 24 essais (4 cris) rendent la résolution possible sans connaître les Pokémon, mais elle devient de l'essai-erreur. Les chaînes de 3 cris ne demandent que 6 essais.
+- [x] Pas d'indice, retour du nombre de paires justes *(par défaut)*
+- [ ] Un document donne le type de chaque cri
+- [ ] Retour plus faible (justes ou non seulement)
+
+Ta réponse :
+
+## D184. Statues, socles et marques de type : lus en page, pas en modèle dans le monde
+Choix appliqué : les portraits (`dex_code`), les socles (`weigh_in`) et les marques (`type_chain`) sont des indices lus dans l'écran de lecture, avec le modèle Cobblemon dessiné dans la page et le nom de l'espèce ; pas encore de modèle Pokémon posé dans le monde sur l'emplacement (rendu d'entité à écrire, avec T8.3). Les leviers `type_chain` se jouent dans le monde, sans écran (aperçu hors ligne seulement).
+- [x] Page de lecture avec le modèle *(par défaut)*
+- [ ] Modèle Pokémon rendu dans le monde sur les emplacements (travail en plus)
+
+Ta réponse :
+
+## D185. Police Zarbi provisoire
+Choix appliqué : `textures/trahison/zarbi/glyphs.png` est un gabarit généré (traits sur une grille de 3 x 3 points, 26 signes différents) ; à redessiner à la main sans toucher au code. Le texte est dessiné à 16, 12 ou 10 pixels selon la place.
+- [x] Gabarit généré à remplacer *(par défaut)*
+- [ ] Autre disposition de la feuille (dites laquelle)
+
+Ta réponse :
+
+## D186. Duel : table des types et réservistes dans l'écran
+Choix appliqué : l'écran montre, en texte, les lignes de la table utiles au duel (« Feu : Plante x2, Eau x1/2 ») ; sur les petits écrans seules les premières lignes tiennent. Les réservistes du joueur sont des boutons de changement sous son Pokémon actif. L'écran ne simule rien : un clic envoie le geste, le plateau suit la vue du backend.
+- [x] Table en texte, changements par boutons de réserve *(par défaut)*
+- [ ] Table en grille de symboles
+- [ ] Écran plus grand pour le duel
+
+Ta réponse :

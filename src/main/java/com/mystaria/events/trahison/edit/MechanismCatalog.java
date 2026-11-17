@@ -59,7 +59,14 @@ final class MechanismCatalog {
 			new Info("ring_dial", true, 2, 240),
 			new Info("wiring", true, 2, 140),
 			new Info("code_breaker", true, 2, 220),
-			new Info("three_levers", true, 2, 150));
+			new Info("three_levers", true, 2, 150),
+			new Info("dex_code", true, 1, 140),
+			new Info("unown_text", true, 2, 150),
+			new Info("weigh_in", true, 2, 120),
+			new Info("type_chain", true, 2, 150),
+			new Info("battle_puzzle", true, 3, 300),
+			new Info("cry_match", true, 2, 160),
+			new Info("pc_box", true, 2, 110));
 
 	/** The backend's answer, null until a call succeeds. */
 	private static volatile List<Info> remote;
