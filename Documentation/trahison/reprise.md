@@ -1,23 +1,17 @@
-# Reprise du chantier (point du 2026-11-18)
+# Reprise du chantier (point du 2026-11-18, après-midi)
 
-> Guides pour construire : [`guide-editeur-plan.md`](guide-editeur-plan.md) (le complexe et son plan), [`guide-editeur-salle.md`](guide-editeur-salle.md) (les salles).
-
-> **État :** tout est sur `main`, poussé (dernier commit 1aa564d). Dernier contrôle de l'orchestrateur : build client
-> vert, 470 tests backend `*trahison*` verts, 1 433 clés de langue identiques EN/FR. **Rien n'a encore tourné en jeu.**
+> **État :** tout est sur `main`, poussé (dernier commit c3f6a71). Build client vert, 491 tests backend `*trahison*`
+> verts, 1 460 clés de langue identiques. **Rien n'a encore tourné en jeu.** Le code prévu est fini ; reste ce qui se
+> fait en jeu ou avec la propriétaire.
 >
-> - **Fait :** T0 à T8 et T11 entiers (T5 vocal codé, à confirmer en jeu avec [`vocal-essai.md`](vocal-essai.md)) ;
->   T9.1 brouillons des 9 fiches ([`../salles/`](../salles/README.md), à valider) ; T9.3 quatre mini-jeux
->   (`sliding_blocks`, `rotating_tiles`, `safe_dial`, `twin_screens`) ; T9.4 mécanique des textes (variantes de
->   l'animatrice, 4 fins, fragments `@fragment:n`), textes provisoires ; relecture des risques de plantage faite.
-> - **Premier essai en jeu :** suivre [`premier-essai.md`](premier-essai.md). Le déploiement du module backend attend
->   l'accord de la propriétaire.
-> - **Questions ouvertes** dans [`decisions.md`](decisions.md) : D200 à D203 (vocal), D210 à D215 (mini-jeux),
->   D220 à D229 (fiches de salle), D230 à D235 (textes, fins).
+> - **Construire :** le complexe fixe avec [`guide-editeur-plan.md`](guide-editeur-plan.md) ; les 9 salles avec le
+>   pas à pas en tête de [`guide-editeur-salle.md`](guide-editeur-salle.md) (`room new <id> <fiche>`, 9 gabarits).
+> - **Premier essai en jeu :** [`premier-essai.md`](premier-essai.md), vocal : [`vocal-essai.md`](vocal-essai.md).
+>   Le déploiement du module backend attend l'accord de la propriétaire.
+> - **Questions ouvertes** dans [`decisions.md`](decisions.md) : D250 à D259 (création guidée), D260 (cachettes des
+>   salles), D270 à D274 (contrôles du plan).
 >
-> **Suite, dans l'ordre :**
-> 1. relire `decisions.md` et appliquer les réponses ;
-> 2. premier essai en jeu (déploiement avec accord), corrections ;
-> 3. lore et vrais textes avec la propriétaire (T9.4), construction (T9.2), habillage (T9.5), puis T10.
+> **Suite :** relire `decisions.md` ; premier essai et corrections ; lore et vrais textes (T9.4) ; habillage (T9.5) ; T10.
 
 > Point d'arrêt de l'orchestration du développement. À lire en premier à la reprise, avec
 > [`etapes/README.md`](etapes/README.md).
