@@ -11,6 +11,14 @@
 > - **Questions ouvertes** dans [`decisions.md`](decisions.md) : D250 à D259 (création guidée), D260 (cachettes des
 >   salles), D270 à D274 (contrôles du plan).
 >
+> **Prochaine tâche (demandée par Gwen le 2026-11-18, pas commencée, limite à 80 %) :** le mode d'essai `room try` de
+> l'éditeur de salle. Dans le monde solo où la salle est construite, sans partie ni hub ni factices :
+> `/phantasmon event trahison room try` rend la salle de l'éditeur jouable (instance de salle admin seule côté backend,
+> ancrée sur la boîte de l'éditeur ; emplacements interactifs, mini-jeux, indices, aides, sortie) ; les étapes de
+> coopération se jouent seule pendant l'essai (sans toucher `solo`/`hold`) ; `room try reset`, `room try skip` (étape
+> en cours), `room try stop` ; un petit panneau montre l'étape en cours. Rien n'est enregistré comme partie. Questions
+> D280 à D289. Puis vérifier, pousser, redéployer (backend + `--events`), mettre à jour le pas à pas du guide (étape 6).
+>
 > **Suite :** relire `decisions.md` ; premier essai et corrections ; lore et vrais textes (T9.4) ; habillage (T9.5) ; T10.
 
 > Point d'arrêt de l'orchestration du développement. À lire en premier à la reprise, avec
