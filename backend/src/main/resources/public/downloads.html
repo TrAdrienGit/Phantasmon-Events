@@ -7,13 +7,13 @@
 <style>
   :root {
     --bg: #101214; --bg2: #15181b; --panel: #1b1f23; --panel2: #22272c; --line: #2c3238; --ink: #eef1f3; --muted: #9aa4ad;
-    --dim: #6c757d; --accent: #38c4bc; --accent-ink: #062b29; --opt: #ffb23f;
+    --dim: #6c757d; --accent: #38c4bc; --accent-ink: #062b29; --opt: #ffb23f; --pack: #a98bff; --pack-ink: #1c1035; --pack-bg: rgba(169,139,255,.07);
     --shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 6px 18px rgba(0,0,0,.25);
   }
   @media (prefers-color-scheme: light) {
     :root {
       --bg: #f3f5f7; --bg2: #e9edf1; --panel: #ffffff; --panel2: #f6f8fa; --line: #dde3e9; --ink: #182026; --muted: #5b6672;
-      --dim: #8a949e; --accent: #11968f; --accent-ink: #ffffff; --opt: #b87500;
+      --dim: #8a949e; --accent: #11968f; --accent-ink: #ffffff; --opt: #b87500; --pack: #7b55e0; --pack-ink: #ffffff; --pack-bg: rgba(123,85,224,.06);
       --shadow: 0 1px 2px rgba(16,24,40,.06), 0 4px 12px rgba(16,24,40,.06);
     }
   }
@@ -49,6 +49,10 @@
          display: flex; flex-direction: column; gap: 12px; position: relative; overflow: hidden; }
   .mod::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--c, var(--accent)); }
   .mod.optional { --c: var(--opt); }
+  /* Resource packs: violet, apart from the mods. */
+  .mod.pack { --c: var(--pack); background: linear-gradient(var(--pack-bg), var(--pack-bg)), var(--panel); }
+  .mod.pack .btn:not(.alt) { background: var(--pack); color: var(--pack-ink); }
+  .mod.pack .tag { color: var(--pack); border-color: currentColor; background: none; }
   .head { display: flex; gap: 12px; align-items: flex-start; }
   .head .titles { min-width: 0; flex: 1; }
   .name { font-weight: 700; font-size: 18px; margin: 0; }
@@ -98,19 +102,22 @@
   const GROUPS = [
     { dev: 'Emerge le Doc', face: 'emerge', columns: [
       [{ name: 'LeagueWay', icon: 'leagueway', desc: 'Ligue, arènes et progression Cobblemon.',
-         links: [{ label: 'Modrinth', modrinth: 'league-way' }] }] ] },
+         links: [{ label: 'Modrinth', modrinth: 'league-way' }] },
+       { name: 'Ressources additionnelles LeagueWay', icon: 'leagueway', pack: true, desc: 'Le pack de ressources qui accompagne LeagueWay.',
+         tags: ['Pack de ressources'], links: [{ label: 'Modrinth', modrinth: 'league-way', zip: true,
+           url: 'https://cdn.modrinth.com/data/4yH4VILK/versions/UUi6HJXg/LeagueWay%20-%20Additionnal%20Ressources%20-%20v1.4.zip' }] }] ] },
     { dev: 'MystAria', face: 'mystaria', columns: [
       [{ name: 'Cobblemon Battle Showtime', icon: 'showtime', desc: 'Mise en scène des combats Cobblemon.',
          github: 'https://github.com/TrAdrienGit/Cobblemon-Battle-Showtime',
          links: [{ label: 'Modrinth', modrinth: 'cobblemon-battle-showtime' },
                  { label: 'CurseForge', url: 'https://www.curseforge.com/minecraft/mc-addons/cobblemon-battle-showtime/files', alt: true },
                  { label: 'Cloud', cloud: 'showtime', alt: true }] },
-       { name: 'Pack de ressources Showtime', icon: 'showtimePack', desc: 'Les musiques de combat, de victoire et de défaite de Showtime.',
+       { name: 'Pack de ressources Showtime', icon: 'showtimePack', pack: true, desc: 'Les musiques de combat, de victoire et de défaite de Showtime.',
          tags: ['Pack de ressources'], links: [{ label: 'Cloud Phantasmon', cloud: 'showtime-pack' }] }],
       [{ name: 'Phantasmon Core', icon: 'core', desc: 'Le mod de base de la communauté Phantasmon.', tags: ['Pas encore publié'],
          github: 'https://github.com/TrAdrienGit/Phantasmon-Client',
          links: [{ label: 'Cloud Phantasmon', cloud: 'core' }] },
-       { name: 'Pack de ressources Phantasmon', icon: 'phantasmonPack', desc: 'Les musiques du hall de Phantasmon.',
+       { name: 'Pack de ressources Phantasmon', icon: 'phantasmonPack', pack: true, desc: 'Les musiques du hall de Phantasmon.',
          tags: ['Pack de ressources'], links: [{ label: 'Cloud Phantasmon', cloud: 'phantasmon-pack' }] }],
       [{ name: 'Phantasmon Events', icon: 'events', desc: 'Événements, tournois et ligues de la communauté.', tags: ['Pas encore publié', 'Nécessite Phantasmon Core'],
          github: 'https://github.com/TrAdrienGit/Phantasmon-Events',
@@ -136,7 +143,7 @@
 
   function card(m, optional) {
     const el = document.createElement('article');
-    el.className = 'mod' + (optional ? ' optional' : '');
+    el.className = 'mod' + (optional ? ' optional' : '') + (m.pack ? ' pack' : '');
     el.innerHTML = `
       <div class="head">${m.icon ? `<img class="icon" src="${ICONS[m.icon]}" alt="">` : ''}<div class="titles"><p class="name">${esc(m.name)}</p><p class="desc">${esc(m.desc)}</p></div>
         ${m.github ? `<a class="gh" href="${m.github}" target="_blank" rel="noopener" title="Code source" aria-label="Code source sur GitHub">${GH}</a>` : ''}</div>
@@ -154,7 +161,7 @@
       } else {
         a.target = '_blank'; a.rel = 'noopener';
         a.href = l.url || `https://modrinth.com/mod/${l.modrinth}/versions`;
-        if (l.modrinth) latest(l.modrinth, a, l.label, el);
+        if (l.modrinth) latest(l.modrinth, a, l.label, el, l.zip);
       }
       links.append(a);
     }
@@ -162,18 +169,20 @@
   }
 
   // Modrinth: the newest Fabric 1.21.1 build's file; the versions page if the lookup fails.
-  async function latest(slug, a, label, el) {
+  // zip: the version's resource pack (its .zip file) rather than the mod.
+  async function latest(slug, a, label, el, zip) {
     try {
       const q = `?loaders=${encodeURIComponent(JSON.stringify([LOADER]))}&game_versions=${encodeURIComponent(JSON.stringify([GAME]))}`;
       const r = await fetch(`https://api.modrinth.com/v2/project/${slug}/version${q}`);
       if (!r.ok) return;
       const v = (await r.json())[0];
-      const file = v && (v.files.find(f => f.primary) || v.files[0]);
+      const file = v && (zip ? v.files.find(f => f.filename.endsWith('.zip')) : (v.files.find(f => f.primary) || v.files[0]));
       if (!file) return;
       a.href = file.url;
       a.removeAttribute('target');
-      a.innerHTML = `${esc(label)} <small>${esc(v.version_number)}</small>`;
-      dated(el, v.date_published, v.version_number);
+      const version = zip ? (file.filename.match(/v?(\d[\d.]*)\.zip$/) || [, v.version_number])[1] : v.version_number;
+      a.innerHTML = `${esc(label)} <small>${esc(version)}</small>`;
+      dated(el, v.date_published, version);
     } catch (e) { /* keep the versions page */ }
   }
 
