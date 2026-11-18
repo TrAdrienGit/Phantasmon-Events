@@ -12,7 +12,7 @@ import com.mystaria.events.hub.MirrorHubCommands;
  * <ul>
  * <li>{@code tournament}: opens the tournaments menu, where players register and check in, and admins create and run
  * the tournaments;</li>
- * <li>{@code trahison}: the betrayal game: bare or {@code ping} checks the link with its backend module, {@code edit} (admins) toggles the plan editor, {@code door <id> open|close} (admins) opens or closes a door of the plan, {@code room new|load|list|off} (admins) the room editor, {@code export [room ids]} (admins) writes the nine rooms' Axiom files, {@code check} (admins) lists the places whose blocks differ from the drawn room, {@code minigame <mechanism>} (admins) opens a puzzle screen offline;</li>
+ * <li>{@code trahison}: the betrayal game: bare or {@code ping} checks the link with its backend module, {@code edit} (admins) toggles the plan editor, {@code door <id> open|close} (admins) opens or closes a door of the plan, {@code room new|load|list|off} (admins) the room editor, {@code export [room ids]} (admins) writes the nine rooms' Axiom files, {@code check} (admins) lists the places whose blocks differ from the drawn room, {@code minigame <mechanism>} (admins) opens a puzzle screen offline, {@code voice <player> <gain>|reset} (admins) forces the gain of a player's voice to try the filter;</li>
  * <li>{@code hub ...}: the mirror hubs, admins only ({@link MirrorHubCommands});</li>
  * <li>{@code npc ...}, {@code open}, {@code close}, {@code list}: events and their trainer NPCs, admins only
  * ({@link com.mystaria.events.npc.NpcCommands}).</li>
@@ -70,6 +70,19 @@ public final class EventsCommands {
 									com.mystaria.events.trahison.net.Messages.say(com.mojang.brigadier.arguments.StringArgumentType.getString(context, "text"));
 									return 1;
 								})))
+							// T5.1: forces what this client hears of a player (0 mute, 0.5, 1), to try the voice filter; admins only.
+							.then(ClientCommandManager.literal("voice").requires(source -> com.mystaria.phantasmon.client.api.PhantasmonApi.isAdmin())
+								.then(ClientCommandManager.literal("reset").executes(context -> {
+									com.mystaria.events.trahison.voice.TrahisonVoice.resetForced();
+									return 1;
+								}))
+								.then(ClientCommandManager.argument("player", com.mojang.brigadier.arguments.StringArgumentType.word())
+									.then(ClientCommandManager.argument("gain", com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg(0, 1)).executes(context -> {
+										com.mystaria.events.trahison.voice.TrahisonVoice.force(
+											com.mojang.brigadier.arguments.StringArgumentType.getString(context, "player"),
+											com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(context, "gain"));
+										return 1;
+									}))))
 							// The provisional player screen (T1.4); the chat closes after the command: the screen opens on the next tick.
 							.then(ClientCommandManager.literal("menu").executes(context -> {
 								Minecraft.getInstance().tell(com.mystaria.events.trahison.screen.GameScreen::open);

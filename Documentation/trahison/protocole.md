@@ -463,13 +463,34 @@ Champs ajoutés à `EventsTrahisonView`. Rien d'un rôle ou d'un objet n'est dan
 | `viewer.role_info` | idem | Ce que le rôle retient : Voyant `{used, cabin, group, side, vote}` (`cabin` : l'id de la cabine désignée, D144 ; `group` et `side` en sont déduits) ; Parieur `{paid, bet}` (le pari de la manche en cours) ; Infiltré `{done}` ; sinon `null` |
 | `viewer.items` | un joueur | Ses objets secrets (`KNIFE`, `BONDS`, `LOCK`, `EAR`, `SHIELD`, `PASS`, `LETTER`), dans l'ordre où il les a trouvés |
 | `viewer.restrained_until` | un joueur | Epoch ms où sa corde lâche, `null` s'il est libre |
-| `viewer.listening` | un joueur | L'id de la cabine qu'il écoute avec l'Écoute pendant ce vote (le son est T5.4) |
+| `viewer.listening` | un joueur | L'id de la cabine qu'il écoute avec l'Écoute pendant ce vote (T5.4 : le bloc `voice.ear` donne les places à entendre) |
 | `restrained` | tous | `[{player, until}]` : les joueurs vivants attachés (la corde se voit) |
 | `roles` | tous, **seulement en `ENDED`** | `[{index, role, objective_met}]` : tous les rôles révélés, le maître du jeu qui jouait compris (D49) ; `objective_met` : Infiltré dont le vote de sa paire (ou son vote solo) à la manche 1 était « Trahir », même rendu par son partenaire (D143), Passeur avec 2 fantômes, Gardien avec 5 sortis, Solitaire seul sorti. `null` avant |
 | `gm.roles`, `gm.player_items`, `gm.hidden_items`, `gm.unplaced_items`, `gm.role_state`, `gm.role_settings` | maîtres du jeu (superviseurs et celui qui joue) | Tous les rôles `[{index, role}]`, les objets de chacun `[{index, items}]`, ceux qui restent dans les cachettes `[{spot, item}]`, ceux sans cachette, la mémoire des rôles, les réglages (`roles`, `role_count`, `items`, `bonds_seconds`, `lock_seconds`) |
 
 Réglages de `create` (`settings`) : `roles` (liste de noms), `role_count` (0 à 6, 3 par défaut), `items` (`{KNIFE: 0 à 2, ...}`, 1 de chacun par défaut),
 `bonds_seconds` (600), `lock_seconds` (300). Une porte verrouillée par le verrou est `CLOSED` dans `doors_state` pour tous (sauf si le maître du jeu l'a forcée).
+
+### Le bloc `voice` de la vue (T5)
+
+`voice` est dans toute vue d'une partie. Le backend ne filtre pas la voix : chaque client baisse ou coupe lui-même celle des autres
+(solutions-techniques.md S4 et S5), d'après ce bloc et la liste `players`. Un vivant ne reçoit **jamais** la zone des autres, seulement
+qui est dans la sienne : c'est ce qu'il entendrait de toute façon, et les places restent secrètes.
+
+| Champ | Qui | Sens |
+|---|---|---|
+| `voice.zone` | tous | Ma **zone sonore** : ma zone du plan, ou, si je suis dans une cabine fermée en ce moment, `cabin:<id>`. `null` si je n'ai pas de zone (spectateur, maître du jeu, zone inconnue). Les portes ouvertes ne changent rien ; un couloir est une zone à part |
+| `voice.same` | tous | Les places (0 à 8) des **autres** qui sont dans ma zone sonore. Une cabine fermée n'entend ni n'est entendue de l'extérieur |
+| `voice.announcing` | tous | Les comptes (UUID) des maîtres du jeu qui tiennent leur touche « annonce » : tout le monde les entend à plein volume. Vide après la fin de la partie |
+| `voice.ear` | un joueur, pendant `VOTE` | Quand son Écoute (T7.2) écoute une cabine : les places dans la zone sonore de cette cabine (`cabin:<id>` si elle est fermée, sinon sa zone) ; sinon `null` |
+| `voice.sound_zones` | maîtres du jeu, fantômes, spectateurs | La zone sonore de chaque place, `[{ "index": 0, "sound_zone": "hall" }]` ; `null` pour un vivant (secret) |
+
+Règles du client (`voice/VoiceGains`) : hors partie (`LOBBY`, `ENDED`, pas de partie) rien n'est filtré. Pour un **vivant** : un
+maître du jeu qui annonce est entendu ; un mort (selon la vue : `players[].alive`) est coupé ; la cible de l'Écoute est entendue
+quelle que soit la zone ; quelqu'un de ma zone sonore est entendu à gain 1 jusqu'à 4 blocs puis décroissant jusqu'à 0 à 8 blocs
+(chuchotement : 1 jusqu'à 1,5 bloc, 0 à 3 blocs) ; tout autre est coupé, **y compris** un spectateur ou un inconnu que la partie ne
+liste pas. Un fantôme, un spectateur ou un maître du jeu entend tout le monde à gain 1. Les voix des copies du hub sont filtrées
+sous l'identifiant de l'avatar (S5).
 
 ### `EventsTrahisonPatch`
 
@@ -883,6 +904,7 @@ joue pas (`ERROR_TRAHISON_NOT_A_PLAYER`), hors de l'étape prévue (`ERROR_TRAHI
 | `replace_room` | `round` (1 à 3), `group` (0 à 2), `room` (identifiant d'une salle de la banque) | Met cette salle à la place de la salle tirée, marquée `manual`. Refusée (`ERROR_TRAHISON_WRONG_PHASE`) si les salles de cette manche ont déjà démarré, `ERROR_TRAHISON_BAD_ARGUMENT` si la salle est inconnue ou veut un groupe plus grand que celui de la place |
 | `whisper` | `seat` (0 à 8), `text` (1 à 200 caractères) | T7.4 : une ligne privée de l'hôtesse à ce joueur (`EventsTrahisonSay`, `kind` `whisper`, clé `say.gm_whisper`). Refusé pour un factice. Journal `gm_whisper` |
 | `say` | `text` (1 à 200 caractères) | T7.4 : l'hôtesse parle à tous (`kind` `announce`, clé `say.gm`). Journal `gm_say` |
+| `announce` | `on` : booléen | T5.3 : le maître du jeu tient (`true`) ou lâche (`false`) sa touche « annonce » : le backend met son compte dans `voice.announcing` des vues, tous les clients le jouent à plein volume. Sans effet (silencieux) pour un compte qui n'est pas maître du jeu de la partie ; ni journalisé ni gardé (un redémarrage l'arrête) |
 | `offer` | `seat` | T7.3 : donne tout de suite l'offre de cabine à ce joueur, pendant un `VOTE` seulement (`ERROR_TRAHISON_WRONG_PHASE` sinon), à un humain vivant. Marquée `forced` |
 | `hint` | `group` (0 à 2) | T7.4 : donne le prochain texte d'aide à la salle de ce groupe (`ROOMS` seulement). Journal `gm_hint` (`given` faux : plus d'aide à donner) |
 | `solve_room` | `group` (0 à 2) | T7.4 : résout la salle du groupe (sortie ouverte, groupe « résolu », aucun point perdu, pas d'annonce de course). `ROOMS` seulement. Journal `gm_solve_room` |
@@ -1140,6 +1162,10 @@ dans le monde comme une boîte couleur d'accent, avec son identifiant et son cô
   terminer, points d'un bracelet, votes en cours).
 - `/phantasmon event trahison door <id> open|close` (admins) : l'action `set_door` du maître du jeu, pour ouvrir ou fermer une
   porte du plan à la main (essais, secours un soir de partie).
+- `/phantasmon event trahison voice <joueur> <gain>` (admins, T5.1) : force ce que **ce** client entend d'un joueur (`0` muet, `0.5`, `1` ;
+  `<joueur>` : un nom de la partie ou du serveur, ou un UUID), partie ou non, pour essayer le filtre (`vocal-essai.md`).
+  `/phantasmon event trahison voice reset` rend la main aux règles du jeu.
+- Touche `key.phantasmon_events.trahison_announce` (T5.3, maîtres du jeu), **non assignée** par défaut : tenue, envoie `announce`.
 - À l'entrée dans un hub, le client envoie `view` (avec `hub`), la renvoie tant que le WebSocket n'est pas prêt, puis toutes
   les 30 s (une reconnexion du WebSocket n'est pas signalée au module). Le HUD (bracelet, étape, chrono) et les répliques
   (`Say`) sont dessinés par `hud/BraceletHud` et `hud/Announcer`.

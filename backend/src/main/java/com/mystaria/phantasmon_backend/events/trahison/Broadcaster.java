@@ -14,6 +14,7 @@ import java.util.function.Supplier;
 import com.mystaria.phantasmon_backend.events.trahison.game.Game;
 import com.mystaria.phantasmon_backend.events.trahison.game.GameListener;
 import com.mystaria.phantasmon_backend.events.trahison.game.MapViews;
+import com.mystaria.phantasmon_backend.events.trahison.game.VoiceZones;
 import com.mystaria.phantasmon_backend.events.trahison.game.PlayerState;
 import com.mystaria.phantasmon_backend.events.trahison.game.Views;
 import com.mystaria.phantasmon_backend.events.trahison.room.PuzzleUpdate;
@@ -227,8 +228,19 @@ class Broadcaster implements GameListener, RoomListener {
 			// D12: a playing game master too. T11.2 (D14, D16): the spectators and the ghosts see the cursors on the map.
 			if (MapViews.seesAll(g, Views.kindOf(g, account), account)) {
 				sendView(g, account);
+			} else if (voiceChanged(g, account)) {
+				sendView(g, account); // T5.2: who stands in his sound zone changed, his client re-computes the voice gains
 			}
 		}
+	}
+
+	/** The last {@code voice} block each account was sent, to send a view on a zone change only when it differs (T5.2). */
+	private final Map<UUID, Object> lastVoice = new java.util.concurrent.ConcurrentHashMap<>();
+
+	private boolean voiceChanged(Game g, UUID account) {
+		int seat = g.indexOf(account);
+		Object block = VoiceZones.block(g, seat, false);
+		return !block.equals(lastVoice.put(account, block));
 	}
 
 	// ------------------------------------------------------------------ rooms
@@ -312,6 +324,7 @@ class Broadcaster implements GameListener, RoomListener {
 		if (lobbyMembers != null) {
 			view.put("lobby_members", lobbyMembers);
 		}
+		lastVoice.put(account, view.get("voice"));
 		sessions.send(account, WsMessage.of(VIEW, view));
 	}
 

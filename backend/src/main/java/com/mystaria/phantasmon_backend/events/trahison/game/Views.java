@@ -138,6 +138,7 @@ public final class Views {
 		boolean mapSeesAll = MapViews.seesAll(g, kind, viewer);
 		v.put("map_rooms", MapViews.rooms(g, mapSeesAll));
 		v.put("map_cursors", MapViews.cursors(g, mapSeesAll));
+		v.put("voice", VoiceZones.block(g, kind == Kind.PLAYER || kind == Kind.GHOST ? g.indexOf(viewer) : -1, mapSeesAll));
 		v.put("results", results(g));
 		v.put("final_door", finalDoor(g));
 		v.put("winners", g.phase == Phase.ENDED ? new ArrayList<>(g.winners) : null);

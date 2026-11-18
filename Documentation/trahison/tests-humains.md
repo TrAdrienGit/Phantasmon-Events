@@ -420,3 +420,16 @@ Cette étape n'a été vérifiée que par la compilation et `./gradlew test --te
 3. **Voyant : refus.** Tant qu'une cabine n'est pas fermée, pas de bouton ; une cabine fermée mais sans vote déposé est refusée avec le message « pas encore voté », sans dépenser le pouvoir (réessayer après le vote).
 4. **Touche de la carte.** Sans rien rebinder, M ouvre la carte (D150) ; la touche reste réglable dans les commandes (catégorie Phantasmon Events). Si Cobblemon répond aussi à M, rebinder l'une des deux.
 5. **Noms des salles.** Au début de la partie, ouvrir la carte en manche 1 : les noms des salles des manches 2 et 3 sont déjà affichés sur leurs places (D151).
+
+## T5 : le vocal par zones (jamais essayé en jeu ; commencer par `vocal-essai.md`)
+
+1. **T5.1 d'abord.** Faire les quatre points de [`vocal-essai.md`](vocal-essai.md) (gain 0, gain intermédiaire, voix d'une copie du hub, icône « parle »). Ne passer aux suivants que s'ils sont confirmés.
+2. **Hors partie.** Sans partie, ou en `LOBBY`, ou après `ENDED`, tout le monde s'entend comme avant (rien n'est filtré). `voice reset` fait par chacun.
+3. **Deux salles voisines.** En partie, deux joueurs dans deux zones voisines, porte ouverte : ils ne s'entendent pas. Dans le même couloir (zone à part) ils s'entendent.
+4. **Même salle.** Voix : pleine à 4 blocs, qui baisse jusqu'à 8 blocs où elle disparaît. Chuchotement (la touche de Simple Voice Chat) : pleine à 1,5 bloc, disparue à 3 blocs.
+5. **Cabine fermée.** Un joueur ferme sa cabine (V) : ni lui ni ceux du dehors ne s'entendent, même collés au mur ; en la rouvrant (fin du vote) ils s'entendent de nouveau. Deux joueurs dans la même cabine fermée s'entendent.
+6. **Fantômes.** Un joueur mort (mort connue du joueur qui écoute) n'est plus entendu des vivants ; il entend tout le monde et les autres fantômes. Une mort cachée (D97) : le mort reste entendu tant que la mort est secrète pour celui qui écoute (D200).
+7. **Spectateurs.** Un spectateur (commande `spectate`) sur le serveur ou dans une copie du hub entend les joueurs, et eux ne l'entendent pas. Quelqu'un du serveur qui n'est pas dans la partie n'est pas entendu des joueurs pendant la partie.
+8. **Annonce du maître du jeu.** Un maître du jeu règle la touche « Trahison : annoncer à tout le monde » (non assignée par défaut), la tient et parle : tous les joueurs, vivants, cabines fermées comprises, l'entendent à plein volume. Il lâche la touche : il redevient un spectateur (silencieux pour les vivants). La touche ne fait rien pour un autre joueur.
+9. **Écoute.** Un joueur avec l'objet Écoute, pendant un vote, l'utilise sur une cabine fermée : il entend ceux qui sont dedans, même loin ; le vote fini, plus rien. Si la cabine est hors de la portée du serveur de Simple Voice Chat, il n'entend rien (D203).
+10. **Sans Simple Voice Chat.** Events sans Simple Voice Chat se lance et joue normalement (aucun plantage, aucun filtre).

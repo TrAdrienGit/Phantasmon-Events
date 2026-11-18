@@ -368,6 +368,7 @@ public final class GameView {
 		current = null;
 		Secrets.clear();
 		MapData.clear();
+		VoiceData.clear();
 		cabinsState = Cabins.NONE;
 		finalDoorState = null;
 		lobbyState = Lobby.NONE;
@@ -398,6 +399,7 @@ public final class GameView {
 		Secrets.update(data); // T7: roles, items, ropes
 		GmData.update(data); // T7.4: the game master's extra block
 		MapData.update(data); // T11: explored rooms, room names, cursors
+		VoiceData.update(data); // T5: sound zone, announce key, ear
 		cabinsState = next.hasGame() ? parseCabins(data) : Cabins.NONE;
 		finalDoorState = next.hasGame() && data.get("final_door") instanceof Map<?, ?> fd && fd.get("open_until") instanceof Number until
 				? new FinalDoor(until.longValue(), fd.get("openers") instanceof Number n ? n.intValue() : 0) : null;

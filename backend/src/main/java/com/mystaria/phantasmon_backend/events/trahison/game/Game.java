@@ -48,6 +48,12 @@ public class Game {
 	/** The cabin each player may close and vote in (player index to cabin id), derived; not stored. */
 	@com.fasterxml.jackson.annotation.JsonIgnore
 	public java.util.Map<Integer, String> myCabins = new java.util.LinkedHashMap<>();
+	/** The zone id inside each cabin of the plan (cabin id to zone id), derived; not stored. Used for the sound zones (T5.2). */
+	@com.fasterxml.jackson.annotation.JsonIgnore
+	public java.util.Map<String, String> cabinZones = new java.util.LinkedHashMap<>();
+	/** T5.3: the game masters holding their announce key right now (everybody hears them); never stored, a restart ends it. */
+	@com.fasterxml.jackson.annotation.JsonIgnore
+	public java.util.Set<UUID> announcing = new java.util.LinkedHashSet<>();
 	/** The threshold hints of the colour doors, derived like {@link #doors} and sent as {@code door_hints}; not stored. */
 	@com.fasterxml.jackson.annotation.JsonIgnore
 	public java.util.List<DoorHint> doorHints = new java.util.ArrayList<>();

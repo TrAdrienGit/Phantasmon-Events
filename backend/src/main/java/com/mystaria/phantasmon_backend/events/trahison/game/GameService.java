@@ -827,6 +827,10 @@ public class GameService {
 		}
 		g.doorHints = DoorThresholds.hints(g, plan);
 		g.cabinIds = plan.cabins().stream().map(Cabin::id).toList();
+		g.cabinZones = new java.util.LinkedHashMap<>();
+		for (Cabin c : plan.cabins()) {
+			g.cabinZones.put(c.id(), c.zone());
+		}
 		g.myCabins = new java.util.LinkedHashMap<>();
 		if (r != null && r.splitIndex != null) {
 			for (int p = 0; p < g.players.size(); p++) {
@@ -2699,6 +2703,23 @@ public class GameService {
 			event(g, "gm_whisper", Map.of("player", seat, "text", clean));
 			whisper(g, seat, "phantasmon_events.trahison.say.gm_whisper", List.of(clean));
 			persist(g);
+			return g;
+		}
+	}
+
+	/**
+	 * T5.3: a game master holds or releases his announce key ({@code EventsTrahisonGm {action: "announce", on}}): while it is
+	 * held, every client plays his voice at full gain. Not logged and not stored (it would only be noise).
+	 */
+	public Game setAnnounce(String hub, UUID who, boolean on) {
+		Game g = require(hub);
+		synchronized (g) {
+			if (g.phase == Phase.ENDED || !g.gameMasters.contains(who)) {
+				on = false;
+			}
+			if (on ? g.announcing.add(who) : g.announcing.remove(who)) {
+				notifyChanged(g, "announce");
+			}
 			return g;
 		}
 	}

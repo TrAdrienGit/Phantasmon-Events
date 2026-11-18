@@ -268,6 +268,11 @@ public final class Messages {
 		send(GM, "say", Map.of("text", text), true);
 	}
 
+	/** T5.3: a game master holds ({@code true}) or releases his announce key: everybody hears him while it is held. */
+	public static void announce(boolean on) {
+		send(GM, "announce", Map.of("on", on), false);
+	}
+
 	/** T7.3: hands the cabin offer to a seat now (during a vote). */
 	public static void offer(int seat) {
 		send(GM, "offer", Map.of("seat", seat), true);

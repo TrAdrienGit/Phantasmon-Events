@@ -64,6 +64,7 @@ public final class Trahison {
 		com.mystaria.events.trahison.hud.CabinPrompt.register();
 		com.mystaria.events.trahison.hud.FinalDoorPrompt.register();
 		com.mystaria.events.trahison.hud.ResultsHud.register();
+		com.mystaria.events.trahison.voice.TrahisonVoice.register();
 		KeyBindingHelper.registerKeyBinding(MENU_KEY);
 		KeyBindingHelper.registerKeyBinding(CABIN_KEY);
 		KeyBindingHelper.registerKeyBinding(MAP_KEY);

@@ -12,6 +12,9 @@
 	"entrypoints": {
 		"client": [
 			"com.mystaria.events.PhantasmonEvents"
+		],
+		"voicechat": [
+			"com.mystaria.events.trahison.voice.TrahisonVoicePlugin"
 		]
 	},
 	"mixins": [

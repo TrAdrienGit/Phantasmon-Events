@@ -360,6 +360,7 @@ public class TrahisonWsHandler implements WsMessageHandler {
 			case "set_bot_policy" -> games.setBotPolicy(hub, BotPolicy.parse(in.get("policy")));
 			case "whisper" -> games.gmWhisper(hub, intArg(in, "seat"), text(in, "text", false));
 			case "say" -> games.gmSay(hub, text(in, "text", false));
+			case "announce" -> games.setAnnounce(hub, who, Boolean.TRUE.equals(in.get("on")));
 			case "offer" -> games.offer(hub, intArg(in, "seat"));
 			case "hint" -> games.gmHint(hub, intArg(in, "group"));
 			case "solve_room" -> games.gmSolveRoom(hub, intArg(in, "group"));

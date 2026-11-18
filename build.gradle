@@ -13,6 +13,11 @@ repositories {
 		url = "https://api.modrinth.com/maven"
 		content { includeGroup "maven.modrinth" }
 	}
+	maven {
+		name = "Henkelmax"
+		url = "https://maven.maxhenkel.de/repository/public"
+		content { includeGroup "de.maxhenkel.voicechat" }
+	}
 	// Phantasmon and Cobblemon Battle Showtime: `./gradlew publishToMavenLocal` in their own folders puts them there.
 	mavenLocal() {
 		content {
@@ -34,6 +39,9 @@ dependencies {
 
 	modImplementation "com.mystaria.phantasmon:phantasmon-client:${project.phantasmon_version}"
 	modImplementation "com.mystaria:cobblemon-battle-showtime:${project.showtime_version}"
+
+	// Simple Voice Chat: optional (D-36), only its plugin API is compiled against, never bundled. Only trahison/voice/TrahisonVoicePlugin touches it.
+	compileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
 
 	// JUnit: pure-logic classes (the schematic writer reads its own output back); the game itself stays manual QA.
 	testImplementation platform('org.junit:junit-bom:5.11.3')
