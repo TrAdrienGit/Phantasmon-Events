@@ -7,14 +7,14 @@
 
 ## 0. Déploiement (à faire par Gwen, rien n'est lancé automatiquement)
 
-- [ ] **Module backend** : `Phantasmon-Events/backend` : `./gradlew jar`, après `./gradlew publishToMavenLocal` dans
+- [x] **Module backend** : `Phantasmon-Events/backend` : `./gradlew jar`, après `./gradlew publishToMavenLocal` dans
   `Phantasmon-Backend`. Le jar part dans `/opt/phantasmon/addons/` avec `Phantasmon-Backend/scripts/deploy-ubuntu.sh`
   (voir [`../backend-reference.md`](../backend-reference.md), section 1). **Demande le consentement du propriétaire avant**
-  (le serveur Ubuntu, sa base et Flyway `db/events` V1 à V10 sont touchés). Résultat :
-- [ ] **Version du backend** : `GET /version` annonce `"addons": {"phantasmon_events": ...}`. Résultat :
-- [ ] **Mod client** : `Phantasmon-Client/scripts/deploy-to-prod-server.sh --events` (ou son `.bat`) : construit Showtime,
+  (le serveur Ubuntu, sa base et Flyway `db/events` V1 à V10 sont touchés). Résultat : déployé le 2026-11-18 avec l'accord de Gwen, sauvegarde de la base prise avant, migrations events V6 à V10 appliquées.
+- [x] **Version du backend** : `GET /version` annonce `"addons": {"phantasmon_events": ...}`. Résultat : `{"phantasmon_events":"0.1.0"}`.
+- [x] **Mod client** : `Phantasmon-Client/scripts/deploy-to-prod-server.sh --events` (ou son `.bat`) : construit Showtime,
   Phantasmon puis Events, et copie les jars dans les instances `Cobblemon Academy 2.0 - *` (`C:/Users/adrie/curseforge/minecraft/Instances`).
-  Sans `--events`, le jar Events est retiré. Relancer le jeu après. Résultat :
+  Sans `--events`, le jar Events est retiré. Relancer le jeu après. Résultat : jars copiés dans les deux instances le 2026-11-18 ; relancer le jeu.
 - [ ] **Simple Voice Chat** (2.5.x pour 1.21.1) installé chez les deux comptes pour la partie voix ; **absent** chez un des
   deux pour le point 1 ci-dessous. Résultat :
 
