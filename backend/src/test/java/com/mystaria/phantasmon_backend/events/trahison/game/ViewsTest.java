@@ -216,4 +216,36 @@ class ViewsTest {
 		assertThat(view(ids[1]).get("gm").isNull()).isTrue();
 		assertThat(view(ids[1]).get("viewer").get("is_game_master").asBoolean()).isFalse();
 	}
+
+	/** T9.4: the ending and the recap are in the view only once the game is over, and the ending follows the winners. */
+	@Test
+	void theEndingAndTheRecapComeWithTheEndOfTheGame() {
+		assertThat(view(ids[0]).get("ending").isNull()).isTrue();
+		assertThat(view(ids[0]).get("recap").isNull()).isTrue();
+		service.end(HUB);
+		String[] expected = { "nobody", "solo", "some", "all" };
+		int[] winners = { 0, 1, 4, 9 };
+		for (int k = 0; k < expected.length; k++) {
+			int count = winners[k];
+			service.read(HUB, g -> {
+				g.winners = new java.util.ArrayList<>(java.util.stream.IntStream.range(0, count).boxed().toList());
+				return null;
+			});
+			assertThat(view(ids[0]).get("ending").asString()).isEqualTo(expected[k]);
+			assertThat(view(spectator).get("ending").asString()).isEqualTo(expected[k]);
+		}
+		assertThat(view(ids[0]).get("recap").isArray()).isTrue();
+	}
+
+	@Test
+	void theRecapListsEveryResolvedRound() {
+		toVote();
+		clock.advanceSeconds(10); // VOTE -> RESULTS of round 1
+		assertThat(view(ids[0]).get("phase").asString()).isEqualTo("RESULTS");
+		service.end(HUB);
+		JsonNode recap = view(ids[0]).get("recap");
+		assertThat(recap).hasSize(1);
+		assertThat(recap.get(0).get("round").asInt()).isEqualTo(1);
+		assertThat(recap.get(0).get("votes")).hasSize(3);
+	}
 }

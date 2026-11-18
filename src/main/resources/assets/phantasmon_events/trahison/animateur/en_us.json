@@ -1,0 +1,143 @@
+{
+  "_help": "Hostess texts: see Documentation/trahison/textes-animateur.md",
+  "lines": {
+    "phase.lobby": [
+      "Mystaria: The house is open. Nine bracelets, nine wrists. Come in, and choose your companions carefully."
+    ],
+    "phase.prologue": [
+      "Mystaria: You wake in the hall. I am Mystaria, the first ghost. Look at your bracelet: it is your life now."
+    ],
+    "phase.doors": [
+      "Mystaria: The doors are waking. Pair or solo, red, green or blue: decide who goes where before they close. Whoever passes no door will not see the rooms."
+    ],
+    "phase.rooms": [
+      "Mystaria: The doors have closed. Three of you, one room, and the clock forgives nothing. Work together... for now."
+    ],
+    "phase.free_time": [
+      "Mystaria: The doors stand open again. Wander, talk, search. Walls hide secrets, and so do friends."
+    ],
+    "phase.vote": [
+      "Mystaria: To the booths. Ally or betray: no one will know what you chose... until I say so."
+    ],
+    "phase.results": [
+      "Mystaria: The booths are open. Every vote, every point, laid bare. Look at who is still smiling."
+    ],
+    "phase.final": [
+      "Mystaria: The last door waits. Nine points to open it. Which of you has earned them?"
+    ],
+    "phase.ended": [
+      "Mystaria: It is over. The house falls silent, and I... I stay."
+    ],
+    "doors_dead": [
+      "Mystaria: %1$s passed no door. The house keeps them."
+    ],
+    "final_door_open": [
+      "Mystaria: Door 9 has been opened! It stays open for %2$s seconds, for those who earned it. Only them."
+    ],
+    "final_door_escaped": [
+      "Mystaria: Through the door: %1$s. It closes for ever behind them."
+    ],
+    "final_door_nobody": [
+      "Mystaria: The door closes for ever. Nobody went through."
+    ],
+    "final_countdown": [
+      "Mystaria: %1$s seconds before the last door closes for ever."
+    ],
+    "game_master_killed": [
+      "Mystaria: %1$s was the game master, and was killed. Every other player wins."
+    ],
+    "role.infiltrator": [
+      "Mystaria: Your secret role is Infiltrator. You must betray in round 1. If you do, you win 1 extra point."
+    ],
+    "role.ferryman": [
+      "Mystaria: Your secret role is Ferryman. You are allied with the ghosts. You win if at least 2 players are ghosts at the end, even if you do not get out."
+    ],
+    "role.guardian": [
+      "Mystaria: Your secret role is Guardian. You can never betray. You win if at least 5 players go through the final door."
+    ],
+    "role.seer": [
+      "Mystaria: Your secret role is Seer. Once in the game, during a vote, you see the vote already cast by one side of a group."
+    ],
+    "role.gambler": [
+      "Mystaria: Your secret role is Gambler. Before each vote you bet on your opponent's vote. A right bet gives 1 point, once in the game."
+    ],
+    "role.loner": [
+      "Mystaria: Your secret role is Loner. You want to win alone: you win only if you are the only player through the final door."
+    ],
+    "role.game_master": [
+      "Mystaria: You are the game master, and you play. Your role is secret."
+    ],
+    "letter": [
+      "Mystaria: A letter reaches you, no name on it: \"%1$s\""
+    ],
+    "offer": [
+      "Mystaria: An offer, for you alone: betray, and you win %1$s point more."
+    ],
+    "offer_made": [
+      "Mystaria: An offer has just been made to one of you."
+    ],
+    "leak.vote_time": [
+      "Mystaria: A rumour, and it is true: %1$s voted after %2$s seconds."
+    ],
+    "leak.cabin_closed": [
+      "Mystaria: A rumour, and it is true: %1$s closed a cabin after %2$s seconds."
+    ],
+    "leak.cabin_try": [
+      "Mystaria: A rumour, and it is true: %1$s tried to enter a cabin."
+    ],
+    "leak.item_found": [
+      "Mystaria: A rumour, and it is true: %1$s found a hidden object."
+    ],
+    "race_first": [
+      "Mystaria: First out of its room: %1$s."
+    ],
+    "gm": [
+      "Mystaria: %1$s"
+    ],
+    "gm_whisper": [
+      "Mystaria: %1$s"
+    ],
+    "death": [
+      "Mystaria: %1$s will not come back. (placeholder text)",
+      "Mystaria: The house keeps %1$s. (placeholder variant)"
+    ],
+    "betrayal": [
+      "Mystaria: At least one hand betrayed. (placeholder text)",
+      "Mystaria: Somebody lied. (placeholder variant)"
+    ],
+    "alliance": [
+      "Mystaria: Nobody betrayed this time. (placeholder text)",
+      "Mystaria: The hands stayed joined. (placeholder variant)"
+    ],
+    "ending.solo": [
+      "Mystaria: Only one got out: %1$s. (placeholder text)",
+      "Mystaria: %1$s leaves alone. (placeholder variant)"
+    ],
+    "ending.some": [
+      "Mystaria: %2$s got out: %1$s. (placeholder text)",
+      "Mystaria: A few are leaving: %1$s. (placeholder variant)"
+    ],
+    "ending.all": [
+      "Mystaria: Everybody got out: %1$s. (placeholder text)",
+      "Mystaria: Nobody stays behind. (placeholder variant)"
+    ],
+    "ending.nobody": [
+      "Mystaria: Nobody got out. (placeholder text)",
+      "Mystaria: The house keeps everybody. (placeholder variant)"
+    ]
+  },
+  "fragments": {
+    "1": "Fragment 1 — to be written.",
+    "2": "Fragment 2 — to be written.",
+    "3": "Fragment 3 — to be written.",
+    "4": "Fragment 4 — to be written.",
+    "5": "Fragment 5 — to be written.",
+    "6": "Fragment 6 — to be written.",
+    "7": "Fragment 7 — to be written.",
+    "8": "Fragment 8 — to be written.",
+    "9": "Fragment 9 — to be written.",
+    "10": "Fragment 10 — to be written.",
+    "11": "Fragment 11 — to be written.",
+    "12": "Fragment 12 — to be written."
+  }
+}

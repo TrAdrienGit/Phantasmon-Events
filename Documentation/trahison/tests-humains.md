@@ -449,3 +449,12 @@ Chaque mini-jeu se teste d'abord hors ligne (`/phantasmon event trahison minigam
 - [ ] `twin_screens` : le même joueur ouvre les deux terminaux : le second refuse (aucun siège) ; une saisie fausse vide l'entrée avec l'erreur.
 - [ ] `twin_screens` : la définition sans indice au bon emplacement est refusée à l'enregistrement dans l'éditeur (`BAD_GIVE`).
 - [ ] Les quatre écrans à 320 × 180 et à 854 × 480 : rien ne déborde du cadre, le texte est lisible, l'aide (`?`) s'ouvre ; Échap ferme sans rien perdre.
+
+## T9.4 : textes de l'animatrice, fins, fragments
+
+- Lancer une partie complète avec des bots : à chaque étape (salon, prologue, portes, salles, temps libre, vote, résultats, final, fin) l'animatrice parle ; deux joueurs connectés lisent **la même phrase**.
+- Aux résultats : une réplique `betrayal` ou `alliance` ; si un joueur meurt aux points, une réplique `death` avec son nom.
+- Ajouter une variante à `phase.vote` dans `fr_fr.json` et `en_us.json`, reconstruire : sur plusieurs parties de graines différentes, les deux variantes sortent ; une même partie rejouée dit la même.
+- Passer le client en anglais : les mêmes moments parlent en anglais ; supprimer un moment du fichier : la clé de langue sert de secours.
+- Faire les quatre fins (le MJ termine sans sortis = personne ; un seul sort par la porte finale = solo ; plusieurs = quelques-uns ; tous les sièges = tous) : bandeau de fin de la bonne couleur, réplique `ending.*`, rôles révélés, puis les votes manche par manche, lisibles à 320 × 180 et 854 × 480 (défilement de la colonne).
+- Mettre `@fragment:2` dans le texte d'un document de salle, puis un fragment sans texte (`@fragment:50`) : le premier affiche son texte, le second « Fragment 50 — à écrire. ».

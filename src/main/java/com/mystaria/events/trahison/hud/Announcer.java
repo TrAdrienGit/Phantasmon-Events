@@ -88,12 +88,10 @@ public final class Announcer {
 	public static void onSay(Map<String, Object> data) {
 		String kind = String.valueOf(data.get("kind"));
 		if ("announce".equals(kind) && data.get("key") != null) {
-			Object[] args = data.get("args") instanceof java.util.List<?> list ? list.stream().map(String::valueOf).toArray() : new Object[0];
-			say(Component.translatable(String.valueOf(data.get("key")), args));
+			say(lineOf(data));
 		} else if ("whisper".equals(kind) && data.get("key") != null) {
 			// T7: a role at the prologue, an anonymous letter: private, said in the hostess's voice.
-			Object[] args = data.get("args") instanceof java.util.List<?> list ? list.stream().map(String::valueOf).toArray() : new Object[0];
-			say(Component.translatable(String.valueOf(data.get("key")), args));
+			say(lineOf(data));
 		} else if ("error".equals(kind) && data.get("code") != null) {
 			String code = String.valueOf(data.get("code"));
 			error(Component.translatableWithFallback("phantasmon_events.error." + code.toLowerCase(Locale.ROOT), code));
@@ -104,6 +102,29 @@ public final class Announcer {
 				}
 			});
 		}
+	}
+
+	/**
+	 * The text of a {@code say} message: the variant the backend chose among those of the texts file
+	 * ({@link AnnouncerTexts}), or, when the moment is not in the file, the language key.
+	 */
+	static Component lineOf(Map<String, Object> data) {
+		String key = String.valueOf(data.get("key"));
+		java.util.List<String> args = data.get("args") instanceof java.util.List<?> list ? list.stream().map(String::valueOf).toList() : java.util.List.of();
+		int variant = data.get("variant") instanceof Number n ? n.intValue() : 0;
+		return moment(key, variant, args);
+	}
+
+	/** A line by language key and variant number; falls back to the language key when the texts file lacks it. */
+	public static Component moment(String key, int variant, java.util.List<String> args) {
+		String moment = AnnouncerTexts.momentOf(key);
+		if (moment != null) {
+			String text = AnnouncerTexts.forLanguage(Minecraft.getInstance().getLanguageManager().getSelected()).line(moment, variant, args);
+			if (text != null) {
+				return Component.literal(text);
+			}
+		}
+		return Component.translatable(key, args.toArray());
 	}
 
 	/** Queues a line of the hostess; her name (the text before the first colon) is shown in the accent colour. */

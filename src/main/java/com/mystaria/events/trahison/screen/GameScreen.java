@@ -197,7 +197,7 @@ public final class GameScreen extends TrahisonScreen {
 		ctxScroll = clamp(ctxScroll, ctxContent - viewH);
 		ui.clip(g, x - 1, cy, x + w + 1, bottom);
 		int ay = cy - ctxScroll;
-		int secretH = secrets.draw(g, v, x, ay, w);
+		int secretH = v.phase() == Phase.ENDED ? 0 : secrets.draw(g, v, x, ay, w); // at the end the reveal comes after the ending
 		ay += secretH;
 		int used = switch (v.phase()) {
 			case LOBBY -> drawLobby(g, v, x, ay, w);
@@ -207,7 +207,7 @@ public final class GameScreen extends TrahisonScreen {
 			case VOTE -> drawVote(g, v, x, ay, w);
 			case RESULTS -> drawResults(g, v, x, ay, w);
 			case FINAL -> drawFinal(g, v, x, ay, w);
-			case ENDED -> drawEnded(g, v, x, ay, w);
+			case ENDED -> drawEndedAll(g, v, x, ay, w);
 			default -> 0;
 		};
 		ui.unclip(g);
@@ -514,10 +514,54 @@ public final class GameScreen extends TrahisonScreen {
 		return used;
 	}
 
+	/** T9.4, in order: the ending, who got out, the roles revealed, the votes round by round. */
+	private int drawEndedAll(GuiGraphics g, View v, int x, int y, int w) {
+		int used = drawEnded(g, v, x, y, w) + 6;
+		used += secrets.draw(g, v, x, y + used, w);
+		return used + drawRecap(g, v, x, y + used, w);
+	}
+
+	/** The colour of an ending's title: all out (success), some (accent), solo (game master gold), nobody (ghost). */
+	static int endingColor(String ending) {
+		return switch (ending == null ? "" : ending) {
+			case "all" -> TrahisonPalette.SUCCESS;
+			case "some" -> TrahisonPalette.ACCENT;
+			case "solo" -> TrahisonPalette.GAME_MASTER;
+			default -> TrahisonPalette.GHOST;
+		};
+	}
+
+	/** The votes of every round, from the recap the backend sends once the game is over. */
+	private int drawRecap(GuiGraphics g, View v, int x, int y, int w) {
+		if (v.recap() == null || v.recap().isEmpty()) {
+			return 0;
+		}
+		int used = MenuUi.paragraph(g, Component.translatable(T + "ended.recap"), x, y, w, TrahisonPalette.ACCENT) + 4;
+		for (GameView.Results res : v.recap()) {
+			used += MenuUi.paragraph(g, Component.translatable(T + (res.finalLoop() ? "ended.recap.final" : "ended.recap.round"), res.round()), x, y + used, w,
+					TrahisonPalette.TEXT_MUTED) + 2;
+			for (VoteResult vr : res.votes()) {
+				used += resultCard(g, v, vr, x, y + used, w) + 4;
+			}
+			if (!res.newlyDead().isEmpty()) {
+				String names = res.newlyDead().stream().map(v::nameOf).collect(java.util.stream.Collectors.joining(", "));
+				used += MenuUi.paragraph(g, Component.translatable(T + "results.dead", names), x, y + used, w, TrahisonPalette.GHOST) + 4;
+			}
+		}
+		return used;
+	}
+
 	private int drawEnded(GuiGraphics g, View v, int x, int y, int w) {
 		List<Integer> winners = v.winners() == null ? List.of() : v.winners();
+		int top = 0;
+		if (v.ending() != null) {
+			Component title = Component.translatable(T + "ended.ending." + v.ending());
+			TrahisonUi.pill(g, x, y, title, TrahisonPalette.PANEL_SUNKEN, endingColor(v.ending()));
+			top = 18;
+		}
+		y += top;
 		if (winners.isEmpty()) {
-			return hint(g, T + "ended.none", x, y, w);
+			return top + hint(g, T + "ended.none", x, y, w);
 		}
 		int used = MenuUi.paragraph(g, Component.translatable(T + "ended.winners"), x, y, w, TrahisonPalette.SUCCESS) + 4;
 		for (int index : winners) {
@@ -531,7 +575,7 @@ public final class GameScreen extends TrahisonScreen {
 			TrahisonUi.textEllipsis(g, Component.literal(v.nameOf(index)), x + 24, y + used + 5, w - 30, TrahisonPalette.TEXT);
 			used += 20;
 		}
-		return used;
+		return top + used;
 	}
 
 	// ---------------------------------------------------------------- input

@@ -46,7 +46,7 @@ public final class FinalDoorPrompt {
 		int seconds = GameView.finalDoorSeconds();
 		for (int s = lastSeconds == Integer.MAX_VALUE ? seconds : lastSeconds - 1; s >= seconds && s >= 1; s--) {
 			if (s <= 5 || s % 10 == 0) {
-				Announcer.say(Component.translatable(T + "say.final_countdown", s));
+				Announcer.say(Announcer.moment(T + "say.final_countdown", GameView.orEmpty().round(), java.util.List.of(String.valueOf(s))));
 			}
 		}
 		lastSeconds = seconds;

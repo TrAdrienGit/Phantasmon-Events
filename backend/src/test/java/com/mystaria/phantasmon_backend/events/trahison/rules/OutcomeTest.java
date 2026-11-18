@@ -44,4 +44,14 @@ class OutcomeTest {
 		org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
 			() -> Outcome.newlyDead(new int[2], new boolean[9]));
 	}
+
+	@Test
+	void theFourEndings() {
+		assertThat(Outcome.ending(0, 9)).isEqualTo(Outcome.Ending.NOBODY);
+		assertThat(Outcome.ending(1, 9)).isEqualTo(Outcome.Ending.SOLO);
+		assertThat(Outcome.ending(2, 9)).isEqualTo(Outcome.Ending.SOME);
+		assertThat(Outcome.ending(8, 9)).isEqualTo(Outcome.Ending.SOME);
+		assertThat(Outcome.ending(9, 9)).isEqualTo(Outcome.Ending.ALL);
+		assertThat(Outcome.Ending.SOLO.key()).isEqualTo("solo");
+	}
 }

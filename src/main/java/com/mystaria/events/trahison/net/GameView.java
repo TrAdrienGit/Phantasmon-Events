@@ -147,7 +147,7 @@ public final class GameView {
 	 */
 	public record View(String hub, String gameId, int layoutVersion, Map<String, Boolean> doorsOpen, List<DoorHint> doorHints, Phase phase, int round, boolean finalLoop, int finalLoops, String mode, Long deadline,
 			boolean paused, boolean autoPaused, Long remainingMs, long serverTime, List<Player> players, List<Bracelet> bracelets,
-			List<Door> doors, List<Group> groups, List<Integer> doorsPassed, Viewer viewer, Results results, List<Integer> winners, Gm gm) {
+			List<Door> doors, List<Group> groups, List<Integer> doorsPassed, Viewer viewer, Results results, List<Integer> winners, String ending, List<Results> recap, Gm gm) {
 
 		public boolean hasGame() {
 			return phase != Phase.NONE;
@@ -227,7 +227,7 @@ public final class GameView {
 	}
 
 	private static final View EMPTY = new View("", "", 0, Map.of(), List.of(), Phase.NONE, 0, false, 0, "AUTO", null, false, false, null, 0, List.of(), List.of(),
-			List.of(), null, null, new Viewer(ViewerKind.SPECTATOR, null, null, null, null, false, null, false, false, false), null, null, null);
+			List.of(), null, null, new Viewer(ViewerKind.SPECTATOR, null, null, null, null, false, null, false, false, false), null, null, null, List.of(), null);
 
 	private static View current;
 	private static Cabins cabinsState = Cabins.NONE;
@@ -449,7 +449,7 @@ public final class GameView {
 		Phase phase = Phase.of(str(d, "phase"));
 		if (phase == Phase.NONE) {
 			return new View(str(d, "hub") == null ? "" : str(d, "hub"), "", 0, Map.of(), List.of(), Phase.NONE, 0, false, 0, "AUTO", null, false, false, null,
-					lng(d, "server_time", 0), List.of(), List.of(), List.of(), null, null, EMPTY.viewer(), null, null, null);
+					lng(d, "server_time", 0), List.of(), List.of(), List.of(), null, null, EMPTY.viewer(), null, null, null, List.of(), null);
 		}
 		List<Player> players = new ArrayList<>();
 		for (Map<String, Object> p : maps(d, "players")) {
@@ -499,17 +499,14 @@ public final class GameView {
 		Viewer viewer = new Viewer(kind, nullableInt(v, "index"), nullableInt(v, "group"), side == null ? null : "PAIR".equalsIgnoreCase(side),
 				nullableInt(v, "door_passed"), bool(v, "side_voted"), Vote.of(v.get("own_vote")), bool(v, "can_open_final_door"),
 				bool(v, "can_roam"), bool(v, "is_game_master"));
-		Results results = null;
-		if (d.get("results") instanceof Map<?, ?> rm) {
-			@SuppressWarnings("unchecked")
-			Map<String, Object> r = (Map<String, Object>) rm;
-			List<VoteResult> votes = new ArrayList<>();
-			for (Map<String, Object> vr : maps(r, "votes")) {
-				votes.add(new VoteResult(integer(vr, "door", 0), color(str(vr, "pair_color")), color(str(vr, "solo_color")), ints(vr, "pair"),
-						integer(vr, "solo", -1), vote(vr, "pair_vote"), bool(vr, "pair_cast"), nullableInt(vr, "pair_voter"), vote(vr, "solo_vote"),
-						bool(vr, "solo_cast")));
+		Results results = d.get("results") instanceof Map<?, ?> rm ? parseResults(rm) : null;
+		List<Results> recap = new ArrayList<>(); // T9.4: every round's votes, at the end of the game
+		if (d.get("recap") instanceof List<?> rl) {
+			for (Object o : rl) {
+				if (o instanceof Map<?, ?> rm) {
+					recap.add(parseResults(rm));
+				}
 			}
-			results = new Results(integer(r, "round", 0), bool(r, "final_loop"), votes, ints(r, "deltas"), ints(r, "newly_dead"));
 		}
 		List<Integer> winners = d.get("winners") instanceof List<?> ? ints(d, "winners") : null;
 		Gm gm = null;
@@ -543,7 +540,19 @@ public final class GameView {
 				bool(d, "final_loop"), integer(d, "final_loops", 0), str(d, "mode") == null ? "AUTO" : str(d, "mode"),
 				d.get("deadline") instanceof Number n ? n.longValue() : null, bool(d, "paused"), bool(d, "auto_paused"),
 				d.get("remaining_ms") instanceof Number n2 ? n2.longValue() : null, lng(d, "server_time", 0), Collections.unmodifiableList(players),
-				Collections.unmodifiableList(bracelets), Collections.unmodifiableList(doors), groups, passed, viewer, results, winners, gm);
+				Collections.unmodifiableList(bracelets), Collections.unmodifiableList(doors), groups, passed, viewer, results, winners, str(d, "ending"), recap, gm);
+	}
+
+	private static Results parseResults(Map<?, ?> rm) {
+		@SuppressWarnings("unchecked")
+		Map<String, Object> r = (Map<String, Object>) rm;
+		List<VoteResult> votes = new ArrayList<>();
+		for (Map<String, Object> vr : maps(r, "votes")) {
+			votes.add(new VoteResult(integer(vr, "door", 0), color(str(vr, "pair_color")), color(str(vr, "solo_color")), ints(vr, "pair"),
+					integer(vr, "solo", -1), vote(vr, "pair_vote"), bool(vr, "pair_cast"), nullableInt(vr, "pair_voter"), vote(vr, "solo_vote"),
+					bool(vr, "solo_cast")));
+		}
+		return new Results(integer(r, "round", 0), bool(r, "final_loop"), votes, ints(r, "deltas"), ints(r, "newly_dead"));
 	}
 
 	private static List<Away> parseAway(Map<String, Object> d) {

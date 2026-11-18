@@ -142,6 +142,8 @@ public final class Views {
 		v.put("results", results(g));
 		v.put("final_door", finalDoor(g));
 		v.put("winners", g.phase == Phase.ENDED ? new ArrayList<>(g.winners) : null);
+		v.put("ending", g.phase == Phase.ENDED ? Outcome.ending(g.winners.size(), g.players.size()).key() : null); // T9.4
+		v.put("recap", recap(g)); // T9.4: every round's votes, once the game is over
 		// D12: a game master who plays keeps his player view and gets the game master block on top of it.
 		v.put("gm", kind == Kind.GM || g.gameMasters.contains(viewer) ? gmBlock(g, r) : null);
 		return v;
@@ -408,16 +410,29 @@ public final class Views {
 	 * dead. Null before the first results. Nothing of a round still being played is ever in it.
 	 */
 	private static Map<String, Object> results(Game g) {
-		RoundState r = null;
 		for (int i = g.rounds.size() - 1; i >= 0; i--) {
 			if (g.rounds.get(i).deltas != null) {
-				r = g.rounds.get(i);
-				break;
+				return resultsOf(g.rounds.get(i));
 			}
 		}
-		if (r == null) {
+		return null;
+	}
+
+	/** T9.4: the votes of every resolved round, in order, at the end of the game only (they were all public at their results). */
+	private static List<Object> recap(Game g) {
+		if (g.phase != Phase.ENDED) {
 			return null;
 		}
+		List<Object> out = new ArrayList<>();
+		for (RoundState r : g.rounds) {
+			if (r.deltas != null) {
+				out.add(resultsOf(r));
+			}
+		}
+		return out;
+	}
+
+	private static Map<String, Object> resultsOf(RoundState r) {
 		Split s = r.split();
 		List<Object> votes = new ArrayList<>();
 		for (int k = 0; k < Door.ALL.size(); k++) {

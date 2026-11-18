@@ -152,13 +152,15 @@ class Broadcaster implements GameListener, RoomListener {
 		if (!stage.equals(announced.put(g.id, stage))) {
 			announce(g);
 			announceDoorDeaths(g);
-			if (g.phase == com.mystaria.phantasmon_backend.events.trahison.game.Phase.ENDED
-					&& g.log.stream().anyMatch(e -> e.type.equals("final_door"))) {
-				announceEscape(g);
+			if (g.phase == com.mystaria.phantasmon_backend.events.trahison.game.Phase.RESULTS) {
+				announceResults(g);
 			}
 			if (g.phase == com.mystaria.phantasmon_backend.events.trahison.game.Phase.ENDED
 					&& g.log.stream().anyMatch(e -> e.type.equals("game_master_killed"))) {
 				announceGameMasterKilled(g);
+			}
+			if (g.phase == com.mystaria.phantasmon_backend.events.trahison.game.Phase.ENDED) {
+				announceEnding(g); // T9.4: replaces the former final_door_escaped / final_door_nobody lines
 			}
 		}
 	}
@@ -181,33 +183,43 @@ class Broadcaster implements GameListener, RoomListener {
 		}
 	}
 
+	/**
+	 * T9.4: a hostess line, as sent. {@code variant} is drawn from the game seed, the key and the round
+	 * ({@link com.mystaria.phantasmon_backend.events.trahison.rules.Variants}), so every recipient of a line hears the same
+	 * variant of it, and the same game says the same things.
+	 */
+	static Map<String, Object> sayOf(Game g, String kind, String key, List<String> args) {
+		Map<String, Object> say = new java.util.LinkedHashMap<>();
+		say.put("kind", kind);
+		say.put("key", key);
+		if (args != null) {
+			say.put("args", args);
+		}
+		say.put("phase", g.phase.name());
+		say.put("round", g.round);
+		say.put("variant", com.mystaria.phantasmon_backend.events.trahison.rules.Variants.pick(g.seed, key, g.round));
+		return say;
+	}
+
+	private void sendToAll(Game g, Map<String, Object> say) {
+		for (UUID account : recipients(g)) {
+			sessions.send(account, WsMessage.of(SAY, say));
+		}
+	}
+
 	/** T7: a role or a letter, told to one seat only ({@code kind: whisper}); a bot has nobody to tell. */
 	@Override
 	public void whispered(Game g, int seat, String key, List<String> args) {
 		if (seat < 0 || seat >= g.players.size() || g.players.get(seat).bot) {
 			return;
 		}
-		Map<String, Object> say = new java.util.LinkedHashMap<>();
-		say.put("kind", "whisper");
-		say.put("key", key);
-		say.put("args", args);
-		say.put("phase", g.phase.name());
-		say.put("round", g.round);
-		sessions.send(g.players.get(seat).uuid, WsMessage.of(SAY, say));
+		sessions.send(g.players.get(seat).uuid, WsMessage.of(SAY, sayOf(g, "whisper", key, args)));
 	}
 
 	/** T7.3 and the game master's {@code say}: a line for everybody. */
 	@Override
 	public void announced(Game g, String key, List<String> args) {
-		Map<String, Object> say = new java.util.LinkedHashMap<>();
-		say.put("kind", "announce");
-		say.put("key", SAY_KEY + key);
-		say.put("args", args);
-		say.put("phase", g.phase.name());
-		say.put("round", g.round);
-		for (UUID account : recipients(g)) {
-			sessions.send(account, WsMessage.of(SAY, say));
-		}
+		sendToAll(g, sayOf(g, "announce", SAY_KEY + key, args));
 	}
 
 	/** T11.2: the new room is in the explorer's own view, nobody else's. */
@@ -364,28 +376,37 @@ class Broadcaster implements GameListener, RoomListener {
 		for (int i : r.diedAtDoors) {
 			who.add(g.players.get(i).name);
 		}
-		Map<String, Object> say = new java.util.LinkedHashMap<>();
-		say.put("kind", "announce");
-		say.put("key", SAY_KEY + "doors_dead");
-		say.put("args", List.of(String.join(", ", who)));
-		say.put("phase", g.phase.name());
-		say.put("round", g.round);
-		for (UUID account : recipients(g)) {
-			sessions.send(account, WsMessage.of(SAY, say));
+		sendToAll(g, sayOf(g, "announce", SAY_KEY + "doors_dead", List.of(String.join(", ", who))));
+	}
+
+	/**
+	 * T9.4: at the results, the hostess comments the round: who died by the points ({@code death}), then whether anybody
+	 * betrayed ({@code betrayal}) or everybody allied ({@code alliance}). Only the votes that were really cast count.
+	 */
+	private void announceResults(Game g) {
+		var r = g.currentRound();
+		if (r == null || r.deltas == null) {
+			return;
 		}
+		if (!r.newlyDead.isEmpty()) {
+			List<String> who = new java.util.ArrayList<>();
+			for (int i : r.newlyDead) {
+				who.add(g.players.get(i).name);
+			}
+			sendToAll(g, sayOf(g, "announce", SAY_KEY + "death", List.of(String.join(", ", who))));
+		}
+		boolean betrayal = false;
+		for (int k = 0; k < r.pairVote.length; k++) {
+			betrayal |= r.pairVote[k] == com.mystaria.phantasmon_backend.events.trahison.rules.Vote.BETRAY
+					|| r.soloVote[k] == com.mystaria.phantasmon_backend.events.trahison.rules.Vote.BETRAY;
+		}
+		sendToAll(g, sayOf(g, "announce", SAY_KEY + (betrayal ? "betrayal" : "alliance"), List.of()));
 	}
 
 	/** T2.5: the hostess says that the final door is open, who opened it, and for how long. */
 	private void announceFinalDoor(Game g) {
-		Map<String, Object> say = new java.util.LinkedHashMap<>();
-		say.put("kind", "announce");
-		say.put("key", SAY_KEY + "final_door_open");
-		say.put("args", List.of(g.players.get(g.finalDoor.openedBy()).name, String.valueOf(g.settings.finalDoorSeconds)));
-		say.put("phase", g.phase.name());
-		say.put("round", g.round);
-		for (UUID account : recipients(g)) {
-			sessions.send(account, WsMessage.of(SAY, say));
-		}
+		sendToAll(g, sayOf(g, "announce", SAY_KEY + "final_door_open",
+				List.of(g.players.get(g.finalDoor.openedBy()).name, String.valueOf(g.settings.finalDoorSeconds))));
 	}
 
 	/** D12: the game ended because the others killed the game master who played; his identity is now public. */
@@ -394,44 +415,27 @@ class Broadcaster implements GameListener, RoomListener {
 		for (int i : g.playingGameMasters()) {
 			who.add(g.players.get(i).name);
 		}
-		Map<String, Object> say = new java.util.LinkedHashMap<>();
-		say.put("kind", "announce");
-		say.put("key", SAY_KEY + "game_master_killed");
-		say.put("args", List.of(String.join(", ", who)));
-		say.put("phase", g.phase.name());
-		say.put("round", g.round);
-		for (UUID account : recipients(g)) {
-			sessions.send(account, WsMessage.of(SAY, say));
-		}
+		sendToAll(g, sayOf(g, "announce", SAY_KEY + "game_master_killed", List.of(String.join(", ", who))));
 	}
 
-	/** T2.5: once the game has ended through the final door, who walked out (or that nobody did). */
-	private void announceEscape(Game g) {
-		boolean any = !g.winners.isEmpty();
+	/**
+	 * T9.4: the ending, decided by {@link com.mystaria.phantasmon_backend.events.trahison.rules.Outcome#ending}: who walked
+	 * out and how many ({@code say.ending.solo|some|all|nobody}; args: the names, the count).
+	 */
+	static String endingKey(Game g) {
+		return SAY_KEY + "ending." + com.mystaria.phantasmon_backend.events.trahison.rules.Outcome.ending(g.winners.size(), g.players.size()).key();
+	}
+
+	private void announceEnding(Game g) {
 		List<String> who = new java.util.ArrayList<>();
 		for (int i : g.winners) {
 			who.add(g.players.get(i).name);
 		}
-		Map<String, Object> say = new java.util.LinkedHashMap<>();
-		say.put("kind", "announce");
-		say.put("key", SAY_KEY + (any ? "final_door_escaped" : "final_door_nobody"));
-		say.put("args", any ? List.of(String.join(", ", who)) : List.of());
-		say.put("phase", g.phase.name());
-		say.put("round", g.round);
-		for (UUID account : recipients(g)) {
-			sessions.send(account, WsMessage.of(SAY, say));
-		}
+		sendToAll(g, sayOf(g, "announce", endingKey(g), List.of(String.join(", ", who), String.valueOf(who.size()))));
 	}
 
 	private void announce(Game g) {
-		Map<String, Object> say = new java.util.LinkedHashMap<>();
-		say.put("kind", "announce");
-		say.put("key", SAY_KEY_PREFIX + g.phase.name().toLowerCase(java.util.Locale.ROOT));
-		say.put("phase", g.phase.name());
-		say.put("round", g.round);
-		for (UUID account : recipients(g)) {
-			sessions.send(account, WsMessage.of(SAY, say));
-		}
+		sendToAll(g, sayOf(g, "announce", SAY_KEY_PREFIX + g.phase.name().toLowerCase(java.util.Locale.ROOT), null));
 	}
 
 	private Set<UUID> recipients(Game g) {

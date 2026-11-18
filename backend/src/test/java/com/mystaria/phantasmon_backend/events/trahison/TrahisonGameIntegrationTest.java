@@ -354,6 +354,13 @@ class TrahisonGameIntegrationTest {
 				"phantasmon_events.trahison.say.phase.prologue");
 		assertThat(admin.ofType("EventsTrahisonSay").stream().filter(s -> "announce".equals(s.get("kind").asString()))
 			.map(s -> s.get("key").asString())).contains("phantasmon_events.trahison.say.phase.lobby");
+		// T9.4: every hostess line carries a variant number, and everybody gets the same one for the same line
+		assertThat(a.ofType("EventsTrahisonSay").stream().filter(s -> "announce".equals(s.get("kind").asString())))
+			.allSatisfy(s -> assertThat(s.get("variant").asInt()).isBetween(0, 999_999));
+		assertThat(admin.ofType("EventsTrahisonSay").stream().filter(s -> s.has("key") && "phantasmon_events.trahison.say.phase.prologue".equals(s.get("key").asString()))
+			.map(s -> s.get("variant").asInt()).toList())
+			.isEqualTo(a.ofType("EventsTrahisonSay").stream().filter(s -> s.has("key") && "phantasmon_events.trahison.say.phase.prologue".equals(s.get("key").asString()))
+				.map(s -> s.get("variant").asInt()).toList());
 
 		// A player drops and comes back: the game goes on (game master mode), the others see it.
 		handler.onDisconnect(a.uuid);

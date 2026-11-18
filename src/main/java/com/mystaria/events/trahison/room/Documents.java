@@ -80,6 +80,14 @@ public final class Documents {
 	static Page textPage(String text) {
 		List<String> lines = new ArrayList<>();
 		for (String line : text.split("\n", -1)) {
+			String id = fragmentOf(line);
+			if (id != null) { // T9.4: a numbered lore fragment, whose text lives in the hostess texts file
+				String lang = Minecraft.getInstance().getLanguageManager().getSelected();
+				for (String l : com.mystaria.events.trahison.hud.AnnouncerTexts.forLanguage(lang).fragmentOrPlaceholder(id).split("\n", -1)) {
+					lines.add(l);
+				}
+				continue;
+			}
 			lines.add(colorNames(line));
 		}
 		return new Page("text", lines);
@@ -93,6 +101,16 @@ public final class Documents {
 		return COLOR.matcher(line).replaceAll(m -> java.util.regex.Matcher.quoteReplacement(
 				TrahisonUi.WireColor.of(m.group(1)) == null ? m.group()
 						: Component.translatable("phantasmon_events.trahison.color." + m.group(1)).getString()));
+	}
+
+	/** The fragment number of a line {@code @fragment:<n>} (T9.4), or null when the line is anything else. */
+	public static String fragmentOf(String line) {
+		String t = line.strip();
+		if (!t.startsWith("@fragment:")) {
+			return null;
+		}
+		String id = t.substring("@fragment:".length()).strip();
+		return id.matches("[0-9]{1,4}") ? id : null;
 	}
 
 	/** The picture id of a line, or null when the line is plain text. */

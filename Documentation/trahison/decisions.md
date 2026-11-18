@@ -207,3 +207,61 @@ Utiliser un emplacement prend le siège ; un joueur qui tient un siège ou en a 
 - [ ] Siège rendu quand on ferme l'écran (à coder : le backend ne voit pas la fermeture)
 
 Ta réponse :
+
+## D230 : Comment la variante d'une réplique est choisie
+
+Le backend tire un nombre de la graine de la partie, de la clé de la réplique et de la manche, et l'envoie dans chaque `say` (`variant`) ; le client le prend modulo le nombre de variantes. Tous entendent la même chose, et une partie rejouée avec la même graine aussi.
+
+- [x] Stable par partie, réplique et manche *(par défaut)*
+- [ ] Un nouveau tirage à chaque envoi (une même partie rejouée dirait autre chose)
+- [ ] Variante choisie par le maître du jeu avant la soirée
+
+Ta réponse :
+
+## D231 : Ce qu'est « sortie de tous »
+
+La fin se décide sur le nombre de sièges : personne = `nobody`, un = `solo`, plusieurs mais pas tous les sièges = `some`, tous les sièges (bots et maître du jeu qui joue compris) = `all`.
+
+- [x] Tous les sièges de la partie *(par défaut)*
+- [ ] Tous les joueurs encore vivants à la fin (les morts ne comptent plus)
+- [ ] `some` seulement à partir de trois sortis
+
+Ta réponse :
+
+## D232 : Les anciennes répliques de sortie
+
+`say.ending.*` remplace `say.final_door_escaped` et `say.final_door_nobody` à l'entrée en `ENDED` : ces deux-là ne sont plus envoyées (leurs clés restent valides). La fin annonce aussi les noms, et le nombre, pour les trois fins où quelqu'un sort.
+
+- [x] Remplacées par les quatre répliques de fin *(par défaut)*
+- [ ] Gardées en plus (deux répliques de suite à la fin)
+
+Ta réponse :
+
+## D233 : Trahison, alliance et mort aux résultats
+
+À l'entrée en `RESULTS`, l'animatrice dit `death` (si des joueurs meurent aux points), puis `betrayal` si un vote « Trahir » a été réellement rendu, sinon `alliance`. Un vote non rendu (alliance par défaut) ne compte pas comme une trahison.
+
+- [x] Une réplique `betrayal` ou `alliance` à chaque résultat *(par défaut)*
+- [ ] Seulement quand quelqu'un trahit (silence sinon)
+- [ ] Dire aussi combien de trahisons, sans dire qui
+
+Ta réponse :
+
+## D234 : Les fragments de lore dans les documents
+
+Une ligne `@fragment:<n>` d'une page de document est remplacée côté client par le texte du fragment `n` du fichier de textes de l'animatrice. Rien n'est changé côté backend : le numéro est dans le texte du document, et un fragment sans texte affiche « Fragment n — à écrire. ».
+
+- [x] Ligne `@fragment:<n>` dans le texte du document *(par défaut)*
+- [ ] Un champ `fragment` propre à l'indice `document` (à coder, touche au modèle de salle)
+- [ ] Les fragments trouvés sont aussi listés dans un carnet du joueur (à coder)
+
+Ta réponse :
+
+## D235 : Les textes provisoires
+
+Les répliques nouvelles (mort, trahison, alliance, quatre fins) ont deux variantes provisoires marquées « (texte provisoire) » ; les textes existants sont la variante 1 de leur moment, sans variante 2. Le lore et les noms du jeu restent à écrire avec la propriétaire.
+
+- [x] Provisoires marqués, à remplacer *(par défaut)*
+- [ ] Des variantes 2 et 3 écrites tout de suite pour chaque étape (à écrire avec la propriétaire)
+
+Ta réponse :

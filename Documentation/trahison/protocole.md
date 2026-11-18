@@ -122,6 +122,8 @@ Champs (la colonne « Null » dit quand la valeur est `null`) :
 | `map_rooms` | objet | T11.2, la carte : `{ "<id de place du plan>": { "name": nom de la salle tirée, "round": 1 à 3, "group": 0 à 2 } }`. Tout le monde (joueur, maître du jeu, spectateur, fantôme) y trouve **toutes** les places dès que le tirage est fait, manches commencées ou non (D151). `{}` sans tirage |
 | `map_cursors` | liste | T11.2 : `{ "index", "zone", "x", "y", "z" }` des joueurs **vivants** qui ont donné une position (coordonnées de hub). **Vide pour un joueur** : seuls le maître du jeu (qui ne joue pas), le spectateur et le fantôme les reçoivent (D14, D16). Vide en `LOBBY`. Les positions suivent celles de `EventsTrahisonZone` (au plus une vue par seconde) ; la direction du regard n'est pas envoyée |
 | `results` | objet ou `null` | Les résultats de la dernière manche **dont les votes sont comptés** (voir ci-dessous) ; `null` avant les premiers résultats |
+| `ending` | texte ou `null` | T9.4. `null` tant que la partie n'est pas finie ; en `ENDED`, la fin, **décidée par le backend** (`rules/Outcome.ending`) d'après `winners` : `nobody` (personne), `solo` (un seul), `some` (plusieurs, pas tous), `all` (tous les sièges) |
+| `recap` | liste d'objets ou `null` | T9.4. `null` tant que la partie n'est pas finie ; en `ENDED`, les `results` de **chaque** manche comptée, dans l'ordre (même forme que `results`), pour le récapitulatif des votes |
 | `winners` | liste d'entiers ou `null` | `null` tant que la partie n'est pas finie ; en `ENDED`, les index des joueurs qui ont **franchi** la porte finale pendant qu'elle était ouverte (T2.5 ; liste vide si personne n'est passé ou si le maître du jeu a terminé la partie) |
 | `gm` | objet ou `null` | Présent seulement pour `viewer.kind == "GM"` |
 
@@ -513,13 +515,16 @@ dans le message : le client traduit la clé.
 | Champ | Type | Notes |
 |---|---|---|
 | `kind` | texte | `announce` |
-| `key` | texte | `phantasmon_events.trahison.say.phase.<étape en minuscules>` : `lobby`, `prologue`, `doors`, `rooms`, `free_time`, `vote`, `results`, `final`, `ended` ; ou `phantasmon_events.trahison.say.doors_dead` (D2, à l'entrée en `ROOMS` quand des joueurs sont morts faute d'avoir passé une porte) ; ou `say.final_door_open`, `say.final_door_escaped`, `say.final_door_nobody` (T2.5, voir « La porte finale ») |
+| `key` | texte | `phantasmon_events.trahison.say.phase.<étape en minuscules>` : `lobby`, `prologue`, `doors`, `rooms`, `free_time`, `vote`, `results`, `final`, `ended` ; ou `phantasmon_events.trahison.say.doors_dead` (D2, à l'entrée en `ROOMS` quand des joueurs sont morts faute d'avoir passé une porte) ; ou `say.final_door_open` (T2.5, voir « La porte finale ») ; T9.4 : `say.death` (à l'entrée en `RESULTS`, `args` : les noms des morts aux points), `say.betrayal` ou `say.alliance` (à l'entrée en `RESULTS`, selon qu'un vote `BETRAY` a été réellement rendu), `say.ending.solo`, `say.ending.some`, `say.ending.all`, `say.ending.nobody` (à l'entrée en `ENDED`, `args` : les noms de ceux qui sont sortis, séparés par des virgules, puis leur nombre ; ils remplacent `final_door_escaped` et `final_door_nobody`, qui ne sont plus envoyés mais restent des clés valides) |
+| `variant` | entier | T9.4. Présent dans **tout** `announce` et `whisper` : un nombre de 0 à 999 999 tiré de la graine de la partie, de la clé et de la manche (`rules/Variants`). Le client le prend modulo le nombre de variantes du moment dans le fichier de textes de l'animatrice, donc tous entendent la même variante et une même partie dit les mêmes choses. Le texte n'est toujours pas dans le message |
 | `args` | liste de textes | Facultatif : les arguments de la clé (`doors_dead` : les noms des morts, séparés par des virgules ; `final_door_open` : le nom de celui qui a ouvert, la durée en secondes ; `final_door_escaped` : les noms de ceux qui sont passés) |
 | `phase` | texte | L'étape, en majuscules |
 | `round` | entier | La manche |
 
+Les textes (variantes par moment, en français et en anglais) sont dans `assets/phantasmon_events/trahison/animateur/<langue>.json`, voir `textes-animateur.md` ; un moment absent du fichier retombe sur la clé de langue.
+
 ```json
-{ "type": "EventsTrahisonSay", "data": { "kind": "announce", "key": "phantasmon_events.trahison.say.phase.vote", "phase": "VOTE", "round": 2 } }
+{ "type": "EventsTrahisonSay", "data": { "kind": "announce", "key": "phantasmon_events.trahison.say.phase.vote", "phase": "VOTE", "round": 2, "variant": 418204 } }
 ```
 
 Genre `error` : une demande refusée (voir « Codes d'erreur »).
@@ -535,7 +540,7 @@ Genre `error` : une demande refusée (voir « Codes d'erreur »).
 
 Genre `whisper` (T7) : une ligne privée, envoyée à **un seul** joueur (jamais à un factice) : son rôle secret quand le prologue commence
 (`phantasmon_events.trahison.say.role.<rôle en minuscules>`, y compris `game_master` pour le maître du jeu qui joue), ou une lettre anonyme
-(`phantasmon_events.trahison.say.letter`, `args` : le texte). Champs : `kind` (`whisper`), `key`, `args`, `phase`, `round`. Le client le dit
+(`phantasmon_events.trahison.say.letter`, `args` : le texte). Champs : `kind` (`whisper`), `key`, `args`, `phase`, `round`, `variant`. Le client le dit
 avec la voix de l'animatrice, comme un `announce`.
 
 - Erreurs : sans objet.
@@ -607,7 +612,7 @@ l'origine de la place de la salle. `shows` dit ce qu'il montre maintenant :
 | `type` | Champs | Sens |
 |---|---|---|
 | `puzzle` | `step`, `role`, `mechanism`, `solved` | Un mécanisme s'y utilise (étape ouverte ou résolue). `use_slot` l'ouvre |
-| `clue` | `step`, `clue { role, type, value }` | Un indice visible. `type` : `text`, `digits` (`value` : texte de chiffres), `symbols` ou `colors` (`value` : liste de textes), `image` (identifiant), `document` (`value` : liste de pages, chaque page un texte ; une ligne `@image:<id>` y montre l'image `textures/trahison/docs/<id>.png`), `item` (identifiant d'objet, ramassable par `pick_up`) |
+| `clue` | `step`, `clue { role, type, value }` | Un indice visible. `type` : `text`, `digits` (`value` : texte de chiffres), `symbols` ou `colors` (`value` : liste de textes), `image` (identifiant), `document` (`value` : liste de pages, chaque page un texte ; une ligne `@image:<id>` y montre l'image `textures/trahison/docs/<id>.png` ; une ligne `@fragment:<n>` est remplacée côté client par le fragment de lore numéro `n` du fichier de textes de l'animatrice, « Fragment n — à écrire. » tant qu'il n'est pas écrit, T9.4), `item` (identifiant d'objet, ramassable par `pick_up`) |
 | `exit` | `open` | L'emplacement de sortie |
 
 Un indice devient visible quand son étape est ouverte (`gives[].when` = `open`, par défaut) ou résolue (`solved`). Un objet

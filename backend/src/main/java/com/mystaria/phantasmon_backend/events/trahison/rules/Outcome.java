@@ -82,6 +82,34 @@ public final class Outcome {
 		return Roles.objectivesMet(roles, alive, winners, infiltratorBetrayed);
 	}
 
+	/** T9.4: how a game ends, by the number of players who walked out. */
+	public enum Ending {
+		/** Nobody got out. */
+		NOBODY,
+		/** Exactly one player got out. */
+		SOLO,
+		/** Several got out, but not everybody. */
+		SOME,
+		/** Every seat got out. */
+		ALL;
+
+		/** Lower-case name, the suffix of the language keys ({@code say.ending.<name>}) and the view's {@code ending} field. */
+		public String key() {
+			return name().toLowerCase(java.util.Locale.ROOT);
+		}
+	}
+
+	/** T9.4: the ending of a game, decided here and nowhere else: {@code winners} players got out of {@code seats} playing. */
+	public static Ending ending(int winners, int seats) {
+		if (winners <= 0) {
+			return Ending.NOBODY;
+		}
+		if (winners == 1) {
+			return Ending.SOLO;
+		}
+		return winners >= seats ? Ending.ALL : Ending.SOME;
+	}
+
 	private static void check(int a, int b) {
 		if (a != Assignment.BRACELETS || b != Assignment.BRACELETS) {
 			throw new IllegalArgumentException("Expected arrays of length 9");

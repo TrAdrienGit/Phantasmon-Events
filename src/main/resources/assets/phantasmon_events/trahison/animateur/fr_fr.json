@@ -1,0 +1,143 @@
+{
+  "_help": "Textes de l'animatrice : voir Documentation/trahison/textes-animateur.md",
+  "lines": {
+    "phase.lobby": [
+      "Mystaria : La maison est ouverte. Neuf bracelets, neuf poignets. Entrez, et choisissez bien vos compagnons."
+    ],
+    "phase.prologue": [
+      "Mystaria : Vous vous réveillez dans le hall. Je suis Mystaria, le premier fantôme. Regardez votre bracelet : c'est votre vie, maintenant."
+    ],
+    "phase.doors": [
+      "Mystaria : Les portes s'éveillent. Paire ou solo, rouge, vert ou bleu : décidez qui va où avant qu'elles ne se ferment. Qui ne passe aucune porte ne verra pas les salles."
+    ],
+    "phase.rooms": [
+      "Mystaria : Les portes se sont refermées. Trois d'entre vous, une salle, et le temps ne pardonne rien. Collaborez... pour l'instant."
+    ],
+    "phase.free_time": [
+      "Mystaria : Les portes sont de nouveau ouvertes. Flânez, parlez, fouillez. Les murs cachent des secrets, et les amis aussi."
+    ],
+    "phase.vote": [
+      "Mystaria : Aux cabines. S'allier ou trahir : personne ne saura ce que vous avez choisi... jusqu'à ce que je le dise."
+    ],
+    "phase.results": [
+      "Mystaria : Les cabines sont ouvertes. Chaque vote, chaque point, mis à nu. Regardez qui sourit encore."
+    ],
+    "phase.final": [
+      "Mystaria : La dernière porte attend. Neuf points pour l'ouvrir. Lequel d'entre vous les a mérités ?"
+    ],
+    "phase.ended": [
+      "Mystaria : C'est fini. La maison retombe dans le silence, et moi... je reste."
+    ],
+    "doors_dead": [
+      "Mystaria : %1$s n'a passé aucune porte. La maison le garde."
+    ],
+    "final_door_open": [
+      "Mystaria : La porte 9 vient d'être ouverte ! Elle reste ouverte %2$s secondes, pour celles et ceux qui l'ont méritée. Eux seuls."
+    ],
+    "final_door_escaped": [
+      "Mystaria : Passés par la porte : %1$s. Elle se referme pour toujours derrière eux."
+    ],
+    "final_door_nobody": [
+      "Mystaria : La porte se referme pour toujours. Personne n'est passé."
+    ],
+    "final_countdown": [
+      "Mystaria : %1$s secondes avant que la dernière porte se referme pour toujours."
+    ],
+    "game_master_killed": [
+      "Mystaria : %1$s était le maître du jeu, et a été tué. Tous les autres joueurs gagnent."
+    ],
+    "role.infiltrator": [
+      "Mystaria : Ton rôle secret est Infiltré. Tu dois trahir à la manche 1. Si tu le fais, tu gagnes 1 point de plus."
+    ],
+    "role.ferryman": [
+      "Mystaria : Ton rôle secret est Passeur. Tu es l'allié des fantômes. Tu gagnes si au moins 2 joueurs sont des fantômes à la fin, même si tu ne sors pas."
+    ],
+    "role.guardian": [
+      "Mystaria : Ton rôle secret est Gardien. Tu ne peux jamais trahir. Tu gagnes si au moins 5 joueurs passent la porte finale."
+    ],
+    "role.seer": [
+      "Mystaria : Ton rôle secret est Voyant. Une fois dans la partie, pendant un vote, tu vois le vote déjà rendu par un camp d'un groupe."
+    ],
+    "role.gambler": [
+      "Mystaria : Ton rôle secret est Parieur. Avant chaque vote, tu paries sur le vote de ton adversaire. Un pari juste rapporte 1 point, une seule fois dans la partie."
+    ],
+    "role.loner": [
+      "Mystaria : Ton rôle secret est Solitaire. Tu veux gagner seul : tu gagnes seulement si tu es le seul joueur à passer la porte finale."
+    ],
+    "role.game_master": [
+      "Mystaria : Tu es le maître du jeu, et tu joues. Ton rôle est secret."
+    ],
+    "letter": [
+      "Mystaria : Une lettre te parvient, sans nom dessus : « %1$s »"
+    ],
+    "offer": [
+      "Mystaria : Une offre, pour toi seul(e) : trahis, et tu gagnes %1$s point de plus."
+    ],
+    "offer_made": [
+      "Mystaria : Une offre vient d'être faite à l'un de vous."
+    ],
+    "leak.vote_time": [
+      "Mystaria : Une rumeur, et elle est vraie : %1$s a voté au bout de %2$s secondes."
+    ],
+    "leak.cabin_closed": [
+      "Mystaria : Une rumeur, et elle est vraie : %1$s a fermé une cabine au bout de %2$s secondes."
+    ],
+    "leak.cabin_try": [
+      "Mystaria : Une rumeur, et elle est vraie : %1$s a tenté d'entrer dans une cabine."
+    ],
+    "leak.item_found": [
+      "Mystaria : Une rumeur, et elle est vraie : %1$s a trouvé un objet caché."
+    ],
+    "race_first": [
+      "Mystaria : Premiers sortis de leur salle : %1$s."
+    ],
+    "gm": [
+      "Mystaria : %1$s"
+    ],
+    "gm_whisper": [
+      "Mystaria : %1$s"
+    ],
+    "death": [
+      "Mystaria : %1$s ne reviendra pas. (texte provisoire)",
+      "Mystaria : La maison garde %1$s. (variante provisoire)"
+    ],
+    "betrayal": [
+      "Mystaria : Au moins une main a trahi. (texte provisoire)",
+      "Mystaria : Quelqu'un a menti. (variante provisoire)"
+    ],
+    "alliance": [
+      "Mystaria : Personne n'a trahi, cette fois. (texte provisoire)",
+      "Mystaria : Les mains sont restées liées. (variante provisoire)"
+    ],
+    "ending.solo": [
+      "Mystaria : Un seul est sorti : %1$s. (texte provisoire)",
+      "Mystaria : %1$s part seul(e). (variante provisoire)"
+    ],
+    "ending.some": [
+      "Mystaria : %2$s sont sortis : %1$s. (texte provisoire)",
+      "Mystaria : Quelques-uns s'en vont : %1$s. (variante provisoire)"
+    ],
+    "ending.all": [
+      "Mystaria : Tous sont sortis : %1$s. (texte provisoire)",
+      "Mystaria : Personne ne reste. (variante provisoire)"
+    ],
+    "ending.nobody": [
+      "Mystaria : Personne n'est sorti. (texte provisoire)",
+      "Mystaria : La maison garde tout le monde. (variante provisoire)"
+    ]
+  },
+  "fragments": {
+    "1": "Fragment 1 — à écrire.",
+    "2": "Fragment 2 — à écrire.",
+    "3": "Fragment 3 — à écrire.",
+    "4": "Fragment 4 — à écrire.",
+    "5": "Fragment 5 — à écrire.",
+    "6": "Fragment 6 — à écrire.",
+    "7": "Fragment 7 — à écrire.",
+    "8": "Fragment 8 — à écrire.",
+    "9": "Fragment 9 — à écrire.",
+    "10": "Fragment 10 — à écrire.",
+    "11": "Fragment 11 — à écrire.",
+    "12": "Fragment 12 — à écrire."
+  }
+}
