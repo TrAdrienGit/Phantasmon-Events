@@ -1,5 +1,7 @@
 # Reprise du chantier (point du 2026-11-18)
 
+> Guides pour construire : [`guide-editeur-plan.md`](guide-editeur-plan.md) (le complexe et son plan), [`guide-editeur-salle.md`](guide-editeur-salle.md) (les salles).
+
 > **État :** tout est sur `main`, poussé (dernier commit 1aa564d). Dernier contrôle de l'orchestrateur : build client
 > vert, 470 tests backend `*trahison*` verts, 1 433 clés de langue identiques EN/FR. **Rien n'a encore tourné en jeu.**
 >

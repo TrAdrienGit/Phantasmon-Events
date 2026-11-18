@@ -4,6 +4,8 @@
 > avec un compte admin de Phantasmon. Le mod ne marche pas sur un serveur : les blocs et leurs entités (panneaux, bannières)
 > ne se lisent en entier que sur le serveur intégré du monde solo.
 
+> Le **complexe fixe** (hall, portes, cabines, places des salles) se construit et se décrit avec l'éditeur de plan : voir [`guide-editeur-plan.md`](guide-editeur-plan.md).
+
 ## Créer une salle à partir d'une fiche, pas à pas
 
 > Le chemin guidé pour construire une des 9 salles de la première soirée (fiches dans `Documentation/salles/`). Le mod connaît
