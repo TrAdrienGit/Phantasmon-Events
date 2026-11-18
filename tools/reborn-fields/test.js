@@ -122,7 +122,8 @@ test('Burning: a Water move puts the fire out, with the x1.3 change boost', () =
 });
 
 test('Cave: the second quake brings the ceiling down', () => {
-	const b = battle('cave', [mon('Garchomp', ['earthquake'])], [mon('Bronzong', ['splash'], {ability: 'levitate'})]);
+	// (Levitate no longer dodges Earthquake in a cave: a Torterra survives the two quakes.)
+	const b = battle('cave', [mon('Garchomp', ['earthquake'])], [mon('Torterra', ['splash'])]);
 	turn(b);
 	assert.ok(b.log.some((l) => l.includes('|-leaguereborn|text|cave_crumbling')));
 	turn(b);
@@ -332,6 +333,215 @@ test('without the rule, Gooey is -1', () => {
 	const b = battle(null, [mon('Rattata', ['tackle'])], [mon('Goodra', ['splash'], {ability: 'gooey'})]);
 	turn(b);
 	assert.strictEqual(active(b, 0).boosts.spe, -1);
+});
+
+// --- batches 3 to 6: poison, fire, ice/rock/sand, nature/machines ---------------------------------------------
+
+test('Corrosive Mist: everyone is poisoned at the end of the turn, not Steel types', () => {
+	const b = battle('corrosivemist', [mon('Snorlax', ['splash'])], [mon('Skarmory', ['splash'])]);
+	const log = turn(b);
+	assert.strictEqual(active(b, 0).status, 'psn');
+	assert.strictEqual(active(b, 1).status, '');
+	assert.ok(lines(log, /-leaguereborn\|text\|mist_poisoned/).length === 1);
+});
+
+test('Corrosive: entering sears the grounded by their Poison weakness', () => {
+	const b = battle('corrosive', [mon('Snorlax', ['splash']), mon('Venusaur', ['splash'])], [mon('Muk', ['splash'])]);
+	turn(b, 'switch 2');
+	const v = active(b, 0);
+	assert.strictEqual(v.maxhp - v.hp, 0); // Grass/Poison: Poison type, untouched
+	const c = battle('corrosive', [mon('Snorlax', ['splash']), mon('Clefable', ['splash'])], [mon('Muk', ['splash'])]);
+	turn(c, 'switch 2');
+	const f = active(c, 0);
+	assert.strictEqual(f.maxhp - f.hp, Math.floor(f.maxhp * 8 / 16)); // Fairy: weak to Poison, 8/16
+});
+
+test('Wasteland: hazards do nothing on entry, then the waste spits them out', () => {
+	const b = battle('wasteland', [mon('Skarmory', ['spikes'])], [mon('Snorlax', ['splash'])]);
+	const log = turn(b);
+	assert.ok(!b.sides[1].sideConditions.spikes);
+	assert.ok(lines(log, /-leaguereborn\|text\|waste_spikes/).length === 1, log.join('\n'));
+	assert.strictEqual(lost(b, 1), Math.floor(active(b, 1).maxhp / 3));
+});
+
+test('Burning: the grounded burn by their Fire weakness, Fire types do not', () => {
+	const b = battle('burning', [mon('Venusaur', ['splash'])], [mon('Arcanine', ['splash'])]);
+	const log = turn(b);
+	assert.strictEqual(lost(b, 0), Math.floor(active(b, 0).maxhp * 8 / 32));
+	assert.strictEqual(lost(b, 1), 0);
+	assert.ok(lines(log, /-leaguereborn\|text\|field_burned/).length === 1);
+});
+
+test('Burning: rain puts the fire out; no freezing there', () => {
+	const b = battle('burning', [mon('Pelipper', ['raindance'], {ability: 'keeneye'})], [mon('Arcanine', ['splash'])]);
+	turn(b);
+	assert.notStrictEqual(LR.field(b), 'burning');
+});
+
+test("Dragon's Den: Magma Armor swallows Fire, Dragon types take less", () => {
+	const b = battle('dragonsden', [mon('Charizard', ['flamethrower'])], [mon('Camerupt', ['splash'], {ability: 'magmaarmor'})]);
+	turn(b);
+	assert.strictEqual(lost(b, 1), 0);
+	assert.strictEqual(active(b, 1).boosts.def, 1);
+});
+
+test('Cave: Earthquake hits a Levitate user and a Flying type', () => {
+	const b = battle('cave', [mon('Garchomp', ['earthquake'])], [mon('Pidgeot', ['splash'])]);
+	turn(b);
+	assert.ok(lost(b, 1) > 0);
+});
+
+test('Rocky: a missed contact move hits a rock; Stealth Rock twice as sharp', () => {
+	const b = battle('rocky', [mon('Hitmonlee', ['highjumpkick', 'tackle'])], [mon('Gengar', ['splash'])]);
+	turn(b, 'move 2');
+	assert.ok(lost(b, 0) > 0); // Tackle misses the Ghost: a rock instead
+});
+
+test('Desert: Sand Rush doubles Speed, Ground types resist special moves', () => {
+	const b = battle('desert', [mon('Excadrill', ['splash'], {ability: 'sandrush'})], [mon('Snorlax', ['splash'])]);
+	const e = active(b, 0);
+	assert.strictEqual(e.getStat('spe'), e.storedStats.spe * 2);
+});
+
+test('Ashen Beach: a Fighting type breaks through confusion', () => {
+	const b = battle('ashenbeach', [mon('Jolteon', ['confuseray'])], [mon('Machamp', ['splash'])]);
+	const log = turn(b);
+	assert.ok(!active(b, 1).volatiles.confusion);
+	assert.ok(lines(log, /-leaguereborn\|text\|confusion_broken/).length === 1);
+});
+
+test('Inverse: Electric hits Ground, Fighting resisted by Normal', () => {
+	const b = battle('inverse', [mon('Pikachu', ['thunderbolt'])], [mon('Golem', ['splash'])]);
+	const log = turn(b);
+	assert.ok(lost(b, 1) > 0, log.join('\n'));
+	assert.ok(lines(log, /-supereffective/).length === 1);
+});
+
+test('Forest: Leaf Guard blocks status, Growth +2', () => {
+	const b = battle('forest', [mon('Breloom', ['spore'])], [mon('Leafeon', ['growth'], {ability: 'leafguard'})]);
+	turn(b);
+	assert.strictEqual(active(b, 1).status, '');
+	assert.strictEqual(active(b, 1).boosts.atk, 2);
+});
+
+test('Short-Circuit: Electric damage follows the rolls, with their text', () => {
+	const b = battle('shortcircuit', [mon('Pikachu', ['thunderbolt'])], [mon('Snorlax', ['splash'])]);
+	const log = turn(b);
+	assert.ok(lines(log, /-leaguereborn\|text\|bzzt0/).length === 1, log.join('\n'));
+});
+
+test('Topsy-Turvy lays Inverse for 3 turns', () => {
+	const b = battle('cave', [mon('Malamar', ['topsyturvy'])], [mon('Snorlax', ['splash'])]);
+	turn(b);
+	assert.strictEqual(LR.field(b), 'inverse');
+});
+
+// --- batch 7: Rainbow, Starlight, Holy, crystals, Mirror -------------------------------------------------------
+
+test('Rain then sun make a Rainbow', () => {
+	const b = battle('cave', [mon('Pelipper', ['raindance', 'sunnyday'], {ability: 'keeneye'})], [mon('Snorlax', ['splash'])]);
+	turn(b);
+	turn(b, 'move 2');
+	assert.strictEqual(LR.field(b), 'rainbow');
+});
+
+test('Holy: Normal moves hit Ghost types super effectively', () => {
+	const b = battle('holy', [mon('Snorlax', ['bodyslam'])], [mon('Gengar', ['splash'])]);
+	const log = turn(b);
+	assert.ok(lost(b, 1) > 0, log.join('\n'));
+	assert.ok(lines(log, /-supereffective/).length === 1);
+});
+
+test('Starlight: Solar Beam is Fairy', () => {
+	const b = battle('starlight', [mon('Venusaur', ['solarbeam'])], [mon('Hariyama', ['splash'])]);
+	turn(b);
+	const log = turn(b);
+	assert.ok(lost(b, 1) > 0, log.join('\n'));
+	assert.ok(lines(log, /-supereffective/).length === 1);
+});
+
+test('Mirror: Double Team +2, a missed contact move hits a mirror', () => {
+	const b = battle('mirror', [mon('Rattata', ['tackle'])], [mon('Gengar', ['doubleteam'])]);
+	turn(b);
+	assert.strictEqual(active(b, 1).boosts.evasion, 2);
+	assert.ok(lost(b, 0) > 0);
+});
+
+test('Crystal Cavern: Rock moves take the crystals types in turn', () => {
+	const b = battle('crystalcavern', [mon('Golem', ['rockslide'])], [mon('Charizard', ['splash'])]);
+	turn(b);
+	assert.ok(lost(b, 1) > 0);
+});
+
+// --- batch 8: Glitch, New World, Fairy Tale, Chess Board, Big Top Arena -----------------------------------------
+
+test('Glitch: Dark moves are Normal (Gengar immune), Ghost misses Psychic, Dragon hits Fairy', () => {
+	let b = battle('glitch', [mon('Umbreon', ['darkpulse'])], [mon('Gengar', ['splash'])]);
+	turn(b);
+	assert.strictEqual(lost(b, 1), 0);
+	b = battle('glitch', [mon('Gengar', ['shadowball'])], [mon('Alakazam', ['splash'])]);
+	turn(b);
+	assert.strictEqual(lost(b, 1), 0);
+	b = battle('glitch', [mon('Dragonite', ['dragonclaw'])], [mon('Clefable', ['splash'])]);
+	turn(b);
+	assert.ok(lost(b, 1) > 0);
+});
+
+test('Conversion then Conversion 2 corrupt the field into a Glitch Field', () => {
+	const b = battle('grassy', [mon('Porygon2', ['thunderbolt', 'conversion', 'conversion2'])], [mon('Snorlax', ['splash'])]);
+	turn(b, 'move 2');
+	assert.strictEqual(LR.field(b), 'grassy');
+	const log = turn(b, 'move 3');
+	assert.strictEqual(LR.field(b), 'glitch', log.join('\n'));
+});
+
+test('New World: Nature\'s Madness takes half the max HP; Gravity makes Starlight until it ends', () => {
+	let b = battle('newworld', [mon('Tapu Koko', ['naturesmadness'])], [mon('Snorlax', ['splash'])]);
+	turn(b);
+	assert.strictEqual(lost(b, 1), Math.floor(active(b, 1).maxhp / 2));
+	b = battle('newworld', [mon('Alakazam', ['gravity', 'calmmind'])], [mon('Snorlax', ['calmmind'])]);
+	turn(b);
+	assert.strictEqual(LR.field(b), 'starlight');
+	for (let i = 0; i < 5 && LR.field(b) === 'starlight'; i++) turn(b, 'move 2');
+	assert.strictEqual(LR.field(b), 'newworld');
+});
+
+test('Fairy Tale: Steel slays Dragons; Crafty Shield boosts; Battle Armor shines', () => {
+	let b = battle('fairytale', [mon('Metagross', ['ironhead'])], [mon('Dragonite', ['splash'])]);
+	const log = turn(b);
+	assert.ok(lines(log, /-supereffective/).length === 1, log.join('\n'));
+	b = battle('fairytale', [mon('Jolteon', ['craftyshield'])], [mon('Snorlax', ['splash'])]);
+	turn(b);
+	assert.strictEqual(active(b, 0).boosts.def, 1);
+	assert.strictEqual(active(b, 0).boosts.spd, 1);
+	b = battle('fairytale', [mon('Kabutops', ['splash'], {ability: 'battlearmor'})], [mon('Snorlax', ['splash'])]);
+	assert.strictEqual(active(b, 0).boosts.def, 1);
+});
+
+test('Chess: pieces, the Pawn hangs on, the King\'s Shield stops status moves', () => {
+	let b = battle('chess', [mon('Mewtwo', ['psystrike'])],
+		[mon('Rattata', ['splash']), mon('Snorlax', ['splash']), mon('Blissey', ['splash'])]);
+	const side = b.sides[1].pokemon;
+	assert.deepStrictEqual(side.map((p) => LR.piece(p)), ['pawn', 'king', 'queen']);
+	turn(b);
+	assert.strictEqual(active(b, 1).hp, 1);
+	b = battle('chess', [mon('Aegislash', ['kingsshield'])], [mon('Jolteon', ['thunderwave'])]);
+	turn(b);
+	assert.strictEqual(active(b, 0).status, '');
+});
+
+test('Big Top: the strength meter, Belly Drum +1 Def, Clangorous Soul half HP for +2', () => {
+	let b = battle('bigtop', [mon('Machamp', ['closecombat'])], [mon('Snorlax', ['splash'])]);
+	const log = turn(b);
+	assert.ok(lines(log, /whammo/).length === 1 && lines(log, /striker_/).length === 1, log.join('\n'));
+	b = battle('bigtop', [mon('Snorlax', ['bellydrum'])], [mon('Snorlax', ['splash'])]);
+	turn(b);
+	assert.strictEqual(active(b, 0).boosts.atk, 6);
+	assert.strictEqual(active(b, 0).boosts.def, 1);
+	b = battle('bigtop', [mon('Kommo-o', ['clangoroussoul'])], [mon('Snorlax', ['splash'])]);
+	turn(b);
+	assert.strictEqual(active(b, 0).boosts.atk, 2);
+	assert.strictEqual(lost(b, 0), Math.floor(active(b, 0).maxhp / 2));
 });
 
 // --- run -------------------------------------------------------------------------------------------------------

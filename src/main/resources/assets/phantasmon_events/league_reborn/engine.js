@@ -97,6 +97,7 @@
 		reset(s) {
 			s.counter = [0, 0, 0, 0];
 			s.pledge = null;
+			s.conversion = null;
 		},
 		canChange(battle, to) {
 			const f = LR.field(battle);
@@ -624,6 +625,7 @@
 	const TOXIC_FIELDS = ['corrosive', 'corrosivemist', 'wasteland', 'murkwatersurface'];
 	LR.toxicField = (battle) => TOXIC_FIELDS.includes(LR.field(battle));
 	const RAIN = ['raindance', 'primordialsea'];
+	const HAIL = ['hail', 'snow'];
 	const PLEDGES = ['firepledge', 'grasspledge', 'waterpledge'];
 
 	Object.assign(BOOSTS, {
@@ -831,6 +833,951 @@
 		},
 	});
 
+	// --- Third batch: the poison fields (Corrosive, Corrosive Mist, Wasteland) -------------------------------------
+
+	/** Adds a status move's boosts on a list of fields. */
+	function boostOn(move, fields, boosts) {
+		BOOSTS[move] = BOOSTS[move] || {};
+		for (const f of fields) BOOSTS[move][f] = boosts;
+	}
+	boostOn('smokescreen', ['burning', 'corrosivemist', 'volcanic', 'volcanictop', 'backalley', 'city'], {accuracy: -2});
+	boostOn('sandattack', ['desert', 'ashenbeach'], {accuracy: -2});
+	boostOn('flash', ['shortcircuit', 'darkcrystalcavern', 'mirror', 'starlight', 'newworld', 'darkness1'], {accuracy: -2});
+	/** Who the poison of a corroded field leaves alone. */
+	const POISON_PROOF = ['magicguard', 'poisonheal', 'immunity', 'wonderguard', 'toxicboost', 'pastelveil'];
+	const poisonProof = (pokemon) => pokemon.hasType(['Poison', 'Steel']) || pokemon.hasAbility(POISON_PROOF);
+	const RANDOM_STATUS = ['brn', 'psn', 'par', 'frz'];
+	/** Reborn's hazard damage: maxhp * eff / divisor, with 1x = 4 (at least 1). */
+	function hazardDamage(battle, pokemon, type, divisor) {
+		const e = battle.dex.getEffectiveness(type, pokemon);
+		if (!battle.dex.getImmunity(type, pokemon)) return 0;
+		return Math.max(1, Math.floor(pokemon.maxhp * 4 * Math.pow(2, e) / divisor));
+	}
+
+	shared({
+		tryMove(source, target, move) {
+			// The corrosive mist would blow up: Damp stops Eruption and Fire Pledge.
+			if (LR.field(this) !== 'corrosivemist' || !['eruption', 'firepledge'].includes(move.id)) return;
+			const bearer = this.getAllActive().find((p) => p.hasAbility('damp'));
+			if (!bearer) return;
+			LR.say(this, 'text', 'damp_prevented');
+			return false;
+		},
+		modifyMove(move, source) {
+			const f = LR.field(this);
+			if (move.id === 'direclaw' && f === 'wasteland' && move.secondaries) move.secondaries = move.secondaries.map((s) => Object.assign({}, s, {chance: 100}));
+			if (move.id === 'swallow' && f === 'wasteland') move.lrStockpile = source.volatiles.stockpile ? source.volatiles.stockpile.layers : 0;
+		},
+		basePower(basePower, source, target, move) {
+			if (source.hasAbility('corrosion') && ['corrosive', 'corrosivemist', 'corrupted'].includes(LR.field(this))) return 1.5;
+		},
+		entry(pokemon) {
+			// The corrosion sears what touches the ground.
+			if (LR.field(this) !== 'corrosive' || !pokemon.isGrounded() || pokemon.hasItem('heavydutyboots') || poisonProof(pokemon)) return;
+			const damage = hazardDamage(this, pokemon, 'Poison', 16);
+			if (!damage) return;
+			LR.say(this, 'text', 'corrosion_seared', pokemon.name);
+			this.directDamage(damage, pokemon);
+		},
+		afterMove(source, target, move) {
+			const f = LR.field(this);
+			if (source.moveThisTurnResult !== true) return;
+			if (move.id === 'swallow' && move.lrStockpile) {
+				// Wasteland: Swallow heals twice as much, and three stockpiles cure the status.
+				const extra = [0.25, 0.5, 0][move.lrStockpile - 1];
+				if (extra) this.heal(Math.floor(source.maxhp * extra), source, source);
+				if (move.lrStockpile === 3 && source.status) source.cureStatus();
+			}
+			if (move.id === 'floralhealing' && ['corrosive', 'corrosivemist'].includes(f) && target && target.hp) target.trySetStatus('psn', source);
+			if (move.id === 'lifedew' && f === 'corrosivemist') {
+				for (const ally of source.alliesAndSelf()) if (ally !== source && ally.hp) ally.trySetStatus('psn', source);
+			}
+			// Corrosion on the Wasteland: 10% chance of a random status on what it hits.
+			if (source.hasAbility('corrosion') && f === 'wasteland' && move.category !== 'Status' && target && target !== source &&
+				target.hp && this.randomChance(1, 10)) target.trySetStatus(this.sample(RANDOM_STATUS), source);
+		},
+		residual() {
+			const f = LR.field(this);
+			if (f === 'wasteland') wastelandHazards(this);
+			for (const pokemon of this.getAllActive()) {
+				if (!pokemon.hp) continue;
+				// Dry Skin drinks the poison: it hurts, unless it is a Poison type.
+				if (pokemon.hasAbility('dryskin') && TOXIC_AIR.includes(f) && !pokemon.hasType('Steel')) {
+					if (!pokemon.hasType('Poison')) this.damage(pokemon.baseMaxhp / 8, pokemon, pokemon, ability(this, 'dryskin'));
+					else this.heal(pokemon.baseMaxhp / 8, pokemon, pokemon, ability(this, 'dryskin'));
+				}
+			}
+		},
+	});
+
+	/** Wasteland: the waste swallows each side's hazards and spits them back at its battlers. */
+	function wastelandHazards(battle) {
+		for (const side of battle.sides) {
+			const mons = side.active.filter((p) => p && p.hp);
+			const away = (p) => p.volatiles.twoturnmove || p.volatiles.skydrop;
+			const sc = side.sideConditions;
+			if (sc.stealthrock) {
+				side.removeSideCondition('stealthrock');
+				LR.say(battle, 'text', 'waste_rocks');
+				for (const p of mons) {
+					if (away(p) || p.hasAbility('magicguard')) continue;
+					const damage = hazardDamage(battle, p, 'Rock', 16);
+					if (damage && battle.dex.getEffectiveness('Rock', p) >= 0) battle.directDamage(damage, p);
+				}
+			}
+			if (sc.spikes) {
+				const layers = sc.spikes.layers || 1;
+				side.removeSideCondition('spikes');
+				LR.say(battle, 'text', 'waste_spikes');
+				for (const p of mons) {
+					if (away(p) || !p.isGrounded() || p.hasAbility('magicguard')) continue;
+					battle.directDamage(Math.max(1, Math.floor(layers * p.maxhp / 3)), p);
+				}
+			}
+			if (sc.toxicspikes) {
+				const layers = sc.toxicspikes.layers || 1;
+				side.removeSideCondition('toxicspikes');
+				LR.say(battle, 'text', 'waste_toxic_spikes');
+				for (const p of mons) {
+					if (away(p) || !p.isGrounded() || p.hasType(['Steel', 'Poison'])) continue;
+					if (!p.hasAbility('magicguard')) battle.directDamage(Math.max(1, Math.floor(layers * p.maxhp / 8)), p);
+					if (p.hp) p.trySetStatus(layers > 1 ? 'tox' : 'psn');
+				}
+			}
+			if (sc.stickyweb) {
+				side.removeSideCondition('stickyweb');
+				LR.say(battle, 'text', 'waste_web');
+				for (const p of mons) battle.boost({spe: -4}, p, p, null, true);
+			}
+		}
+	}
+
+	Object.assign(HOOKS, {
+		/** Corrosive: Grass Pelt corrodes, the sleeping are seared. */
+		corrosive: {
+			residual() {
+				for (const pokemon of this.getAllActive()) {
+					if (!pokemon.hp) continue;
+					if (pokemon.hasAbility('grasspelt')) {
+						LR.say(this, 'text', 'pelt_corroded', pokemon.name);
+						this.directDamage(Math.max(1, Math.floor(pokemon.maxhp / 8)), pokemon);
+					}
+					if (pokemon.hp && (pokemon.status === 'slp' || pokemon.hasAbility('comatose')) && pokemon.isGrounded() && !poisonProof(pokemon)) {
+						LR.say(this, 'text', 'corrosion_seared', pokemon.name);
+						this.directDamage(Math.max(1, Math.floor(pokemon.maxhp / 16)), pokemon);
+					}
+				}
+			},
+		},
+		/** Corrosive Mist: the mist poisons everyone at the end of each turn. */
+		corrosivemist: {
+			residual() {
+				if (this.getAllActive().some((p) => p.hasAbility('neutralizinggas'))) return;
+				let said = false;
+				for (const pokemon of this.getAllActive()) {
+					if (!pokemon.hp || pokemon.status || !pokemon.runStatusImmunity('psn')) continue;
+					if (!said) LR.say(this, 'text', 'mist_poisoned');
+					said = true;
+					pokemon.trySetStatus('psn', pokemon);
+				}
+			},
+		},
+	});
+
+	// --- Fourth batch: the fire fields (Burning, Superheated, Dragon's Den) and the field defenses -----------------
+
+	/** fieldDefenseBoost: a target's defense multiplier on a field (Misty's is its modifySpD hook). */
+	function fieldDefense(f, target, move) {
+		const special = move.overrideDefensiveStat ? move.overrideDefensiveStat === 'spd' : move.category === 'Special';
+		const hail = target.effectiveWeather() === 'hail'; // Showdown's snow already gives Ice its x1.5
+		const prism = target.hasAbility('prismarmor') ? 1.33 : 1;
+		switch (f) {
+		case 'darkcrystalcavern': return (target.hasType(['Dark', 'Ghost']) ? 1.5 : 1) * prism;
+		case 'rainbow': case 'crystalcavern': return prism;
+		case 'dragonsden': return target.hasType('Dragon') ? 1.3 : 1;
+		case 'newworld': return target.isGrounded() ? 1 : 0.9;
+		case 'snowymountain': case 'icy': return !special && target.hasType('Ice') && hail ? 1.5 : 1;
+		case 'desert': return special && target.hasType('Ground') ? 1.5 : 1;
+		case 'dimensional': return target.hasType('Ghost') ? 1.5 : 1;
+		case 'frozendimension': return (target.hasType(['Ghost', 'Ice']) ? 1.2 : 1) * (target.hasType('Fire') ? 0.8 : 1);
+		case 'darkness2': return target.hasType(['Dark', 'Ghost']) ? 1.1 : 1;
+		case 'darkness3': return target.hasType(['Dark', 'Ghost']) ? 1.2 : 1;
+		}
+		return 1;
+	}
+	const FIRE_FIELDS = ['burning', 'volcanic', 'infernal'];
+	const MAGMA_FIELDS = ['dragonsden', 'volcanictop', 'infernal'];
+	boostOn('dragondance', ['bigtop', 'dragonsden'], {atk: 2, spe: 2});
+	boostOn('nobleroar', ['fairytale', 'dragonsden'], {atk: -2, spa: -2});
+
+	shared({
+		setStatus(status, target) {
+			if (status.id === 'frz' && ['burning', 'volcanic'].includes(LR.field(this))) return false;
+		},
+		tryHit(target, source, move) {
+			// Magma Armor swallows Fire moves on the lava fields.
+			if (move.type !== 'Fire' || !target.hasAbility('magmaarmor') || !MAGMA_FIELDS.includes(LR.field(this)) || target === source) return;
+			this.add('-immune', target, '[from] ability: Magma Armor');
+			return null;
+		},
+		basePower(basePower, source, target, move) {
+			const f = LR.field(this);
+			let mult = 1;
+			if (FIRE_FIELDS.includes(f) && source.hasAbility('flareboost') && move.category === 'Special' && source.status !== 'brn') mult *= 1.5;
+			if (FIRE_FIELDS.includes(f) && source.hasAbility('blaze') && move.type === 'Fire' && source.hp > source.maxhp / 3) mult *= 1.5;
+			return mult;
+		},
+		modifyDamage(damage, source, target, move) {
+			if (!target || move.category === 'Status') return;
+			const def = fieldDefense(LR.field(this), target, move);
+			if (def !== 1) return 1 / def;
+		},
+		entry(pokemon) {
+			if (LR.field(this) === 'dragonsden' && pokemon.hasAbility('magmaarmor')) {
+				this.boost({def: 1, spd: 1}, pokemon, pokemon, ability(this, 'magmaarmor'));
+			}
+		},
+		afterMove(source, target, move) {
+			const f = LR.field(this);
+			// Superheated: Outrage, Thrash and Petal Dance last one turn (then confusion).
+			if (['superheated', 'volcanictop'].includes(f) && source.volatiles.lockedmove) {
+				source.volatiles.lockedmove.trueDuration = 1;
+				source.removeVolatile('lockedmove');
+			}
+			if (move.id === 'payday' && f === 'dragonsden' && source.moveThisTurnResult === true) LR.say(this, 'text', 'treasure');
+		},
+		residual() {
+			const f = LR.field(this);
+			const weather = this.field.effectiveWeather();
+			if (f === 'burning' && ['raindance', 'sandstorm'].includes(weather)) {
+				LR.say(this, 'text', weather === 'sandstorm' ? 'sand_snuffed' : 'rain_snuffed');
+				LR.breakField(this);
+				return;
+			}
+			if (['superheated', 'volcanic', 'volcanictop', 'infernal'].includes(f) && HAIL.includes(weather)) {
+				LR.say(this, 'text', 'hail_melted');
+				this.field.clearWeather();
+			}
+			// Burn Up's lost Fire type comes back at the end of the turn.
+			if (FIRE_FIELDS.includes(f)) {
+				for (const pokemon of this.getAllActive()) {
+					if (!pokemon.hp || !pokemon.getTypes().includes('???') || !pokemon.lastMove || pokemon.lastMove.id !== 'burnup') continue;
+					pokemon.setType(pokemon.species.types);
+					this.add('-start', pokemon, 'typechange', pokemon.getTypes().join('/'), '[silent]');
+				}
+			}
+		},
+	});
+
+	/** burningFieldPassiveDamage?: what the flames reach. */
+	function burnable(pokemon) {
+		if (!pokemon.isGrounded() || pokemon.hasType('Fire') || pokemon.volatiles.aquaring) return false;
+		if (pokemon.hasAbility(['flareboost', 'magmaarmor', 'flamebody', 'flashfire', 'waterveil', 'magicguard', 'heatproof', 'waterbubble'])) return false;
+		return !pokemon.volatiles.dig && !pokemon.volatiles.dive;
+	}
+
+	Object.assign(HOOKS, {
+		/** Burning: Flash Fire lights up, the flames burn the grounded (by their Fire weakness). */
+		burning: {
+			residual() {
+				let said = false;
+				for (const pokemon of this.getAllActive()) {
+					if (!pokemon.hp) continue;
+					if (pokemon.hasAbility('flashfire') && !pokemon.volatiles.flashfire) pokemon.addVolatile('flashfire');
+					if (!burnable(pokemon)) continue;
+					const e = this.dex.getEffectiveness('Fire', pokemon);
+					if (e < 0) continue;
+					let eff = 4 * Math.pow(2, e);
+					if (pokemon.hasAbility(['leafguard', 'icebody', 'fluffy', 'grasspelt'])) eff *= 2;
+					if (pokemon.volatiles.tarshot) eff *= 2;
+					if (!said) LR.say(this, 'text', 'field_burned');
+					said = true;
+					this.directDamage(Math.max(1, Math.floor(pokemon.maxhp * eff / 32)), pokemon);
+				}
+			},
+		},
+		/** Dragon's Den: a Dragon's weakness does not reach a Multiscale. */
+		dragonsden: {
+			effectiveness(typeMod, target, type, move) {
+				if (type === 'Dragon' && target.hasAbility('multiscale') && typeMod > 0) return 0;
+			},
+		},
+	});
+
+	// --- Fifth batch: ice, mountains, rocks, caves and sand (Icy, Snowy Mountain, Mountain, Rocky, Cave, Desert, Ashen Beach)
+
+	const ICE_FIELDS = ['icy', 'snowymountain', 'frozendimension'];
+	const SAND_FIELDS = ['desert', 'ashenbeach'];
+	const PEAKS = ['mountain', 'snowymountain'];
+	const WIND_MOVES = ['ominouswind', 'icywind', 'silverwind', 'twister', 'razorwind', 'fairywind', 'gust'];
+	const BULLET_DODGE = 'bullet';
+	/** Weathers that last 8 turns on these fields (as with their rock). */
+	const LONG_WEATHER = {
+		sunnyday: ['desert', 'mountain', 'snowymountain', 'sky'],
+		sandstorm: ['desert', 'ashenbeach', 'sky'],
+		hail: ['icy', 'snowymountain', 'frozendimension', 'sky', 'clouds'],
+		snow: ['icy', 'snowymountain', 'frozendimension', 'sky', 'clouds'],
+	};
+	LR.longWeather = (battle) => {
+		const w = battle.field.weatherState;
+		const list = LONG_WEATHER[battle.field.weather];
+		if (w && w.duration === 5 && list && list.includes(LR.field(battle))) w.duration = 8;
+	};
+	const strongWinds = (battle) => battle.field.weather === 'deltastream';
+	boostOn('rockpolish', ['rocky'], {spe: 3});
+	const ICY_SLIDES = ['feint', 'rollout', 'defensecurl', 'steamroller', 'lunge', 'iceball'];
+	const ASHEN_FOCUS = ['owntempo', 'innerfocus', 'purepower', 'sandveil', 'steadfast'];
+
+	shared({
+		tryAddVolatile(status, target) {
+			// Ashen Beach: a Fighting type or Inner Focus breaks through confusion.
+			if (status.id !== 'confusion' || LR.field(this) !== 'ashenbeach') return;
+			if (!target.hasType('Fighting') && !target.hasAbility('innerfocus')) return;
+			LR.say(this, 'text', 'confusion_broken', target.name);
+			return null;
+		},
+		tryMove(source, target, move) {
+			if (move.id === 'skydrop' && LR.field(this) === 'cave') {
+				LR.say(this, 'text', 'low_ceiling');
+				return false;
+			}
+		},
+		tryHit(target, source, move) {
+			// Rocky: a target behind a substitute or with raised Defense hides from bullets.
+			if (LR.field(this) !== 'rocky' || !move.flags[BULLET_DODGE] || target === source) return;
+			if (!target.volatiles.substitute && !(target.boosts.def > 0)) return;
+			LR.say(this, 'text', 'rock_hide', target.name);
+			return null;
+		},
+		chargeMove(pokemon, target, move) {
+			if (!['fly', 'bounce'].includes(move.id) || !['cave', 'clouds', 'sky'].includes(LR.field(this))) return;
+			this.attrLastMove('[still]');
+			this.addMove('-anim', pokemon, move.name, target);
+			return false;
+		},
+		modifyType(move, pokemon) {
+			const f = LR.field(this);
+			if (f === 'ashenbeach' && move.id === 'strength') move.type = 'Fighting';
+			if (f === 'icy' && move.flags.sound && pokemon.hasAbility('liquidvoice')) move.type = 'Ice';
+		},
+		modifyMove(move, source) {
+			const f = LR.field(this);
+			// Cave: Ground moves reach what flies (Levitate included).
+			if (f === 'cave' && move.type === 'Ground') move.ignoreImmunity = Object.assign({}, move.ignoreImmunity || {}, {Ground: true});
+			if (move.id === 'bittermalice' && ['icy', 'snowymountain'].includes(f)) {
+				move.secondaries = (move.secondaries || []).concat([{chance: 10, status: 'frz'}]);
+			}
+			if (f === 'ashenbeach' && source.hasAbility(ASHEN_FOCUS) && typeof move.accuracy === 'number' &&
+				!source.foes().some((p) => p.hasAbility(['unnerve', 'asonespectrier', 'asoneglastrier']))) {
+				move.accuracy = true;
+			}
+			if (source.hasAbility('longreach') && ['rocky', 'forest'].includes(f) && typeof move.accuracy === 'number') move.accuracy *= 0.9;
+		},
+		basePower(basePower, source, target, move) {
+			const f = LR.field(this);
+			const changer = move.typeChangerBoosted && move.typeChangerBoosted.id;
+			let mult = 1;
+			if (changer === 'aerilate' && [...PEAKS, 'sky'].includes(f)) mult *= 1.5 / 1.2;
+			if (changer === 'refrigerate' && ICE_FIELDS.includes(f)) mult *= 1.5 / 1.2;
+			if (source.hasAbility('punkrock') && move.flags.sound && ['cave', 'bigtop'].includes(f)) mult *= 1.5 / 1.3;
+			if (move.flags.sound && f === 'cave') mult *= 1.5;
+			if (PEAKS.includes(f) && strongWinds(this) && (WIND_MOVES.includes(move.id) || (move.type === 'Flying' && move.category === 'Special'))) mult *= 1.5;
+			if (source.hasAbility('longreach') && [...PEAKS, 'sky'].includes(f)) mult *= 1.5;
+			if (source.hasAbility('sandforce') && SAND_FIELDS.includes(f) && ['Rock', 'Ground', 'Steel'].includes(move.type) &&
+				this.field.effectiveWeather() !== 'sandstorm') mult *= 1.3;
+			return mult;
+		},
+		modifySpe(spe, pokemon) {
+			const f = LR.field(this);
+			if (pokemon.hasAbility('sandrush') && SAND_FIELDS.includes(f) && pokemon.effectiveWeather() !== 'sandstorm') return 2;
+			if (pokemon.hasAbility('slushrush') && ICE_FIELDS.includes(f) && !HAIL.includes(pokemon.effectiveWeather())) return 2;
+		},
+		afterMove(source, target, move) {
+			const f = LR.field(this);
+			if (source.moveThisTurnResult !== true) {
+				// Rocky: a physical contact move that misses hits a rock.
+				if (f === 'rocky' && move.flags.contact && move.category === 'Physical' && !source.hasAbility('rockhead') &&
+					target && target !== source && !target.volatiles.protect && source.hp) {
+					LR.say(this, 'text', 'hit_rock', source.name);
+					this.directDamage(Math.max(1, Math.floor(source.maxhp / (source.hasAbility('gorillatactics') ? 4 : 8))), source);
+				}
+				return;
+			}
+			// Icy: priority contact moves (and a few rolling ones) slide the grounded user faster.
+			if (f === 'icy' && source.isGrounded() && ((move.priority >= 1 && move.category !== 'Status' && move.flags.contact &&
+				!source.hasAbility('longreach')) || ICY_SLIDES.includes(move.id))) {
+				this.boost({spe: 1}, source, source, null, true);
+			}
+			if (move.id === 'tailwind' && ['mountain', 'snowymountain', 'volcanictop', 'clouds', 'sky'].includes(f)) {
+				const tw = source.side.sideConditions.tailwind;
+				if (tw) tw.duration = f === 'sky' ? 8 : 6;
+				if (f !== 'clouds' && !['primordialsea', 'desolateland'].includes(this.field.weather) && this.field.setWeather('deltastream', source)) {
+					this.field.weatherState.duration = 6;
+				}
+			}
+			if (move.id === 'psychup' && f === 'ashenbeach' && source.status) source.cureStatus();
+		},
+		residual() {
+			const f = LR.field(this);
+			const weather = this.field.effectiveWeather();
+			if (f === 'mountain' && HAIL.includes(weather)) {
+				const s = LR.state(this);
+				s.counter[0] += 1;
+				if (s.counter[0] >= 3) {
+					LR.say(this, 'text', 'mountain_snow');
+					LR.set(this, 'snowymountain');
+					return;
+				}
+			}
+			for (const pokemon of this.getAllActive()) {
+				if (!pokemon.hp) continue;
+				if (pokemon.hasAbility('icebody') && ICE_FIELDS.includes(f) && !HAIL.includes(pokemon.effectiveWeather())) {
+					this.heal(pokemon.baseMaxhp / 16, pokemon, pokemon, ability(this, 'icebody'));
+				}
+				if (pokemon.hasAbility('dryskin') && f === 'desert') this.damage(pokemon.baseMaxhp / 8, pokemon, pokemon, ability(this, 'dryskin'));
+				if (pokemon.hasAbility('wanderingspirit') && ['desert', 'haunted'].includes(f)) this.boost({spe: -1}, pokemon, pokemon, null, true);
+				// Ashen Beach: Sand Tomb also blinds.
+				const trap = pokemon.volatiles.partiallytrapped;
+				if (f === 'ashenbeach' && trap && trap.sourceEffect && trap.sourceEffect.id === 'sandtomb') this.boost({accuracy: -1}, pokemon);
+			}
+		},
+	});
+
+	Object.assign(HOOKS, {
+		/** Snowy Mountain: an Ice weakness does not reach Ice Scales. */
+		snowymountain: {
+			effectiveness(typeMod, target, type) {
+				if (type === 'Ice' && target.hasAbility('icescales') && typeMod > 0) return 0;
+			},
+		},
+	});
+
+	// --- Sixth batch: Forest, Factory, Short-Circuit, Inverse, Flower Garden, no field -------------------------------
+
+	const GARDEN = ['flowergarden1', 'flowergarden2', 'flowergarden3', 'flowergarden4', 'flowergarden5'];
+	const GARDEN_HIGH = ['flowergarden3', 'flowergarden4', 'flowergarden5'];
+	const LEAFGUARD_FIELDS = ['forest', 'flowergarden2', ...GARDEN_HIGH];
+	const MACHINES = ['factory', 'shortcircuit'];
+	/** Short-Circuit's Electric damage rolls, used in turn (PBStuff::SHORTCIRCUITROLLS). */
+	const SC_ROLLS = [0.8, 1.5, 0.5, 1.2, 2.0];
+	boostOn('growth', ['forest', 'flowergarden1', 'flowergarden2'], {atk: 2, spa: 2});
+	boostOn('growth', GARDEN_HIGH, {atk: 3, spa: 3});
+	boostOn('defendorder', ['forest'], {def: 2, spd: 2});
+	boostOn('autotomize', ['factory', 'deepearth', 'city'], {spe: 3});
+	boostOn('shiftgear', ['factory', 'city'], {atk: 2, spe: 2});
+	boostOn('metalsound', MACHINES, {spd: -3});
+	boostOn('sweetscent', ['flowergarden3'], {evasion: -1, def: -1, spd: -1});
+	boostOn('sweetscent', ['flowergarden4'], {evasion: -2, def: -2, spd: -2});
+	boostOn('sweetscent', ['flowergarden5'], {evasion: -3, def: -3, spd: -3});
+	/** Swarm and Overgrow in the Flower Garden (by stage), Overgrow and Swarm in the Forest. */
+	function gardenPinch(battle, source, move) {
+		const f = LR.field(battle);
+		const stage = GARDEN.indexOf(f) + 1;
+		if (source.hasAbility('swarm') && move.type === 'Bug') {
+			if (f === 'forest') return 1.5;
+			if (stage) return stage <= 2 ? 1.5 : stage <= 4 ? 1.8 : 2;
+		}
+		if (source.hasAbility('overgrow') && move.type === 'Grass') {
+			if (f === 'forest') return 1.5;
+			if (stage === 2) return source.hp <= Math.floor(source.maxhp * 0.67) ? 1.5 : 1;
+			if (stage >= 3) return [1.6, 1.8, 2][stage - 3];
+		}
+		return 1;
+	}
+
+	shared({
+		setStatus(status, target) {
+			if (target.hasAbility('leafguard') && LEAFGUARD_FIELDS.includes(LR.field(this))) return false;
+		},
+		modifyMove(move) {
+			const f = LR.field(this);
+			if (move.id === 'healorder' && f === 'forest') move.heal = [2, 3];
+		},
+		basePower(basePower, source, target, move) {
+			const f = LR.field(this);
+			let mult = gardenPinch(this, source, move);
+			// Showdown already boosts a pinched Swarm or Overgrow by 1.5.
+			if (mult !== 1 && source.hp <= source.maxhp / 3) mult /= 1.5;
+			if (f === 'shortcircuit' && move.type === 'Electric') {
+				const s = LR.state(this);
+				const i = (s.roll || 0) % SC_ROLLS.length;
+				s.roll = i + 1;
+				LR.say(this, 'text', 'bzzt' + i);
+				mult *= SC_ROLLS[i];
+			}
+			if (move.id === 'terrainpulse' && f !== NONE && !this.field.terrain) mult *= 2;
+			return mult;
+		},
+		afterMove(source, target, move) {
+			const f = LR.field(this);
+			// Topsy-Turvy inverts the field even when no stat changed (Showdown fails it then).
+			if (move.id === 'topsyturvy' && target && target !== source) layField(this, source, 'inverse', 3);
+			if (source.moveThisTurnResult !== true) return;
+			if (move.id === 'magnetrise' && MACHINES.includes(f)) {
+				const rise = source.volatiles.magnetrise;
+				if (rise && rise.duration === 5) rise.duration = 8;
+			}
+			if (move.id === 'forestscurse' && ['forest', 'fairytale', 'bewitched'].includes(f) && target && target.hp) target.addVolatile('curse', source);
+			if (move.id === 'steelroller' && LR.canChange(this, NONE)) {
+				LR.say(this, 'text', 'flattened');
+				LR.set(this, NONE, source.hasItem('amplifieldrock') ? 8 : 5);
+			}
+		},
+		residual() {
+			const f = LR.field(this);
+			for (const pokemon of this.getAllActive()) {
+				if (!pokemon.hp || pokemon.hp >= pokemon.maxhp) continue;
+				if (f === 'forest' && pokemon.hasAbility('sapsipper') && this.heal(pokemon.baseMaxhp / 16, pokemon, pokemon)) {
+					LR.say(this, 'text', 'sap_drunk', pokemon.name);
+				}
+				if (f === 'shortcircuit' && pokemon.hasAbility('voltabsorb') && this.heal(pokemon.baseMaxhp / 16, pokemon, pokemon)) {
+					LR.say(this, 'text', 'stray_electricity', pokemon.name);
+				}
+			}
+		},
+	});
+	Object.assign(HOOKS, {
+		/** Inverse: every matchup is turned around, immunities become weaknesses (Showdown's inversemod). */
+		inverse: {
+			effectiveness(typeMod, target, type, move) {
+				if (move.id === 'freezedry' && type === 'Water') return;
+				if (!this.dex.getImmunity(move, type)) return 1;
+				return -typeMod;
+			},
+		},
+	});
+	// --- Seventh batch: Rainbow, Starlight, Holy, Crystal Cavern, Dark Crystal Cavern, Mirror ----------------------
+
+	const ALL_TYPES = ['Fire', 'Water', 'Grass', 'Electric', 'Ice', 'Fighting', 'Poison', 'Ground', 'Flying', 'Psychic', 'Bug',
+		'Rock', 'Ghost', 'Dragon', 'Dark', 'Steel', 'Fairy'];
+	/** PBStuff::CCROLLS: the Crystal Cavern's crystals, in turn. */
+	const CC_ROLLS = ['Fire', 'Water', 'Grass', 'Psychic'];
+	const CC_MOVES = ['judgment', 'rockclimb', 'strength', 'multiattack', 'prismaticlaser'];
+	const MIRROR_MOVES = ['chargebeam', 'solarbeam', 'psybeam', 'triattack', 'bubblebeam', 'hyperbeam', 'icebeam', 'originpulse',
+		'moongeistbeam', 'fleurcannon'];
+	const BLINDING_MOVES = ['aurorabeam', 'signalbeam', 'flashcannon', 'lusterpurge', 'dazzlinggleam', 'technoblast', 'doomdummy',
+		'prismaticlaser', 'photongeyser', 'lightthatburnsthesky', 'mirrorshot'];
+	const DARK_SKIES = ['starlight', 'newworld', 'darkcrystalcavern', 'darkness2', 'darkness3'];
+	boostOn('doubleteam', ['mirror'], {evasion: 2});
+	boostOn('rockpolish', ['crystalcavern'], {spe: 2, atk: 1});
+	/** Moonlight and its kin on the dark and starry fields (the factor of max HP healed). */
+	LR.moonFactor = (battle, id, factor) => {
+		const f = LR.field(battle);
+		if (id === 'moonlight' && ['darkcrystalcavern', 'starlight', 'newworld', 'bewitched'].includes(f)) return 0.75;
+		if (id === 'moonlight' && f === 'darkness1') return 0.4;
+		if (id !== 'moonlight' && ['darkcrystalcavern', 'darkness2'].includes(f)) return 0.25;
+		return factor;
+	};
+	/** A weather change: rain and sun meeting make a rainbow; sun lights the dark crystals. */
+	LR.weatherSet = (battle, before, now, source) => {
+		const f = LR.field(battle);
+		const meet = (before === 'raindance' && now === 'sunnyday') || (before === 'sunnyday' && now === 'raindance');
+		if (meet && f !== 'rainbow' && LR.canChange(battle, 'rainbow')) {
+			const held = source && source.hasItem && source.hasItem(['heatrock', 'damprock']);
+			const turns = held || ['desert', 'mountain', 'snowymountain', 'sky'].includes(f) ? 8 : 5;
+			LR.say(battle, 'text', 'rainbow_formed');
+			LR.set(battle, 'rainbow', turns);
+		} else if (now === 'sunnyday' && f === 'darkcrystalcavern' && LR.canChange(battle, 'crystalcavern')) {
+			LR.say(battle, 'text', 'crystals_lit');
+			LR.set(battle, 'crystalcavern', (battle.field.weatherState.duration || 5) + 1);
+		}
+	};
+
+	shared({
+		tryHit(target, source, move) {
+			const f = LR.field(this);
+			// Holy: attacks pass through allies (Telepathy for everyone).
+			if (f === 'holy' && move.category !== 'Status' && target !== source && target.side === source.side) {
+				this.add('-activate', target, 'ability: Telepathy');
+				return null;
+			}
+			// Starlight: Mirror Armor dazzles priority moves like Queenly Majesty.
+			if (f === 'starlight' && move.priority > 0 && target.side !== source.side &&
+				target.alliesAndSelf().some((p) => p.hasAbility('mirrorarmor'))) {
+				this.add('cant', source, 'ability: Mirror Armor', move);
+				return null;
+			}
+		},
+		chargeMove(pokemon, target, move) {
+			const f = LR.field(this);
+			const skip = (['solarbeam', 'solarblade'].includes(move.id) && f === 'rainbow') ||
+				(move.id === 'meteorbeam' && ['starlight', 'newworld'].includes(f));
+			if (!skip) return;
+			this.attrLastMove('[still]');
+			this.addMove('-anim', pokemon, move.name, target);
+			return false;
+		},
+		modifyType(move) {
+			if (LR.field(this) === 'starlight' && ['solarbeam', 'solarblade'].includes(move.id)) move.type = 'Fairy';
+		},
+		modifyMove(move, source) {
+			const f = LR.field(this);
+			// Rainbow: every added effect is twice as likely (Serene Grace does not stack).
+			if (f === 'rainbow' && !source.hasAbility('serenegrace') && move.secondaries) {
+				move.secondaries = move.secondaries.map((s) => s.chance ? Object.assign({}, s, {chance: Math.min(100, s.chance * 2)}) : s);
+			}
+			if (f === 'rainbow' && move.id === 'sonicboom') move.damage = 140;
+			if (f === 'rainbow' && move.category === 'Special' && move.type === 'Normal') move.lrAdded = this.sample(ALL_TYPES);
+			if (f === 'crystalcavern' && (move.type === 'Rock' || CC_MOVES.includes(move.id))) {
+				const s = LR.state(this);
+				const i = (s.ccRoll || 0) % CC_ROLLS.length;
+				s.ccRoll = i + 1;
+				move.lrAdded = CC_ROLLS[i];
+			}
+			if (f === 'mirror' && BLINDING_MOVES.includes(move.id)) move.accuracy = true;
+			if (f === 'mirror' && move.id === 'mirrorshot' && move.secondaries) move.secondaries = move.secondaries.map((s) => Object.assign({}, s, {chance: 100}));
+			if (move.id === 'meteorassault' && f === 'starlight') delete move.self;
+			if (move.id === 'lifedew' && ['rainbow', 'holy'].includes(f)) move.heal = [1, 2];
+			if (move.id === 'naturesmadness' && f === 'holy') move.damageCallback = (pokemon, target) => Math.max(1, Math.floor(target.hp * 0.66));
+		},
+		basePower(basePower, source, target, move) {
+			const f = LR.field(this);
+			let mult = 1;
+			if (move.id === 'weatherball' && f === 'rainbow' && !this.field.weather) mult *= 2;
+			if (f === 'mirror' && MIRROR_MOVES.includes(move.id) && target && target.boosts.evasion > 0) mult *= 2;
+			if (source.hasAbility('victorystar') && ['starlight', 'newworld'].includes(f)) mult *= 1.5;
+			return mult;
+		},
+		modifyDamage(damage, source, target, move) {
+			if (target && target.hasAbility('shadowshield') && DARK_SKIES.includes(LR.field(this)) && target.getMoveHitData(move).typeMod > 0) return 0.75;
+		},
+		entry(pokemon) {
+			const f = LR.field(this);
+			if (f === 'starlight' && pokemon.hasAbility('illuminate')) this.boost({spa: 1}, pokemon, pokemon, ability(this, 'illuminate'));
+			if (f === 'mirror' && pokemon.hasAbility(['snowcloak', 'sandveil', 'tangledfeet', 'magicbounce', 'colorchange'])) {
+				this.boost({evasion: 1}, pokemon, pokemon, pokemon.getAbility());
+			}
+		},
+		afterMove(source, target, move) {
+			const f = LR.field(this);
+			if (source.moveThisTurnResult !== true) {
+				// Mirror: a physical contact move that misses hits a mirror.
+				if (f === 'mirror' && move.flags.contact && move.category === 'Physical' && target && target !== source && source.hp) {
+					LR.say(this, 'text', 'hit_mirror', source.name);
+					this.directDamage(Math.max(1, Math.floor(source.maxhp / 4)), source);
+				}
+				return;
+			}
+			if (f === 'mirror' && ['reflect', 'lightscreen', 'auroraveil'].includes(move.id)) {
+				const screen = source.side.sideConditions[move.id];
+				if (screen && screen.duration === 5) screen.duration = 8;
+				this.boost({evasion: 1}, source, source, null, true);
+			}
+			if (f === 'mirror' && move.id === 'mirrormove') this.boost({atk: 1, spa: 1, accuracy: 1}, source, source, null, true);
+		},
+		residual() {
+			const f = LR.field(this);
+			// Dark Crystal Cavern's sunlit crystals fade with the sun.
+			if (f === 'crystalcavern' && LR.backup(this) === 'darkcrystalcavern' && LR.state(this).overlay != null &&
+				this.field.effectiveWeather() !== 'sunnyday') {
+				LR.endTemp(this);
+				return;
+			}
+			for (const pokemon of this.getAllActive()) {
+				if (!pokemon.hp) continue;
+				if (f === 'rainbow' && (pokemon.status === 'slp' || pokemon.hasAbility('comatose')) && pokemon.hp < pokemon.maxhp &&
+					this.heal(pokemon.baseMaxhp / 16, pokemon, pokemon)) LR.say(this, 'text', 'rainbow_dream', pokemon.name);
+				if (f === 'holy' && pokemon.volatiles.curse) {
+					pokemon.removeVolatile('curse');
+					LR.say(this, 'text', 'curse_lifted', pokemon.name);
+				}
+			}
+		},
+	});
+	const addedOnMove = (move) => move.lrAdded;
+	Object.assign(HOOKS, {
+		rainbow: {addedType: addedOnMove},
+		crystalcavern: {addedType: addedOnMove},
+		/** Holy: Normal moves strike Dark and Ghost types hard. */
+		holy: {
+			effectiveness(typeMod, target, type, move) {
+				if (move.type === 'Normal' && ['Dark', 'Ghost'].includes(type)) return 1;
+			},
+		},
+		shortcircuit: {
+			addedType(move, source) {
+				if (move.type === 'Steel' && source && source.hasAbility('steelworker')) return 'Electric';
+			},
+		},
+	});
+	HOOKS.corrosivemist.addedType = (move) => (move.type === 'Flying' && move.category === 'Special' ? 'Poison' : undefined);
+
+	/** Steel Beam and Chloroblast recoil: 1/4 on Factory (Steel Beam) and Forest (Chloroblast), all HP on Short-Circuit. */
+	LR.beamRecoil = (battle, pokemon, move) => {
+		const f = LR.field(battle);
+		if ((f === 'factory' && move.id === 'steelbeam') || (f === 'forest' && move.id === 'chloroblast')) return Math.ceil(pokemon.maxhp / 4);
+		if (f === 'shortcircuit' && move.id === 'steelbeam') return pokemon.maxhp;
+		return Math.round(pokemon.maxhp / 2);
+	};
+
+	// --- Eighth batch: Glitch, New World, Fairy Tale, Chess Board, Big Top Arena -----------------------------------
+
+	/** Glitch: the gen-3 split, a move's category comes from its type (PBTypes.isSpecialType?). */
+	const GLITCH_SPECIAL = ['Fire', 'Water', 'Grass', 'Electric', 'Psychic', 'Ice', 'Dragon', 'Dark'];
+	const GLITCH_NORMAL = ['Dark', 'Steel', 'Fairy'];
+	const CHESS_MOVES = ['strength', 'ancientpower', 'psychic', 'continentalcrush', 'secretpower', 'shatteredpsyche'];
+	const STRIKER_MOVES = ['strength', 'woodhammer', 'dualchop', 'heatcrash', 'skydrop', 'bulldoze', 'pound', 'iciclecrash',
+		'bodyslam', 'stomp', 'slam', 'gigaimpact', 'smackdown', 'irontail', 'meteormash', 'dragonrush', 'crabhammer', 'bounce',
+		'heavyslam', 'magnitude', 'earthquake', 'stompingtantrum', 'brutalswing', 'highhorsepower', 'icehammer',
+		'dragonhammer', 'blazekick', 'continentalcrush'];
+	/** Big Top's strength meter: [roll at least, multiplier], best first (texts striker_4..striker_0). */
+	const STRIKER = [[15, 3], [13, 2], [9, 1.5], [3, 1], [-99, 0.5]];
+	const STRIKER_STRONG = ['hugepower', 'guts', 'purepower', 'sheerforce'];
+	boostOn('swordsdance', ['bigtop', 'fairytale', 'colosseum', 'dancefloor'], {atk: 3});
+	boostOn('quiverdance', ['bigtop', 'dancefloor'], {spa: 2, spd: 2, spe: 2});
+	boostOn('victorydance', ['bigtop', 'dancefloor'], {atk: 2, def: 2, spe: 2});
+	boostOn('featherdance', ['bigtop'], {atk: -3});
+	boostOn('clangoroussoul', ['bigtop'], {atk: 2, def: 2, spa: 2, spd: 2, spe: 2});
+	boostOn('noretreat', ['chess'], {atk: 2, spa: 2, spe: 2, def: -1, spd: -1});
+	LONG_WEATHER.raindance = ['bigtop', 'clouds', 'sky'];
+
+	/**
+	 * Chess Board pieces (Battle#pieceAssignment), once per side: the last Pokémon is the Queen, the lead a Pawn, the
+	 * frailest of the others (King's Rock first) the King; the rest by their best stat (Speed: Knight, attacks: Bishop,
+	 * defenses: Rook).
+	 */
+	function piece(pokemon) {
+		const side = pokemon.side;
+		if (!side.lrPieces) {
+			side.lrPieces = true;
+			const party = side.pokemon.slice();
+			const set = (p, name) => {
+				if (p && !p.lrPiece) p.lrPiece = name;
+			};
+			for (const p of party) p.lrPiece = null;
+			set(party[party.length - 1], 'queen');
+			set(party.find((p) => p.hp > 0), 'pawn');
+			const rest = party.filter((p) => !p.lrPiece);
+			rest.sort((a, b) => (a.item === 'kingsrock' ? 0 : 1) - (b.item === 'kingsrock' ? 0 : 1) || a.maxhp - b.maxhp);
+			set(rest[0], 'king');
+			for (const p of party) {
+				if (p.lrPiece) continue;
+				const s = p.storedStats;
+				const best = Math.max(s.spe, s.atk, s.spa, s.def, s.spd);
+				let name = 'knight';
+				if (best === Math.max(s.atk, s.spa)) name = 'bishop';
+				if (best === Math.max(s.def, s.spd)) name = 'rook';
+				p.lrPiece = name;
+			}
+		}
+		return pokemon.lrPiece || null;
+	}
+	LR.piece = piece;
+	const PIECE_BOOSTS = {bishop: {atk: 1, spa: 1}, rook: {def: 1, spd: 1}, queen: {def: 1, spd: 1}};
+	/** King's Shield and Obstruct also stop status moves there (Battler.rb pbTryUseMove). */
+	LR.shieldsStatus = (battle, id) => {
+		const f = LR.field(battle);
+		return f === 'chess' || (id === 'kingsshield' && f === 'fairytale');
+	};
+	/** King's Shield takes Special Attack too there. */
+	LR.kingsDrop = (battle) => (['fairytale', 'chess', 'colosseum'].includes(LR.field(battle)) ? {atk: -1, spa: -1} : {atk: -1});
+	const moveWorked = (battle, move) => battle.lastSuccessfulMoveThisTurn === move.id;
+
+	shared({
+		afterMove(source, target, move) {
+			const f = LR.field(this);
+			// Conversion then Conversion 2 (or the other way round) corrupt the field into a Glitch Field.
+			if ((move.id === 'conversion' || move.id === 'conversion2') && moveWorked(this, move)) {
+				const s = LR.state(this);
+				const mine = move.id === 'conversion' ? 1 : 2;
+				if (s.conversion && s.conversion !== mine && !source.hasItem('everstone') && LR.canChange(this, 'glitch')) {
+					LR.set(this, 'glitch', source.hasItem('amplifieldrock') ? 8 : 5);
+					LR.say(this, 'text', 'glitch_corrupt');
+				} else {
+					s.conversion = mine;
+				}
+			}
+			if (!moveWorked(this, move)) return;
+			if (f === 'fairytale') {
+				// A kiss wakes the sleeping.
+				if ((move.id === 'sweetkiss' || move.id === 'drainingkiss') && target && target.hp && target.status === 'slp' &&
+					!target.volatiles.substitute) target.cureStatus();
+				if (move.id === 'craftyshield' || (move.id === 'flowershield' && !source.hasType('Grass'))) {
+					LR.say(this, 'text', 'shield_boost', source.name);
+					this.boost({def: 1, spd: 1}, source, source);
+				}
+			}
+			if (f === 'bigtop') {
+				if (move.id === 'bellydrum') this.boost({def: 1}, source, source);
+				if (move.id === 'spotlight' && target) {
+					this.boost({atk: 1, spa: 1}, source, source);
+					if (target !== source && target.hp) this.boost({atk: 1, spa: 1}, target, source);
+				}
+				// Dancer: a dance on the Big Top lifts the dancers.
+				if (move.flags.dance) {
+					for (const p of this.getAllActive()) {
+						if (p !== source && p.hp && p.hasAbility('dancer')) this.boost({spa: 1, spe: 1}, p, p, ability(this, 'dancer'));
+					}
+				}
+			}
+		},
+	});
+
+	/** The Pawn holds on at 1 HP from full (a Focus Sash of its own), and one-hit KO moves miss it. */
+	const pawnHolds = (battle, target) => LR.field(battle) === 'chess' && piece(target) === 'pawn';
+
+	Object.assign(HOOKS, {
+		glitch: {
+			modifyType(move) {
+				if (GLITCH_NORMAL.includes(move.type)) move.type = 'Normal';
+				if (move.category !== 'Status') move.category = GLITCH_SPECIAL.includes(move.type) ? 'Special' : 'Physical';
+			},
+			/** One Special stat: the higher of Sp. Atk and Sp. Def, for the attack and for the defense (getSpecialStat). */
+			tryHit(target, source, move) {
+				if (move.type === 'Ghost' && target.hasType('Psychic') && move.category !== 'Status') {
+					this.add('-immune', target);
+					return null;
+				}
+				if (move.category !== 'Special') return;
+				if (!move.overrideOffensiveStat) move.overrideOffensiveStat = source.getStat('spd') > source.getStat('spa') ? 'spd' : 'spa';
+				if (!move.overrideDefensiveStat || move.lrGlitchDef) {
+					move.lrGlitchDef = true;
+					move.overrideDefensiveStat = target.getStat('spa') > target.getStat('spd') ? 'spa' : 'spd';
+				}
+			},
+			/** The old type chart: Dragon hits everything neutrally, Bug and Poison hit each other hard, Ice is fine on Fire. */
+			effectiveness(typeMod, target, type, move) {
+				if (move.type === 'Dragon') return 0;
+				if ((move.type === 'Bug' && type === 'Poison') || (move.type === 'Poison' && type === 'Bug')) return 1;
+				if (move.type === 'Ice' && type === 'Fire') return 0;
+			},
+			/** Explosion and Self-Destruct halve the defense, as in the first games. */
+			modifyDamage(damage, source, target, move) {
+				return ['explosion', 'selfdestruct'].includes(move.id) ? 2 : 1;
+			},
+			/** A faster attacker lands more critical hits. */
+			critRatio(critRatio, source, target) {
+				return target && source.getStat('spe') > target.getStat('spe') ? 1 : 0;
+			},
+			/** Hyper Beam needs no recharge after a knock-out. */
+			afterMove(source, target, move) {
+				if (move.flags.recharge && target && target.hp <= 0 && source.volatiles.mustrecharge) source.removeVolatile('mustrecharge');
+			},
+		},
+		newworld: {
+			modifyMove(move) {
+				if (move.id === 'naturesmadness') {
+					move.damageCallback = function (pokemon, target) {
+						return this.clampIntRange(Math.floor(target.maxhp * 0.5), 1);
+					};
+				}
+			},
+		},
+		fairytale: {
+			modifyType(move) {
+				if (['sacredsword', 'cut', 'slash', 'secretsword'].includes(move.id)) move.type = 'Steel';
+			},
+			modifyMove(move, source) {
+				if (move.id === 'strangesteam') move.secondaries = [{chance: 100, volatileStatus: 'confusion'}];
+				if (source && source.hasAbility('fairyaura') && move.accuracy !== true) move.accuracy = true;
+				if (move.id === 'floralhealing') {
+					move.onHit = function (target, src) {
+						const success = !!this.heal(target.baseMaxhp);
+						if (success && !target.isAlly(src)) target.staleness = 'external';
+						if (!success) {
+							this.add('-fail', target, 'heal');
+							return this.NOT_FAIL;
+						}
+						return success;
+					};
+				}
+			},
+			/** Steel slays dragons. */
+			effectiveness(typeMod, target, type, move) {
+				if (move.type === 'Steel' && type === 'Dragon') return 1;
+			},
+			basePower(basePower, source, target, move) {
+				let mult = 1;
+				if (source.hasAbility('queenlymajesty')) mult *= 1.5;
+				if (move.type === 'Steel' && [source, ...source.alliesAndSelf()].some((p) => p.hasAbility('steelyspirit'))) mult *= 2 / 1.5;
+				return mult;
+			},
+			/** Shining armor and magical power at the switch-in. */
+			entry(pokemon) {
+				if (pokemon.hasAbility(['battlearmor', 'shellarmor', 'powerofalchemy', 'stancechange'])) {
+					LR.say(this, 'text', 'shining_armor', pokemon.name);
+					this.boost({def: 1}, pokemon, pokemon);
+				}
+				if (pokemon.hasAbility(['magicguard', 'magicbounce', 'powerofalchemy', 'mirrorarmor', 'pastelveil'])) {
+					LR.say(this, 'text', pokemon.hasAbility('mirrorarmor') ? 'reflective_armor' : 'magic_spdef', pokemon.name);
+					this.boost({spd: 1}, pokemon, pokemon);
+				}
+			},
+		},
+		chess: {
+			entry(pokemon) {
+				const p = piece(pokemon);
+				if (!p) return;
+				LR.say(this, 'text', 'piece_' + p, pokemon.name);
+				if (PIECE_BOOSTS[p]) this.boost(PIECE_BOOSTS[p], pokemon, pokemon);
+			},
+			priority(priority, pokemon) {
+				return piece(pokemon) === 'king' ? 1 : 0;
+			},
+			tryHit(target, source, move) {
+				if (move.ohko && piece(target) === 'pawn') {
+					this.add('-immune', target);
+					return null;
+				}
+			},
+			basePower(basePower, source, target, move) {
+				let mult = 1;
+				if (CHESS_MOVES.includes(move.id) && target) {
+					if (target.hasAbility(['adaptability', 'anticipation', 'synchronize', 'telepathy'])) mult *= 0.5;
+					if (target.hasAbility(['oblivious', 'klutz', 'unaware', 'simple']) || target.volatiles.confusion) mult *= 2;
+					if (!move.lrChessMsg) LR.say(this, 'text', 'chess_slam');
+					move.lrChessMsg = true;
+				}
+				if (piece(source) === 'queen' || source.hasAbility('queenlymajesty')) {
+					mult *= 1.5;
+					if (piece(source) === 'queen' && !move.lrQueenMsg) LR.say(this, 'text', 'queen_dominates');
+					move.lrQueenMsg = true;
+				}
+				if (piece(source) === 'knight' && target && piece(target) === 'queen') {
+					mult *= 3;
+					LR.say(this, 'text', 'knight_queen');
+				}
+				return mult;
+			},
+			/** A Knight's spread move forks: x1.25 instead of the spread x0.75. */
+			modifyDamage(damage, source, target, move) {
+				if (piece(source) !== 'knight' || !move.spreadHit || move.target !== 'allAdjacentFoes') return 1;
+				if (!move.lrForkMsg) LR.say(this, 'text', 'knight_fork');
+				move.lrForkMsg = true;
+				return 1.25 / 0.75;
+			},
+			damage(damage, target, source, effect) {
+				if (!effect || effect.effectType !== 'Move' || piece(target) !== 'pawn') return;
+				if (target.hp === target.maxhp && damage >= target.hp) {
+					LR.say(this, 'text', 'pawn_hold', target.name);
+					return target.hp - 1;
+				}
+			},
+		},
+		bigtop: {
+			basePower(basePower, source, target, move) {
+				let mult = 1;
+				// The strength meter: physical Fighting moves and the hammer blows.
+				if ((move.type === 'Fighting' && move.category === 'Physical') || STRIKER_MOVES.includes(move.id)) {
+					let roll = this.random(1, 15);
+					if (source.hasAbility(STRIKER_STRONG)) roll = roll >= 9 ? 15 : 14;
+					roll += source.boosts.atk;
+					const i = STRIKER.findIndex(([min]) => roll >= min);
+					if (!move.lrStrikerMsg) LR.say(this, 'text', 'whammo');
+					move.lrStrikerMsg = true;
+					LR.say(this, 'text', 'striker_' + (4 - i));
+					mult *= STRIKER[i][1];
+				}
+				if (move.flags.sound) {
+					mult *= 1.5;
+					if (!move.lrLoudMsg) LR.say(this, 'text', 'loud_clear');
+					move.lrLoudMsg = true;
+				}
+				return mult;
+			},
+		},
+	});
+
 	/**
 	 * Showdown's own effects a field changes, patched once per Dex (the battle's: Cobblemon's mod or the base one).
 	 * Each patch keeps Showdown's behaviour outside League Reborn (LR.field is null there).
@@ -843,8 +1790,10 @@
 	/** Binding moves that squeeze harder on their fields (one step down Reborn's divisors). */
 	const BIND_FIELDS = {
 		thundercage: ['electerrain'], snaptrap: ['grassy'], whirlpool: ['watersurface', 'underwater'],
-		magmastorm: ['dragonsden'], sandtomb: ['desert'], infestation: ['forest'], firespin: ['burning', 'haunted'],
+		magmastorm: ['dragonsden'], sandtomb: ['desert'], infestation: ['forest', 'flowergarden3'], firespin: ['burning', 'haunted'],
 	};
+	/** ...and those that squeeze more than one step. */
+	const BIND_STEPS = {infestation: {flowergarden4: 2, flowergarden5: 3}};
 	const OOZE_FIELDS = ['murkwatersurface', 'wasteland', 'corrupted'];
 	const STENCH_FIELDS = ['wasteland', 'murkwatersurface', 'backalley', 'city'];
 	const POISONED = /target\.status === "psn" \|\| target\.status === "tox"/;
@@ -891,15 +1840,139 @@
 			return this.chainModify(POWERSPOT_FIELDS.includes(LR.field(this)) ? 1.5 : [5325, 4096]);
 		}],
 		['conditions', 'aquaring', 'onResidual', () => function (pokemon) {
+			if (LR.field(this) === 'corrosivemist' && !pokemon.hasType(['Steel', 'Poison'])) {
+				LR.say(this, 'text', 'aquaring_poison', pokemon.name);
+				this.damage(pokemon.baseMaxhp / 16, pokemon, pokemon);
+				return;
+			}
 			this.heal(pokemon.baseMaxhp / (AQUARING_FIELDS.includes(LR.field(this)) ? 8 : 16));
 		}],
+		// Roots drink foul nutrients on the Swamp and the corroded fields.
+		['conditions', 'ingrain', 'onResidual', (orig) => function (pokemon) {
+			const f = LR.field(this);
+			if (!['swamp', 'corrosive', 'corrupted'].includes(f) || pokemon.hasType(['Steel', 'Poison'])) {
+				// Forest and Flower Garden: the roots drink more.
+				const div = ['flowergarden3', 'flowergarden4', 'flowergarden5'].includes(f) ? 4 : ['forest', 'flowergarden2'].includes(f) ? 8 : 0;
+				if (div) return void this.heal(pokemon.baseMaxhp / div);
+				return orig.call(this, pokemon);
+			}
+			if (pokemon.hasAbility('magicguard')) return;
+			LR.say(this, 'text', 'foul_roots', pokemon.name);
+			this.damage(pokemon.baseMaxhp / 16, pokemon, pokemon);
+		}],
+		['conditions', 'leechseed', 'onResidual', (orig) => rewrite(orig, [/pokemon\.baseMaxhp \/ 8/, '(pokemon.baseMaxhp / (LR.field(this) === "wasteland" ? 4 : 8))'])],
+		// Corrosive: Poison types do not absorb Toxic Spikes (a rewrite, so before any wrapper of the same function).
+		['conditions', 'toxicspikes', 'onEntryHazard', (orig) => rewrite(orig, [/if \(pokemon\.hasType\("Poison"\)\) \{/, 'if (pokemon.hasType("Poison") && LR.field(this) !== "corrosive") {'])],
+		// Rocky and Cave: Stealth Rock cuts twice as deep (a rewrite, before the Wasteland wrapper).
+		['conditions', 'stealthrock', 'onEntryHazard', (orig) => rewrite(orig, [/\* Math\.pow\(2, typeMod\) \/ 8/, '* Math.pow(2, typeMod) / (["rocky", "cave"].includes(LR.field(this)) ? 4 : 8)'])],
+		// The Wasteland swallows the hazards: they do nothing on entry (it spits them out at the end of the turn).
+		...['spikes', 'stealthrock', 'stickyweb', 'toxicspikes'].map((id) => ['conditions', id, 'onEntryHazard', (orig) => function (...args) {
+			if (LR.field(this) === 'wasteland') return;
+			return orig.apply(this, args);
+		}]),
+		['abilities', 'aftermath', 'onDamagingHit', (orig) => rewrite(orig, [/source\.baseMaxhp \/ 4/, 'source.baseMaxhp / (LR.field(this) === "corrosivemist" ? 2 : 4)'])],
+		['abilities', 'poisonpoint', 'onDamagingHit', (orig) => rewrite(orig, [/this\.randomChance\(3, 10\)/, 'this.randomChance(["wasteland", "corrupted"].includes(LR.field(this)) ? 6 : 3, 10)'])],
+		['abilities', 'effectspore', 'onDamagingHit', (orig) => rewrite(orig, [/this\.random\(100\)/, 'this.random(["forest", "wasteland", "bewitched"].includes(LR.field(this)) ? 50 : 100)'])],
+		// Rainbow, Starlight, Holy, the crystals.
+		...['moonlight', 'morningsun', 'synthesis'].map((id) => ['moves', id, 'onHit', (orig) => rewrite(orig,
+			[/this\.modify\(pokemon\.maxhp, factor\)/, `this.modify(pokemon.maxhp, LR.moonFactor(this, "${id}", factor))`])]),
+		['abilities', 'wonderskin', 'onModifyAccuracy', (orig) => rewrite(orig, [/return 50;/, 'return LR.field(this) === "rainbow" ? 0 : 50;'])],
+		['abilities', 'justified', 'onDamagingHit', (orig) => rewrite(orig, [/\{ atk: 1 \}/, '{ atk: LR.field(this) === "holy" ? 2 : 1 }'])],
+		...['perishbody', 'cursedbody'].map((id) => ['abilities', id, 'onDamagingHit', (orig) => function (...args) {
+			if (LR.field(this) === 'holy') return;
+			return orig.apply(this, args);
+		}]),
+		['conditions', 'nightmare', 'onResidual', (orig) => function (...args) {
+			if (LR.field(this) === 'rainbow') return;
+			return orig.apply(this, args);
+		}],
+		['abilities', 'baddreams', 'onResidual', (orig) => function (...args) {
+			if (LR.field(this) === 'rainbow') return;
+			return orig.apply(this, args);
+		}],
+		// Forest, machines, gardens.
+		...['steelbeam', 'chloroblast'].map((id) => ['moves', id, 'onAfterMove', (orig) => rewrite(orig, [/Math\.round\(pokemon\.maxhp \/ 2\)/, 'LR.beamRecoil(this, pokemon, move)'])]),
+		['abilities', 'technician', 'onBasePower', (orig) => rewrite(orig, [/basePowerAfterMultiplier <= 60/, 'basePowerAfterMultiplier <= (LR.field(this) === "factory" ? 80 : 60)'])],
+		['abilities', 'motordrive', 'onTryHit', (orig) => rewrite(orig, [/\{ spe: 1 \}/, '{ spe: LR.field(this) === "factory" ? 2 : 1 }'])],
+		...['onModifyAtk', 'onModifySpA'].map((key) => ['abilities', 'steelworker', key, (orig) => function (atk, attacker, defender, move) {
+			if (LR.field(this) === 'factory' && move.type === 'Steel') return this.chainModify(2);
+			return orig.call(this, atk, attacker, defender, move);
+		}]),
+		...['plus', 'minus'].map((id) => ['abilities', id, 'onModifySpA', (orig) => function (spa, pokemon, ...rest) {
+			if (LR.field(this) === 'shortcircuit') return this.chainModify(1.5);
+			return orig.call(this, spa, pokemon, ...rest);
+		}]),
+		['abilities', 'static', 'onDamagingHit', (orig) => rewrite(orig, [/this\.randomChance\(3, 10\)/, 'this.randomChance(LR.field(this) === "shortcircuit" ? 6 : 3, 10)'])],
+		['abilities', 'download', 'onStart', (orig) => rewrite(orig, [/\{ atk: 1 \}|\{ spa: 1 \}/g, (m) => m.replace('1', '(["factory", "city", "backalley"].includes(LR.field(this)) ? 2 : 1)')])],
+		['moves', 'steelroller', 'onTry', (orig) => function (...args) {
+			if (LR.field(this) !== null) return LR.canChange(this, NONE);
+			return orig.apply(this, args);
+		}],
+		['abilities', 'grasspelt', 'onModifyDef', (orig) => function (def, ...rest) {
+			if (LR.field(this) === 'forest') return this.chainModify(1.5);
+			return orig.call(this, def, ...rest);
+		}],
+		// Ice, rocks and sand.
+		['moves', 'auroraveil', 'onTry', (orig) => function (...args) {
+			if (['darkcrystalcavern', 'rainbow', 'icy', 'crystalcavern', 'snowymountain', 'mirror', 'starlight', 'frozendimension'].includes(LR.field(this))) return;
+			return orig.apply(this, args);
+		}],
+		['abilities', 'sandveil', 'onModifyAccuracy', (orig) => function (accuracy, ...rest) {
+			if (typeof accuracy === 'number' && SAND_FIELDS.includes(LR.field(this)) && !this.field.isWeather('sandstorm')) return this.chainModify([3277, 4096]);
+			return orig.call(this, accuracy, ...rest);
+		}],
+		['abilities', 'snowcloak', 'onModifyAccuracy', (orig) => function (accuracy, ...rest) {
+			if (typeof accuracy === 'number' && ICE_FIELDS.includes(LR.field(this)) && !this.field.isWeather(HAIL)) return this.chainModify([3277, 4096]);
+			return orig.call(this, accuracy, ...rest);
+		}],
+		['abilities', 'galewings', 'onModifyPriority', (orig) => function (priority, pokemon, target, move) {
+			const f = LR.field(this);
+			if (move && move.type === 'Flying' && pokemon.hp < pokemon.maxhp &&
+				(f === 'sky' || (['mountain', 'snowymountain', 'volcanictop'].includes(f) && strongWinds(this)))) return priority + 1;
+			return orig.call(this, priority, pokemon, target, move);
+		}],
+		['conditions', 'brn', 'onResidual', (orig) => rewrite(orig, [/pokemon\.baseMaxhp \/ 16/, 'pokemon.baseMaxhp / (LR.field(this) === "icy" ? 32 : 16)'])],
+		['conditions', 'focusenergy', 'onModifyCritRatio', (orig) => rewrite(orig, [/critRatio \+ 2/, 'critRatio + (LR.field(this) === "ashenbeach" ? 3 : 2)'])],
+		['moves', 'shoreup', 'onHit', (orig) => rewrite(rewrite(orig, [/let factor = 0\.5;/, 'let factor = LR.field(this) === "ashenbeach" ? 1 : LR.field(this) === "desert" ? 0.667 : 0.5;']),
+			[/this\.field\.isWeather\("sandstorm"\)/, '(this.field.isWeather("sandstorm") && LR.field(this) !== "ashenbeach")'])],
+		// Rocky: raised Defense keeps from flinching; otherwise the flinch knocks into a rock.
+		['conditions', 'flinch', 'onBeforeMove', (orig) => function (pokemon, ...rest) {
+			if (LR.field(this) !== 'rocky') return orig.call(this, pokemon, ...rest);
+			if (pokemon.boosts.def >= 1) {
+				LR.say(this, 'text', 'flinch_defended', pokemon.name);
+				return;
+			}
+			const r = orig.call(this, pokemon, ...rest);
+			if (!pokemon.hasAbility(['steadfast', 'sturdy', 'innerfocus'])) {
+				LR.say(this, 'text', 'knocked_rock', pokemon.name);
+				this.directDamage(Math.max(1, Math.floor(pokemon.maxhp / 4)), pokemon);
+			}
+			return r;
+		}],
+		// Dragon's Den: Shed Skin always works, heals 1/4 and trades defenses for Speed and Sp. Atk.
+		['abilities', 'shedskin', 'onResidual', (orig) => function (pokemon) {
+			if (LR.field(this) !== 'dragonsden' || !pokemon.hp || !pokemon.status) return orig.call(this, pokemon);
+			this.add('-activate', pokemon, 'ability: Shed Skin');
+			pokemon.cureStatus();
+			LR.say(this, 'text', 'scaled_sheen', pokemon.name);
+			this.heal(pokemon.baseMaxhp / 4, pokemon, pokemon);
+			this.boost({spe: 1, spa: 1, def: -1, spd: -1}, pokemon, pokemon);
+		}],
+		// Gooey: -2 on Swamp and Murkwater (a rewrite, before the wrapper below).
+		['abilities', 'gooey', 'onDamagingHit', (orig) => rewrite(orig, [/\{ spe: -1 \}/, '{ spe: ["swamp", "murkwatersurface"].includes(LR.field(this)) ? -2 : -1 }'])],
+		// Gooey and Tangling Hair also poison on the Wasteland.
+		...['gooey', 'tanglinghair'].map((id) => ['abilities', id, 'onDamagingHit', (orig) => function (damage, target, source, move) {
+			const r = orig.call(this, damage, target, source, move);
+			if (LR.field(this) === 'wasteland' && this.checkMoveMakesContact(move, source, target, true)) source.trySetStatus('psn', target);
+			return r;
+		}]),
 		['conditions', 'partiallytrapped', 'onStart', (orig) => function (...args) {
 			const r = orig.apply(this, args);
 			const by = this.effectState.sourceEffect && this.effectState.sourceEffect.id;
-			if ((BIND_FIELDS[by] || []).includes(LR.field(this))) {
-				const i = BINDING.indexOf(this.effectState.boundDivisor);
-				if (i >= 0 && i < BINDING.length - 1) this.effectState.boundDivisor = BINDING[i + 1];
-			}
+			const f = LR.field(this);
+			const steps = (BIND_STEPS[by] && BIND_STEPS[by][f]) || ((BIND_FIELDS[by] || []).includes(f) ? 1 : 0);
+			const i = BINDING.indexOf(this.effectState.boundDivisor);
+			if (steps && i >= 0) this.effectState.boundDivisor = BINDING[Math.min(BINDING.length - 1, i + steps)];
 			return r;
 		}],
 		// The toxic fields count as a poisoned target.
@@ -913,7 +1986,6 @@
 		['abilities', 'liquidooze', 'onSourceTryHeal', (orig) => rewrite(orig, [/this\.damage\(damage\)/, 'this.damage(OOZE.includes(LR.field(this)) ? damage * 2 : damage)'.replace('OOZE', JSON.stringify(OOZE_FIELDS))])],
 		['moves', 'strengthsap', 'onHit', (orig) => rewrite(orig, [/this\.heal\(atk,/, 'this.heal(["swamp", "forest"].includes(LR.field(this)) ? Math.floor(atk * 1.3) : atk,'])],
 		['moves', 'takeheart', 'onHit', (orig) => rewrite(orig, [/\{ spa: 1, spd: 1 \}/, '(["watersurface", "underwater"].includes(LR.field(this)) ? { spa: 2, spd: 2 } : { spa: 1, spd: 1 })'])],
-		['abilities', 'gooey', 'onDamagingHit', (orig) => rewrite(orig, [/\{ spe: -1 \}/, '{ spe: ["swamp", "murkwatersurface"].includes(LR.field(this)) ? -2 : -1 }'])],
 		['abilities', 'stench', 'onModifyMove', (orig) => rewrite(orig, [/chance: 10,/, 'chance: STENCH.includes(LR.field(this)) ? 20 : 10,'.replace('STENCH', JSON.stringify(STENCH_FIELDS))])],
 		// Wishiwashi stays schooled in the water, at any HP.
 		...['onStart', 'onResidual'].map((key) => ['abilities', 'schooling', key, (orig) => rewrite(orig, [/pokemon\.hp > pokemon\.maxhp \/ 4/, '(pokemon.hp > pokemon.maxhp / 4 || LR.inWater(this, pokemon))'])]),
@@ -930,6 +2002,53 @@
 				this.add('-activate', pokemon, 'ability: Mimicry');
 				this.add('-end', pokemon, 'typechange', '[silent]');
 			}
+		}],
+		// Eighth batch.
+		...['kingsshield', 'obstruct'].map((id) => ['conditions', id, 'onTryHit', (orig) => rewrite(rewrite(orig,
+			[/move\.category === "Status"/, `(move.category === "Status" && !LR.shieldsStatus(this, "${id}"))`]),
+			[/\{ atk: -1 \}/, 'LR.kingsDrop(this)'])]),
+		['moves', 'clangoroussoul', 'onTry', (orig) => rewrite(orig, [/33 \/ 100/g, '(LR.field(this) === "bigtop" ? 50 : 33) / 100'])],
+		['moves', 'clangoroussoul', 'onHit', (orig) => rewrite(orig, [/33 \/ 100/g, '(LR.field(this) === "bigtop" ? 50 : 33) / 100'])],
+		['moves', 'acrobatics', 'basePowerCallback', (orig) => rewrite(orig, [/!pokemon\.item/, '(!pokemon.item || LR.field(this) === "bigtop")'])],
+		/** New World: Heart Swap also shares the HP out evenly (and fails through a substitute). */
+		['moves', 'heartswap', 'onHit', (orig) => function (target, source, ...rest) {
+			if (LR.field(this) !== 'newworld') return orig.call(this, target, source, ...rest);
+			if (target.volatiles.substitute) return false;
+			const r = orig.call(this, target, source, ...rest);
+			const avg = Math.floor((source.hp + target.hp) / 2);
+			for (const p of [source, target]) {
+				p.sethp(Math.min(avg, p.maxhp));
+				this.add('-sethp', p, p.getHealth, '[silent]');
+			}
+			LR.say(this, 'text', 'shared_pain');
+			return r;
+		}],
+		/** Big Top: Encore lasts 3 more turns. */
+		['conditions', 'encore', 'onStart', (orig) => function (target, ...rest) {
+			const r = orig.call(this, target, ...rest);
+			if (r !== false && LR.field(this) === 'bigtop' && target.volatiles.encore) target.volatiles.encore.duration += 3;
+			return r;
+		}],
+		/** Healing Wish and Lunar Dance give the healed Pokémon boosts on the starry and fairy-tale fields. */
+		...[['healingwish', {fairytale: {atk: 1}, starlight: {atk: 1}}],
+			['lunardance', {starlight: {atk: 1, spa: 1}, newworld: {atk: 1, def: 1, spa: 1, spd: 1, spe: 1}}]].map(([id, boosts]) =>
+			['conditions', id, 'onSwap', (orig) => function (target, ...rest) {
+				const slot = () => target.side.slotConditions[target.position] || {};
+				const had = !!slot()[id];
+				const r = orig.call(this, target, ...rest);
+				const b = boosts[LR.field(this)];
+				if (had && !slot()[id] && b) this.boost(b, target, target);
+				return r;
+			}]),
+		/** Gravity ending on a New World made Starlight: the world breaks apart again. */
+		['conditions', 'gravity', 'onFieldEnd', (orig) => function (...args) {
+			const r = orig.apply(this, args);
+			const f = LR.field(this);
+			if (f && f !== 'newworld' && LR.backup(this) === 'newworld') {
+				LR.breakField(this);
+				LR.say(this, 'text', 'world_broke');
+			}
+			return r;
 		}],
 	];
 	/**
@@ -1034,7 +2153,13 @@
 			const setWeather = sdField.setWeather.bind(sdField);
 			sdField.setWeather = function (...args) {
 				if (LOCKED.includes(LR.field(battle))) return false;
-				return setWeather(...args);
+				const before = sdField.weather;
+				const r = setWeather(...args);
+				if (r) {
+					LR.longWeather(battle);
+					LR.weatherSet(battle, before, sdField.weather, args[1]);
+				}
+				return r;
 			};
 			const h = HOOKS[field] && HOOKS[field].onEnter;
 			if (h) h.call(this, null, false);
@@ -1124,6 +2249,15 @@
 			if (mod !== typeMod) return mod;
 		},
 		/** Pbtype: a field turning a move into another type outright (Murkwater Surface: mud is water). */
+		/** Inverse: no type immunity (Showdown's inversemod). */
+		onNegateImmunity(pokemon, type) {
+			const f = LR.field(this);
+			if (f === 'inverse' && type !== 'prankster') return false;
+			// Holy: Normal moves reach Ghost types.
+			if (f === 'holy' && type === 'Normal') return false;
+			// Glitch: Dragon moves reach Fairy types.
+			if (f === 'glitch' && type === 'Dragon') return false;
+		},
 		onModifyTypePriority: -2,
 		onModifyType(move, pokemon) {
 			for (const h of LR.hooks(this, 'modifyType')) h.call(this, move, pokemon);
@@ -1162,6 +2296,21 @@
 		onModifySpD(spd, target, source, move) {
 			const mult = LR.mult(this, 'modifySpD', [spd, target, source, move]);
 			if (mult !== 1) return this.chainModify(mult);
+		},
+		/** Chess Board: the King moves first. */
+		onModifyPriority(priority, pokemon, target, move) {
+			let add = 0;
+			for (const h of LR.hooks(this, 'priority')) add += h.call(this, priority, pokemon, target, move) || 0;
+			if (add) return priority + add;
+		},
+		onModifyCritRatio(critRatio, source, target, move) {
+			let add = 0;
+			for (const h of LR.hooks(this, 'critRatio')) add += h.call(this, critRatio, source, target, move) || 0;
+			if (add) return critRatio + add;
+		},
+		/** Damage a field changes as it is dealt (the Pawn holding on). */
+		onDamage(damage, target, source, effect) {
+			return LR.veto(this, 'damage', [damage, target, source, effect]);
 		},
 		onSwitchIn(pokemon) {
 			for (const h of LR.hooks(this, 'entry')) h.call(this, pokemon);

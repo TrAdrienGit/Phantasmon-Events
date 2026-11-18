@@ -270,3 +270,53 @@ Showdown réagissent pour l'instant à ses 4 terrains) ; Gobe-Bombe sous l'eau.
 Écarts connus avec Reborn, à traiter : l'efficacité combinée de Reborn ne descend pas sous ×0,25 (arrondi
 `ceil` de `fieldTypeChange`) ; Showdown arrondit les multiplicateurs au 4096e, Reborn calcule en flottants (écarts
 d'un point de dégâts possibles).
+
+**2026-11-18 (suite) : lots 3 à 8, tous les autres terrains (à valider en jeu).**
+
+Le code propre de Reborn pour les 37 terrains restants, en un passage (même méthode : `HOOKS`, `shared`, `PATCHES`) :
+
+- Lot 3, poison (Corrosive, Corrosive Mist, Wasteland) : entrée et sommeil corrosifs, la brume empoisonne tout le
+  monde chaque tour, Moiteur bloque Éruption et Aire de Feu, Wasteland recrache les pièges en fin de tour (Piège de
+  Roc, Picots, Pics Toxik, Toile Gluante), Avale de Wasteland, Racines et Anneau Hydro pourris, Vampigraine /4,
+  Boom Final, Point Poison, Pose Spore, Visco-Corps, Corrosion ×1,5 et statut au hasard.
+- Lot 4, feu (Burning, Superheated, Dragon's Den) : table `fieldDefense` de tous les terrains, pas de gel,
+  Armumagma immunisé au Feu, Rage Brûlure, Brasier, Colère en un tour, la grêle fond, pluie ou sable éteignent
+  Burning, brûlure passive, Multiécaille, Mue, Danse Draco et Rugissement +2.
+- Lot 5, glace, montagne, roche, grotte, sable (Icy, Snowy Mountain, Mountain, Rocky, Cave, Desert, Ashen Beach) :
+  météo de 8 tours, vents forts, Vol/Rebond sans charge, Force devient Combat, Voix Enjôleuse devient Glace, Sol
+  touche tout dans la grotte, Piège de Roc ×2, Voile Aurore, Voile Sable, Rideau Neige, Ailes Bourrasque, glissade
+  sur la glace, chute sur les rochers, Écaille Glace, Puissance Cachée de la montagne enneigée…
+- Lot 6, nature et machines (Forest, Factory, Short-Circuit, Inverse, Flower Garden 1 à 5, Indoor) : Croissance,
+  Défense Ordre, Allègement, Changement Vitesse, Cri Métal, Doux Parfum, Feuille Garde, Soin Ordre, Champlification
+  ×2, Vol Magnétik 8 tours, Malédiction Sylvestre, Renversement pose Inverse 3 tours, Rouleau d'Acier rase le
+  terrain, tables d'efficacité inversées, tirages Short-Circuit, Technicien, Motorisé, Plus/Minus, Statik, Télécharge.
+- Lot 7, lumières (Rainbow, Starlight, Holy, Crystal Cavern, Dark Crystal Cavern, Mirror) : pluie + soleil font un
+  arc-en-ciel, le soleil allume les cristaux noirs, Normal touche Spectre et Ténèbres sur Holy, types ajoutés au
+  hasard (arc-en-ciel, cristaux), miroirs (une attaque ratée heurte un miroir, écrans 8 tours), Lune, Aurore et
+  Synthèse, Victorieux, Spectro-Bouclier, Peau Miracle, Justice +2.
+- Lot 8 (Glitch, New World, Fairy Tale, Chess, Big Top) :
+  - Glitch : Ténèbres, Acier et Fée deviennent Normal, catégorie selon le type (3e génération), une seule stat
+    Spéciale (la plus haute des deux), ancienne table (Dragon neutre partout, Insecte et Poison super efficaces
+    l'un sur l'autre, Spectre sans effet sur Psy), critique +1 si plus rapide, Explosion ×2, Ultralaser sans
+    recharge après un K.O. Conversion puis Conversion 2 posent Glitch 5 tours.
+  - New World : Ire de la Nature 50 %, Cœur de Rechange partage les PV, Gravité pose Starlight et le monde se brise
+    à nouveau quand elle s'arrête, Danse Lune +1 partout.
+  - Fairy Tale : Acier super efficace sur Dragon, Lame Sainte, Coupe, Tranche deviennent Acier, Bisou et
+    Vampibaiser réveillent, Buée Mystique 100 %, Aura Féérique ne rate jamais, Majesté ×1,5, Esprit d'Acier ×2,
+    Bouclier Royal bloque le statut et baisse aussi l'Atq. Spé., Vigilance et Garde Florale +1 Déf./Déf. Spé.,
+    armures et magie à l'entrée, Vœu Soin +1 Atq.
+  - Chess : pièces attribuées à chaque équipe (dernier = Reine, premier = Pion, plus fragile = Roi, puis selon la
+    meilleure stat : Cavalier, Fou, Tour) avec leurs bonus d'entrée ; le Roi a +1 en priorité, le Pion tient à 1 PV
+    depuis ses PV max et esquive les K.O. en un coup, la Reine ×1,5, le Cavalier ×3 sur la Reine et ×1,25 en
+    attaque de zone ; capacités d'échecs ×0,5 ou ×2 selon le talent de la cible ; Ultime Bastion +2/−1.
+  - Big Top : le marteau de force (Combat physique et capacités de frappe : ×0,5 à ×3 selon le tirage et l'Atq.),
+    son ×1,5, Danse-Lames +3, Papillodanse et Danse Victoire +2, Danse Plumes −3, Cognobidon +1 Déf., Âme Martiale
+    50 % des PV pour +2, Encore 3 tours de plus, Acrobatie toujours doublée, Projecteur, Danseuse, pluie 8 tours.
+- Textes FR/EN à nous pour chaque nouveau message (`league_reborn.text.*`). `test.js` : environ 75 tests, tous verts.
+
+Écarts connus (non portés) : graines de Reborn ; Silvally et Arceus (formes), Protéen au hasard, Darumacho ;
+Coquille Bell sur Ashen ; critique du Miroir selon l'esquive ; Boule Roc qui continue sur Crystal Cavern ; type du
+Piège de Roc sur Crystal Cavern ; Bénédiction Lunaire ; bonus de Médic Nature / Régé-Force ; les 5 capacités de zone
+de Flower Garden ; Voile Miroir et la capacité 0x13E (non identifiées) ; sur Glitch, Métronome limité à 70 de
+puissance, objets spéciaux désactivés, Frénésie ; Repli Factice (pas dans Showdown) ; le Pion d'un combat double
+(seul le premier est Pion) ; sur Glitch, en attaque de zone, la Déf. Spé. retenue est celle de la dernière cible.
