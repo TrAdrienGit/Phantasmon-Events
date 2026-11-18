@@ -81,6 +81,9 @@ public final class VoiceZones {
 	 *   <li>{@code same}: the other seats in it;</li>
 	 *   <li>{@code announcing}: the accounts of the game masters holding their announce key (public: they speak to all);</li>
 	 *   <li>{@code ear}: while his ear listens (T7.2), the seats inside the cabin it listens to, else null;</li>
+	 *   <li>{@code hear} (D200): only for a living viewer, the seats of his sound zone and of his ear's cabin that are really
+	 *   alive, computed with the full truth: a hidden death (D97) is absent at once, and the list does not say who is dead (a
+	 *   seat that is absent may as well be elsewhere). Null when {@code seesAll} or when he does not play: he hears everybody;</li>
 	 *   <li>{@code sound_zones}: only when {@code seesAll}, the sound zone of every seat.</li>
 	 * </ul>
 	 */
@@ -108,6 +111,23 @@ public final class VoiceZones {
 		out.put("same", same);
 		out.put("announcing", announcing);
 		out.put("ear", ear);
+		if (seesAll || seat < 0) {
+			out.put("hear", null);
+		} else {
+			List<Object> hear = new ArrayList<>();
+			java.util.Set<Integer> audible = new java.util.TreeSet<>(seatsIn(g, mine));
+			if (ear != null) {
+				for (Object o : ear) {
+					audible.add((Integer) o);
+				}
+			}
+			for (int i : audible) {
+				if (i != seat && g.players.get(i).alive) {
+					hear.add(i);
+				}
+			}
+			out.put("hear", hear);
+		}
 		if (seesAll) {
 			List<Object> zones = new ArrayList<>();
 			for (int i = 0; i < g.players.size(); i++) {

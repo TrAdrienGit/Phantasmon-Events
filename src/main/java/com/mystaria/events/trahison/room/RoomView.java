@@ -7,12 +7,13 @@ import java.util.Set;
 
 /**
  * A parsed {@code EventsTrahisonRoom} (Documentation/trahison/protocole.md): what the backend tells a client of one
- * room: the active slots with what each shows, and the bag. Nothing here is a rule; the backend never sends a solution.
+ * room: the active slots with what each shows, and the bag. {@code secret} (D228): for a game master only, the slot of the
+ * room's live hiding place, null otherwise. Nothing here is a rule; the backend never sends a solution.
  * Pure: no Minecraft class.
  */
 public record RoomView(String hub, int round, int group, String room, String name, List<Integer> members, boolean exitOpen, boolean finished,
 		List<SlotView> slots, List<ItemView> items, Place place, List<String> hints, List<Progress> progress, List<Partner> partners, String ghostPartner,
-		List<PowerStep> powers) {
+		List<PowerStep> powers, String secret) {
 
 	/** The partner Pokemon of a member (T8.3): a Cobblemon species id and the power it holds ({@code FLASH}, {@code STRENGTH}, {@code CUT}, {@code SURF}). */
 	public record Partner(int player, String species, String power) {
@@ -269,7 +270,8 @@ public record RoomView(String hub, int round, int group, String room, String nam
 			}
 		}
 		return new RoomView(str(data.get("hub"), ""), data.get("round") instanceof Number round ? Math.max(0, round.intValue()) : 0, group.intValue(), room, str(data.get("name"), room), List.copyOf(members),
-				Boolean.TRUE.equals(data.get("exit_open")), data.get("finished_at") != null, List.copyOf(slots), List.copyOf(items), place, List.copyOf(hints), List.copyOf(progress), List.copyOf(partners), str(data.get("ghost_partner"), "gastly"), List.copyOf(powers));
+				Boolean.TRUE.equals(data.get("exit_open")), data.get("finished_at") != null, List.copyOf(slots), List.copyOf(items), place, List.copyOf(hints), List.copyOf(progress), List.copyOf(partners), str(data.get("ghost_partner"), "gastly"), List.copyOf(powers),
+				data.get("secret") instanceof Map<?, ?> sm && sm.get("active") instanceof String active ? active : null);
 	}
 
 	/** Items the player carries (or that anybody may handle). */

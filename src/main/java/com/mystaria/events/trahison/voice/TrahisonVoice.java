@@ -96,7 +96,7 @@ public final class TrahisonVoice {
 				continue;
 			}
 			listed.add(p.uuid());
-			speakers.add(new VoiceGains.Speaker(p.uuid(), avatarOf(p.uuid()), !p.alive(), voice.same().contains(p.index()),
+			speakers.add(new VoiceGains.Speaker(p.uuid(), avatarOf(p.uuid()), voice.deadFor(p.index(), p.alive()), voice.same().contains(p.index()),
 				voice.ear() != null && voice.ear().contains(p.index()), voice.announcing().contains(p.uuid()), distanceTo(mc, p.uuid())));
 		}
 		for (UUID gm : voice.announcing()) { // a game master who does not play is no player of the view

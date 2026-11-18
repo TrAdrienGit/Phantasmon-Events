@@ -45,4 +45,16 @@ class VoiceDataTest {
 		assertEquals(Voice.NONE, VoiceData.parse("x"));
 		assertTrue(VoiceData.parse(Map.of("announcing", List.of("not-a-uuid"), "same", List.of("a"))).announcing().isEmpty());
 	}
+
+	@Test
+	void hearIsTheBackendTruthAndOverridesTheAliveOfTheView() {
+		Voice v = VoiceData.parse(Map.of("zone", "hall", "same", List.of(1, 2), "announcing", List.of(), "hear", List.of(1)));
+		assertEquals(Set.of(1), v.hear());
+		assertTrue(v.deadFor(2, true)); // the view says alive, the backend does not list him: muted
+		assertTrue(!v.deadFor(1, false)); // listed: heard whatever the view says
+		Voice none = VoiceData.parse(Map.of("zone", "hall", "same", List.of(1), "announcing", List.of()));
+		assertNull(none.hear());
+		assertTrue(none.deadFor(1, false));
+		assertTrue(!none.deadFor(1, true));
+	}
 }

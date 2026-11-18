@@ -94,6 +94,16 @@ public final class RoomViews {
 			size.put("z", slot.size().z());
 			n.set("shows", shows);
 		}
+		if (viewer == ViewerKind.GAME_MASTER) { // D228: only the game master knows which candidate hiding place is the live one
+			ObjectNode secret = out.putObject("secret");
+			if (room.activeSecret == null) {
+				secret.putNull("active");
+			} else {
+				secret.put("active", room.activeSecret);
+			}
+			ArrayNode candidates = secret.putArray("candidates");
+			RoomSecrets.candidates(room.definition).forEach(candidates::add);
+		}
 		ArrayNode inventory = out.putArray("inventory");
 		room.inventory.forEach(inventory::add);
 		ArrayNode items = out.putArray("items");

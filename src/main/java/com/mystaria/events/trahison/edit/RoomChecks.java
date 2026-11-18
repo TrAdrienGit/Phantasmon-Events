@@ -61,6 +61,19 @@ final class RoomChecks {
 			checkChain(room, slots, steps, out);
 		}
 		checkReuse(room, slots, out);
+		// D228: every slot of the kind secret is a candidate hiding place (plus the legacy flagged one); the seed draws one per game.
+		java.util.TreeSet<String> candidates = new java.util.TreeSet<>();
+		for (SlotDto s : room.slots) {
+			if ("secret".equals(s.kind)) {
+				candidates.add(s.id);
+			}
+		}
+		if (room.secret != null && slots.containsKey(room.secret)) {
+			candidates.add(room.secret);
+		}
+		if (candidates.size() == 1) {
+			out.add(new Issue("LOCAL_FEW_SECRET_CANDIDATES", List.copyOf(candidates), "min=2", true));
+		}
 		return out;
 	}
 

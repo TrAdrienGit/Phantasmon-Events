@@ -543,7 +543,10 @@ public final class GmScreen extends TrahisonScreen {
 		int cx = x + 6;
 		Component state = Component.translatable(T + (room.exitOpen() ? "room.done" : "room.playing"));
 		cx += TrahisonUi.pill(g, cx, y + 29, state, TrahisonPalette.PANEL_SUNKEN, room.exitOpen() ? TrahisonPalette.SUCCESS : TrahisonPalette.ACCENT) + 3;
-		TrahisonUi.pill(g, cx, y + 29, Component.translatable(T + "room.hints", room.hints().size()), TrahisonPalette.PANEL_SUNKEN, TrahisonPalette.TEXT_SECONDARY);
+		cx += TrahisonUi.pill(g, cx, y + 29, Component.translatable(T + "room.hints", room.hints().size()), TrahisonPalette.PANEL_SUNKEN, TrahisonPalette.TEXT_SECONDARY) + 3;
+		if (room.secret() != null) { // D228: the live hiding place of the free time, among the room's candidates
+			TrahisonUi.pill(g, cx, y + 29, Component.translatable(T + "room.secret", room.secret()), TrahisonPalette.PANEL_SUNKEN, TrahisonPalette.GAME_MASTER);
+		}
 		boolean live = rooming && !room.exitOpen();
 		int bw = 52;
 		ui.button(g, x + w - 2 * bw - 10, y + 26, bw, 14, Component.translatable(T + "room.hint"), ButtonKind.DEFAULT,

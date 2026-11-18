@@ -128,3 +128,29 @@
 - **D191** Plus petit groupe que de pouvoirs demandés : choix par défaut confirmé (2026-11-18).
 - **D192** Obstacles en faux blocs : la salle les laisse vides : choix par défaut confirmé (2026-11-18).
 - **D193** Partenaire : suit sans physique, visible de tous les vivants du groupe : choix par défaut confirmé (2026-11-18).
+- **D200 (ce que le vocal sait des morts cachées et des inconnus)** : fait (2026-11-18). Un mort caché est coupé tout de suite pour les vivants : le backend envoie dans le bloc `voice` d'un vivant la liste `hear` des places vraiment vivantes de sa zone sonore (et de la cabine écoutée), sans dire qui est mort ; le client coupe toute place absente (`VoiceData.deadFor`). Tests des deux côtés.
+- **D201 (la touche « annonce » du maître du jeu)** : choix par défaut confirmé (2026-11-18).
+- **D202 (portées dans la salle, chuchotement compris)** : choix par défaut confirmé (2026-11-18).
+- **D203 (l'Écoute et la portée du serveur de Simple Voice Chat)** : choix par défaut confirmé (2026-11-18).
+- **D220 (les neuf thèmes de la première soirée)** : choix par défaut confirmé (2026-11-18).
+- **D221 (l'ordre des manches et la montée de la difficulté)** : choix par défaut confirmé (2026-11-18).
+- **D222 (des salles qui dépendent des mécanismes à coder)** : choix par défaut confirmé (2026-11-18).
+- **D223 (la coopération à trois, et ses deux sortes)** : choix par défaut confirmé (2026-11-18).
+- **D224 (où loge le fragment de lore dans une salle)** : choix par défaut confirmé (2026-11-18).
+- **D225 (ce qui compte comme « recherche dans le décor »)** : choix par défaut confirmé (2026-11-18).
+- **D226 (la part de Cobblemon et ce que les joueurs doivent savoir)** : choix par défaut confirmé (2026-11-18).
+- **D227 (la dernière étape ouvre la sortie)** : choix par défaut confirmé (2026-11-18).
+- **D228 (une cachette du temps libre par salle, où)** : fait (2026-11-18). Une salle déclare plusieurs candidats (tout emplacement de genre `secret`) ; `room/RoomSecrets` en tire un par partie d'après la graine de la salle (`RoomInstance.activeSecret`), les autres sont inertes ; avertissement (non bloquant) à un seul candidat, ancien champ `secret` valide ; la vue du MJ donne `secret.active`. Tests de tirage, de stabilité et du seul candidat actif.
+- **D229 (noms des fiches et ids des salles)** : choix par défaut confirmé (2026-11-18).
+- **D210 (twin_screens, où se lit la moitié du problème)** : choix par défaut confirmé (2026-11-18).
+- **D211 (safe_dial, un voyant en plus du son)** : choix par défaut confirmé (2026-11-18).
+- **D212 (safe_dial, un mauvais verrouillage)** : choix par défaut confirmé (2026-11-18).
+- **D213 (sliding_blocks, la sortie)** : choix par défaut confirmé (2026-11-18).
+- **D214 (rotating_tiles, la source et la lampe)** : choix par défaut confirmé (2026-11-18).
+- **D215 (twin_screens, qui tient un terminal)** : choix par défaut confirmé (2026-11-18).
+- **D230 (Comment la variante d'une réplique est choisie)** : choix par défaut confirmé (2026-11-18).
+- **D231 (Ce qu'est « sortie de tous »)** : choix par défaut confirmé (2026-11-18).
+- **D232 (Les anciennes répliques de sortie)** : choix par défaut confirmé (2026-11-18).
+- **D233 (Trahison, alliance et mort aux résultats)** : choix par défaut confirmé (2026-11-18).
+- **D234 (Les fragments de lore dans les documents)** : choix par défaut confirmé (2026-11-18).
+- **D235 (Les textes provisoires)** : choix par défaut confirmé (2026-11-18).

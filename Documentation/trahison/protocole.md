@@ -485,10 +485,11 @@ qui est dans la sienne : c'est ce qu'il entendrait de toute façon, et les place
 | `voice.same` | tous | Les places (0 à 8) des **autres** qui sont dans ma zone sonore. Une cabine fermée n'entend ni n'est entendue de l'extérieur |
 | `voice.announcing` | tous | Les comptes (UUID) des maîtres du jeu qui tiennent leur touche « annonce » : tout le monde les entend à plein volume. Vide après la fin de la partie |
 | `voice.ear` | un joueur, pendant `VOTE` | Quand son Écoute (T7.2) écoute une cabine : les places dans la zone sonore de cette cabine (`cabin:<id>` si elle est fermée, sinon sa zone) ; sinon `null` |
+| `voice.hear` | un joueur vivant | D200 : les places de ma zone sonore (et de la cabine que mon Écoute écoute) qui sont **vraiment vivantes**, calculées avec toute la vérité côté backend. Une mort cachée (D97) en est absente tout de suite, sans que la vue dise qui est mort : une place absente peut aussi bien être ailleurs. `null` pour les maîtres du jeu, fantômes et spectateurs (ils entendent tout le monde) |
 | `voice.sound_zones` | maîtres du jeu, fantômes, spectateurs | La zone sonore de chaque place, `[{ "index": 0, "sound_zone": "hall" }]` ; `null` pour un vivant (secret) |
 
 Règles du client (`voice/VoiceGains`) : hors partie (`LOBBY`, `ENDED`, pas de partie) rien n'est filtré. Pour un **vivant** : un
-maître du jeu qui annonce est entendu ; un mort (selon la vue : `players[].alive`) est coupé ; la cible de l'Écoute est entendue
+maître du jeu qui annonce est entendu ; un mort est coupé (D200 : **non pas** d'après `players[].alive`, qu'une mort cachée fait mentir, mais d'après `voice.hear` : toute place qui n'y figure pas est coupée ; sans `voice.hear`, `alive` de la vue sert de repli) ; la cible de l'Écoute est entendue
 quelle que soit la zone ; quelqu'un de ma zone sonore est entendu à gain 1 jusqu'à 4 blocs puis décroissant jusqu'à 0 à 8 blocs
 (chuchotement : 1 jusqu'à 1,5 bloc, 0 à 3 blocs) ; tout autre est coupé, **y compris** un spectateur ou un inconnu que la partie ne
 liste pas. Un fantôme, un spectateur ou un maître du jeu entend tout le monde à gain 1. Les voix des copies du hub sont filtrées
@@ -600,6 +601,7 @@ avec la voix de l'animatrice, comme un `announce`.
 | `steps_done`, `steps_total` | entiers | |
 | `steps` | liste | `{ id, open, solved, hints, progress?, world? }` : `world` (T8.3) = ce que le monde autour des emplacements montre d'une étape jouée dans le monde (`power_spot` : la vue du mécanisme plus `bound { <rôle> : { id, position, size, orientation } }`, la géométrie de ses emplacements même avant l'ouverture de l'étape, pour que l'obstacle soit déjà là ; jamais un secret) ; `progress` = `{ done, total }`, un compteur que le client montre sur le HUD tant que l'étape est ouverte (D61 : `pickup_set` « Objets : 2 / 3 », jamais un secret) ; `hints` : `hints` = les textes d'aide déjà donnés à l'étape, du plus vague au plus direct (T3.6, jamais une solution : c'est le texte écrit par l'auteur de la salle) ; le maître du jeu y ajoute `mechanism` et `hints_given` |
 | `slots` | liste | Les emplacements **actifs** seulement (voir ci-dessous) |
+| `secret` | objet, maîtres du jeu seulement | D228 : `{ active, candidates }` ; `candidates` : les ids des emplacements candidats à la cachette du temps libre (tout emplacement de genre `secret`, plus celui que désigne l'ancien champ `secret`) ; `active` : celui que la graine de la salle a tiré pour cette partie (`null` sans candidat). Les autres candidats sont inertes. Un joueur ne reçoit jamais ce bloc |
 | `inventory` | liste de textes | Identifiants des objets du sac commun du groupe (tous les porteurs, dans l'ordre de ramassage) |
 | `items` | liste | Le même sac avec son porteur : `{ id, holder }`, `holder` étant l'indice du joueur qui porte l'objet (`-1` : n'importe quel membre). **L'inventaire d'un joueur est la part de `items` dont il est le porteur** : lui seul donne, utilise ou combine un objet |
 | `partners` | liste | T8.3 : le Pokémon partenaire de chaque membre, `{ player, species, power }` (`species` : id d'espèce Cobblemon ; `power` : `FLASH`, `STRENGTH`, `CUT` ou `SURF`). Public pour tout le groupe, jamais un secret. Tiré au début de la salle (voir `power_spot`) |
@@ -1266,7 +1268,7 @@ incluse) ; `kind` : `terminal`, `keypad`, `pickup`, `wall_clue`, `document`, `le
 `secret` ; `orientation` : `north`, `east`, `south`, `west` ; `size` : un bloc par défaut. `steps[].slots` associe chaque rôle
 du mécanisme à un emplacement (le rôle `exit` ouvre la sortie : son emplacement est de genre `exit`) ; `needs` : étapes à finir
 avant ; `gives[].clue` : un rôle d'indice du mécanisme, `slot` : où il s'affiche, `when` : `open` (défaut) ou `solved` ; `hints` :
-3 textes au plus, du plus vague au plus direct ; `secret` : l'emplacement de la cachette (facultatif).
+3 textes au plus, du plus vague au plus direct ; `secret` : l'emplacement de la cachette (facultatif, ancien champ). D228 : tout emplacement de genre `secret` est un **candidat** à la cachette ; la graine de la salle en tire un seul par partie, les autres sont inertes. Deux candidats au moins sont recommandés : avec un seul, l'éditeur avertit (`LOCAL_FEW_SECRET_CANDIDATES`, côté serveur `RoomValidator.warnings`, `WARN_TRAHISON_ROOM_FEW_SECRET_CANDIDATES`), sans jamais refuser l'enregistrement.
 
 **Validation** (400 `ERROR_TRAHISON_ROOM_INVALID`, `details.errors` : `[{ code, ids, info }]`, toutes les erreurs d'un coup) : voir
 section 5. Mécanismes connus à ce jour (rôle d'emplacement : genres acceptés) : `debug_button` (un appui résout ; `press` : `terminal`, `keypad`, `lever`,

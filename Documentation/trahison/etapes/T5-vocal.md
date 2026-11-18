@@ -77,6 +77,7 @@ Règles à obtenir pendant une partie :
 
 - Tout se fait dans la table des gains de T5.2, sans toucher à Phantasmon (solution S5) : les voix des copies
   passent par le même événement, sous l'identifiant de l'avatar. Ajouter cette seconde clé pour chaque joueur.
+- D200 : un mort **caché** (D97) est coupé tout de suite pour les vivants, même ceux qui ignorent sa mort. Le client ne peut pas le savoir d'après sa vue : le backend envoie dans `voice.hear` la liste des places vivantes de la zone sonore (et de la cabine écoutée), et le client coupe toute place absente de cette liste.
 - Un vivant met à 0 le gain des fantômes et des spectateurs. Un fantôme ou un spectateur entend tout le monde.
 - L'annonce du maître du jeu : une touche tenue envoie `EventsTrahisonGm { action: "announce", on }` ; le backend
   le porte dans la vue ; tous les clients mettent son gain à 1 pendant ce temps.

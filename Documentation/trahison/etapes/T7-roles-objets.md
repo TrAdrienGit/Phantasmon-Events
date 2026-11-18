@@ -47,7 +47,7 @@ Backend, paquet `game`.
 
 - `Item` : `KNIFE`, `BONDS`, `LOCK`, `EAR`, `SHIELD`, `PASS`, `LETTER`. Quantités dans `settings` (0 à 2 chacun).
 - Au début de la partie, le backend répartit les objets dans les **cachettes** du plan (T2.1) et les emplacements
-  `secret` des salles. Une cachette garnie se fouille comme un emplacement (T3.3) ; l'objet va dans l'inventaire
+  `secret` des salles (D228 : une salle en déclare plusieurs, la graine de la salle n'en active qu'une par partie). Une cachette garnie se fouille comme un emplacement (T3.3) ; l'objet va dans l'inventaire
   personnel, que les autres ne voient pas.
 - Effets (action `use_item`, cible et lieu vérifiés par le backend) :
 

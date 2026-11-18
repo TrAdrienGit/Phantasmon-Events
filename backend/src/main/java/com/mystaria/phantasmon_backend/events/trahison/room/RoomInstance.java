@@ -24,6 +24,11 @@ public final class RoomInstance {
 	public final int group;
 	public final RoomDefinition definition;
 	public final long seed;
+	/**
+	 * D228: the one candidate hiding place (slot id) of the free time this room plays, drawn from {@link #seed}; null when the
+	 * room declares none. The other candidates are inert. Not stored: the seed recomputes it.
+	 */
+	public final String activeSecret;
 	/** Player indices of the group: only they may act. */
 	public final List<Integer> members;
 	/** In definition order. */
@@ -62,7 +67,13 @@ public final class RoomInstance {
 		this.group = group;
 		this.definition = definition;
 		this.seed = seed;
+		this.activeSecret = RoomSecrets.draw(definition, seed).orElse(null);
 		this.members = List.copyOf(members);
+	}
+
+	/** D228: whether searching this slot yields the room's secret: only the drawn candidate does. */
+	public boolean yieldsSecret(String slotId) {
+		return slotId != null && slotId.equals(activeSecret);
 	}
 
 	/** Puts an item in the bag, carried by {@code holder}. */

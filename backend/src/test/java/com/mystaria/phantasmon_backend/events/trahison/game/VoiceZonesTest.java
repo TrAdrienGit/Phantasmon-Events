@@ -153,4 +153,36 @@ class VoiceZonesTest {
 		assertThat(voice(ids[4]).get("ear")).isNull(); // nobody else gets the target
 		assertThat(voice(gm).get("ear")).isNull();
 	}
+
+	@Test
+	void hearListsTheLivingSeatsOfTheZoneWithTheFullTruthD200() {
+		game();
+		stand(0, "hall");
+		stand(1, "hall");
+		stand(2, "hall");
+		stand(3, "corridor");
+		assertThat(voice(ids[0]).get("hear")).isEqualTo(List.of(1, 2));
+		service.read(HUB, g -> {
+			g.players.get(2).alive = false; // a death the others may not know (D97): the list drops it at once
+			return null;
+		});
+		assertThat(voice(ids[0]).get("hear")).isEqualTo(List.of(1));
+		assertThat(voice(ids[1]).get("hear")).isEqualTo(List.of(0));
+		assertThat(voice(ids[3]).get("hear")).isEqualTo(List.of()); // alone in the corridor
+	}
+
+	@Test
+	void hearIncludesTheLivingOfTheEarCabinAndIsNullForThoseWhoHearAll() {
+		game();
+		stand(1, CAB);
+		stand(2, CAB);
+		service.read(HUB, g -> {
+			g.listening.put(0, CAB);
+			g.phase = Phase.VOTE;
+			g.players.get(2).alive = false;
+			return null;
+		});
+		assertThat(voice(ids[0]).get("hear")).isEqualTo(List.of(1));
+		assertThat(voice(gm).get("hear")).isNull();
+	}
 }

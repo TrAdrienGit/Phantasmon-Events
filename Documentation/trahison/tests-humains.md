@@ -458,3 +458,11 @@ Chaque mini-jeu se teste d'abord hors ligne (`/phantasmon event trahison minigam
 - Passer le client en anglais : les mêmes moments parlent en anglais ; supprimer un moment du fichier : la clé de langue sert de secours.
 - Faire les quatre fins (le MJ termine sans sortis = personne ; un seul sort par la porte finale = solo ; plusieurs = quelques-uns ; tous les sièges = tous) : bandeau de fin de la bonne couleur, réplique `ending.*`, rôles révélés, puis les votes manche par manche, lisibles à 320 × 180 et 854 × 480 (défilement de la colonne).
 - Mettre `@fragment:2` dans le texte d'un document de salle, puis un fragment sans texte (`@fragment:50`) : le premier affiche son texte, le second « Fragment 50 — à écrire. ».
+
+## D200 et D228 : vocal des morts cachées, cachette tirée au sort (2026-11-18)
+
+- Vocal (deux comptes vivants dans la même zone, plus un troisième) : le MJ tue en secret le troisième (mort cachée, D97). Le joueur qui ignore sa mort ne l'entend plus tout de suite, alors que sa vue le montre encore « vivant » ; l'autre non plus. Rien dans l'écran ne dit qu'il est mort.
+- Le mort caché qui parle à côté d'un vivant : silence pour le vivant. Un fantôme, un spectateur ou le MJ l'entend toujours.
+- Une cabine écoutée (objet Écoute) pendant un vote : un mort caché de la cabine n'est pas entendu non plus.
+- Éditeur de salle : une salle avec un seul emplacement de genre cachette donne un avertissement jaune (« Une seule cachette ») mais s'enregistre. Avec deux, plus d'avertissement.
+- Lancer deux parties avec des graines différentes sur la même salle à deux cachettes : l'écran du MJ montre « cachette : id » dans la carte de la salle, et l'id change d'une graine à l'autre ; rejouer la même graine donne le même id. Un joueur ne voit jamais cette ligne.

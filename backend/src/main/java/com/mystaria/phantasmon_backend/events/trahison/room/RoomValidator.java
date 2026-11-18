@@ -55,6 +55,8 @@ public final class RoomValidator {
 	public static final String UNREACHABLE = "ERROR_TRAHISON_ROOM_UNREACHABLE";
 	public static final String NO_EXIT = "ERROR_TRAHISON_ROOM_NO_EXIT";
 	public static final String BAD_COMBINE = "ERROR_TRAHISON_ROOM_BAD_COMBINE";
+	/** D228, a warning (never an error, so an old room stays valid): a room with a hiding place declares only one candidate. */
+	public static final String FEW_SECRET_CANDIDATES = "WARN_TRAHISON_ROOM_FEW_SECRET_CANDIDATES";
 	public static final int MAX_COMBINES = 32;
 	/** Distinct powers a room may ask for (T8.3). */
 	public static final int MAX_POWERS = 3;
@@ -92,6 +94,18 @@ public final class RoomValidator {
 		checkCombines(room, out);
 		checkPowers(room, out);
 		return out;
+	}
+
+	/**
+	 * D228: the warnings of a room, separate from {@link #validate} (they never refuse a save): a room whose hiding place has a
+	 * single candidate gets no draw, so every game hides it in the same spot.
+	 */
+	public static List<Issue> warnings(RoomDefinition room) {
+		List<String> candidates = RoomSecrets.candidates(room);
+		if (candidates.size() == 1) {
+			return List.of(new Issue(FEW_SECRET_CANDIDATES, candidates, "min=" + RoomSecrets.MIN_CANDIDATES));
+		}
+		return List.of();
 	}
 
 	/** T8.3: a group has at most three members and every power goes to a different one, so a room asks for at most three powers. */

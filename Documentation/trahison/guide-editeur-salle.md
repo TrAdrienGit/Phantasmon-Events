@@ -78,7 +78,9 @@ Un emplacement est une boîte marquée dans la salle où le jeu affichera quelqu
 2. Panneau, onglet **Emplacements** : choisis le genre, **Nouveau**. L'emplacement prend la boîte sélectionnée (coin minimal et
    taille, relatifs à l'origine de la boîte de la salle).
 3. Dans sa fiche : id (modifiable, ce qui le renomme partout où il est utilisé), genre, orientation, position et taille
-   (« Placer sur la sélection » pour les refaire), « En faire la cachette » (l'objet caché du temps libre ; un seul par salle).
+   (« Placer sur la sélection » pour les refaire), « En faire la cachette » (ancien réglage : un emplacement de n'importe quel genre devient candidat à la cachette ; un seul par salle).
+
+   **La cachette du temps libre est tirée au sort (D228).** Déclare **deux emplacements de genre `cachette` ou plus** dans la salle (livre vide, tiroir, miroir voilé...) : ce sont les candidats. À chaque partie, la graine de la salle en active un seul ; les autres ne donnent rien. Le maître du jeu voit sur la carte de la salle (onglet des salles) laquelle est active (« cachette : id »). Avec un seul candidat, l'éditeur avertit (jaune) mais enregistre : la cachette serait alors toujours au même endroit. Une ancienne salle à une seule cachette reste valide.
 4. La fiche dit quelles étapes l'utilisent.
 
 Un emplacement ne remplace jamais un vrai bloc interactif : le jeu y affiche une entité locale. Ne mets pas de vrai coffre, vrai

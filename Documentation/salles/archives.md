@@ -67,7 +67,7 @@ Repère : la sortie est au nord, l'entrée au sud, l'ouest est à gauche en entr
 ## Secret de la salle
 
 Cachette du temps libre : un livre vide, en haut du rayonnage le plus à l'est, derrière les fiches ramassées. Emplacement
-`cachette` (genre `secret`, un seul par salle).
+`cachette` (genre `secret`). D228 : une salle déclare plusieurs candidats (genre `secret`) et la graine en active un par partie ; cette salle en aura au moins deux, à ajouter à l'écriture de la salle.
 
 ## Fragment de lore
 

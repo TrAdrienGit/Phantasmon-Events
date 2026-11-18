@@ -16,11 +16,18 @@ public final class VoiceData {
 	/**
 	 * {@code zone}: this viewer's own sound zone (null if unknown); {@code same}: the seats in it; {@code announcing}: the
 	 * accounts of the game masters holding the announce key; {@code ear}: the seats of the cabin his ear listens to, null when
-	 * it does not.
+	 * it does not; {@code hear} (D200): the seats really alive in his zone and his ear's cabin, the backend's truth, or null
+	 * when he hears everybody (ghost, spectator, game master) or when the backend sent none. Whoever is not in it is muted
+	 * for a living listener, so a hidden death is silent at once without the view saying it.
 	 */
-	public record Voice(String zone, Set<Integer> same, Set<UUID> announcing, Set<Integer> ear) {
+	public record Voice(String zone, Set<Integer> same, Set<UUID> announcing, Set<Integer> ear, Set<Integer> hear) {
 
-		public static final Voice NONE = new Voice(null, Set.of(), Set.of(), null);
+		public static final Voice NONE = new Voice(null, Set.of(), Set.of(), null, null);
+
+		/** Whether this seat is dead for this listener: not in the backend's {@code hear} list, else what the view says. */
+		public boolean deadFor(int seat, boolean aliveInView) {
+			return hear != null ? !hear.contains(seat) : !aliveInView;
+		}
 	}
 
 	private static volatile Voice current = Voice.NONE;
@@ -47,8 +54,9 @@ public final class VoiceData {
 			return Voice.NONE;
 		}
 		Set<Integer> ear = m.get("ear") instanceof List<?> l ? seats(l) : null;
+		Set<Integer> hear = m.get("hear") instanceof List<?> l ? seats(l) : null;
 		return new Voice(m.get("zone") instanceof String s ? s : null, m.get("same") instanceof List<?> l ? seats(l) : Set.of(),
-			m.get("announcing") instanceof List<?> l ? accounts(l) : Set.of(), ear);
+			m.get("announcing") instanceof List<?> l ? accounts(l) : Set.of(), ear, hear);
 	}
 
 	private static Set<Integer> seats(List<?> list) {

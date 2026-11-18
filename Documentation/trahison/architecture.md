@@ -274,7 +274,8 @@ RoomDefinition
   slots[]          : { id, kind, position, orientation, taille }      les emplacements
   steps[]          : la chaîne
     { id, mechanism, params, slots: { rôle → id d'emplacement }, needs: [étapes à finir avant], gives: [...] }
-  secret           : la cachette de la salle, pour le temps libre
+  secret           : (ancien champ) une cachette de la salle pour le temps libre ; D228 : tout emplacement de genre `secret`
+                     est un candidat, la graine en tire un seul par partie, les autres sont inertes
 ```
 
 ### Un mécanisme
