@@ -193,19 +193,35 @@ public final class EventNpcs {
 		}
 	}
 
-	/** The skin of a Minecraft account, by name: fetched once from Mojang; null meanwhile (default skin). */
+	/** When a failed skin may be fetched again, by name, and how many times it failed (2026-11-18). */
+	private static final java.util.Map<String, long[]> RETRY = new java.util.concurrent.ConcurrentHashMap<>();
+
+	/**
+	 * The skin of a Minecraft account, by name, fetched from Mojang; null meanwhile (default skin). A failed fetch (no
+	 * network, Mojang's rate limit, a profile without its textures) is tried again after 10 s, then longer, up to 5 min
+	 * apart (2026-11-18): it used to leave the default skin for the whole session.
+	 */
 	private static PlayerSkin skin(String name) {
 		Optional<PlayerSkin> known = SKINS.get(name);
-		if (known != null) {
-			return known.orElse(null);
+		if (known != null && known.isPresent()) {
+			return known.get();
+		}
+		long[] retry = RETRY.get(name);
+		if (known != null && (retry == null || System.currentTimeMillis() < retry[0])) {
+			return null; // being fetched, or waiting to try again
 		}
 		SKINS.put(name, Optional.empty());
+		RETRY.remove(name);
 		SkullBlockEntity.fetchGameProfile(name).thenCompose(profile -> profile.isPresent()
 				? Minecraft.getInstance().getSkinManager().getOrLoad(profile.get())
 				: java.util.concurrent.CompletableFuture.<PlayerSkin>completedFuture(null))
 				.whenComplete((skin, error) -> {
-					if (skin != null) {
+					if (skin != null && skin.textureUrl() != null) {
 						SKINS.put(name, Optional.of(skin));
+					} else {
+						int failures = retry == null ? 1 : (int) retry[1] + 1;
+						long wait = Math.min(300_000L, 10_000L << Math.min(failures - 1, 5));
+						RETRY.put(name, new long[] { System.currentTimeMillis() + wait, failures });
 					}
 				});
 		return null;
