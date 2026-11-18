@@ -12,7 +12,8 @@
 		"PlayerRendererGhostNameMixin",
 		"MultiPlayerGameModeGhostMixin",
 		"ServerPlayerGameModeGhostMixin",
-		"KeyboardInputRestrainMixin"
+		"KeyboardInputRestrainMixin",
+		"BattleMessageFieldMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

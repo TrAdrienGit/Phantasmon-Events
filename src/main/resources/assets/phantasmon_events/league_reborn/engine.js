@@ -12,7 +12,8 @@
  * in HOOKS (one entry per field), added batch by batch.
  *
  * Messages are protocol lines `|-leaguereborn|<kind>|...` that the mod translates (our own texts, in its lang files):
- *   start <field> | change <from> <to> <msg index> | end <field> (temporary field over) |
+ *   start <field> | field <field> <turns left, 0 = permanent> | change <from> <to> <msg index> |
+ *   end <field> (temporary field over) |
  *   move <field> <msg index> | type <field> <msg index> | text <key> [args...]
  */
 (function (Dex, FIELDS) {
@@ -103,7 +104,9 @@
 		/** What follows any field change (pbChangeBGSprite, abilities on field, seedCheck, noWeather). */
 		changed(battle, from, growth) {
 			const to = LR.field(battle);
-			LR.say(battle, 'field', to);
+			const s = LR.state(battle);
+			// The turns a temporary field has left (0: permanent), for the clients' field display.
+			LR.say(battle, 'field', to, s.overlay != null ? s.turns : 0);
 			if (LOCKED.includes(to) && battle.field.weather) battle.field.clearWeather();
 			const leave = HOOKS[from] && HOOKS[from].onLeave;
 			if (leave) leave.call(battle, to);

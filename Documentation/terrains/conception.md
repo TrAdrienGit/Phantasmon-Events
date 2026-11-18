@@ -201,7 +201,10 @@ installé), et les dégâts comparés au calcul de Reborn, avant d'aller en jeu.
   Un texte propre à un message de Reborn se branche par la clé `league_reborn.<terrain>.move|type|change.<n>` :
   s'il existe dans le fichier de langue, il remplace le générique (238 messages à écrire, lot suivant).
 
-Reste à faire : premier essai en jeu (PNJ avec un terrain, champion avec une récompense `FIELD`) ; les textes propres
+Essai en jeu validé par Adrien (PNJ sur Cave, Séisme fait s'effondrer la grotte). Affichage du terrain en haut au centre
+(`LeagueRebornHud`, style Battle Extras, sous ses lignes) avec les tours restants d'un terrain temporaire.
+
+Reste à faire : les textes propres
 à chaque message ; puis l'étape 2 (le code propre à chaque terrain dans `HOOKS`).
 
 Écarts connus avec Reborn, à traiter : l'efficacité combinée de Reborn ne descend pas sous ×0,25 (arrondi

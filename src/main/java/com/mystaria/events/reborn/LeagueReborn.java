@@ -49,6 +49,7 @@ public final class LeagueReborn {
 				LeagueReborn::script);
 		ShowdownInterpreter.registerUpdateInstructionParser("-leaguereborn",
 				(battle, instructionSet, message, messages) -> new Line(message));
+		LeagueRebornHud.register();
 	}
 
 	/** The engine, called with Showdown's Dex (index.js's global) and the field data; kept as globalThis.LeagueReborn. */
@@ -117,6 +118,14 @@ public final class LeagueReborn {
 		}
 	}
 
+	private static int turns(String text) {
+		try {
+			return Integer.parseInt(text.strip());
+		} catch (NumberFormatException ex) {
+			return 0;
+		}
+	}
+
 	private static String arg(List<String> args, int index) {
 		return index < args.size() ? args.get(index) : "";
 	}
@@ -139,8 +148,9 @@ public final class LeagueReborn {
 							.withColor(TEXT));
 				}
 			}
+			// The turns left ride along unshown (the text has no %2$s): LeagueRebornHud reads them on every client.
 			case "field" -> lines.add((NONE.equals(field) ? Component.translatable("league_reborn.cleared")
-					: Component.translatable("league_reborn.now", fieldName(field))).withColor(TEXT));
+					: Component.translatable("league_reborn.now", fieldName(field), turns(arg(args, 1)))).withColor(TEXT));
 			case "end" -> lines.add(Component.translatable("league_reborn.end", fieldName(field)).withColor(TEXT));
 			case "change" -> {
 				String key = "league_reborn." + field + ".change." + arg(args, 2);
