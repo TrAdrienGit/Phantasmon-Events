@@ -1,7 +1,7 @@
 # Generates the nine room templates from compact data. Hints of steps are read from Documentation/salles/*.md.
 import json, re, os
 
-ROOT = r"W:\GitHub\Phantasmon-Events"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = ROOT + r"\src\main\resources\assets\phantasmon_events\trahison\templates"
 os.makedirs(OUT, exist_ok=True)
 
