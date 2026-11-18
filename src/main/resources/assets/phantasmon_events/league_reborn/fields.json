@@ -1,0 +1,4735 @@
+{
+	"indoor": {
+		"naturePower": "triattack",
+		"secretPower": "triattack",
+		"mimicry": "Normal",
+		"statusMods": [],
+		"moves": {},
+		"types": {},
+		"changeCond": {}
+	},
+	"electerrain": {
+		"naturePower": "thunderbolt",
+		"secretPower": "shockwave",
+		"mimicry": "Electric",
+		"statusMods": [
+			"charge",
+			"eerieimpulse",
+			"magnetrise"
+		],
+		"moves": {
+			"magnetbomb": {
+				"mult": 2,
+				"msg": 3
+			},
+			"explosion": {
+				"mult": 1.5,
+				"type": "Electric",
+				"msg": 1
+			},
+			"selfdestruct": {
+				"mult": 1.5,
+				"type": "Electric",
+				"msg": 1
+			},
+			"hurricane": {
+				"mult": 1.5,
+				"type": "Electric",
+				"msg": 2
+			},
+			"surf": {
+				"mult": 1.5,
+				"type": "Electric",
+				"msg": 2
+			},
+			"smackdown": {
+				"mult": 1.5,
+				"type": "Electric",
+				"msg": 2
+			},
+			"muddywater": {
+				"mult": 1.5,
+				"type": "Electric",
+				"msg": 2
+			},
+			"thousandarrows": {
+				"mult": 1.5,
+				"type": "Electric",
+				"msg": 2
+			},
+			"hydrovortex": {
+				"type": "Electric"
+			},
+			"mudsport": {
+				"change": "indoor",
+				"changeMsg": 1
+			},
+			"tectonicrage": {
+				"change": "indoor",
+				"changeMsg": 1
+			}
+		},
+		"types": {
+			"Electric": {
+				"mult": 1.5,
+				"msg": 1,
+				"cond": "attackerGrounded"
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "elementalseed",
+			"effect": "Charge",
+			"duration": 2,
+			"animation": "charge",
+			"stats": {
+				"spe": 1
+			}
+		}
+	},
+	"grassy": {
+		"naturePower": "energyball",
+		"secretPower": "seedbomb",
+		"mimicry": "Grass",
+		"statusMods": [
+			"coil",
+			"growth",
+			"floralhealing",
+			"grasswhistle"
+		],
+		"moves": {
+			"fairywind": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"silverwind": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"muddywater": {
+				"mult": 0.5,
+				"msg": 2
+			},
+			"surf": {
+				"mult": 0.5,
+				"msg": 2
+			},
+			"earthquake": {
+				"mult": 0.5,
+				"msg": 2
+			},
+			"magnitude": {
+				"mult": 0.5,
+				"msg": 2
+			},
+			"bulldoze": {
+				"mult": 0.5,
+				"msg": 2
+			},
+			"grasswhistle": {
+				"acc": 80
+			},
+			"heatwave": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"eruption": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"searingshot": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"flameburst": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"lavaplume": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"firepledge": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"mindblown": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"incinerate": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"infernooverdrive": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"sludgewave": {
+				"change": "corrosive",
+				"changeMsg": 2,
+				"keepBackup": true
+			},
+			"aciddownpour": {
+				"change": "corrosive",
+				"changeMsg": 2,
+				"keepBackup": true
+			}
+		},
+		"types": {
+			"Grass": {
+				"mult": 1.5,
+				"msg": 1,
+				"cond": "attackerGrounded"
+			},
+			"Fire": {
+				"mult": 1.5,
+				"msg": 2,
+				"cond": "targetGrounded"
+			}
+		},
+		"changeCond": {
+			"burning": "ignite"
+		},
+		"seed": {
+			"item": "elementalseed",
+			"effect": "Ingrain",
+			"duration": true,
+			"animation": "ingrain",
+			"stats": {
+				"def": 1
+			}
+		}
+	},
+	"misty": {
+		"naturePower": "mistball",
+		"secretPower": "mistball",
+		"mimicry": "Fairy",
+		"statusMods": [
+			"cosmicpower",
+			"aromaticmist",
+			"sweetscent"
+		],
+		"moves": {
+			"selfdestruct": {
+				"mult": 0,
+				"msg": 3
+			},
+			"explosion": {
+				"mult": 0,
+				"msg": 3
+			},
+			"mindblown": {
+				"mult": 0,
+				"msg": 3
+			},
+			"fairywind": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"mysticalfire": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"moonblast": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"magicalleaf": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"doomdummy": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"icywind": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"mistball": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"aurasphere": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"steameruption": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"dazzlinggleam": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"silverwind": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"moongeistbeam": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"darkpulse": {
+				"mult": 0.5,
+				"msg": 2
+			},
+			"shadowball": {
+				"mult": 0.5,
+				"msg": 2
+			},
+			"nightdaze": {
+				"mult": 0.5,
+				"msg": 2
+			},
+			"clearsmog": {
+				"counter": [
+					1,
+					1
+				],
+				"change": "corrosivemist",
+				"changeMsg": 2,
+				"keepBackup": true
+			},
+			"poisongas": {
+				"counter": [
+					1,
+					1
+				],
+				"change": "corrosivemist",
+				"changeMsg": 2,
+				"keepBackup": true
+			},
+			"smog": {
+				"counter": [
+					1,
+					1
+				],
+				"change": "corrosivemist",
+				"changeMsg": 2,
+				"keepBackup": true
+			},
+			"aciddownpour": {
+				"counter": [
+					1,
+					2
+				],
+				"change": "corrosivemist",
+				"changeMsg": 2,
+				"keepBackup": true
+			},
+			"whirlwind": {
+				"change": "indoor",
+				"changeMsg": 1
+			},
+			"gust": {
+				"change": "indoor",
+				"changeMsg": 1
+			},
+			"razorwind": {
+				"change": "indoor",
+				"changeMsg": 1
+			},
+			"defog": {
+				"change": "indoor",
+				"changeMsg": 1
+			},
+			"hurricane": {
+				"change": "indoor",
+				"changeMsg": 1
+			},
+			"twister": {
+				"change": "indoor",
+				"changeMsg": 1
+			},
+			"tailwind": {
+				"change": "indoor",
+				"changeMsg": 1
+			},
+			"supersonicskystrike": {
+				"change": "indoor",
+				"changeMsg": 1
+			}
+		},
+		"types": {
+			"Dragon": {
+				"mult": 0.5,
+				"msg": 1
+			}
+		},
+		"changeCond": {
+			"corrosivemist": "counterAbove1"
+		},
+		"seed": {
+			"item": "elementalseed",
+			"duration": 0,
+			"stats": {
+				"spd": 1
+			}
+		}
+	},
+	"darkcrystalcavern": {
+		"naturePower": "darkpulse",
+		"secretPower": "darkpulse",
+		"mimicry": "Dark",
+		"statusMods": [
+			"flash",
+			"darkvoid",
+			"moonlight"
+		],
+		"moves": {
+			"prismaticlaser": {
+				"mult": 2,
+				"msg": 4
+			},
+			"blackholeeclipse": {
+				"mult": 2,
+				"msg": 5
+			},
+			"darkpulse": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"nightdaze": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"nightslash": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"shadowball": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"shadowpunch": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"shadowclaw": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"shadowsneak": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"shadowforce": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"shadowbone": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"aurorabeam": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"signalbeam": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"flashcannon": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"lusterpurge": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"dazzlinggleam": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"mirrorshot": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"technoblast": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"doomdummy": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"powergem": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"moongeistbeam": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"photongeyser": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"diamondstorm": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"menacingmoonrazemaelstrom": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"lightthatburnsthesky": {
+				"mult": 0.5,
+				"msg": 6
+			},
+			"darkvoid": {
+				"acc": 100
+			},
+			"earthquake": {
+				"change": "cave",
+				"changeMsg": 1
+			},
+			"bulldoze": {
+				"change": "cave",
+				"changeMsg": 1
+			},
+			"magnitude": {
+				"change": "cave",
+				"changeMsg": 1
+			},
+			"fissure": {
+				"change": "cave",
+				"changeMsg": 1
+			},
+			"tectonicrage": {
+				"change": "cave",
+				"changeMsg": 1
+			},
+			"sunnyday": {
+				"change": "crystalcavern",
+				"changeMsg": 2,
+				"keepBackup": true
+			}
+		},
+		"types": {},
+		"changeCond": {
+			"crystalcavern": "never"
+		},
+		"seed": {
+			"item": "magicalseed",
+			"effect": "MagicCoat",
+			"duration": true,
+			"animation": "magiccoat",
+			"stats": {
+				"spd": 1
+			}
+		}
+	},
+	"chess": {
+		"naturePower": "ancientpower",
+		"secretPower": "feint",
+		"mimicry": "Psychic",
+		"statusMods": [
+			"calmmind",
+			"nastyplot",
+			"trickroom"
+		],
+		"moves": {
+			"feint": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"feintattack": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"fakeout": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"suckerpunch": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"firstimpression": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"shadowsneak": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"smartstrike": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"strength": {
+				"mult": 1.5,
+				"type": "Rock"
+			},
+			"ancientpower": {
+				"mult": 1.5,
+				"type": "Rock"
+			},
+			"psychic": {
+				"mult": 1.5,
+				"type": "Rock"
+			},
+			"continentalcrush": {
+				"mult": 1.5,
+				"type": "Rock"
+			},
+			"secretpower": {
+				"mult": 1.5,
+				"type": "Rock"
+			},
+			"shatteredpsyche": {
+				"mult": 1.5,
+				"type": "Rock"
+			},
+			"stompingtantrum": {
+				"change": "indoor",
+				"changeMsg": 1
+			},
+			"tectonicrage": {
+				"change": "indoor",
+				"changeMsg": 1
+			}
+		},
+		"types": {},
+		"changeCond": {},
+		"seed": {
+			"item": "syntheticseed",
+			"effect": "MagicCoat",
+			"duration": true,
+			"animation": "magiccoat",
+			"stats": {
+				"spa": 1
+			}
+		}
+	},
+	"bigtop": {
+		"naturePower": "acrobatics",
+		"secretPower": "dynamicpunch",
+		"mimicry": "Normal",
+		"statusMods": [
+			"encore",
+			"dragondance",
+			"quiverdance",
+			"swordsdance",
+			"featherdance",
+			"sing",
+			"raindance",
+			"bellydrum",
+			"spotlight"
+		],
+		"moves": {
+			"payday": {
+				"mult": 2,
+				"msg": 5
+			},
+			"vinewhip": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"powerwhip": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"firelash": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"fierydance": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"petaldance": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"revelationdance": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"fly": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"acrobatics": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"firstimpression": {
+				"mult": 1.5,
+				"msg": 4
+			},
+			"sing": {
+				"acc": 100
+			}
+		},
+		"types": {},
+		"changeCond": {},
+		"seed": {
+			"item": "syntheticseed",
+			"effect": "HelpingHand",
+			"duration": true,
+			"animation": "helpinghand",
+			"stats": {
+				"atk": 1
+			}
+		}
+	},
+	"burning": {
+		"naturePower": "flamethrower",
+		"secretPower": "flamethrower",
+		"mimicry": "Fire",
+		"statusMods": [
+			"willowisp",
+			"smokescreen"
+		],
+		"moves": {
+			"smackdown": {
+				"mult": 2,
+				"type": "Fire",
+				"msg": 2
+			},
+			"thousandarrows": {
+				"mult": 2,
+				"type": "Fire",
+				"msg": 2
+			},
+			"smog": {
+				"mult": 1.5,
+				"type": "Fire",
+				"msg": 1
+			},
+			"clearsmog": {
+				"mult": 1.5,
+				"type": "Fire",
+				"msg": 1
+			},
+			"willowisp": {
+				"acc": 100
+			},
+			"whirlwind": {
+				"change": "indoor",
+				"changeMsg": 2
+			},
+			"gust": {
+				"change": "indoor",
+				"changeMsg": 2
+			},
+			"razorwind": {
+				"change": "indoor",
+				"changeMsg": 2
+			},
+			"defog": {
+				"change": "indoor",
+				"changeMsg": 2
+			},
+			"hurricane": {
+				"change": "indoor",
+				"changeMsg": 2
+			},
+			"twister": {
+				"change": "indoor",
+				"changeMsg": 2
+			},
+			"tailwind": {
+				"change": "indoor",
+				"changeMsg": 2
+			},
+			"supersonicskystrike": {
+				"change": "indoor",
+				"changeMsg": 2
+			},
+			"watersport": {
+				"change": "indoor",
+				"changeMsg": 3
+			},
+			"surf": {
+				"change": "indoor",
+				"changeMsg": 3
+			},
+			"muddywater": {
+				"change": "indoor",
+				"changeMsg": 3
+			},
+			"waterspout": {
+				"change": "indoor",
+				"changeMsg": 3
+			},
+			"waterpledge": {
+				"change": "indoor",
+				"changeMsg": 3
+			},
+			"sparklingaria": {
+				"change": "indoor",
+				"changeMsg": 3
+			},
+			"sludgewave": {
+				"change": "indoor",
+				"changeMsg": 1
+			},
+			"sandtomb": {
+				"change": "indoor",
+				"changeMsg": 4
+			},
+			"continentalcrush": {
+				"change": "indoor",
+				"changeMsg": 4
+			},
+			"hydrovortex": {
+				"change": "indoor",
+				"changeMsg": 3
+			},
+			"oceanicoperetta": {
+				"change": "indoor",
+				"changeMsg": 3
+			}
+		},
+		"types": {
+			"Fire": {
+				"mult": 1.5,
+				"msg": 1,
+				"cond": "attackerGrounded"
+			},
+			"Grass": {
+				"mult": 0.5,
+				"msg": 2,
+				"cond": "targetGrounded"
+			},
+			"Ice": {
+				"mult": 0.5,
+				"msg": 2
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "elementalseed",
+			"effect": "MultiTurnAttack",
+			"duration": "FIRESPIN",
+			"animation": "firespin",
+			"stats": {
+				"atk": 1,
+				"spa": 1,
+				"spe": 1
+			}
+		}
+	},
+	"swamp": {
+		"naturePower": "muddywater",
+		"secretPower": "muddywater",
+		"mimicry": "Water",
+		"statusMods": [
+			"sleeppowder",
+			"aquaring"
+		],
+		"moves": {
+			"selfdestruct": {
+				"mult": 0,
+				"msg": 3
+			},
+			"explosion": {
+				"mult": 0,
+				"msg": 3
+			},
+			"mindblown": {
+				"mult": 0,
+				"msg": 3
+			},
+			"mudbomb": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"mudshot": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"mudslap": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"muddywater": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"surf": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"sludgewave": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"gunkshot": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"brine": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"smackdown": {
+				"mult": 1.5,
+				"type": "Water",
+				"msg": 1
+			},
+			"thousandarrows": {
+				"mult": 1.5,
+				"type": "Water",
+				"msg": 1
+			},
+			"hydrovortex": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"earthquake": {
+				"mult": 0.25,
+				"msg": 2
+			},
+			"magnitude": {
+				"mult": 0.25,
+				"msg": 2
+			},
+			"bulldoze": {
+				"mult": 0.25,
+				"msg": 2
+			},
+			"sleeppowder": {
+				"acc": 100
+			}
+		},
+		"types": {
+			"Poison": {
+				"mult": 1.5,
+				"msg": 1,
+				"cond": "targetGrounded"
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "telluricseed",
+			"effect": "Ingrain",
+			"duration": true,
+			"animation": "ingrain",
+			"stats": {
+				"def": 1,
+				"spd": 1
+			}
+		}
+	},
+	"rainbow": {
+		"naturePower": "aurorabeam",
+		"secretPower": "aurorabeam",
+		"mimicry": "Dragon",
+		"statusMods": [
+			"cosmicpower",
+			"meditate",
+			"wish"
+		],
+		"moves": {
+			"silverwind": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"mysticalfire": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"dragonpulse": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"triattack": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"sacredfire": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"firepledge": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"waterpledge": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"grasspledge": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"aurorabeam": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"judgment": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"relicsong": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"hiddenpower": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"secretpower": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"weatherball": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"mistball": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"heartstamp": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"moonblast": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"zenheadbutt": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"sparklingaria": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"fleurcannon": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"prismaticlaser": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"twinkletackle": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"oceanicoperetta": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"solarbeam": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"solarblade": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"dazzlinggleam": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"darkpulse": {
+				"mult": 0.5,
+				"msg": 2
+			},
+			"shadowball": {
+				"mult": 0.5,
+				"msg": 2
+			},
+			"nightdaze": {
+				"mult": 0.5,
+				"msg": 2
+			},
+			"neverendingnightmare": {
+				"mult": 0.5,
+				"msg": 2
+			},
+			"lightthatburnsthesky": {
+				"change": "indoor",
+				"changeMsg": 1
+			}
+		},
+		"types": {
+			"Normal": {
+				"mult": 1.5,
+				"msg": 1,
+				"cond": "special"
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "magicalseed",
+			"duration": 0,
+			"stats": {
+				"spa": 1
+			}
+		}
+	},
+	"corrosive": {
+		"naturePower": "acidspray",
+		"secretPower": "acid",
+		"mimicry": "Poison",
+		"statusMods": [
+			"acidarmor",
+			"poisonpowder",
+			"sleeppowder",
+			"stunspore",
+			"toxic"
+		],
+		"moves": {
+			"acid": {
+				"mult": 2,
+				"msg": 1
+			},
+			"acidspray": {
+				"mult": 2,
+				"msg": 1
+			},
+			"grassknot": {
+				"mult": 2,
+				"msg": 1
+			},
+			"smackdown": {
+				"mult": 1.5,
+				"type": "Poison",
+				"msg": 1
+			},
+			"mudslap": {
+				"mult": 1.5,
+				"type": "Poison",
+				"msg": 1
+			},
+			"mudshot": {
+				"mult": 1.5,
+				"type": "Poison",
+				"msg": 1
+			},
+			"mudbomb": {
+				"mult": 1.5,
+				"type": "Poison",
+				"msg": 1
+			},
+			"muddywater": {
+				"mult": 1.5,
+				"type": "Poison",
+				"msg": 1
+			},
+			"whirlpool": {
+				"mult": 1.5,
+				"type": "Poison",
+				"msg": 1
+			},
+			"thousandarrows": {
+				"mult": 1.5,
+				"type": "Poison",
+				"msg": 1
+			},
+			"poisonpowder": {
+				"acc": 100
+			},
+			"sleeppowder": {
+				"acc": 100
+			},
+			"stunspore": {
+				"acc": 100
+			},
+			"toxic": {
+				"acc": 100
+			},
+			"seedflare": {
+				"change": "grassy",
+				"changeMsg": 1
+			}
+		},
+		"types": {
+			"Grass": {
+				"type": "Poison"
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "telluricseed",
+			"effect": "Protect",
+			"duration": "BanefulBunker",
+			"animation": "banefulbunker",
+			"stats": {}
+		}
+	},
+	"corrosivemist": {
+		"naturePower": "venoshock",
+		"secretPower": "acidspray",
+		"mimicry": "Poison",
+		"statusMods": [
+			"acidarmor"
+		],
+		"moves": {
+			"bubblebeam": {
+				"mult": 1.5,
+				"type": "Poison",
+				"msg": 1
+			},
+			"acidspray": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"bubble": {
+				"mult": 1.5,
+				"type": "Poison",
+				"msg": 1
+			},
+			"smog": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"clearsmog": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"sparklingaria": {
+				"mult": 1.5,
+				"type": "Poison",
+				"msg": 1
+			},
+			"energyball": {
+				"type": "Poison"
+			},
+			"toxic": {
+				"acc": 100
+			},
+			"whirlwind": {
+				"change": "indoor",
+				"changeMsg": 1
+			},
+			"gust": {
+				"change": "indoor",
+				"changeMsg": 1
+			},
+			"razorwind": {
+				"change": "indoor",
+				"changeMsg": 1
+			},
+			"defog": {
+				"change": "indoor",
+				"changeMsg": 1
+			},
+			"hurricane": {
+				"change": "indoor",
+				"changeMsg": 1
+			},
+			"twister": {
+				"change": "indoor",
+				"changeMsg": 1
+			},
+			"tailwind": {
+				"change": "indoor",
+				"changeMsg": 1
+			},
+			"supersonicskystrike": {
+				"change": "indoor",
+				"changeMsg": 1
+			},
+			"heatwave": {
+				"change": "indoor",
+				"changeEffect": "mistExplosion"
+			},
+			"eruption": {
+				"change": "indoor",
+				"changeEffect": "mistExplosion"
+			},
+			"searingshot": {
+				"change": "indoor",
+				"changeEffect": "mistExplosion"
+			},
+			"flameburst": {
+				"change": "indoor",
+				"changeEffect": "mistExplosion"
+			},
+			"lavaplume": {
+				"change": "indoor",
+				"changeEffect": "mistExplosion"
+			},
+			"firepledge": {
+				"change": "indoor",
+				"changeEffect": "mistExplosion"
+			},
+			"mindblown": {
+				"change": "indoor",
+				"changeEffect": "mistExplosion"
+			},
+			"incinerate": {
+				"change": "indoor",
+				"changeEffect": "mistExplosion"
+			},
+			"infernooverdrive": {
+				"change": "indoor",
+				"changeEffect": "mistExplosion"
+			},
+			"selfdestruct": {
+				"change": "indoor",
+				"changeEffect": "mistExplosion"
+			},
+			"explosion": {
+				"change": "indoor",
+				"changeEffect": "mistExplosion"
+			},
+			"seedflare": {
+				"change": "misty",
+				"changeMsg": 2
+			},
+			"gravity": {
+				"change": "corrosive",
+				"changeMsg": 3,
+				"keepBackup": true
+			}
+		},
+		"types": {
+			"Fire": {
+				"mult": 1.5,
+				"msg": 1
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "elementalseed",
+			"duration": 0,
+			"stats": {
+				"atk": 1,
+				"spa": 1
+			}
+		}
+	},
+	"desert": {
+		"naturePower": "sandtomb",
+		"secretPower": "sandtomb",
+		"mimicry": "Ground",
+		"statusMods": [
+			"sandstorm",
+			"sunnyday",
+			"sandattack",
+			"shoreup"
+		],
+		"moves": {
+			"needlearm": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"pinmissile": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"dig": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"sandtomb": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"heatwave": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"thousandwaves": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"burnup": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"searingsunrazesmash": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"solarblade": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"solarbeam": {
+				"mult": 1.5,
+				"msg": 1
+			}
+		},
+		"types": {
+			"Water": {
+				"mult": 0.5,
+				"msg": 1,
+				"cond": "attackerGrounded"
+			},
+			"Electric": {
+				"mult": 0.5,
+				"msg": 1,
+				"cond": "targetGrounded"
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "telluricseed",
+			"effect": "MultiTurnAttack",
+			"duration": "SANDTOMB",
+			"animation": "sandtomb",
+			"stats": {
+				"def": 1,
+				"spd": 1,
+				"spe": 1
+			}
+		}
+	},
+	"icy": {
+		"naturePower": "icebeam",
+		"secretPower": "iceshard",
+		"mimicry": "Ice",
+		"statusMods": [
+			"acidarmor"
+		],
+		"moves": {
+			"scald": {
+				"mult": 0.5,
+				"msg": 1,
+				"counter": [
+					1,
+					1
+				],
+				"change": "watersurface",
+				"changeMsg": 3
+			},
+			"steameruption": {
+				"mult": 0.5,
+				"msg": 1,
+				"counter": [
+					1,
+					1
+				],
+				"change": "watersurface",
+				"changeMsg": 3
+			},
+			"heatwave": {
+				"counter": [
+					1,
+					2
+				],
+				"change": "watersurface",
+				"changeMsg": 1
+			},
+			"eruption": {
+				"counter": [
+					1,
+					2
+				],
+				"change": "watersurface",
+				"changeMsg": 1
+			},
+			"searingshot": {
+				"counter": [
+					1,
+					2
+				],
+				"change": "watersurface",
+				"changeMsg": 1
+			},
+			"flameburst": {
+				"counter": [
+					1,
+					2
+				],
+				"change": "watersurface",
+				"changeMsg": 1
+			},
+			"lavaplume": {
+				"counter": [
+					1,
+					2
+				],
+				"change": "watersurface",
+				"changeMsg": 1
+			},
+			"firepledge": {
+				"counter": [
+					1,
+					2
+				],
+				"change": "watersurface",
+				"changeMsg": 1
+			},
+			"mindblown": {
+				"counter": [
+					1,
+					2
+				],
+				"change": "watersurface",
+				"changeMsg": 1
+			},
+			"incinerate": {
+				"counter": [
+					1,
+					2
+				],
+				"change": "watersurface",
+				"changeMsg": 1
+			},
+			"infernooverdrive": {
+				"counter": [
+					1,
+					2
+				],
+				"change": "watersurface",
+				"changeMsg": 1
+			},
+			"earthquake": {
+				"effect": "iceSpikes",
+				"change": "indoor",
+				"changeMsg": 2
+			},
+			"bulldoze": {
+				"effect": "iceSpikes",
+				"change": "indoor",
+				"changeMsg": 2
+			},
+			"magnitude": {
+				"effect": "iceSpikes",
+				"change": "indoor",
+				"changeMsg": 2
+			},
+			"fissure": {
+				"effect": "iceSpikes",
+				"change": "indoor",
+				"changeMsg": 2
+			},
+			"tectonicrage": {
+				"effect": "iceSpikes",
+				"change": "indoor",
+				"changeMsg": 2
+			}
+		},
+		"types": {
+			"Ice": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"Fire": {
+				"mult": 0.5,
+				"msg": 2
+			},
+			"Rock": {
+				"type": "Ice"
+			}
+		},
+		"changeCond": {
+			"indoor": "backupIsWater",
+			"watersurface": "counterAbove1"
+		},
+		"seed": {
+			"item": "elementalseed",
+			"duration": 0,
+			"stats": {
+				"spe": 2
+			}
+		}
+	},
+	"rocky": {
+		"naturePower": "rocksmash",
+		"secretPower": "rockthrow",
+		"mimicry": "Rock",
+		"statusMods": [
+			"rockpolish"
+		],
+		"moves": {
+			"rocksmash": {
+				"mult": 2,
+				"msg": 2
+			},
+			"rockclimb": {
+				"mult": 1.5,
+				"type": "Rock",
+				"msg": 1
+			},
+			"strength": {
+				"mult": 1.5,
+				"type": "Rock",
+				"msg": 1
+			},
+			"magnitude": {
+				"mult": 1.5,
+				"type": "Rock",
+				"msg": 1
+			},
+			"earthquake": {
+				"mult": 1.5,
+				"type": "Rock",
+				"msg": 1
+			},
+			"bulldoze": {
+				"mult": 1.5,
+				"type": "Rock",
+				"msg": 1
+			},
+			"accelerock": {
+				"mult": 1.5,
+				"msg": 1
+			}
+		},
+		"types": {
+			"Rock": {
+				"mult": 1.5,
+				"msg": 1
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "telluricseed",
+			"duration": 0,
+			"stats": {
+				"def": 1
+			}
+		}
+	},
+	"forest": {
+		"naturePower": "woodhammer",
+		"secretPower": "woodhammer",
+		"mimicry": "Grass",
+		"statusMods": [
+			"stickyweb",
+			"defendorder",
+			"growth",
+			"strengthsap",
+			"healorder",
+			"naturesmadness",
+			"forestscurse"
+		],
+		"moves": {
+			"surf": {
+				"mult": 0.5,
+				"msg": 1
+			},
+			"muddywater": {
+				"mult": 0.5,
+				"msg": 1
+			},
+			"attackorder": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"electroweb": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"cut": {
+				"mult": 1.5,
+				"msg": 4
+			},
+			"heatwave": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"eruption": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"searingshot": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"flameburst": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"lavaplume": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"firepledge": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"mindblown": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"incinerate": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"infernooverdrive": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			}
+		},
+		"types": {
+			"Bug": {
+				"mult": 1.5,
+				"msg": 1,
+				"cond": "special"
+			},
+			"Grass": {
+				"mult": 1.5,
+				"msg": 2
+			}
+		},
+		"changeCond": {
+			"burning": "ignite"
+		},
+		"seed": {
+			"item": "telluricseed",
+			"effect": "Protect",
+			"duration": "SpikyShield",
+			"animation": "spikyshield",
+			"stats": {}
+		}
+	},
+	"superheated": {
+		"naturePower": "heatwave",
+		"secretPower": "flameburst",
+		"mimicry": "Fire",
+		"statusMods": [],
+		"moves": {
+			"surf": {
+				"mult": 0.5,
+				"effect": "accuracyDrop"
+			},
+			"muddywater": {
+				"mult": 0.5,
+				"effect": "accuracyDrop"
+			},
+			"waterpledge": {
+				"mult": 0.5,
+				"effect": "accuracyDrop"
+			},
+			"waterspout": {
+				"mult": 0.5,
+				"effect": "accuracyDrop"
+			},
+			"sparklingaria": {
+				"mult": 0.5,
+				"effect": "accuracyDrop"
+			},
+			"hydrovortex": {
+				"mult": 0.5,
+				"effect": "accuracyDrop"
+			},
+			"oceanicoperetta": {
+				"mult": 0.5,
+				"effect": "accuracyDrop"
+			},
+			"scald": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"steameruption": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"heatwave": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"eruption": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"searingshot": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"flameburst": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"lavaplume": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"firepledge": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"mindblown": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"incinerate": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"infernooverdrive": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"selfdestruct": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"explosion": {
+				"change": "burning",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"blizzard": {
+				"change": "indoor",
+				"changeMsg": 2
+			},
+			"glaciate": {
+				"change": "indoor",
+				"changeMsg": 2
+			},
+			"subzeroslammer": {
+				"change": "indoor",
+				"changeMsg": 2
+			}
+		},
+		"types": {
+			"Ice": {
+				"mult": 0.5,
+				"msg": 1
+			},
+			"Water": {
+				"mult": 0.9,
+				"msg": 1,
+				"cond": "notScaldOrSteamEruption"
+			},
+			"Fire": {
+				"mult": 1.1,
+				"msg": 2
+			}
+		},
+		"changeCond": {
+			"burning": "ignite"
+		},
+		"seed": {
+			"item": "telluricseed",
+			"effect": "ShellTrap",
+			"duration": true,
+			"animation": "shelltrap",
+			"stats": {
+				"def": 1
+			}
+		}
+	},
+	"factory": {
+		"naturePower": "geargrind",
+		"secretPower": "magnetbomb",
+		"mimicry": "Steel",
+		"statusMods": [
+			"autotomize",
+			"irondefense",
+			"metalsound",
+			"shiftgear",
+			"magnetrise",
+			"gearup"
+		],
+		"moves": {
+			"flashcannon": {
+				"mult": 2,
+				"msg": 2
+			},
+			"gyroball": {
+				"mult": 2,
+				"msg": 2
+			},
+			"magnetbomb": {
+				"mult": 2,
+				"msg": 2
+			},
+			"geargrind": {
+				"mult": 2,
+				"msg": 2
+			},
+			"steamroller": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"technoblast": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"earthquake": {
+				"change": "shortcircuit",
+				"changeMsg": 1
+			},
+			"bulldoze": {
+				"change": "shortcircuit",
+				"changeMsg": 1
+			},
+			"magnitude": {
+				"change": "shortcircuit",
+				"changeMsg": 1
+			},
+			"fissure": {
+				"change": "shortcircuit",
+				"changeMsg": 1
+			},
+			"tectonicrage": {
+				"change": "shortcircuit",
+				"changeMsg": 1
+			},
+			"selfdestruct": {
+				"change": "shortcircuit",
+				"changeMsg": 1
+			},
+			"explosion": {
+				"change": "shortcircuit",
+				"changeMsg": 1
+			},
+			"lightthatburnsthesky": {
+				"change": "shortcircuit",
+				"changeMsg": 2
+			},
+			"discharge": {
+				"change": "shortcircuit",
+				"changeMsg": 3
+			}
+		},
+		"types": {
+			"Electric": {
+				"mult": 1.5,
+				"msg": 1
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "syntheticseed",
+			"effect": "LaserFocus",
+			"duration": 2,
+			"animation": "laserfocus",
+			"stats": {
+				"spa": 1
+			}
+		}
+	},
+	"shortcircuit": {
+		"naturePower": "discharge",
+		"secretPower": "electroball",
+		"mimicry": "Electric",
+		"statusMods": [
+			"flash",
+			"metalsound",
+			"magnetrise"
+		],
+		"moves": {
+			"dazzlinggleam": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"surf": {
+				"mult": 1.5,
+				"type": "Electric",
+				"msg": 2
+			},
+			"muddywater": {
+				"mult": 1.5,
+				"type": "Electric",
+				"msg": 2
+			},
+			"magnetbomb": {
+				"mult": 1.5,
+				"type": "Electric",
+				"msg": 2
+			},
+			"gyroball": {
+				"mult": 1.5,
+				"type": "Electric",
+				"msg": 2
+			},
+			"flashcannon": {
+				"mult": 1.5,
+				"type": "Electric",
+				"msg": 2
+			},
+			"geargrind": {
+				"mult": 1.5,
+				"type": "Electric",
+				"msg": 2
+			},
+			"hydrovortex": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"darkpulse": {
+				"mult": 1.3,
+				"msg": 3
+			},
+			"nightdaze": {
+				"mult": 1.3,
+				"msg": 3
+			},
+			"nightslash": {
+				"mult": 1.3,
+				"msg": 3
+			},
+			"shadowball": {
+				"mult": 1.3,
+				"msg": 3
+			},
+			"shadowpunch": {
+				"mult": 1.3,
+				"msg": 3
+			},
+			"shadowclaw": {
+				"mult": 1.3,
+				"msg": 3
+			},
+			"shadowsneak": {
+				"mult": 1.3,
+				"msg": 3
+			},
+			"shadowforce": {
+				"mult": 1.3,
+				"msg": 3
+			},
+			"shadowbone": {
+				"mult": 1.3,
+				"msg": 3
+			},
+			"lightthatburnsthesky": {
+				"mult": 0.5,
+				"msg": 4
+			},
+			"zapcannon": {
+				"acc": 80
+			},
+			"paraboliccharge": {
+				"change": "factory",
+				"changeMsg": 1
+			},
+			"wildcharge": {
+				"change": "factory",
+				"changeMsg": 1
+			},
+			"chargebeam": {
+				"change": "factory",
+				"changeMsg": 1
+			},
+			"iondeluge": {
+				"change": "factory",
+				"changeMsg": 1
+			},
+			"gigavolthavoc": {
+				"change": "factory",
+				"changeMsg": 1
+			},
+			"discharge": {
+				"change": "factory",
+				"changeMsg": 1
+			}
+		},
+		"types": {},
+		"changeCond": {},
+		"seed": {
+			"item": "syntheticseed",
+			"effect": "MagnetRise",
+			"duration": 5,
+			"animation": "magnetrise",
+			"stats": {
+				"spd": 1
+			}
+		}
+	},
+	"wasteland": {
+		"naturePower": "gunkshot",
+		"secretPower": "gunkshot",
+		"mimicry": "Poison",
+		"statusMods": [
+			"swallow",
+			"stealthrock",
+			"spikes",
+			"toxicspikes",
+			"stickyweb"
+		],
+		"moves": {
+			"spitup": {
+				"mult": 2,
+				"msg": 4
+			},
+			"vinewhip": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"powerwhip": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"mudslap": {
+				"mult": 1.5,
+				"type": "Poison",
+				"msg": 2
+			},
+			"mudbomb": {
+				"mult": 1.5,
+				"type": "Poison",
+				"msg": 2
+			},
+			"mudshot": {
+				"mult": 1.5,
+				"type": "Poison",
+				"msg": 2
+			},
+			"earthquake": {
+				"mult": 0.25,
+				"msg": 3
+			},
+			"magnitude": {
+				"mult": 0.25,
+				"msg": 3
+			},
+			"bulldoze": {
+				"mult": 0.25,
+				"msg": 3
+			},
+			"octazooka": {
+				"mult": 1.2,
+				"msg": 5
+			},
+			"sludge": {
+				"mult": 1.2,
+				"msg": 5
+			},
+			"gunkshot": {
+				"mult": 1.2,
+				"msg": 5
+			},
+			"sludgewave": {
+				"mult": 1.2,
+				"msg": 5
+			},
+			"sludgebomb": {
+				"mult": 1.2,
+				"msg": 5
+			}
+		},
+		"types": {},
+		"changeCond": {},
+		"seed": {
+			"item": "telluricseed",
+			"duration": 0,
+			"stats": {
+				"atk": 1,
+				"spa": 1
+			}
+		}
+	},
+	"ashenbeach": {
+		"naturePower": "meditate",
+		"secretPower": "mudshot",
+		"mimicry": "Ground",
+		"statusMods": [
+			"calmmind",
+			"kinesis",
+			"meditate",
+			"sandattack",
+			"sandstorm",
+			"focusenergy",
+			"shoreup"
+		],
+		"moves": {
+			"mudslap": {
+				"mult": 2,
+				"msg": 4
+			},
+			"mudshot": {
+				"mult": 2,
+				"msg": 4
+			},
+			"mudbomb": {
+				"mult": 2,
+				"msg": 4
+			},
+			"sandtomb": {
+				"mult": 2,
+				"msg": 4
+			},
+			"hiddenpower": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"strength": {
+				"mult": 1.5,
+				"type": "Psychic",
+				"msg": 1
+			},
+			"landswrath": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"thousandwaves": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"surf": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"muddywater": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"clangoroussoulblaze": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"storedpower": {
+				"mult": 1.3,
+				"msg": 5
+			},
+			"zenheadbutt": {
+				"mult": 1.3,
+				"msg": 5
+			},
+			"focusblast": {
+				"mult": 1.3,
+				"acc": 90,
+				"msg": 5
+			},
+			"aurasphere": {
+				"mult": 1.3,
+				"msg": 5
+			},
+			"psychic": {
+				"mult": 1.2,
+				"msg": 6
+			},
+			"leaftornado": {
+				"effect": "accuracyDrop"
+			},
+			"firespin": {
+				"effect": "accuracyDrop"
+			},
+			"twister": {
+				"effect": "accuracyDrop"
+			},
+			"razorwind": {
+				"effect": "accuracyDrop"
+			},
+			"whirlpool": {
+				"effect": "accuracyDrop"
+			}
+		},
+		"types": {
+			"Flying": {
+				"effect": "accuracyDrop",
+				"cond": "special"
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "telluricseed",
+			"effect": "FocusEnergy",
+			"duration": 3,
+			"animation": "focusenergy",
+			"stats": {}
+		}
+	},
+	"watersurface": {
+		"naturePower": "whirlpool",
+		"secretPower": "aquajet",
+		"mimicry": "Water",
+		"statusMods": [
+			"splash",
+			"aquaring"
+		],
+		"moves": {
+			"spikes": {
+				"mult": 0,
+				"msg": 3
+			},
+			"toxicspikes": {
+				"mult": 0,
+				"msg": 3
+			},
+			"surf": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"muddywater": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"whirlpool": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"dive": {
+				"mult": 1.5,
+				"msg": 1,
+				"change": "underwater",
+				"changeMsg": 2
+			},
+			"hydrovortex": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"sludgewave": {
+				"msg": 2,
+				"counter": [
+					1,
+					1
+				],
+				"change": "murkwatersurface",
+				"changeMsg": 4
+			},
+			"aciddownpour": {
+				"counter": [
+					1,
+					2
+				],
+				"change": "murkwatersurface",
+				"changeMsg": 4
+			},
+			"gravity": {
+				"change": "underwater",
+				"changeMsg": 1
+			},
+			"blizzard": {
+				"change": "icy",
+				"changeMsg": 3,
+				"keepBackup": true
+			},
+			"glaciate": {
+				"change": "icy",
+				"changeMsg": 3,
+				"keepBackup": true
+			},
+			"subzeroslammer": {
+				"change": "icy",
+				"changeMsg": 3,
+				"keepBackup": true
+			}
+		},
+		"types": {
+			"Ground": {
+				"mult": 0,
+				"msg": 4
+			},
+			"Water": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"Electric": {
+				"mult": 1.5,
+				"msg": 1,
+				"cond": "targetGrounded"
+			},
+			"Fire": {
+				"mult": 0.5,
+				"msg": 3,
+				"cond": "targetGrounded"
+			}
+		},
+		"changeCond": {
+			"murkwatersurface": "counterAbove1"
+		},
+		"seed": {
+			"item": "elementalseed",
+			"effect": "AquaRing",
+			"duration": true,
+			"animation": "aquaring",
+			"stats": {
+				"spd": 1
+			}
+		}
+	},
+	"underwater": {
+		"naturePower": "waterpulse",
+		"secretPower": "aquatail",
+		"mimicry": "Water",
+		"statusMods": [
+			"aquaring"
+		],
+		"moves": {
+			"sunnyday": {
+				"mult": 0,
+				"msg": 4
+			},
+			"hail": {
+				"mult": 0,
+				"msg": 4
+			},
+			"sandstorm": {
+				"mult": 0,
+				"msg": 4
+			},
+			"raindance": {
+				"mult": 0,
+				"msg": 4
+			},
+			"anchorshot": {
+				"mult": 2,
+				"msg": 2
+			},
+			"waterpulse": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"sludgewave": {
+				"msg": 3,
+				"counter": [
+					1,
+					1
+				],
+				"change": "murkwatersurface",
+				"changeMsg": 2,
+				"changeEffect": "waterPollution"
+			},
+			"aciddownpour": {
+				"counter": [
+					1,
+					2
+				],
+				"change": "murkwatersurface",
+				"changeMsg": 2,
+				"changeEffect": "waterPollution"
+			},
+			"dive": {
+				"change": "watersurface",
+				"changeMsg": 1
+			},
+			"skydrop": {
+				"change": "watersurface",
+				"changeMsg": 1
+			},
+			"fly": {
+				"change": "watersurface",
+				"changeMsg": 1
+			},
+			"bounce": {
+				"change": "watersurface",
+				"changeMsg": 1
+			}
+		},
+		"types": {
+			"Fire": {
+				"mult": 0,
+				"msg": 3
+			},
+			"Electric": {
+				"mult": 2,
+				"msg": 2
+			},
+			"Water": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"Ground": {
+				"type": "Water"
+			}
+		},
+		"changeCond": {
+			"murkwatersurface": "counterAbove1"
+		},
+		"seed": {
+			"item": "elementalseed",
+			"duration": 0,
+			"animation": "soak",
+			"stats": {
+				"spe": 1
+			}
+		}
+	},
+	"cave": {
+		"naturePower": "rocktomb",
+		"secretPower": "rockwrecker",
+		"mimicry": "Rock",
+		"statusMods": [
+			"stealthrock"
+		],
+		"moves": {
+			"skydrop": {
+				"mult": 0
+			},
+			"rocktomb": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"earthquake": {
+				"effect": "caveCollapse"
+			},
+			"bulldoze": {
+				"effect": "caveCollapse"
+			},
+			"magnitude": {
+				"effect": "caveCollapse"
+			},
+			"fissure": {
+				"effect": "caveCollapse"
+			},
+			"tectonicrage": {
+				"effect": "caveCollapse"
+			},
+			"continentalcrush": {
+				"effect": "caveCollapse"
+			},
+			"powergem": {
+				"change": "crystalcavern",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"diamondstorm": {
+				"change": "crystalcavern",
+				"changeMsg": 1,
+				"keepBackup": true
+			}
+		},
+		"types": {
+			"Rock": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"Flying": {
+				"mult": 0.5,
+				"msg": 1,
+				"cond": "nonContact"
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "telluricseed",
+			"duration": 0,
+			"stats": {
+				"def": 2
+			}
+		}
+	},
+	"glitch": {
+		"naturePower": "metronome",
+		"secretPower": "technoblast",
+		"mimicry": "Qmarks",
+		"statusMods": [
+			"metronome"
+		],
+		"moves": {
+			"blizzard": {
+				"acc": 90
+			}
+		},
+		"types": {
+			"Psychic": {
+				"mult": 1.2,
+				"msg": 1
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "syntheticseed",
+			"duration": 0,
+			"animation": "amnesia",
+			"stats": {
+				"def": 1
+			}
+		}
+	},
+	"crystalcavern": {
+		"naturePower": "powergem",
+		"secretPower": "powergem",
+		"mimicry": "Qmarks",
+		"statusMods": [
+			"rockpolish",
+			"stealthrock"
+		],
+		"moves": {
+			"aurorabeam": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"signalbeam": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"flashcannon": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"lusterpurge": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"dazzlinggleam": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"mirrorshot": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"technoblast": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"doomdummy": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"moongeistbeam": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"photongeyser": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"menacingmoonrazemaelstrom": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"powergem": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"diamondstorm": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"ancientpower": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"judgment": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"rocksmash": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"rocktomb": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"strength": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"rockclimb": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"multiattack": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"earthquake": {
+				"change": "cave",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"bulldoze": {
+				"change": "cave",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"magnitude": {
+				"change": "cave",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"fissure": {
+				"change": "cave",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"tectonicrage": {
+				"change": "cave",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"darkpulse": {
+				"change": "darkcrystalcavern",
+				"changeMsg": 2,
+				"keepBackup": true
+			},
+			"darkvoid": {
+				"change": "darkcrystalcavern",
+				"changeMsg": 2,
+				"keepBackup": true
+			},
+			"nightdaze": {
+				"change": "darkcrystalcavern",
+				"changeMsg": 2,
+				"keepBackup": true
+			},
+			"lightthatburnsthesky": {
+				"change": "darkcrystalcavern",
+				"changeMsg": 3
+			}
+		},
+		"types": {
+			"Rock": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"Dragon": {
+				"mult": 1.5,
+				"msg": 2
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "magicalseed",
+			"effect": "MagicCoat",
+			"duration": true,
+			"animation": "magiccoat",
+			"stats": {
+				"spa": 1
+			}
+		}
+	},
+	"murkwatersurface": {
+		"naturePower": "sludgewave",
+		"secretPower": "sludgebomb",
+		"mimicry": "Poison",
+		"statusMods": [
+			"acidarmor"
+		],
+		"moves": {
+			"spikes": {
+				"mult": 0,
+				"msg": 3
+			},
+			"toxicspikes": {
+				"mult": 0,
+				"msg": 3
+			},
+			"mudbomb": {
+				"mult": 1.5,
+				"type": "Poison",
+				"msg": 1
+			},
+			"mudslap": {
+				"mult": 1.5,
+				"type": "Poison",
+				"msg": 1
+			},
+			"mudshot": {
+				"mult": 1.5,
+				"type": "Poison",
+				"msg": 1
+			},
+			"smackdown": {
+				"mult": 1.5,
+				"type": "Poison",
+				"msg": 1
+			},
+			"acid": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"acidspray": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"brine": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"thousandwaves": {
+				"mult": 1.5,
+				"type": "Poison",
+				"msg": 1
+			},
+			"sludgewave": {
+				"type": "Water"
+			},
+			"whirlpool": {
+				"change": "watersurface",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"blizzard": {
+				"change": "icy",
+				"changeMsg": 2,
+				"keepBackup": true
+			},
+			"glaciate": {
+				"change": "icy",
+				"changeMsg": 2,
+				"keepBackup": true
+			},
+			"subzeroslammer": {
+				"change": "icy",
+				"changeMsg": 2,
+				"keepBackup": true
+			}
+		},
+		"types": {
+			"Ground": {
+				"mult": 0,
+				"msg": 3
+			},
+			"Water": {
+				"mult": 1.5,
+				"type": "Poison",
+				"msg": 1
+			},
+			"Poison": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"Electric": {
+				"mult": 1.3,
+				"msg": 2,
+				"cond": "targetGrounded"
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "elementalseed",
+			"effect": "AquaRing",
+			"duration": true,
+			"animation": "aquaring",
+			"stats": {
+				"spe": 1
+			}
+		}
+	},
+	"mountain": {
+		"naturePower": "rockslide",
+		"secretPower": "rockblast",
+		"mimicry": "Rock",
+		"statusMods": [
+			"tailwind",
+			"sunnyday"
+		],
+		"moves": {
+			"vitalthrow": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"circlethrow": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"stormthrow": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"ominouswind": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"icywind": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"silverwind": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"twister": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"razorwind": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"fairywind": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"thunder": {
+				"mult": 1.5,
+				"acc": 0,
+				"msg": 3
+			},
+			"eruption": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"avalanche": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"hypervoice": {
+				"mult": 1.5,
+				"msg": 4
+			},
+			"blizzard": {
+				"change": "snowymountain",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"glaciate": {
+				"change": "snowymountain",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"subzeroslammer": {
+				"change": "snowymountain",
+				"changeMsg": 1,
+				"keepBackup": true
+			}
+		},
+		"types": {
+			"Rock": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"Flying": {
+				"mult": 1.5,
+				"msg": 2
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "telluricseed",
+			"duration": 0,
+			"stats": {
+				"atk": 2,
+				"accuracy": -1
+			}
+		}
+	},
+	"snowymountain": {
+		"naturePower": "avalanche",
+		"secretPower": "iceball",
+		"mimicry": "Ice",
+		"statusMods": [
+			"tailwind",
+			"sunnyday",
+			"hail"
+		],
+		"moves": {
+			"icywind": {
+				"mult": 2,
+				"msg": 5
+			},
+			"vitalthrow": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"circlethrow": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"stormthrow": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"ominouswind": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"silverwind": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"twister": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"razorwind": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"fairywind": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"avalanche": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"powdersnow": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"hypervoice": {
+				"mult": 1.5,
+				"msg": 6
+			},
+			"glaciate": {
+				"mult": 1.5
+			},
+			"scald": {
+				"mult": 0.5,
+				"msg": 4
+			},
+			"steameruption": {
+				"mult": 0.5,
+				"msg": 4
+			},
+			"thunder": {
+				"acc": 0
+			},
+			"heatwave": {
+				"change": "mountain",
+				"changeMsg": 1
+			},
+			"eruption": {
+				"change": "mountain",
+				"changeMsg": 1
+			},
+			"searingshot": {
+				"change": "mountain",
+				"changeMsg": 1
+			},
+			"flameburst": {
+				"change": "mountain",
+				"changeMsg": 1
+			},
+			"lavaplume": {
+				"change": "mountain",
+				"changeMsg": 1
+			},
+			"firepledge": {
+				"change": "mountain",
+				"changeMsg": 1
+			},
+			"mindblown": {
+				"change": "mountain",
+				"changeMsg": 1
+			},
+			"incinerate": {
+				"change": "mountain",
+				"changeMsg": 1
+			},
+			"infernooverdrive": {
+				"change": "mountain",
+				"changeMsg": 1
+			}
+		},
+		"types": {
+			"Rock": {
+				"mult": 1.5,
+				"type": "Ice",
+				"msg": 1
+			},
+			"Ice": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"Flying": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"Fire": {
+				"mult": 0.5,
+				"msg": 3
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "telluricseed",
+			"duration": 0,
+			"stats": {
+				"spa": 2,
+				"accuracy": -1
+			}
+		}
+	},
+	"holy": {
+		"naturePower": "judgment",
+		"secretPower": "dazzlinggleam",
+		"mimicry": "Normal",
+		"statusMods": [
+			"wish",
+			"miracleeye",
+			"cosmicpower",
+			"naturesmadness"
+		],
+		"moves": {
+			"psystrike": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"aeroblast": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"originpulse": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"doomdummy": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"mistball": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"crushgrip": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"lusterpurge": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"secretsword": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"psychoboost": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"relicsong": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"spacialrend": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"hyperspacehole": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"roaroftime": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"landswrath": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"precipiceblades": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"dragonascent": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"moongeistbeam": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"sunsteelstrike": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"prismaticlaser": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"fleurcannon": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"diamondstorm": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"genesissupernova": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"searingsunrazesmash": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"menacingmoonrazemaelstrom": {
+				"mult": 1.3,
+				"msg": 1
+			},
+			"mysticalfire": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"magicalleaf": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"ancientpower": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"judgment": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"sacredfire": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"extremespeed": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"sacredsword": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"return": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"lightthatburnsthesky": {
+				"change": "indoor",
+				"changeMsg": 1
+			}
+		},
+		"types": {
+			"Fairy": {
+				"mult": 1.5,
+				"msg": 1,
+				"cond": "special"
+			},
+			"Normal": {
+				"mult": 1.5,
+				"msg": 1,
+				"cond": "special"
+			},
+			"Psychic": {
+				"mult": 1.2,
+				"msg": 2
+			},
+			"Dragon": {
+				"mult": 1.2,
+				"msg": 2
+			},
+			"Ghost": {
+				"mult": 0.5,
+				"msg": 3
+			},
+			"Dark": {
+				"mult": 0.5,
+				"msg": 3,
+				"cond": "special"
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "magicalseed",
+			"effect": "MagicCoat",
+			"duration": true,
+			"animation": "magiccoat",
+			"stats": {
+				"spa": 1
+			}
+		}
+	},
+	"mirror": {
+		"naturePower": "mirrorshot",
+		"secretPower": "mirrorshot",
+		"mimicry": "Steel",
+		"statusMods": [
+			"lightscreen",
+			"auroraveil",
+			"reflect",
+			"mirrormove",
+			"mirrorcoat",
+			"doubleteam",
+			"flash"
+		],
+		"moves": {
+			"mirrorshot": {
+				"mult": 2,
+				"acc": 0,
+				"msg": 2
+			},
+			"aurorabeam": {
+				"mult": 1.5,
+				"acc": 0,
+				"msg": 1
+			},
+			"signalbeam": {
+				"mult": 1.5,
+				"acc": 0,
+				"msg": 1
+			},
+			"flashcannon": {
+				"mult": 1.5,
+				"acc": 0,
+				"msg": 1
+			},
+			"lusterpurge": {
+				"mult": 1.5,
+				"acc": 0,
+				"msg": 1
+			},
+			"dazzlinggleam": {
+				"mult": 1.5,
+				"acc": 0,
+				"msg": 1
+			},
+			"technoblast": {
+				"mult": 1.5,
+				"acc": 0,
+				"msg": 1
+			},
+			"doomdummy": {
+				"mult": 1.5,
+				"acc": 0,
+				"msg": 1
+			},
+			"prismaticlaser": {
+				"mult": 1.5,
+				"acc": 0,
+				"msg": 1
+			},
+			"photongeyser": {
+				"mult": 1.5,
+				"acc": 0,
+				"msg": 1
+			},
+			"lightthatburnsthesky": {
+				"mult": 1.5,
+				"acc": 0,
+				"msg": 1
+			},
+			"earthquake": {
+				"change": "indoor",
+				"changeMsg": 1,
+				"changeEffect": "mirrorShatter"
+			},
+			"bulldoze": {
+				"change": "indoor",
+				"changeMsg": 1,
+				"changeEffect": "mirrorShatter"
+			},
+			"magnitude": {
+				"change": "indoor",
+				"changeMsg": 1,
+				"changeEffect": "mirrorShatter"
+			},
+			"fissure": {
+				"change": "indoor",
+				"changeMsg": 1,
+				"changeEffect": "mirrorShatter"
+			},
+			"tectonicrage": {
+				"change": "indoor",
+				"changeMsg": 1,
+				"changeEffect": "mirrorShatter"
+			},
+			"boomburst": {
+				"change": "indoor",
+				"changeMsg": 1,
+				"changeEffect": "mirrorShatter"
+			},
+			"hypervoice": {
+				"change": "indoor",
+				"changeMsg": 1,
+				"changeEffect": "mirrorShatter"
+			},
+			"selfdestruct": {
+				"change": "indoor",
+				"changeMsg": 1,
+				"changeEffect": "mirrorShatter"
+			},
+			"explosion": {
+				"change": "indoor",
+				"changeMsg": 1,
+				"changeEffect": "mirrorShatter"
+			}
+		},
+		"types": {},
+		"changeCond": {},
+		"seed": {
+			"item": "syntheticseed",
+			"effect": "MagicCoat",
+			"duration": true,
+			"animation": "magiccoat",
+			"stats": {
+				"evasion": 1
+			}
+		}
+	},
+	"fairytale": {
+		"naturePower": "secretsword",
+		"secretPower": "slash",
+		"mimicry": "Fairy",
+		"statusMods": [
+			"kingsshield",
+			"spikyshield",
+			"craftyshield",
+			"flowershield",
+			"acidarmor",
+			"nobleroar",
+			"swordsdance",
+			"wish",
+			"healingwish",
+			"miracleeye",
+			"forestscurse",
+			"floralhealing"
+		],
+		"moves": {
+			"drainingkiss": {
+				"mult": 2,
+				"msg": 3
+			},
+			"nightslash": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"leafblade": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"psychocut": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"smartstrike": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"airslash": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"solarblade": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"magicalleaf": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"mysticalfire": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"ancientpower": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"relicsong": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"sparklingaria": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"moongeistbeam": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"fleurcannon": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"oceanicoperetta": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"menacingmoonrazemaelstrom": {
+				"mult": 1.5,
+				"msg": 2
+			}
+		},
+		"types": {
+			"Dragon": {
+				"mult": 2,
+				"msg": 3
+			},
+			"Steel": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"Fairy": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"Fire": {
+				"type": "Dragon"
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "magicalseed",
+			"effect": "Protect",
+			"duration": "KingsShield",
+			"animation": "kingsshield",
+			"stats": {}
+		}
+	},
+	"dragonsden": {
+		"naturePower": "dragonpulse",
+		"secretPower": "dragonpulse",
+		"mimicry": "Dragon",
+		"statusMods": [
+			"dragondance",
+			"nobleroar"
+		],
+		"moves": {
+			"smackdown": {
+				"mult": 2,
+				"type": "Fire",
+				"msg": 3
+			},
+			"thousandarrows": {
+				"mult": 2,
+				"type": "Fire",
+				"msg": 3
+			},
+			"dragonascent": {
+				"mult": 2,
+				"msg": 4
+			},
+			"payday": {
+				"mult": 2,
+				"msg": 5
+			},
+			"tectonicrage": {
+				"mult": 2,
+				"type": "Fire"
+			},
+			"continentalcrush": {
+				"mult": 2,
+				"type": "Fire"
+			},
+			"megakick": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"magmastorm": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"lavaplume": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"muddywater": {
+				"counter": [
+					1,
+					1
+				],
+				"change": "cave",
+				"changeMsg": 2
+			},
+			"surf": {
+				"counter": [
+					1,
+					1
+				],
+				"change": "cave",
+				"changeMsg": 2
+			},
+			"sparklingaria": {
+				"counter": [
+					1,
+					1
+				],
+				"change": "cave",
+				"changeMsg": 2
+			},
+			"glaciate": {
+				"counter": [
+					1,
+					2
+				],
+				"change": "cave",
+				"changeMsg": 1
+			},
+			"subzeroslammer": {
+				"counter": [
+					1,
+					2
+				],
+				"change": "cave",
+				"changeMsg": 1
+			},
+			"oceanicoperetta": {
+				"counter": [
+					1,
+					2
+				],
+				"change": "cave",
+				"changeMsg": 2
+			},
+			"hydrovortex": {
+				"counter": [
+					1,
+					2
+				],
+				"change": "cave",
+				"changeMsg": 2
+			}
+		},
+		"types": {
+			"Dragon": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"Fire": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"Ice": {
+				"mult": 0.5,
+				"msg": 3
+			},
+			"Water": {
+				"mult": 0.5,
+				"msg": 3
+			}
+		},
+		"changeCond": {
+			"cave": "counterAbove1"
+		},
+		"seed": {
+			"item": "elementalseed",
+			"effect": "FlashFire",
+			"duration": true,
+			"stats": {
+				"spa": 1
+			}
+		}
+	},
+	"flowergarden1": {
+		"naturePower": "growth",
+		"secretPower": "sweetscent",
+		"mimicry": "Grass",
+		"statusMods": [
+			"growth",
+			"rototiller",
+			"raindance",
+			"watersport",
+			"sunnyday",
+			"flowershield",
+			"sweetscent",
+			"ingrain",
+			"floralhealing"
+		],
+		"moves": {
+			"growth": {
+				"change": "flowergarden2",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"flowershield": {
+				"change": "flowergarden2",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"raindance": {
+				"change": "flowergarden2",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"sunnyday": {
+				"change": "flowergarden2",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"rototiller": {
+				"change": "flowergarden2",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"ingrain": {
+				"change": "flowergarden2",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"watersport": {
+				"change": "flowergarden2",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"bloomdoom": {
+				"change": "flowergarden2",
+				"keepBackup": true
+			}
+		},
+		"types": {},
+		"changeCond": {},
+		"seed": {
+			"item": "syntheticseed",
+			"effect": "Ingrain",
+			"duration": true,
+			"animation": "ingrain",
+			"stats": {
+				"spd": 1
+			}
+		}
+	},
+	"flowergarden2": {
+		"naturePower": "growth",
+		"secretPower": "petalblizzard",
+		"mimicry": "Grass",
+		"statusMods": [
+			"growth",
+			"rototiller",
+			"raindance",
+			"watersport",
+			"sunnyday",
+			"flowershield",
+			"sweetscent",
+			"ingrain",
+			"floralhealing"
+		],
+		"moves": {
+			"cut": {
+				"mult": 1.5,
+				"msg": 1,
+				"change": "flowergarden1",
+				"changeMsg": 1
+			},
+			"growth": {
+				"change": "flowergarden3",
+				"changeMsg": 2
+			},
+			"flowershield": {
+				"change": "flowergarden3",
+				"changeMsg": 2
+			},
+			"raindance": {
+				"change": "flowergarden3",
+				"changeMsg": 2
+			},
+			"sunnyday": {
+				"change": "flowergarden3",
+				"changeMsg": 2
+			},
+			"rototiller": {
+				"change": "flowergarden3",
+				"changeMsg": 2
+			},
+			"ingrain": {
+				"change": "flowergarden3",
+				"changeMsg": 2
+			},
+			"watersport": {
+				"change": "flowergarden3",
+				"changeMsg": 2
+			},
+			"bloomdoom": {
+				"change": "flowergarden3"
+			},
+			"xscissor": {
+				"change": "flowergarden1",
+				"changeMsg": 1
+			},
+			"aciddownpour": {
+				"change": "flowergarden1",
+				"changeMsg": 3
+			}
+		},
+		"types": {
+			"Grass": {
+				"mult": 1.1,
+				"msg": 1
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "syntheticseed",
+			"effect": "Ingrain",
+			"duration": true,
+			"animation": "ingrain",
+			"stats": {
+				"spd": 1
+			}
+		}
+	},
+	"flowergarden3": {
+		"naturePower": "growth",
+		"secretPower": "petalblizzard",
+		"mimicry": "Grass",
+		"statusMods": [
+			"growth",
+			"rototiller",
+			"raindance",
+			"watersport",
+			"sunnyday",
+			"flowershield",
+			"sweetscent",
+			"ingrain",
+			"floralhealing"
+		],
+		"moves": {
+			"cut": {
+				"mult": 1.5,
+				"msg": 1,
+				"change": "flowergarden2",
+				"changeMsg": 2
+			},
+			"petalblizzard": {
+				"mult": 1.2,
+				"msg": 2
+			},
+			"petaldance": {
+				"mult": 1.2,
+				"msg": 2
+			},
+			"fleurcannon": {
+				"mult": 1.2,
+				"msg": 2
+			},
+			"growth": {
+				"change": "flowergarden4",
+				"changeMsg": 3
+			},
+			"flowershield": {
+				"change": "flowergarden4",
+				"changeMsg": 3
+			},
+			"raindance": {
+				"change": "flowergarden4",
+				"changeMsg": 3
+			},
+			"sunnyday": {
+				"change": "flowergarden4",
+				"changeMsg": 3
+			},
+			"rototiller": {
+				"change": "flowergarden4",
+				"changeMsg": 3
+			},
+			"ingrain": {
+				"change": "flowergarden4",
+				"changeMsg": 3
+			},
+			"watersport": {
+				"change": "flowergarden4",
+				"changeMsg": 3
+			},
+			"bloomdoom": {
+				"change": "flowergarden4"
+			},
+			"xscissor": {
+				"change": "flowergarden2",
+				"changeMsg": 2
+			},
+			"aciddownpour": {
+				"change": "flowergarden1",
+				"changeMsg": 4
+			},
+			"heatwave": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"eruption": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"searingshot": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"flameburst": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"lavaplume": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"firepledge": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"mindblown": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"incinerate": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"infernooverdrive": {
+				"change": "burning",
+				"changeMsg": 1
+			}
+		},
+		"types": {
+			"Fire": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"Bug": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"Grass": {
+				"mult": 1.3,
+				"msg": 1
+			}
+		},
+		"changeCond": {
+			"burning": "ignite"
+		},
+		"seed": {
+			"item": "syntheticseed",
+			"effect": "Ingrain",
+			"duration": true,
+			"animation": "ingrain",
+			"stats": {
+				"spd": 1
+			}
+		}
+	},
+	"flowergarden4": {
+		"naturePower": "growth",
+		"secretPower": "petalblizzard",
+		"mimicry": "Grass",
+		"statusMods": [
+			"growth",
+			"rototiller",
+			"raindance",
+			"watersport",
+			"sunnyday",
+			"flowershield",
+			"sweetscent",
+			"ingrain",
+			"floralhealing"
+		],
+		"moves": {
+			"cut": {
+				"mult": 1.5,
+				"msg": 1,
+				"change": "flowergarden3",
+				"changeMsg": 2
+			},
+			"petalblizzard": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"petaldance": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"fleurcannon": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"growth": {
+				"change": "flowergarden5",
+				"changeMsg": 3
+			},
+			"flowershield": {
+				"change": "flowergarden5",
+				"changeMsg": 3
+			},
+			"raindance": {
+				"change": "flowergarden5",
+				"changeMsg": 3
+			},
+			"sunnyday": {
+				"change": "flowergarden5",
+				"changeMsg": 3
+			},
+			"rototiller": {
+				"change": "flowergarden5",
+				"changeMsg": 3
+			},
+			"ingrain": {
+				"change": "flowergarden5",
+				"changeMsg": 3
+			},
+			"watersport": {
+				"change": "flowergarden5",
+				"changeMsg": 3
+			},
+			"bloomdoom": {
+				"change": "flowergarden5"
+			},
+			"xscissor": {
+				"change": "flowergarden3",
+				"changeMsg": 2
+			},
+			"aciddownpour": {
+				"change": "flowergarden1",
+				"changeMsg": 4
+			},
+			"heatwave": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"eruption": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"searingshot": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"flameburst": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"lavaplume": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"firepledge": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"mindblown": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"incinerate": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"infernooverdrive": {
+				"change": "burning",
+				"changeMsg": 1
+			}
+		},
+		"types": {
+			"Bug": {
+				"mult": 2,
+				"msg": 2
+			},
+			"Fire": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"Grass": {
+				"mult": 1.5,
+				"msg": 1
+			}
+		},
+		"changeCond": {
+			"burning": "ignite"
+		},
+		"seed": {
+			"item": "syntheticseed",
+			"effect": "Ingrain",
+			"duration": true,
+			"animation": "ingrain",
+			"stats": {
+				"spd": 1
+			}
+		}
+	},
+	"flowergarden5": {
+		"naturePower": "petalblizzard",
+		"secretPower": "petaldance",
+		"mimicry": "Grass",
+		"statusMods": [
+			"growth",
+			"rototiller",
+			"raindance",
+			"watersport",
+			"sunnyday",
+			"flowershield",
+			"sweetscent",
+			"ingrain",
+			"floralhealing"
+		],
+		"moves": {
+			"cut": {
+				"mult": 1.5,
+				"msg": 1,
+				"change": "flowergarden4",
+				"changeMsg": 2
+			},
+			"petalblizzard": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"petaldance": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"fleurcannon": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"xscissor": {
+				"change": "flowergarden4",
+				"changeMsg": 2
+			},
+			"aciddownpour": {
+				"change": "flowergarden1",
+				"changeMsg": 3
+			},
+			"heatwave": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"eruption": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"searingshot": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"flameburst": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"lavaplume": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"firepledge": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"mindblown": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"incinerate": {
+				"change": "burning",
+				"changeMsg": 1
+			},
+			"infernooverdrive": {
+				"change": "burning",
+				"changeMsg": 1
+			}
+		},
+		"types": {
+			"Grass": {
+				"mult": 2,
+				"msg": 1
+			},
+			"Bug": {
+				"mult": 2,
+				"msg": 2
+			},
+			"Fire": {
+				"mult": 1.5,
+				"msg": 3
+			}
+		},
+		"changeCond": {
+			"burning": "ignite"
+		},
+		"seed": {
+			"item": "syntheticseed",
+			"effect": "Ingrain",
+			"duration": true,
+			"animation": "ingrain",
+			"stats": {
+				"spd": 1
+			}
+		}
+	},
+	"starlight": {
+		"naturePower": "moonblast",
+		"secretPower": "swift",
+		"mimicry": "Dark",
+		"statusMods": [
+			"cosmicpower",
+			"flash",
+			"wish",
+			"healingwish",
+			"lunardance",
+			"moonlight"
+		],
+		"moves": {
+			"dracometeor": {
+				"mult": 2,
+				"msg": 3
+			},
+			"meteormash": {
+				"mult": 2,
+				"msg": 3
+			},
+			"cometpunch": {
+				"mult": 2,
+				"msg": 3
+			},
+			"spacialrend": {
+				"mult": 2,
+				"msg": 3
+			},
+			"swift": {
+				"mult": 2,
+				"msg": 3
+			},
+			"hyperspacehole": {
+				"mult": 2,
+				"msg": 4
+			},
+			"hyperspacefury": {
+				"mult": 2,
+				"msg": 3
+			},
+			"moongeistbeam": {
+				"mult": 2,
+				"msg": 3
+			},
+			"sunsteelstrike": {
+				"mult": 2,
+				"msg": 3
+			},
+			"blackholeeclipse": {
+				"mult": 2,
+				"msg": 3
+			},
+			"searingsunrazesmash": {
+				"mult": 2,
+				"msg": 3
+			},
+			"menacingmoonrazemaelstrom": {
+				"mult": 2,
+				"msg": 3
+			},
+			"doomdummy": {
+				"mult": 4,
+				"type": "Fire",
+				"msg": 5
+			},
+			"aurorabeam": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"signalbeam": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"flashcannon": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"lusterpurge": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"dazzlinggleam": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"mirrorshot": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"technoblast": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"solarbeam": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"photongeyser": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"moonblast": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"lightthatburnsthesky": {
+				"change": "indoor",
+				"changeMsg": 1
+			}
+		},
+		"types": {
+			"Dark": {
+				"mult": 1.5,
+				"type": "Fairy",
+				"msg": 2
+			},
+			"Psychic": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"Fairy": {
+				"mult": 1.3,
+				"msg": 1
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "magicalseed",
+			"duration": 0,
+			"stats": {
+				"spa": 1
+			}
+		}
+	},
+	"newworld": {
+		"naturePower": "spacialrend",
+		"secretPower": "roaroftime",
+		"mimicry": "Qmarks",
+		"statusMods": [
+			"darkvoid",
+			"heartswap",
+			"trickroom",
+			"magicroom",
+			"wonderroom",
+			"cosmicpower",
+			"flash",
+			"moonlight",
+			"naturesmadness",
+			"guardianofalola"
+		],
+		"moves": {
+			"hail": {
+				"mult": 0,
+				"msg": 9
+			},
+			"sunnyday": {
+				"mult": 0,
+				"msg": 9
+			},
+			"sandstorm": {
+				"mult": 0,
+				"msg": 9
+			},
+			"raindance": {
+				"mult": 0,
+				"msg": 9
+			},
+			"shadowsky": {
+				"mult": 0,
+				"msg": 9
+			},
+			"grassyterrain": {
+				"mult": 0,
+				"msg": 8
+			},
+			"psychicterrain": {
+				"mult": 0,
+				"msg": 8
+			},
+			"mistyterrain": {
+				"mult": 0,
+				"msg": 8
+			},
+			"electricterrain": {
+				"mult": 0,
+				"msg": 8
+			},
+			"fissure": {
+				"mult": 0,
+				"msg": 7
+			},
+			"vacuumwave": {
+				"mult": 2,
+				"msg": 4
+			},
+			"dracometeor": {
+				"mult": 2,
+				"msg": 4
+			},
+			"meteormash": {
+				"mult": 2,
+				"msg": 4
+			},
+			"moonblast": {
+				"mult": 2,
+				"msg": 4
+			},
+			"cometpunch": {
+				"mult": 2,
+				"msg": 4
+			},
+			"swift": {
+				"mult": 2,
+				"msg": 4
+			},
+			"hyperspacehole": {
+				"mult": 2,
+				"msg": 4
+			},
+			"spacialrend": {
+				"mult": 2,
+				"msg": 4
+			},
+			"hyperspacefury": {
+				"mult": 2,
+				"msg": 4
+			},
+			"ancientpower": {
+				"mult": 2,
+				"msg": 4
+			},
+			"futuredummy": {
+				"mult": 2,
+				"msg": 4
+			},
+			"blackholeeclipse": {
+				"mult": 2,
+				"msg": 6
+			},
+			"doomdummy": {
+				"mult": 4,
+				"type": "Fire",
+				"msg": 5
+			},
+			"aurorabeam": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"signalbeam": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"flashcannon": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"dazzlinggleam": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"mirrorshot": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"photongeyser": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"psystrike": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"aeroblast": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"sacredfire": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"mistball": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"lusterpurge": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"originpulse": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"precipiceblades": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"dragonascent": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"psychoboost": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"roaroftime": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"magmastorm": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"crushgrip": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"judgment": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"seedflare": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"shadowforce": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"searingshot": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"vcreate": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"secretsword": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"sacredsword": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"relicsong": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"fusionbolt": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"fusionflare": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"iceburn": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"freezeshock": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"boltstrike": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"blueflare": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"glaciate": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"technoblast": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"oblivionwing": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"landswrath": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"thousandarrows": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"thousandwaves": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"diamondstorm": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"steameruption": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"coreenforcer": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"fleurcannon": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"prismaticlaser": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"sunsteelstrike": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"spectralthief": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"moongeistbeam": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"multiattack": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"mindblown": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"plasmafists": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"earthpower": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"powergem": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"eruption": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"continentalcrush": {
+				"mult": 1.5,
+				"msg": 3
+			},
+			"genesissupernova": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"soulstealing7starstrike": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"searingsunrazesmash": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"menacingmoonrazemaelstrom": {
+				"mult": 1.5,
+				"msg": 2
+			},
+			"lightthatburnsthesky": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"earthquake": {
+				"mult": 0.25,
+				"msg": 7
+			},
+			"magnitude": {
+				"mult": 0.25,
+				"msg": 7
+			},
+			"bulldoze": {
+				"mult": 0.25,
+				"msg": 7
+			},
+			"darkvoid": {
+				"acc": 85
+			},
+			"gravity": {
+				"change": "starlight",
+				"changeMsg": 1,
+				"keepBackup": true
+			},
+			"geomancy": {
+				"change": "starlight",
+				"changeMsg": 2
+			}
+		},
+		"types": {
+			"Dark": {
+				"mult": 1.5,
+				"msg": 1
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "magicalseed",
+			"effect": "HyperBeam",
+			"duration": 1,
+			"stats": {
+				"atk": 1,
+				"def": 1,
+				"spe": 1,
+				"spa": 1,
+				"spd": 1
+			}
+		}
+	},
+	"inverse": {
+		"naturePower": "trickroom",
+		"secretPower": "confusion",
+		"mimicry": "Normal",
+		"statusMods": [],
+		"moves": {},
+		"types": {},
+		"changeCond": {},
+		"seed": {
+			"item": "magicalseed",
+			"effect": "HyperBeam",
+			"duration": 1,
+			"stats": {
+				"atk": 1,
+				"def": 1,
+				"spe": 1,
+				"spa": 1,
+				"spd": 1
+			}
+		}
+	},
+	"psyterrain": {
+		"naturePower": "psychic",
+		"secretPower": "psychic",
+		"mimicry": "Psychic",
+		"statusMods": [
+			"calmmind",
+			"cosmicpower",
+			"kinesis",
+			"meditate",
+			"nastyplot",
+			"hypnosis",
+			"telekinesis",
+			"gravity",
+			"magicroom",
+			"trickroom",
+			"wonderroom"
+		],
+		"moves": {
+			"hex": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"magicalleaf": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"mysticalfire": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"moonblast": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"aurasphere": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"mindblown": {
+				"mult": 1.5,
+				"msg": 1
+			},
+			"hypnosis": {
+				"acc": 90
+			}
+		},
+		"types": {
+			"Psychic": {
+				"mult": 1.5,
+				"msg": 1,
+				"cond": "attackerGrounded"
+			}
+		},
+		"changeCond": {},
+		"seed": {
+			"item": "magicalseed",
+			"duration": 0,
+			"stats": {
+				"spa": 2
+			}
+		}
+	}
+}

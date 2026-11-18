@@ -40,6 +40,8 @@ public final class NpcEditScreen extends Screen {
 	private final Ui.Dropdown<String[]> format;
 	private final Ui.Dropdown<String> intro;
 	private final Ui.Dropdown<String> ambiance;
+	/** League Reborn's field its battles impose; "" for none. */
+	private final Ui.Dropdown<String> field;
 	private boolean aiDebug;
 	private boolean busy;
 	private Component message;
@@ -63,6 +65,15 @@ public final class NpcEditScreen extends Screen {
 		String currentAmbiance = npc.ambiance() == null ? "" : npc.ambiance();
 		intro = new Ui.Dropdown<>(intros(currentIntro), NpcEditScreen::introName, currentIntro);
 		ambiance = new Ui.Dropdown<>(ambiances(currentAmbiance), NpcEditScreen::ambianceName, currentAmbiance);
+		String currentField = npc.field() == null ? "" : npc.field();
+		List<String> fields = new ArrayList<>();
+		fields.add("");
+		fields.addAll(com.mystaria.events.reborn.LeagueReborn.fieldIds());
+		if (!fields.contains(currentField)) {
+			fields.add(currentField);
+		}
+		field = new Ui.Dropdown<>(fields, id -> id.isEmpty() ? Component.translatable("phantasmon_events.npc.field_none")
+				: com.mystaria.events.reborn.LeagueReborn.fieldName(id), currentField);
 	}
 
 	static List<String[]> formats() {
@@ -121,7 +132,7 @@ public final class NpcEditScreen extends Screen {
 	// ---------------------------------------------------------------- drawing
 
 	private int height() {
-		return 290;
+		return 314;
 	}
 
 	@Override
@@ -170,6 +181,8 @@ public final class NpcEditScreen extends Screen {
 		MenuUi.small(g, Component.translatable(aiDebug ? "phantasmon_events.npc.ai_debug_on" : "phantasmon_events.npc.ai_debug_off"),
 				x + 312, row + 4, w - 312, c.muted());
 		ui.zone(x + 286, row, w - 286, 15, () -> aiDebug = !aiDebug);
+		row += 24;
+		ui.dropdown(g, field, x, row, 278, 15, Component.translatable("phantasmon_events.npc.field"));
 		row += 24;
 		// Showtime staging
 		section(g, "phantasmon_events.npc.section.show", x, row, w);
@@ -281,6 +294,7 @@ public final class NpcEditScreen extends Screen {
 		body.put("ai_debug", aiDebug);
 		body.put("intro", intro.value);
 		body.put("ambiance", ambiance.value);
+		body.put("field", field.value);
 		post("/admin/events/npcs/" + npc.uuid(), body, "phantasmon_events.npc.saved");
 	}
 
@@ -342,7 +356,8 @@ public final class NpcEditScreen extends Screen {
 				.thenAccept(ignored -> Minecraft.getInstance().execute(() -> {
 					busy = false;
 					npc = new EventNpcDto(npc.uuid(), npc.event(), open, npc.name(), npc.skin(), npc.x(), npc.y(), npc.z(), npc.yaw(),
-							npc.ai(), npc.formatId(), npc.teamSize(), npc.teamSpecies(), npc.hub(), npc.aiDebug(), npc.intro(), npc.ambiance());
+							npc.ai(), npc.formatId(), npc.teamSize(), npc.teamSpecies(), npc.hub(), npc.aiDebug(), npc.intro(), npc.ambiance(),
+							npc.field());
 					message = Component.translatable(open ? "phantasmon_events.npc.event_opened_short" : "phantasmon_events.npc.event_closed_short")
 							.withStyle(ChatFormatting.GREEN);
 				}))

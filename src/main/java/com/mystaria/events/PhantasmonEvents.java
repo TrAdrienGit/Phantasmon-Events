@@ -41,6 +41,7 @@ public final class PhantasmonEvents implements ClientModInitializer {
 		MirrorCopy.register();
 		com.mystaria.events.hub.EventHubsTab.register();
 		com.mystaria.events.npc.EventNpcs.register();
+		com.mystaria.events.reborn.LeagueReborn.register();
 		MirrorGhosts.register();
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (tournaments.consumeClick()) {

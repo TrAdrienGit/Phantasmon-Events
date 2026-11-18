@@ -74,6 +74,10 @@ public class EventNpc {
 	@Column
 	private String ambiance;
 
+	/** The League Reborn battle field its battles impose (V12); null: none. */
+	@Column
+	private String field;
+
 	@Column(name = "format_id", nullable = false)
 	private String formatId;
 

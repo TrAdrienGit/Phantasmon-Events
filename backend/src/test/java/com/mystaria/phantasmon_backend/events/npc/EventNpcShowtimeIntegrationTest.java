@@ -79,5 +79,20 @@ class EventNpcShowtimeIntegrationTest {
 				.content("{\"intro\":\"not an intro!\"}"))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.error_code").value("ERROR_NPC_INTRO"));
+
+		// League Reborn's field (2026-11-18): saved, handed to the core's battles, refused if unknown, cleared.
+		mockMvc.perform(post("/admin/events/npcs/" + npc).header("Authorization", token).contentType(MediaType.APPLICATION_JSON)
+				.content("{\"field\":\"burning\"}"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.field").value("burning"));
+		assertThat(service.npcOpponent(adminUuid, npc).field()).isEqualTo("burning");
+		mockMvc.perform(post("/admin/events/npcs/" + npc).header("Authorization", token).contentType(MediaType.APPLICATION_JSON)
+				.content("{\"field\":\"lava\"}"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.error_code").value("ERROR_NPC_FIELD"));
+		mockMvc.perform(post("/admin/events/npcs/" + npc).header("Authorization", token).contentType(MediaType.APPLICATION_JSON)
+				.content("{\"field\":\"\"}"))
+				.andExpect(jsonPath("$.field").value(nullValue()));
+		assertThat(service.npcOpponent(adminUuid, npc).field()).isNull();
 	}
 }

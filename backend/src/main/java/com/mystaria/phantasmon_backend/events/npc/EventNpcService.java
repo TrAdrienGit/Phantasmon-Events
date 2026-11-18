@@ -151,6 +151,15 @@ public class EventNpcService implements NpcOpponentProvider {
 		if (body.containsKey("ambiance")) {
 			npc.setAmbiance(showtimeId(body.get("ambiance"), AMBIANCE, "ERROR_NPC_AMBIANCE"));
 		}
+		// League Reborn's field (2026-11-18): "" or null for none.
+		if (body.containsKey("field")) {
+			Object field = body.get("field");
+			String id = field == null ? "" : field.toString().strip();
+			if (!id.isEmpty() && !com.mystaria.phantasmon_backend.events.field.LeagueRebornFields.IDS.contains(id)) {
+				throw new ApiException(HttpStatus.BAD_REQUEST, "ERROR_NPC_FIELD", Map.of());
+			}
+			npc.setField(id.isEmpty() ? null : id);
+		}
 		if (body.containsKey("event")) {
 			String event = text(body, "event", EVENT, "ERROR_EVENT_NAME");
 			events.findById(event).orElseGet(() -> events.save(new EventGroup(event, clock.instant())));
@@ -221,7 +230,7 @@ public class EventNpcService implements NpcOpponentProvider {
 			return null;
 		}
 		return new NpcOpponent(npc.getUuid(), npc.getName(), npc.getSkin(), npc.getAi(), npc.isAiDebug(),
-				npc.getFormatId(), List.copyOf(npc.getTeam()), npc.getIntro(), npc.getAmbiance());
+				npc.getFormatId(), List.copyOf(npc.getTeam()), npc.getIntro(), npc.getAmbiance(), npc.getField());
 	}
 
 	/** A Showtime intro name ({@code PBR_ENTRANCE}) or a mod's namespaced one, as the core's lobby takes them. */
@@ -276,6 +285,7 @@ public class EventNpcService implements NpcOpponentProvider {
 		view.put("format_id", npc.getFormatId());
 		view.put("intro", npc.getIntro());
 		view.put("ambiance", npc.getAmbiance());
+		view.put("field", npc.getField());
 		List<String> species = new ArrayList<>();
 		for (PokemonResponse pokemon : npc.getTeam()) {
 			species.add(pokemon.species());
