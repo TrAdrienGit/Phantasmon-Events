@@ -1,20 +1,21 @@
-# Reprise du chantier (pause du 2026-11-17, nuit)
+# Reprise du chantier (point du 2026-11-18)
 
-> **État :** tout est sur `main`, poussé (dernier commit af16b8d). Dernier contrôle de l'orchestrateur : build client
-> vert, 428 tests backend `*trahison*` verts, 1 381 clés de langue identiques EN/FR. **Rien n'a encore tourné en jeu.**
+> **État :** tout est sur `main`, poussé (dernier commit 1aa564d). Dernier contrôle de l'orchestrateur : build client
+> vert, 470 tests backend `*trahison*` verts, 1 433 clés de langue identiques EN/FR. **Rien n'a encore tourné en jeu.**
 >
-> - **Fait :** T0 à T4, T6, T7, T11 entiers ; T8 entier (catalogue, 7 énigmes Pokémon backend + écrans, police Zarbi
->   provisoire `textures/trahison/zarbi/glyphs.png`, duel, partenaire à pouvoir et `power_spot`, salle d'essai
->   `exemples/salle-essai-cobblemon.json`) ; décisions jusqu'à D120 appliquées.
-> - **Agents :** ils lisent d'abord [`contexte-agent.md`](contexte-agent.md). Les tests humains sont dans
->   [`tests-humains.md`](tests-humains.md), les décisions réglées dans [`decisions-tranchees.md`](decisions-tranchees.md).
-> - **Questions ouvertes** dans [`decisions.md`](decisions.md) : D140 à D147 (rôles, objets), D150 à D154 (carte),
->   D160 à D165 (tentations, MJ), D170 à D171 et D180 à D186 (énigmes Pokémon), D190 à D193 (partenaire).
+> - **Fait :** T0 à T8 et T11 entiers (T5 vocal codé, à confirmer en jeu avec [`vocal-essai.md`](vocal-essai.md)) ;
+>   T9.1 brouillons des 9 fiches ([`../salles/`](../salles/README.md), à valider) ; T9.3 quatre mini-jeux
+>   (`sliding_blocks`, `rotating_tiles`, `safe_dial`, `twin_screens`) ; T9.4 mécanique des textes (variantes de
+>   l'animatrice, 4 fins, fragments `@fragment:n`), textes provisoires ; relecture des risques de plantage faite.
+> - **Premier essai en jeu :** suivre [`premier-essai.md`](premier-essai.md). Le déploiement du module backend attend
+>   l'accord de la propriétaire.
+> - **Questions ouvertes** dans [`decisions.md`](decisions.md) : D200 à D203 (vocal), D210 à D215 (mini-jeux),
+>   D220 à D229 (fiches de salle), D230 à D235 (textes, fins).
 >
 > **Suite, dans l'ordre :**
 > 1. relire `decisions.md` et appliquer les réponses ;
-> 2. T5 vocal (greffon à confirmer en jeu), T9 contenu, T10 répétition ;
-> 3. la check-list cochable des tests humains au premier déploiement (avec essai de la salle Cobblemon).
+> 2. premier essai en jeu (déploiement avec accord), corrections ;
+> 3. lore et vrais textes avec la propriétaire (T9.4), construction (T9.2), habillage (T9.5), puis T10.
 
 > Point d'arrêt de l'orchestration du développement. À lire en premier à la reprise, avec
 > [`etapes/README.md`](etapes/README.md).
