@@ -161,7 +161,8 @@ public final class LeagueReborn {
 			case "move" -> lines.add(text("league_reborn." + field + ".move." + arg(args, 1), "league_reborn.move",
 					arg(args, 2), arg(args, 3)).withColor(TEXT));
 			case "type" -> lines.add(text("league_reborn." + field + ".type." + arg(args, 1), "league_reborn.type").withColor(TEXT));
-			case "text" -> lines.add(Component.translatable("league_reborn.text." + field, arg(args, 1)).withColor(TEXT));
+			case "text" -> lines.add(Component.translatable("league_reborn.text." + field, arg(args, 1), arg(args, 2))
+					.withColor(TEXT));
 			default -> {
 			}
 		}

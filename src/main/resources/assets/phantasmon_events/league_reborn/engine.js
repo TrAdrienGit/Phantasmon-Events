@@ -1401,7 +1401,7 @@
 		chargeMove(pokemon, target, move) {
 			const f = LR.field(this);
 			const skip = (['solarbeam', 'solarblade'].includes(move.id) && f === 'rainbow') ||
-				(move.id === 'meteorbeam' && ['starlight', 'newworld'].includes(f));
+				(move.id === 'meteorbeam' && ['starlight', 'newworld'].includes(f)) || (move.id === 'geomancy' && f === 'starlight');
 			if (!skip) return;
 			this.attrLastMove('[still]');
 			this.addMove('-anim', pokemon, move.name, target);
@@ -1778,6 +1778,67 @@
 		},
 	});
 
+
+	// --- The remaining gaps --------------------------------------------------------------------------------------
+
+	/** The crystals' type now (Crystal Cavern's roll, without moving it on). */
+	LR.ccType = (battle) => CC_ROLLS[((LR.state(battle).ccRoll || 0)) % CC_ROLLS.length];
+	/** Stealth Rock, crystallized on Crystal Cavern. */
+	LR.rockMove = (battle, pokemon) => {
+		const move = battle.dex.getActiveMove('stealthrock');
+		if (LR.field(battle) === 'crystalcavern') {
+			move.type = LR.ccType(battle);
+			LR.say(battle, 'text', 'crystal_rocks', pokemon.name);
+		}
+		return move;
+	};
+	/** Zen Mode: Ashen Beach calms Darmanitan, Burning and Super-Heated set Galarian Darmanitan ablaze. */
+	LR.zenWanted = (battle, pokemon) => {
+		const f = LR.field(battle);
+		const galar = pokemon.species.forme.startsWith('Galar');
+		if (f === 'ashenbeach' && !galar) return true;
+		if (['burning', 'superheated'].includes(f) && galar) return true;
+		return pokemon.hp <= pokemon.maxhp / 2;
+	};
+	shared({
+		/** Mirror Arena: the user's evasion and accuracy boosts (and the target's drops) sharpen its critical hits. */
+		critRatio(critRatio, source, target) {
+			if (LR.field(this) !== 'mirror' || !target) return 0;
+			const up = (n) => Math.max(0, n);
+			const add = up(source.boosts.evasion) + up(source.boosts.accuracy) + up(-target.boosts.evasion) + up(-target.boosts.accuracy);
+			return add;
+		},
+		/** Arceus and Silvally: New World rolls them a random type; Glitch corrupts Silvally, Holy humbles it. */
+		entry(pokemon) {
+			const f = LR.field(this);
+			let type = null;
+			let text = null;
+			if (f === 'newworld' && pokemon.hasAbility(['multitype', 'rkssystem'])) {
+				type = this.sample(ALL_TYPES);
+				text = 'type_roll';
+			} else if (pokemon.hasAbility('rkssystem') && f === 'glitch') {
+				type = '???';
+				text = 'rogue_data';
+			} else if (pokemon.hasAbility('rkssystem') && f === 'holy') {
+				type = 'Dark';
+				text = 'false_god';
+			}
+			if (!type || !pokemon.setType(type)) return;
+			this.add('-start', pokemon, 'typechange', type, '[silent]');
+			LR.say(this, 'text', text, pokemon.name, type);
+		},
+		/** Mirror Arena: Mirror Coat polishes the user first (+1 evasion, Defense, Sp. Def). */
+		modifyMove(move, source) {
+			if (move.id === 'mirrorcoat' && LR.field(this) === 'mirror') {
+				move.self = {boosts: {evasion: 1, def: 1, spd: 1}};
+			}
+		},
+	});
+	/** Glitch: the items and abilities that only touch the special side do nothing. */
+	const GLITCH_OFF = [['items', 'choicespecs', 'onModifySpA'], ['items', 'assaultvest', 'onModifySpD'],
+		['items', 'eviolite', 'onModifySpD'], ['items', 'lightball', 'onModifyAtk'], ['items', 'lightball', 'onModifySpA'],
+		['items', 'deepseatooth', 'onModifySpA'], ['items', 'deepseascale', 'onModifySpD'],
+		['abilities', 'solarpower', 'onModifySpA'], ['abilities', 'battery', 'onAllyBasePower']];
 	/**
 	 * Showdown's own effects a field changes, patched once per Dex (the battle's: Cobblemon's mod or the base one).
 	 * Each patch keeps Showdown's behaviour outside League Reborn (LR.field is null there).
@@ -1864,7 +1925,8 @@
 		// Corrosive: Poison types do not absorb Toxic Spikes (a rewrite, so before any wrapper of the same function).
 		['conditions', 'toxicspikes', 'onEntryHazard', (orig) => rewrite(orig, [/if \(pokemon\.hasType\("Poison"\)\) \{/, 'if (pokemon.hasType("Poison") && LR.field(this) !== "corrosive") {'])],
 		// Rocky and Cave: Stealth Rock cuts twice as deep (a rewrite, before the Wasteland wrapper).
-		['conditions', 'stealthrock', 'onEntryHazard', (orig) => rewrite(orig, [/\* Math\.pow\(2, typeMod\) \/ 8/, '* Math.pow(2, typeMod) / (["rocky", "cave"].includes(LR.field(this)) ? 4 : 8)'])],
+		['conditions', 'stealthrock', 'onEntryHazard', (orig) => rewrite(rewrite(orig, [/\* Math\.pow\(2, typeMod\) \/ 8/, '* Math.pow(2, typeMod) / (["rocky", "cave"].includes(LR.field(this)) ? 4 : 8)']),
+			[/this\.dex\.getActiveMove\("stealthrock"\)/, 'LR.rockMove(this, pokemon)'])],
 		// The Wasteland swallows the hazards: they do nothing on entry (it spits them out at the end of the turn).
 		...['spikes', 'stealthrock', 'stickyweb', 'toxicspikes'].map((id) => ['conditions', id, 'onEntryHazard', (orig) => function (...args) {
 			if (LR.field(this) === 'wasteland') return;
@@ -1993,7 +2055,10 @@
 		['abilities', 'mimicry', 'onTerrainChange', (orig) => function (pokemon) {
 			const f = LR.field(this);
 			if (f === null) return orig.call(this, pokemon);
-			const type = FIELDS[f] && FIELDS[f].mimicry;
+			let type = FIELDS[f] && FIELDS[f].mimicry;
+			if (type === 'Qmarks') type = '???';
+			if (f === 'crystalcavern') type = LR.ccType(this);
+			if (f === 'newworld') type = this.sample(ALL_TYPES);
 			const types = type ? [type] : pokemon.baseSpecies.types;
 			if (pokemon.getTypes().join() === types.join() || !pokemon.setType(types)) return;
 			if (type || pokemon.transformed) {
@@ -2003,6 +2068,17 @@
 				this.add('-end', pokemon, 'typechange', '[silent]');
 			}
 		}],
+		// The remaining gaps.
+		...GLITCH_OFF.map(([kind, id, key]) => [kind, id, key, (orig) => function (...args) {
+			if (LR.field(this) === 'glitch') return;
+			return orig.apply(this, args);
+		}]),
+		['moves', 'metronome', 'onHit', (orig) => rewrite(orig, [/move\.flags\["metronome"\]\)/, 'move.flags["metronome"] && (LR.field(this) !== "glitch" || move.basePower >= 70))'])],
+		['moves', 'lunarblessing', 'onHit', (orig) => rewrite(orig, [/pokemon\.maxhp, 0\.25/, 'pokemon.maxhp, ["starlight", "newworld"].includes(LR.field(this)) ? 1 / 3 : 0.25'])],
+		['items', 'shellbell', 'onAfterMoveSecondarySelf', (orig) => rewrite(orig, [/move\.totalDamage \/ 8/, 'move.totalDamage / (LR.field(this) === "ashenbeach" ? 4 : 8)'])],
+		['abilities', 'zenmode', 'onResidual', (orig) => rewrite(rewrite(orig,
+			[/pokemon\.hp <= pokemon\.maxhp \/ 2/, 'LR.zenWanted(this, pokemon)']),
+			[/pokemon\.hp > pokemon\.maxhp \/ 2/, '!LR.zenWanted(this, pokemon)'])],
 		// Eighth batch.
 		...['kingsshield', 'obstruct'].map((id) => ['conditions', id, 'onTryHit', (orig) => rewrite(rewrite(orig,
 			[/move\.category === "Status"/, `(move.category === "Status" && !LR.shieldsStatus(this, "${id}"))`]),
@@ -2058,7 +2134,7 @@
 	 */
 	const PATCHED_DEX = new WeakSet();
 	const PATCHED_ENTRIES = new WeakSet();
-	const TABLES = {abilities: 'Abilities', moves: 'Moves', conditions: 'Conditions'};
+	const TABLES = {abilities: 'Abilities', moves: 'Moves', conditions: 'Conditions', items: 'Items'};
 	function patched(holder, patches) {
 		const copy = Object.assign({}, holder);
 		for (const [key, make] of patches) {
@@ -2108,6 +2184,7 @@
 			dex.abilities.abilityCache.delete(id);
 			dex.moves.moveCache.delete(id);
 			dex.conditions.conditionCache.delete(id);
+			if (dex.items.itemCache) dex.items.itemCache.delete(id);
 		}
 	}
 

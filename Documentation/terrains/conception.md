@@ -314,9 +314,16 @@ Le code propre de Reborn pour les 37 terrains restants, en un passage (même mé
     50 % des PV pour +2, Encore 3 tours de plus, Acrobatie toujours doublée, Projecteur, Danseuse, pluie 8 tours.
 - Textes FR/EN à nous pour chaque nouveau message (`league_reborn.text.*`). `test.js` : environ 75 tests, tous verts.
 
-Écarts connus (non portés) : graines de Reborn ; Silvally et Arceus (formes), Protéen au hasard, Darumacho ;
-Coquille Bell sur Ashen ; critique du Miroir selon l'esquive ; Boule Roc qui continue sur Crystal Cavern ; type du
-Piège de Roc sur Crystal Cavern ; Bénédiction Lunaire ; bonus de Médic Nature / Régé-Force ; les 5 capacités de zone
-de Flower Garden ; Voile Miroir et la capacité 0x13E (non identifiées) ; sur Glitch, Métronome limité à 70 de
-puissance, objets spéciaux désactivés, Frénésie ; Repli Factice (pas dans Showdown) ; le Pion d'un combat double
-(seul le premier est Pion) ; sur Glitch, en attaque de zone, la Déf. Spé. retenue est celle de la dernière cible.
+Écarts comblés ensuite (même jour) : Piège de Roc cristallisé sur Crystal Cavern, Géo-Contrôle en un tour sur
+Starlight, Mimétisme (type des cristaux, type au hasard sur New World, ??? sur Glitch), Arceus et Silvally tirent un
+type sur New World, Silvally devient ??? sur Glitch et Ténèbres sur Holy, critiques du Miroir selon esquive et
+précision, Voile Miroir +1 Esquive/Déf./Déf. Spé. sur Mirror, Métronome limité à 70 de puissance et objets/talents
+spéciaux désactivés sur Glitch (Lunettes Choix, Veste de Combat, Évoluroc en Déf. Spé., Balle Lumière, Dent et
+Écaille Océan, Force Soleil, Batterie), Bénédiction Lunaire 1/3, Grelot Coque 1/4 sur Ashen Beach, Mode Transe de
+Darumacho (Ashen Beach, et Burning/Superheated pour la forme de Galar).
+
+Restent hors de portée : les graines de Reborn (objets absents de Cobblemon : Elemental, Magical, Telluric,
+Synthetic Seed) ; Frénésie et Repli Factice (absents de Showdown) ; Boule Roc qui continue sur Crystal Cavern (pas
+de coup à 0 dégât dans Showdown) ; le second Pion d'un combat double sauvage ; sur Glitch, en attaque de zone, la Déf.
+Spé. retenue est celle de la dernière cible. Médic Nature, Régé-Force et les « 5 capacités de zone » de Flower Garden
+n'ont en fait pas de code de terrain dans Reborn.
