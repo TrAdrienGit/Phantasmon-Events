@@ -36,7 +36,11 @@
 	 * modifySpD (multipliers), entry (switch-in), afterMove, residual, onEnter, onLeave, addedType (per field only).
 	 */
 	const HOOKS = {};
+	/** hook name -> functions, added by shared({...}) one group at a time. */
 	const ALL = {};
+	function shared(hooks) {
+		for (const [name, fn] of Object.entries(hooks)) (ALL[name] = ALL[name] || []).push(fn);
+	}
 
 	const LR = {
 		state(battle) {
@@ -58,7 +62,7 @@
 		/** ALL's hook then the field's, for the hooks every field may add to. */
 		hooks(battle, name) {
 			const out = [];
-			if (ALL[name]) out.push(ALL[name]);
+			if (ALL[name]) out.push(...ALL[name]);
 			const h = LR.hook(battle, name);
 			if (h) out.push(h);
 			return out;
@@ -412,7 +416,7 @@
 	};
 	const WISH_FIELDS = ['misty', 'rainbow', 'holy', 'fairytale', 'starlight'];
 
-	Object.assign(ALL, {
+	shared({
 		modifyMove(move, source) {
 			const f = LR.field(this);
 			const boosts = BOOSTS[move.id] && BOOSTS[move.id][f];
@@ -541,13 +545,6 @@
 			modifySpD(spd, target) {
 				if (target.hasType('Fairy')) return 1.5;
 			},
-			residual() {
-				for (const pokemon of this.getAllActive()) {
-					if (!pokemon.hp || !pokemon.hasAbility('dryskin')) continue;
-					if (['raindance', 'primordialsea', 'sunnyday', 'desolateland'].includes(pokemon.effectiveWeather())) continue;
-					this.heal(pokemon.baseMaxhp / 16, pokemon, pokemon, ability(this, 'dryskin'));
-				}
-			},
 		},
 		/** Psychic Terrain: grounded Pokémon cannot be hit by priority moves; Secret Power confuses. */
 		psyterrain: {
@@ -558,8 +555,278 @@
 				return null;
 			},
 			modifyMove(move) {
-				if (move.id === 'secretpower') move.secondaries = [{chance: 30, volatileStatus: 'confusion'}];
 				if (move.id === 'confide') LR.say(this, 'text', 'confide');
+			},
+		},
+	});
+
+	// --- Shared field code, second batch: water fields, Secret Power, the pledges --------------------------------
+
+	/** Secret Power's added effect per field (Move 0A4 pbAdditionalEffect), 30%; paralysis elsewhere. */
+	const drop = (boosts) => ({boosts});
+	const SECRET_POWER = {};
+	const secretOn = (fields, effect) => fields.forEach((f) => { SECRET_POWER[f] = effect; });
+	secretOn(['electerrain', 'shortcircuit'], {status: 'par'});
+	secretOn(['grassy', 'forest', 'fairytale'], {status: 'slp'});
+	secretOn(['misty', 'holy'], drop({spa: -1}));
+	secretOn(['darkcrystalcavern', 'desert', 'ashenbeach', 'clouds'], drop({accuracy: -1}));
+	secretOn(['chess', 'darkness1', 'darkness2', 'darkness3'], drop({def: -1}));
+	secretOn(['bigtop', 'starlight'], drop({spd: -1}));
+	secretOn(['burning', 'superheated', 'dragonsden', 'volcanic', 'volcanictop', 'infernal', 'dancefloor'], {status: 'brn'});
+	secretOn(['swamp', 'watersurface', 'glitch'], drop({spe: -1}));
+	secretOn(['corrosive', 'corrosivemist', 'murkwatersurface', 'corrupted', 'backalley', 'city'], {status: 'psn'});
+	secretOn(['icy', 'snowymountain', 'frozendimension'], {status: 'frz'});
+	secretOn(['rocky', 'cave', 'mountain', 'dimensional', 'deepearth'], {volatileStatus: 'flinch'});
+	secretOn(['factory', 'underwater'], drop({atk: -1}));
+	secretOn(['mirror'], drop({evasion: -1}));
+	secretOn(['flowergarden1', 'flowergarden2'], drop({evasion: -1}));
+	secretOn(['flowergarden3', 'flowergarden4'], drop({def: -1, spd: -1, evasion: -1}));
+	secretOn(['flowergarden5'], drop({def: -2, spd: -2, evasion: -2}));
+	secretOn(['newworld'], drop({atk: -1, def: -1, spe: -1, spa: -1, spd: -1, accuracy: -1}));
+	secretOn(['inverse', 'psyterrain', 'sky'], {volatileStatus: 'confusion'});
+	secretOn(['haunted'], {volatileStatus: 'curse'});
+	secretOn(['colosseum'], {self: {boosts: {atk: 1}}});
+	/** ...or one of several, at random. */
+	const SECRET_RANDOM = {
+		rainbow: ['par', 'psn', 'brn', 'frz', 'slp'],
+		wasteland: ['par', 'psn', 'brn', 'frz'],
+		crystalcavern: ['brn', 'frz', 'slp', 'confusion'],
+		bewitched: ['par', 'psn', 'slp'],
+	};
+	function secretPower(f) {
+		const random = SECRET_RANDOM[f];
+		if (!random) return Object.assign({chance: 30}, SECRET_POWER[f] || {status: 'par'});
+		return {
+			chance: 30,
+			onHit(target, source) {
+				const pick = this.sample(random);
+				if (pick === 'confusion') target.addVolatile('confusion', source);
+				else target.trySetStatus(pick, source);
+			},
+		};
+	}
+
+	/** In the water: anywhere Underwater, on the ground on the two water surfaces. */
+	const SURFACES = ['watersurface', 'murkwatersurface'];
+	function inWater(battle, pokemon) {
+		const f = LR.field(battle);
+		return f === 'underwater' || (SURFACES.includes(f) && pokemon.isGrounded());
+	}
+	LR.inWater = inWater;
+	/** Fields that count as poisoned ground (Toxic Boost, Merciless, Poison Heal...): everywhere, or on the ground. */
+	const TOXIC_AIR = ['corrosivemist', 'corrupted'];
+	const TOXIC_GROUND = ['corrosive', 'murkwatersurface', 'wasteland'];
+	function toxicGround(battle, pokemon) {
+		const f = LR.field(battle);
+		return TOXIC_AIR.includes(f) || (TOXIC_GROUND.includes(f) && pokemon.isGrounded());
+	}
+	/** Fields where Venoshock, Barb Barrage and Venom Drench act as if the target were poisoned. */
+	const TOXIC_FIELDS = ['corrosive', 'corrosivemist', 'wasteland', 'murkwatersurface'];
+	LR.toxicField = (battle) => TOXIC_FIELDS.includes(LR.field(battle));
+	const RAIN = ['raindance', 'primordialsea'];
+	const PLEDGES = ['firepledge', 'grasspledge', 'waterpledge'];
+
+	Object.assign(BOOSTS, {
+		acidarmor: Object.fromEntries(['corrosive', 'corrosivemist', 'murkwatersurface', 'fairytale'].map((f) => [f, {def: 3}])),
+		irondefense: {factory: {def: 3}},
+	});
+
+	shared({
+		modifyMove(move) {
+			const f = LR.field(this);
+			if (move.id === 'secretpower') move.secondaries = [secretPower(f)];
+			if (move.id === 'wavecrash' && ['watersurface', 'underwater'].includes(f)) move.recoil = [1, 4];
+			if (f === 'underwater' && move.type === 'Electric') move.accuracy = true;
+		},
+		basePower(basePower, source, target, move) {
+			const f = LR.field(this);
+			let mult = 1;
+			// Torrent works at any HP in the water (Showdown already boosts at a third of the HP).
+			if (move.type === 'Water' && source.hasAbility('torrent') && source.hp > source.maxhp / 3 &&
+				(f === 'underwater' || (f === 'watersurface' && source.isGrounded()))) mult *= 1.5;
+			if (source.hasAbility('propellertail') && move.priority >= 1 && ['watersurface', 'underwater'].includes(f)) mult *= 1.5;
+			// Underwater, physical moves other than Water ones are slowed by the water.
+			if (f === 'underwater' && move.category === 'Physical' && move.type !== 'Water' &&
+				!source.hasAbility(['steelworker', 'swiftswim'])) mult *= 0.5;
+			if (TOXIC_FIELDS.includes(f) && move.category === 'Physical' && source.hasAbility('toxicboost') &&
+				!['psn', 'tox'].includes(source.status)) mult *= 1.5;
+			return mult;
+		},
+		modifySpe(spe, pokemon) {
+			const f = LR.field(this);
+			const water = inWater(this, pokemon);
+			let mult = 1;
+			if (pokemon.hasAbility('swiftswim') && water && !RAIN.includes(pokemon.effectiveWeather())) mult *= 2;
+			if (pokemon.hasAbility('surgesurfer') && (water || ['shortcircuit', 'underwater'].includes(f))) mult *= 2;
+			if (f === 'newworld' && pokemon.isGrounded()) mult *= 0.75;
+			if (SURFACES.includes(f) && pokemon.isGrounded() && !pokemon.hasType('Water') &&
+				!pokemon.hasAbility(['surgesurfer', 'swiftswim'])) mult *= 0.75;
+			if (f === 'underwater' && !pokemon.hasType('Water') && !pokemon.hasAbility(['swiftswim', 'steelworker'])) mult *= 0.5;
+			return mult;
+		},
+		chargeMove(pokemon, target, move) {
+			if (move.id !== 'dive' || !['watersurface', 'underwater'].includes(LR.field(this))) return;
+			this.attrLastMove('[still]');
+			this.addMove('-anim', pokemon, move.name, target);
+			return false;
+		},
+		entry(pokemon) {
+			// Spikes and Toxic Spikes sink or blow away.
+			if (!['watersurface', 'murkwatersurface', 'sky', 'clouds'].includes(LR.field(this))) return;
+			pokemon.side.removeSideCondition('spikes');
+			pokemon.side.removeSideCondition('toxicspikes');
+		},
+		afterMove(source, target, move) {
+			const f = LR.field(this);
+			const hit = source.moveThisTurnResult === true;
+			if (move.id === 'splash' && f === 'watersurface' && !this.field.pseudoWeather.gravity) {
+				for (const pokemon of this.getAllActive()) if (pokemon !== source) this.boost({accuracy: -1}, pokemon, source, null, true);
+			}
+			if (!hit) return;
+			if (PLEDGES.includes(move.id)) pledge(this, source, move);
+			if (move.id === 'roar' && f === 'swamp') LR.say(this, 'text', 'swamp_roar');
+			if (move.id === 'whirlpool' && ['watersurface', 'underwater'].includes(f) && target && target.hp && target !== source) {
+				target.addVolatile('confusion', source);
+			}
+			if (move.id === 'tarshot' && ['murkwatersurface', 'corrupted'].includes(f) && target && target.hp) target.trySetStatus('psn', source);
+			if (move.id === 'lifedew') {
+				if (f === 'watersurface') source.addVolatile('aquaring');
+				if (['corrosivemist', 'murkwatersurface'].includes(f)) source.trySetStatus('psn', source);
+			}
+			if (move.id === 'shoreup' && SURFACES.includes(f) && source.hasAbility('watercompaction')) {
+				this.boost({def: 2}, source, source, ability(this, 'watercompaction'));
+			}
+		},
+		residual() {
+			const f = LR.field(this);
+			for (const pokemon of this.getAllActive()) {
+				if (!pokemon.hp) continue;
+				const water = inWater(this, pokemon) || (f === 'swamp' && pokemon.isGrounded());
+				if (pokemon.hasAbility('steamengine') && pokemon.activeTurns > 0 &&
+					['volcanic', 'volcanictop', 'watersurface', 'underwater', 'infernal'].includes(f)) {
+					this.boost({spe: 1}, pokemon, pokemon, ability(this, 'steamengine'));
+				}
+				if (pokemon.status && ((pokemon.hasAbility('hydration') && (f === 'underwater' || (f === 'watersurface' && pokemon.isGrounded())) &&
+					!RAIN.includes(pokemon.effectiveWeather())) || (pokemon.hasAbility('waterveil') && ['watersurface', 'underwater'].includes(f)))) {
+					this.add('-activate', pokemon, 'ability: ' + pokemon.getAbility().name);
+					pokemon.cureStatus();
+				}
+				if (pokemon.hasAbility('watercompaction') && water && f !== 'misty') {
+					this.boost({def: 2}, pokemon, pokemon, ability(this, 'watercompaction'));
+				}
+				if (pokemon.hasAbility('poisonheal') && !['psn', 'tox'].includes(pokemon.status) && toxicGround(this, pokemon) &&
+					pokemon.hp < pokemon.maxhp) {
+					this.heal(pokemon.baseMaxhp / 8, pokemon, pokemon, ability(this, 'poisonheal'));
+				}
+				// Dry Skin drinks the mist or the murk, out of rain and sun.
+				if (pokemon.hasAbility('dryskin') && ['misty', 'swamp'].includes(f) &&
+					![...RAIN, 'sunnyday', 'desolateland'].includes(pokemon.effectiveWeather())) {
+					this.heal(pokemon.baseMaxhp / 16, pokemon, pokemon, ability(this, 'dryskin'));
+				}
+			}
+		},
+	});
+
+	/** setPledge: two different pledges make a field for 4 turns (water + grass: Swamp, fire + water: Rainbow, fire + grass: Burning). */
+	function pledge(battle, source, move) {
+		const s = LR.state(battle);
+		if (!s.pledge) {
+			s.pledge = move.id;
+			return;
+		}
+		if (s.pledge === move.id) return;
+		const pair = [move.id, s.pledge];
+		s.pledge = null;
+		const to = !pair.includes('firepledge') ? 'swamp' : !pair.includes('grasspledge') ? 'rainbow' : 'burning';
+		const turns = source.hasItem('amplifieldrock') ? 7 : 4;
+		if (LR.field(battle) === to) {
+			if (s.overlay != null) s.turns = turns; // the pledges reinforce it
+			return;
+		}
+		if (LR.canChange(battle, to)) LR.set(battle, to, turns);
+	}
+
+	/** Water that washes Tar Shot off and that Water Absorb and Dry Skin drink. */
+	function bathe(battle, pokemon, grounded) {
+		if (pokemon.volatiles.tarshot) {
+			pokemon.removeVolatile('tarshot');
+			LR.say(battle, 'text', 'tar_washed', pokemon.name);
+		}
+		if (pokemon.hasAbility(['waterabsorb', 'dryskin']) && (!grounded || pokemon.isGrounded()) && pokemon.hp < pokemon.maxhp) {
+			if (battle.heal(pokemon.baseMaxhp / 16, pokemon, pokemon, pokemon.getAbility())) LR.say(battle, 'text', 'water_absorbed', pokemon.name);
+		}
+	}
+	/** Damage from a type's effectiveness, Reborn's way: maxhp * eff / divisor, with 1x = 4 (at least 1). */
+	function typeDamage(battle, pokemon, type, divisor) {
+		let eff = 4 * Math.pow(2, battle.dex.getEffectiveness(type, pokemon));
+		if (pokemon.hasAbility(['flamebody', 'magmaarmor'])) eff *= 2;
+		return Math.max(1, Math.floor(pokemon.maxhp * eff / divisor));
+	}
+
+	Object.assign(HOOKS, {
+		/** Water Surface: the water heals water drinkers and washes tar off. */
+		watersurface: {
+			residual() {
+				for (const pokemon of this.getAllActive()) if (pokemon.hp) bathe(this, pokemon, true);
+			},
+		},
+		/** Underwater: Water hits Water normally; Pokémon the water hurts struggle; Dive takes one turn. */
+		underwater: {
+			effectiveness(typeMod, target, type, move) {
+				if (move.type === 'Water' && type === 'Water') return 0;
+			},
+			residual() {
+				for (const pokemon of this.getAllActive()) {
+					if (!pokemon.hp) continue;
+					bathe(this, pokemon, false);
+					if (pokemon.hasType('Water') || pokemon.hasAbility(['swiftswim', 'magicguard'])) continue;
+					if (this.dex.getEffectiveness('Water', pokemon) <= 0) continue;
+					LR.say(this, 'text', 'water_struggle', pokemon.name);
+					this.directDamage(typeDamage(this, pokemon, 'Water', 32), pokemon);
+				}
+			},
+		},
+		/** Murkwater Surface: the toxic water hurts (worse under it), heals Poison water drinkers; mud is water. */
+		murkwatersurface: {
+			modifyType(move) {
+				if (['mudslap', 'mudbomb', 'mudbarrage', 'mudshot', 'thousandwaves'].includes(move.id)) move.type = 'Water';
+			},
+			residual() {
+				for (const pokemon of this.getAllActive()) {
+					if (!pokemon.hp) continue;
+					const immune = pokemon.hasType(['Steel', 'Poison']) ||
+						pokemon.hasAbility(['poisonheal', 'magicguard', 'wonderguard', 'toxicboost', 'immunity', 'pastelveil']);
+					if (!immune) {
+						const drinker = pokemon.hasAbility(['flamebody', 'magmaarmor', 'dryskin', 'waterabsorb']) ? 2 : 1;
+						if (pokemon.volatiles.dive) {
+							LR.say(this, 'text', 'toxic_water_dive', pokemon.name);
+							this.directDamage(Math.max(1, Math.floor(pokemon.maxhp * 4 * Math.pow(2, this.dex.getEffectiveness('Poison', pokemon)) * drinker / 8)), pokemon);
+						} else if (pokemon.isGrounded()) {
+							LR.say(this, 'text', 'toxic_water', pokemon.name);
+							this.directDamage(Math.max(1, Math.floor(pokemon.maxhp * 4 * Math.pow(2, this.dex.getEffectiveness('Poison', pokemon)) * drinker / 32)), pokemon);
+						}
+					}
+					if (pokemon.hp && pokemon.hasType('Poison') && pokemon.hasAbility(['dryskin', 'waterabsorb']) && pokemon.isGrounded() &&
+						pokemon.hp < pokemon.maxhp && this.heal(pokemon.baseMaxhp / 8, pokemon, pokemon, pokemon.getAbility())) {
+						LR.say(this, 'text', 'poison_water_heal', pokemon.name);
+					}
+				}
+			},
+		},
+		/** Swamp: the mire slows the grounded down every turn and saps the sleeping. */
+		swamp: {
+			residual() {
+				for (const pokemon of this.getAllActive()) {
+					if (!pokemon.hp) continue;
+					if (pokemon.isGrounded() && !pokemon.hasItem('heavydutyboots') &&
+						!pokemon.hasAbility(['whitesmoke', 'clearbody', 'quickfeet', 'swiftswim', 'propellertail', 'steamengine'])) {
+						this.boost({spe: -1}, pokemon, pokemon, null, true);
+					}
+					if ((pokemon.status === 'slp' || pokemon.hasAbility('comatose')) && !pokemon.hasAbility('magicguard')) {
+						LR.say(this, 'text', 'swamp_sapped', pokemon.name);
+						this.directDamage(Math.max(1, Math.floor(pokemon.maxhp / 16)), pokemon);
+					}
+				}
 			},
 		},
 	});
@@ -573,6 +840,15 @@
 	const POWERSPOT_FIELDS = ['haunted', 'bewitched', 'holy', 'psyterrain', 'deepearth'];
 	const AQUARING_FIELDS = ['misty', 'swamp', 'watersurface', 'underwater'];
 	const BINDING = [8, 6, 4, 3, 2];
+	/** Binding moves that squeeze harder on their fields (one step down Reborn's divisors). */
+	const BIND_FIELDS = {
+		thundercage: ['electerrain'], snaptrap: ['grassy'], whirlpool: ['watersurface', 'underwater'],
+		magmastorm: ['dragonsden'], sandtomb: ['desert'], infestation: ['forest'], firespin: ['burning', 'haunted'],
+	};
+	const OOZE_FIELDS = ['murkwatersurface', 'wasteland', 'corrupted'];
+	const STENCH_FIELDS = ['wasteland', 'murkwatersurface', 'backalley', 'city'];
+	const POISONED = /target\.status === "psn" \|\| target\.status === "tox"/;
+	const POISONED_HERE = '(target.status === "psn" || target.status === "tox" || LR.toxicField(this))';
 	/** Rewrites Showdown code: Comatose is no sleep on Electric Terrain (ability == :COMATOSE && FE != :ELECTERRAIN). */
 	const AWAKE = [/(\w+)\.hasAbility\("comatose"\)/g, '($1.hasAbility("comatose") && LR.field(this) !== "electerrain")'];
 	const GULP = [/(\w+)\.hp <= \1\.maxhp \/ 2 \? "cramorantgorging" : "cramorantgulping"/g, 'LR.gulpForme(this, $1)'];
@@ -619,14 +895,28 @@
 		}],
 		['conditions', 'partiallytrapped', 'onStart', (orig) => function (...args) {
 			const r = orig.apply(this, args);
-			const f = LR.field(this);
 			const by = this.effectState.sourceEffect && this.effectState.sourceEffect.id;
-			if ((f === 'electerrain' && by === 'thundercage') || (f === 'grassy' && by === 'snaptrap')) {
+			if ((BIND_FIELDS[by] || []).includes(LR.field(this))) {
 				const i = BINDING.indexOf(this.effectState.boundDivisor);
 				if (i >= 0 && i < BINDING.length - 1) this.effectState.boundDivisor = BINDING[i + 1];
 			}
 			return r;
 		}],
+		// The toxic fields count as a poisoned target.
+		['moves', 'venoshock', 'onBasePower', (orig) => rewrite(orig, [POISONED, POISONED_HERE])],
+		['moves', 'barbbarrage', 'onBasePower', (orig) => rewrite(orig, [POISONED, POISONED_HERE])],
+		['moves', 'venomdrench', 'onHit', (orig) => rewrite(orig, [POISONED, POISONED_HERE])],
+		['abilities', 'merciless', 'onModifyCritRatio', (orig) => function (critRatio, source, target) {
+			if (target && LR.toxicField(this)) return 5;
+			return orig.call(this, critRatio, source, target);
+		}],
+		['abilities', 'liquidooze', 'onSourceTryHeal', (orig) => rewrite(orig, [/this\.damage\(damage\)/, 'this.damage(OOZE.includes(LR.field(this)) ? damage * 2 : damage)'.replace('OOZE', JSON.stringify(OOZE_FIELDS))])],
+		['moves', 'strengthsap', 'onHit', (orig) => rewrite(orig, [/this\.heal\(atk,/, 'this.heal(["swamp", "forest"].includes(LR.field(this)) ? Math.floor(atk * 1.3) : atk,'])],
+		['moves', 'takeheart', 'onHit', (orig) => rewrite(orig, [/\{ spa: 1, spd: 1 \}/, '(["watersurface", "underwater"].includes(LR.field(this)) ? { spa: 2, spd: 2 } : { spa: 1, spd: 1 })'])],
+		['abilities', 'gooey', 'onDamagingHit', (orig) => rewrite(orig, [/\{ spe: -1 \}/, '{ spe: ["swamp", "murkwatersurface"].includes(LR.field(this)) ? -2 : -1 }'])],
+		['abilities', 'stench', 'onModifyMove', (orig) => rewrite(orig, [/chance: 10,/, 'chance: STENCH.includes(LR.field(this)) ? 20 : 10,'.replace('STENCH', JSON.stringify(STENCH_FIELDS))])],
+		// Wishiwashi stays schooled in the water, at any HP.
+		...['onStart', 'onResidual'].map((key) => ['abilities', 'schooling', key, (orig) => rewrite(orig, [/pokemon\.hp > pokemon\.maxhp \/ 4/, '(pokemon.hp > pokemon.maxhp / 4 || LR.inWater(this, pokemon))'])]),
 		// Mimicry takes the field's type (its "mimicry" data), on any field.
 		['abilities', 'mimicry', 'onTerrainChange', (orig) => function (pokemon) {
 			const f = LR.field(this);
@@ -825,9 +1115,26 @@
 		/** fieldTypeChange: the added type counts in the effectiveness, as a second type of the move. */
 		onEffectiveness(typeMod, target, type, move) {
 			if (move.category === 'Status') return;
+			// A field's own type chart change (Underwater: Water is neutral on Water), then the added type.
+			const h = LR.hook(this, 'effectiveness');
+			const own = h ? h.call(this, typeMod, target, type, move) : undefined;
+			let mod = own === undefined ? typeMod : own;
 			const added = LR.addedType(this, move, this.activePokemon);
-			if (!added || added === move.type) return;
-			return typeMod + this.dex.getEffectiveness(added, type);
+			if (added && added !== move.type) mod += this.dex.getEffectiveness(added, type);
+			if (mod !== typeMod) return mod;
+		},
+		/** Pbtype: a field turning a move into another type outright (Murkwater Surface: mud is water). */
+		onModifyTypePriority: -2,
+		onModifyType(move, pokemon) {
+			for (const h of LR.hooks(this, 'modifyType')) h.call(this, move, pokemon);
+		},
+		onModifySpe(spe, pokemon) {
+			const mult = LR.mult(this, 'modifySpe', [spe, pokemon]);
+			if (mult !== 1) return this.chainModify(mult);
+		},
+		/** A two-turn move done in one turn (false: no charging turn, as Power Herb). */
+		onChargeMove(pokemon, target, move) {
+			return LR.veto(this, 'chargeMove', [pokemon, target, move]);
 		},
 		/** ...and so does its immunity (a type modifier of 0 in Reborn). */
 		onTryHit(target, source, move) {

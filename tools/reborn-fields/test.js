@@ -260,6 +260,80 @@ test('without the rule, the patched Showdown code is Showdown\'s', () => {
 	assert.deepStrictEqual(active(fish, 0).getTypes(), ['Ground', 'Steel']);
 });
 
+// --- the water fields' own code (second batch) ----------------------------------------------------------------
+
+test('Swamp: grounded Pokemon lose Speed each turn, flying ones do not', () => {
+	const b = battle('swamp', [mon('Snorlax', ['splash'])], [mon('Pidgeot', ['splash'])]);
+	turn(b);
+	turn(b);
+	assert.strictEqual(active(b, 0).boosts.spe, -2);
+	assert.strictEqual(active(b, 1).boosts.spe, 0);
+});
+
+test('Swamp: Gooey -2 Speed; Water + Grass Pledge make a Swamp', () => {
+	const b = battle('swamp', [mon('Rattata', ['tackle'])], [mon('Goodra', ['splash'], {ability: 'gooey'})]);
+	turn(b);
+	assert.strictEqual(active(b, 0).boosts.spe, -3); // Gooey -2, the swamp -1
+	const p = battle('cave', [mon('Samurott', ['waterpledge'])], [mon('Serperior', ['grasspledge'])]);
+	turn(p);
+	assert.strictEqual(LR.field(p), 'swamp');
+});
+
+test('Underwater: Water hits Water normally, Electric never misses', () => {
+	const b = battle('underwater', [mon('Squirtle', ['watergun'])], [mon('Vaporeon', ['splash'])]);
+	const log = turn(b);
+	assert.strictEqual(lines(log, /-resisted/).length, 0, log.join('\n'));
+	const v = battle(null, [mon('Squirtle', ['watergun'])], [mon('Vaporeon', ['splash'])]);
+	assert.strictEqual(lines(turn(v), /-resisted/).length, 1);
+});
+
+test('Underwater: Pokemon the water hurts struggle, the others do not', () => {
+	const b = battle('underwater', [mon('Arcanine', ['splash'])], [mon('Snorlax', ['splash'])]);
+	const log = turn(b);
+	assert.ok(lines(log, /-leaguereborn\|text\|water_struggle/).length === 1, log.join('\n'));
+	assert.strictEqual(lost(b, 0), Math.floor(active(b, 0).maxhp * 8 / 32));
+	assert.strictEqual(lost(b, 1), 0);
+});
+
+test('Underwater: Dive hits the same turn, Take Heart +2', () => {
+	const b = battle('underwater', [mon('Lapras', ['dive'])], [mon('Snorlax', ['splash'])]);
+	turn(b);
+	assert.ok(lost(b, 1) > 0);
+	const t = battle('underwater', [mon('Manaphy', ['takeheart'])], [mon('Snorlax', ['splash'])]);
+	turn(t);
+	assert.strictEqual(active(t, 0).boosts.spa, 2);
+});
+
+test('Water Surface: Swift Swim doubles Speed, the grounded non-Water slow down', () => {
+	const b = battle('watersurface', [mon('Kingdra', ['splash'], {ability: 'swiftswim'})], [mon('Snorlax', ['splash'])]);
+	const k = active(b, 0), s = active(b, 1);
+	assert.strictEqual(k.getStat('spe'), k.storedStats.spe * 2);
+	assert.strictEqual(s.getStat('spe'), Math.floor(s.storedStats.spe * 0.75));
+});
+
+test('Murkwater Surface: the toxic water hurts the grounded, not Poison types', () => {
+	const b = battle('murkwatersurface', [mon('Snorlax', ['splash'])], [mon('Muk', ['splash'])]);
+	const log = turn(b);
+	assert.ok(lines(log, /-leaguereborn\|text\|toxic_water/).length === 1, log.join('\n'));
+	assert.strictEqual(lost(b, 0), Math.floor(active(b, 0).maxhp * 4 / 32));
+	assert.strictEqual(lost(b, 1), 0);
+});
+
+test('Murkwater Surface: Venoshock acts as if the target were poisoned', () => {
+	const b = battle('murkwatersurface', [mon('Muk', ['venoshock'])], [mon('Muk', ['splash'])]);
+	const m = active(b, 0), t = active(b, 1);
+	const move = b.dex.getActiveMove('venoshock');
+	assert.strictEqual(b.runEvent('BasePower', m, t, move, 65, true), 130);
+	const v = battle(null, [mon('Muk', ['venoshock'])], [mon('Muk', ['splash'])]);
+	assert.strictEqual(v.runEvent('BasePower', active(v, 0), active(v, 1), v.dex.getActiveMove('venoshock'), 65, true), 65);
+});
+
+test('without the rule, Gooey is -1', () => {
+	const b = battle(null, [mon('Rattata', ['tackle'])], [mon('Goodra', ['splash'], {ability: 'gooey'})]);
+	turn(b);
+	assert.strictEqual(active(b, 0).boosts.spe, -1);
+});
+
 // --- run -------------------------------------------------------------------------------------------------------
 
 let failed = 0;

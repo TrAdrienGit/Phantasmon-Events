@@ -236,9 +236,36 @@ Le code écrit à la main dans les scripts de Reborn (hors Rejuvenation) pour El
   comportement de Showdown (testé).
 - `test.js` : 28 tests, tous verts.
 
-Reste à faire : les textes propres à chaque message ; les autres terrains (étape 2) ; les graines de Reborn (les
-graines de Showdown réagissent pour l'instant à ses 4 terrains) ; Force Cachée sur les autres terrains (Showdown ne
-lui donne d'effet que sur ses 4 terrains).
+**2026-11-18 (suite) : lot 2, les terrains aquatiques (à valider en jeu).**
+
+Water Surface, Underwater, Murkwater Surface et Swamp, plus ce que Reborn partage entre terrains :
+
+- `ALL` devient une liste de groupes (`shared({...})`) ; nouveaux points d'accroche `modifyType`, `modifySpe`,
+  `chargeMove`, et `effectiveness` (propre au terrain, remplace le `typeMod`).
+- Force Cachée : la table complète de Reborn (30 %, tous les terrains, tirage au hasard sur Rainbow, Wasteland,
+  Crystal Cavern, Bewitched ; paralysie ailleurs).
+- Les Aires (Feu/Herbe/Eau) : deux Aires différentes posent un terrain 4 tours (7 avec la Roche Amplichamp) : Eau +
+  Plante → Swamp, Feu + Eau → Rainbow, Feu + Plante → Burning.
+- Dans l'eau (Underwater partout, les deux surfaces au sol) : Glissade ×2 Vitesse, Surf Caudal ×2, Torrent toujours
+  actif, Hélice Caudale ×1,5 sur la priorité, Hydratation et Ignifu-Voile soignent, Machine à Vapeur +1 Vitesse,
+  Sable Humide +2 Déf. par tour, Plongée en un tour, Siphon confond et serre plus fort, Vague Fracassante recul 1/4,
+  Ardeur +2. Les non-Eau au sol ralentissent (×0,75 en surface, ×0,5 sous l'eau, où le physique non-Eau fait ×0,5).
+- Water Surface : Absorb-Eau et Peau Sèche soignent 1/16, l'eau lave le Goudronnage, Trempette baisse la Précision,
+  Rosée Vitale donne l'Anneau Hydro, Picots et Pics Toxik coulent.
+- Underwater : Eau contre Eau neutre, Électrik ne rate jamais, les Pokémon que l'Eau touche fort « se débattent »
+  (dégâts selon l'efficacité, doublés pour Corps Ardent et Armumagma).
+- Murkwater Surface : l'eau toxique blesse au sol (bien plus en Plongée), sauf Acier, Poison et quelques talents ;
+  un Poison avec Absorb-Eau ou Peau Sèche soigne 1/8 ; les capacités de boue deviennent Eau ; Acidarmure +3.
+- Swamp : −1 Vitesse par tour au sol (sauf Grosses Bottes et quelques talents), un dormeur perd 1/16, Peau Sèche
+  soigne 1/16, Hurlement a son texte.
+- Terrains toxiques (Corrosive, Corrosive Mist, Wasteland, Murkwater) : Choc Venin, Baryline et Piège de Venin
+  agissent comme sur une cible empoisonnée, Cruauté fait toujours mouche, Rage Poison ×1,5 en physique, Soin Poison
+  soigne 1/8. Suintement double, Puanteur 20 %, Visco-Corps −2 (Swamp, Murkwater), Vole-Force ×1,3 (Swamp,
+  Forest), Banc reste en forme Banc dans l'eau.
+- `test.js` : 37 tests, tous verts.
+
+Reste à faire : les textes propres à chaque message ; les autres terrains ; les graines de Reborn (les graines de
+Showdown réagissent pour l'instant à ses 4 terrains) ; Gobe-Bombe sous l'eau.
 
 Écarts connus avec Reborn, à traiter : l'efficacité combinée de Reborn ne descend pas sous ×0,25 (arrondi
 `ceil` de `fieldTypeChange`) ; Showdown arrondit les multiplicateurs au 4096e, Reborn calcule en flottants (écarts
