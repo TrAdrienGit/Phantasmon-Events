@@ -57,8 +57,8 @@ public final class MapViews {
 	}
 
 	/**
-	 * The room of each place of the plan, by place id: its name, round and group. A player only learns the rooms of the
-	 * rounds that began; those who see everything know them all as soon as the draw is made.
+	 * The room of each place of the plan, by place id: its name, round and group. Everybody learns every name as soon
+	 * as the draw is made (D151), started rounds or not; {@code seesAll} no longer matters and is kept for the callers.
 	 */
 	public static Map<String, Object> rooms(Game g, boolean seesAll) {
 		Map<String, Object> out = new LinkedHashMap<>();
@@ -66,7 +66,7 @@ public final class MapViews {
 			return out;
 		}
 		for (RoomDraw.Pick p : g.draw.picks()) {
-			if (p.place() == null || !seesAll && (g.phase == Phase.LOBBY || p.round() > Math.max(1, g.round))) {
+			if (p.place() == null) {
 				continue;
 			}
 			Map<String, Object> room = new LinkedHashMap<>();

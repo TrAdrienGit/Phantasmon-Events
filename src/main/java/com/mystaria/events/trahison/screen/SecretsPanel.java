@@ -107,13 +107,23 @@ final class SecretsPanel {
 					TrahisonPalette.TEXT) + 4;
 		} else if (!info.used() && v.phase() == Phase.VOTE && !v.paused()) {
 			used += MenuUi.paragraph(g, Component.translatable(T + "role.seer.use"), x, y, w, TrahisonPalette.TEXT_MUTED) + 2;
+			GameView.Cabins cabins = GameView.cabins();
 			int half = (w - 4) / 2;
-			for (int door = 0; door < 3; door++) {
-				final int group = door;
-				ui.button(g, x, y + used, half, TrahisonUi.BUTTON_H, Component.translatable(T + "role.seer.pair", door + 1), ButtonKind.DEFAULT, null,
-						() -> Messages.foresee(group, true));
-				ui.button(g, x + half + 4, y + used, half, TrahisonUi.BUTTON_H, Component.translatable(T + "role.seer.solo", door + 1), ButtonKind.DEFAULT, null,
-						() -> Messages.foresee(group, false));
+			int n = 0;
+			for (int i = 0; i < cabins.cabins().size(); i++) {
+				GameView.Cabin cabin = cabins.cabins().get(i);
+				boolean closed = "LOCKED".equals(cabin.state()) || "RELEASED".equals(cabin.state());
+				if (!closed || cabin.id().equals(cabins.myCabin())) {
+					continue;
+				}
+				final String id = cabin.id();
+				ui.button(g, x + (n % 2) * (half + 4), y + used, half, TrahisonUi.BUTTON_H, Component.translatable(T + "role.seer.cabin", i + 1),
+						ButtonKind.DEFAULT, null, () -> Messages.foresee(id));
+				if (n++ % 2 == 1) {
+					used += TrahisonUi.BUTTON_H + 2;
+				}
+			}
+			if (n % 2 == 1) {
 				used += TrahisonUi.BUTTON_H + 2;
 			}
 			used += 2;

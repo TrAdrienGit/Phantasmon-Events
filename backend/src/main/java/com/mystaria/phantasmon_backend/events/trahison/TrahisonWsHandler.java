@@ -193,13 +193,7 @@ public class TrahisonWsHandler implements WsMessageHandler {
 			}
 			case "unlock" -> games.unlock(hubOf(who, in, false), who, in.get("door") instanceof String d ? d : in.get("cabin") instanceof String c ? c : null);
 			case "untie" -> games.untie(hubOf(who, in, false), who, intArg(in, "target"));
-			case "foresee" -> {
-				String side = text(in, "side", true);
-				if (!side.equals("pair") && !side.equals("solo")) {
-					throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "side: pair or solo");
-				}
-				games.foresee(hubOf(who, in, false), who, intArg(in, "group"), side.equals("pair"));
-			}
+			case "foresee" -> games.foresee(hubOf(who, in, false), who, text(in, "cabin", true));
 			case "bet" -> games.bet(hubOf(who, in, false), who, parseVote(in.get("vote")));
 			case "debug_solve" -> games.debugSolve(hubOf(who, in, false), who);
 			case "use_slot", "puzzle_input", "pick_up", "give_item", "use_item", "combine", "replay" -> {

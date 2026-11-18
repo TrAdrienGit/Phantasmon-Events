@@ -15,6 +15,8 @@ public class RoleState {
 	/** What he saw: the group (0..2), the side ({@code PAIR} or {@code SOLO}) and the vote; null before. */
 	public Integer seerGroup;
 	public String seerSide;
+	/** The cabin he named (D144); null before. */
+	public String seerCabin;
 	public String seerVote;
 	/** The gambler's bets: number of the round (as {@code RoundState.number}) to the vote he bet the opponent casts. */
 	public Map<Integer, String> bets = new LinkedHashMap<>();

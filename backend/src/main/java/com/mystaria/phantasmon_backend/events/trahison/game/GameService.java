@@ -2394,10 +2394,12 @@ public class GameService {
 	}
 
 	/**
-	 * T7.1, the seer: once in the game, during VOTE, he learns the vote already cast by one side of a group that is not his
-	 * ({@code group} 0..2, {@code pair} true for the pair). Refused, and not spent, when that side has not voted yet.
+	 * T7.1, the seer (D144): once in the game, during VOTE, he names one cabin (not his own) and learns the vote already cast
+	 * by the side it serves. Refused, and not spent, when the cabin is not closed (locked or released) or when its side has
+	 * not voted yet. With {@code cabins_required} off nothing is ever closed, so a cabin of the plan whose side voted is
+	 * enough.
 	 */
-	public Game foresee(String hub, UUID uuid, int group, boolean pair) {
+	public Game foresee(String hub, UUID uuid, String cabinId) {
 		Game g = require(hub);
 		synchronized (g) {
 			int p = playerAction(g, uuid, Phase.VOTE);
@@ -2409,22 +2411,29 @@ public class GameService {
 				throw new TrahisonException(TrahisonException.POWER_USED, "already used");
 			}
 			RoundState r = g.currentRound();
-			if (group < 0 || group >= 3 || r == null || r.splitIndex == null) {
-				throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "group 0..2");
+			LayoutContent plan = planOf(g);
+			Cabin cabin = cabinId == null ? null : plan.cabins().stream().filter(c -> cabinId.equals(c.id())).findFirst().orElse(null);
+			Side side = cabin == null || r == null ? null : sideOf(plan, r, cabin);
+			if (side == null) {
+				throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "unknown cabin");
 			}
-			boolean mine = r.groupOf(p) == group && r.split().group(Door.ALL.get(group)).pair().contains(p) == pair;
-			if (mine) {
-				throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "not his own side");
+			if (myCabin(plan, r, p).map(c -> c.id().equals(cabin.id())).orElse(false)) {
+				throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "not his own cabin");
 			}
-			Vote cast = pair ? r.pairVote[group] : r.soloVote[group];
+			CabinLock lock = g.cabinLocks.get(cabin.id());
+			if (g.settings.cabinsRequired && (lock == null || !lock.locked())) {
+				throw new TrahisonException(TrahisonException.CABIN_NOT_CLOSED, "that cabin is not closed");
+			}
+			Vote cast = side.pair() ? r.pairVote[side.group()] : r.soloVote[side.group()];
 			if (cast == null) {
-				throw new TrahisonException(TrahisonException.NOT_VOTED_YET, "that side has not voted yet");
+				throw new TrahisonException(TrahisonException.NOT_VOTED_YET, "that cabin has not voted yet");
 			}
 			g.roleState.seerUsed = true;
-			g.roleState.seerGroup = group;
-			g.roleState.seerSide = pair ? "PAIR" : "SOLO";
+			g.roleState.seerGroup = side.group();
+			g.roleState.seerSide = side.pair() ? "PAIR" : "SOLO";
+			g.roleState.seerCabin = cabin.id();
 			g.roleState.seerVote = cast.name();
-			event(g, "foresee", Map.of("player", p, "group", group, "pair", pair));
+			event(g, "foresee", Map.of("player", p, "cabin", cabin.id(), "group", side.group(), "pair", side.pair()));
 			persist(g);
 			notifyChanged(g, "role");
 			return g;
@@ -2488,7 +2497,7 @@ public class GameService {
 			int k = r.groupOf(i);
 			boolean pair = split.group(Door.ALL.get(k)).pair().contains(i);
 			if (role == Role.INFILTRATOR && r.number == 1 && !r.finalLoop) {
-				boolean betrayed = pair ? r.pairVote[k] == Vote.BETRAY && r.pairVoter[k] == i : r.soloVote[k] == Vote.BETRAY;
+				boolean betrayed = (pair ? r.pairVote[k] : r.soloVote[k]) == Vote.BETRAY; // D143: his pair's vote counts, whoever cast it
 				if (betrayed) {
 					total[i] += Roles.INFILTRATOR_BONUS;
 					g.roleState.infiltratorBetrayed.add(i);
@@ -2584,7 +2593,7 @@ public class GameService {
 		int i = t.offerSeat;
 		int k = r.groupOf(i);
 		boolean pair = split.group(Door.ALL.get(k)).pair().contains(i);
-		boolean betrayed = pair ? r.pairVote[k] == Vote.BETRAY && r.pairVoter[k] == i : r.soloVote[k] == Vote.BETRAY;
+		boolean betrayed = (pair ? r.pairVote[k] : r.soloVote[k]) == Vote.BETRAY; // D143: his pair's vote counts, whoever cast it
 		if (betrayed) {
 			total[i] += Temptations.OFFER_BONUS;
 			event(g, "offer_taken", Map.of("player", i, "round", r.number));

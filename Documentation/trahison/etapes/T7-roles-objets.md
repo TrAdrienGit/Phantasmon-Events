@@ -31,10 +31,10 @@ Backend, paquet `game`.
 - Tirage au début de la partie, d'après `settings` (rôles actifs, nombre). Chaque joueur reçoit le sien en privé
   pendant le prologue, avec son texte.
 - Effets :
-  - Infiltré : s'il trahit à la manche 1, +1 point aux résultats de cette manche.
+  - Infiltré : si le vote de sa paire (ou son vote solo) est « Trahir » à la manche 1, même rendu par son partenaire (D143), +1 point aux résultats de cette manche.
   - Gardien : un vote « Trahir » de sa part est refusé.
-  - Voyant : action `foresee` (une fois), entre la fermeture d'une cabine et les résultats : il reçoit le vote
-    de cette cabine.
+  - Voyant : action `foresee` (une fois), entre la fermeture d'une cabine et les résultats : il désigne une cabine précise (fermée, pas la sienne, D144) et reçoit le vote
+    de cette cabine ; refusé sans être dépensé si elle n'est pas fermée ou n'a pas voté.
   - Parieur : avant chaque vote, action `bet` sur le vote de son adversaire ; un pari juste rapporte +1, une
     seule fois dans la partie.
   - Passeur et Solitaire : conditions de victoire, évaluées à la fin.

@@ -368,7 +368,7 @@ public final class Views {
 		}
 		RoleState st = g.roleState;
 		return switch (role) {
-			case SEER -> orderedMap("used", st.seerUsed, "group", st.seerGroup, "side", st.seerSide, "vote", st.seerVote);
+			case SEER -> orderedMap("used", st.seerUsed, "group", st.seerGroup, "side", st.seerSide, "cabin", st.seerCabin, "vote", st.seerVote);
 			case GAMBLER -> orderedMap("paid", st.gamblerPaid, "bet", r == null ? null : st.bets.get(r.number));
 			case INFILTRATOR -> orderedMap("done", st.infiltratorBetrayed.contains(seat));
 			default -> null;
@@ -502,7 +502,7 @@ public final class Views {
 
 	private static Map<String, Object> roleState(Game g) {
 		RoleState st = g.roleState;
-		return orderedMap("seer_used", st.seerUsed, "seer_group", st.seerGroup, "seer_side", st.seerSide, "seer_vote", st.seerVote,
+		return orderedMap("seer_used", st.seerUsed, "seer_group", st.seerGroup, "seer_side", st.seerSide, "seer_cabin", st.seerCabin, "seer_vote", st.seerVote,
 			"bets", new LinkedHashMap<>(st.bets), "gambler_paid", st.gamblerPaid, "infiltrator_betrayed", new ArrayList<>(st.infiltratorBetrayed));
 	}
 

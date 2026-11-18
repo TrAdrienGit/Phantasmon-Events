@@ -59,7 +59,7 @@ On peut commencer les sous-tâches 1 et 2 sur le plan seul, avec les noms des pl
 - Backend : un ensemble `explored` par joueur, rempli quand sa zone désigne une salle ou une place. Il est enregistré
   avec la partie, survit à un redémarrage, et part dans la vue du joueur (`viewer.explored`).
 - Les maîtres du jeu, les spectateurs et les fantômes voient toutes les salles sans hachures, et les curseurs de tous les joueurs (D14, D16). Un fantôme garde ses annotations.
-- Les noms des salles, par place, sont dans la vue dès que le tirage est fait.
+- Les noms des salles, par place, sont dans la vue dès que le tirage est fait, pour tout le monde, manches commencées ou non (D151).
 - **Fini quand :** des tests couvrent la visite, la persistance, et le fait qu'un joueur ne reçoive jamais
   l'exploration d'un autre.
 

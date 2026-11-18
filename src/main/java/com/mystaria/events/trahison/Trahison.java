@@ -29,9 +29,9 @@ public final class Trahison {
 	public static final KeyMapping CABIN_KEY = new KeyMapping("key.phantasmon_events.trahison_cabin",
 			InputConstants.Type.KEYSYM, org.lwjgl.glfw.GLFW.GLFW_KEY_V, "key.categories.phantasmon_events");
 
-	/** Opens the map of the complex (T11). Z, because M is the Cobblemon summary and N, O, P, J, H are taken by the modpack. Rebindable. */
+	/** Opens the map of the complex (T11). M by default (D150), rebindable if it clashes with the Cobblemon summary. */
 	public static final KeyMapping MAP_KEY = new KeyMapping("key.phantasmon_events.trahison_map",
-			InputConstants.Type.KEYSYM, org.lwjgl.glfw.GLFW.GLFW_KEY_Z, "key.categories.phantasmon_events");
+			InputConstants.Type.KEYSYM, org.lwjgl.glfw.GLFW.GLFW_KEY_M, "key.categories.phantasmon_events");
 
 	/** Opens the game master panel (T7.4); unbound by default, the panel is also a page of the Phantasmon menu and {@code /phantasmon event trahison gm}. */
 	public static final KeyMapping GM_KEY = new KeyMapping("key.phantasmon_events.trahison_gm",

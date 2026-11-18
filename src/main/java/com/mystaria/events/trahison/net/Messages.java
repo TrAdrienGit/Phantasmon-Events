@@ -112,12 +112,9 @@ public final class Messages {
 		send(ACTION, "untie", Map.of("target", target), true);
 	}
 
-	/** T7.1, the seer: learns the vote already cast by one side of a group. */
-	public static void foresee(int group, boolean pair) {
-		Map<String, Object> extra = new LinkedHashMap<>();
-		extra.put("group", group);
-		extra.put("side", pair ? "pair" : "solo");
-		send(ACTION, "foresee", extra, true);
+	/** T7.1, the seer (D144): learns the vote already cast from one closed cabin. */
+	public static void foresee(String cabin) {
+		send(ACTION, "foresee", Map.of("cabin", cabin), true);
 	}
 
 	/** T7.1, the gambler: bets on the vote of the opposite side of his group. */

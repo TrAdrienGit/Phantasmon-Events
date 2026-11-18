@@ -49,7 +49,7 @@ public final class Roles {
 	}
 
 	/**
-	 * The seats whose objective is met at the end. {@code infiltratorBetrayed}: the infiltrators who betrayed in round 1;
+	 * The seats whose objective is met at the end. {@code infiltratorBetrayed}: the infiltrators whose pair or solo vote was "betray" in round 1 (D143: his pair's vote counts, whoever cast it);
 	 * {@code winners}: who walked through the final door. The seer and the gambler have powers, not objectives; the game
 	 * master who plays has none either.
 	 */

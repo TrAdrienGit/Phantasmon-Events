@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.mystaria.phantasmon_backend.events.trahison.layout.Box;
+import com.mystaria.phantasmon_backend.events.trahison.layout.Cabin;
 import com.mystaria.phantasmon_backend.events.trahison.layout.HidingSpot;
 import com.mystaria.phantasmon_backend.events.trahison.layout.Layout;
 import com.mystaria.phantasmon_backend.events.trahison.layout.LayoutContent;
@@ -50,11 +51,19 @@ class RolesAndItemsTest {
 			doors.add(new LayoutDoor("c_" + NAMES[k], "color", BOX, "hall", "slot_" + k, 1, List.of(COLORS[k]), "thr_" + NAMES[k]));
 		}
 		doors.add(new LayoutDoor("d_plain", "plain", PLAIN, "hall", "vault", null, null));
+		List<Cabin> cabins = new ArrayList<>();
+		for (int k = 0; k < 3; k++) {
+			for (String side : List.of("pair", "solo")) {
+				String id = "cab_" + NAMES[k] + "_" + side;
+				zones.add(new LayoutZone(id, "cabin", List.of(PLAIN)));
+				cabins.add(new Cabin(id, new String[] { "red_green", "red_blue", "green_blue" }[k], side, id, null));
+			}
+		}
 		List<HidingSpot> spots = new ArrayList<>();
 		for (int i = 0; i < 7; i++) {
 			spots.add(new HidingSpot("s" + i, new Pos(i * 10, 65, 0)));
 		}
-		return new LayoutContent(zones, doors, null, null, spots);
+		return new LayoutContent(zones, doors, null, cabins, spots);
 	}
 
 	@BeforeEach
@@ -254,22 +263,59 @@ class RolesAndItemsTest {
 	}
 
 	@Test
-	void theSeerSeesOneVoteOnceAndOnlyAfterItWasCast() {
+	void theSeerSeesTheVoteOfOneClosedCabinOnceAndOnlyAfterItWasCast() {
 		toVote();
 		Split s = split();
 		int seer = s.groups().get(0).solo();
 		int pairFirst = s.groups().get(1).pair().get(0);
 		setRoles(Map.of(seer, Role.SEER));
-		assertCode(() -> service.foresee(HUB, ids[seer], 1, true), TrahisonException.NOT_VOTED_YET);
-		assertCode(() -> service.foresee(HUB, ids[seer], 0, false), TrahisonException.BAD_ARGUMENT); // his own side
+		String own = cabinId(0, false);
+		String target = cabinId(1, true);
+		service.read(HUB, g -> g.settings.cabinsRequired = true);
+		assertCode(() -> service.foresee(HUB, ids[seer], "nope"), TrahisonException.BAD_ARGUMENT);
+		assertCode(() -> service.foresee(HUB, ids[seer], own), TrahisonException.BAD_ARGUMENT); // his own cabin
+		assertCode(() -> service.foresee(HUB, ids[seer], target), TrahisonException.CABIN_NOT_CLOSED);
+		lock(target, false); // waiting: still not closed
+		assertCode(() -> service.foresee(HUB, ids[seer], target), TrahisonException.CABIN_NOT_CLOSED);
+		lock(target, true);
+		assertCode(() -> service.foresee(HUB, ids[seer], target), TrahisonException.NOT_VOTED_YET);
+		service.read(HUB, g -> g.settings.cabinsRequired = false);
 		service.vote(HUB, ids[pairFirst], Vote.BETRAY);
-		service.foresee(HUB, ids[seer], 1, true);
+		service.read(HUB, g -> g.settings.cabinsRequired = true);
+		service.foresee(HUB, ids[seer], target);
 		Map<?, ?> info = (Map<?, ?>) viewer(seer).get("role_info");
 		assertThat(info.get("vote")).isEqualTo("BETRAY");
+		assertThat(info.get("cabin")).isEqualTo(target);
+		assertThat(info.get("group")).isEqualTo(1);
+		assertThat(info.get("side")).isEqualTo("PAIR");
 		assertThat(info.get("used")).isEqualTo(true);
-		assertCode(() -> service.foresee(HUB, ids[seer], 1, true), TrahisonException.POWER_USED);
-		assertCode(() -> service.foresee(HUB, ids[pairFirst], 1, true), TrahisonException.NOT_YOUR_ROLE);
+		assertCode(() -> service.foresee(HUB, ids[seer], target), TrahisonException.POWER_USED);
+		assertCode(() -> service.foresee(HUB, ids[pairFirst], target), TrahisonException.NOT_YOUR_ROLE);
 		assertThat(viewer(pairFirst).get("role_info")).isNull();
+	}
+
+	/** The cabin that serves the colour pair of door {@code k} on the pair or the solo side, in this test's plan. */
+	private String cabinId(int k, boolean pair) {
+		return "cab_" + NAMES[k] + "_" + (pair ? "pair" : "solo");
+	}
+
+	private void lock(String cabin, boolean locked) {
+		service.read(HUB, g -> g.cabinLocks.put(cabin, new CabinLock(0, 0, locked, false, List.of())));
+	}
+
+	@Test
+	void theInfiltratorGetsHisPointWhenHisPartnerBetraysForTheirPair() {
+		toVote();
+		Split s = split();
+		int infiltrator = s.groups().get(0).pair().get(0);
+		int partner = s.groups().get(0).pair().get(1);
+		setRoles(Map.of(infiltrator, Role.INFILTRATOR));
+		int before = points(infiltrator);
+		service.vote(HUB, ids[partner], Vote.BETRAY); // D143: the pair's vote counts, cast by the partner
+		service.vote(HUB, ids[s.groups().get(0).solo()], Vote.ALLY);
+		service.next(HUB);
+		assertThat(points(infiltrator)).isGreaterThan(before + 1);
+		assertThat(((Map<?, ?>) viewer(infiltrator).get("role_info")).get("done")).isEqualTo(true);
 	}
 
 	@Test

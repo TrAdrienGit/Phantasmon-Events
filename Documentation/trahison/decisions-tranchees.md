@@ -96,3 +96,35 @@
 - **D114** Réglages d'une partie venus du message `create` : choix par défaut confirmé (2026-11-17).
 - **D111 (spectateurs non inscrits)** : fait. Un bouton « Regarder » (« Arrêter de regarder » une fois inscrit) dans l'écran du lobby de `GameScreen`, en plus de la commande `spectate` ; seuls les comptes inscrits ont la marque (réponse du 2026-11-17).
 - **D120 (compteur d'objets)** : fait. `BraceletHud.stepCounters` montre aussi le compteur « Objets : n / total » au maître du jeu, aux spectateurs et aux fantômes, pour la salle dont ils occupent le carré (`Rooms.roomAtPlayer`).
+- **D143 (point de l'Infiltré)** : fait. Le point est donné si le vote de sa paire (ou son vote solo) à la manche 1 est « Trahir », même rendu par son partenaire (`GameService.applyRoleAndItemPoints`).
+- **D144 (le Voyant)** : fait. `foresee` prend `cabin` (id d'une cabine fermée, pas la sienne) ; `viewer.role_info` ajoute `cabin` ; le panneau du rôle propose un bouton par cabine fermée. Refusé sans dépense si la cabine n'est pas fermée (`CABIN_NOT_CLOSED`) ou n'a pas voté (`NOT_VOTED_YET`).
+- **D150 (touche de la carte)** : fait. M par défaut (`Trahison.MAP_KEY`), toujours réglable.
+- **D151 (noms des salles)** : fait. `MapViews.rooms` donne tous les noms à tout le monde dès que le tirage est fait.
+- **D140** Nom de l'action des objets secrets : choix par défaut confirmé (2026-11-18).
+- **D141** Où l'on cache les objets : choix par défaut confirmé (2026-11-18).
+- **D142** Nombre de rôles tirés : choix par défaut confirmé (2026-11-18).
+- **D145** Passe et déverrouillage : choix par défaut confirmé (2026-11-18).
+- **D146** Détacher : cinq secondes : choix par défaut confirmé (2026-11-18).
+- **D147** La Lettre : choix par défaut confirmé (2026-11-18).
+- **D152** Exploration : quelles zones, quel dessin : choix par défaut confirmé (2026-11-18).
+- **D153** Fond de carte fait à la main : calage : choix par défaut confirmé (2026-11-18).
+- **D154** Notes : écriture à la fin de la partie : choix par défaut confirmé (2026-11-18).
+- **D160** Offre en cabine : ce qu'elle vaut : choix par défaut confirmé (2026-11-18).
+- **D161** Offre en cabine : le Gardien et les cases sans cabine : choix par défaut confirmé (2026-11-18).
+- **D162** Fuites : ce qu'on peut apprendre : choix par défaut confirmé (2026-11-18).
+- **D163** La course : qui est annoncé : choix par défaut confirmé (2026-11-18).
+- **D164** Le journal est réservé aux maîtres du jeu : choix par défaut confirmé (2026-11-18).
+- **D165** Panneau du maître du jeu : fenêtre, chat, réglages : choix par défaut confirmé (2026-11-18).
+- **D170** Espèces du catalogue Pokémon : choix par défaut confirmé (2026-11-18).
+- **D171** Duel tactique : attaque de l'adversaire affichée : choix par défaut confirmé (2026-11-18).
+- **D180** Cris : les ids d'espèces sont dans la vue : choix par défaut confirmé (2026-11-18).
+- **D181** Texte Zarbi : recopié au-dessus du clavier une fois lu : choix par défaut confirmé (2026-11-18).
+- **D182** Boîte PC : la règle se déduit des Pokémon verrouillés : choix par défaut confirmé (2026-11-18).
+- **D183** Cris : sans indice de salle : choix par défaut confirmé (2026-11-18).
+- **D184** Statues, socles et marques de type : lus en page, pas en modèle dans le monde : choix par défaut confirmé (2026-11-18).
+- **D185** Police Zarbi provisoire : choix par défaut confirmé (2026-11-18).
+- **D186** Duel : table des types et réservistes dans l'écran : choix par défaut confirmé (2026-11-18).
+- **D190** Partenaires : espèces imposées par pouvoir, pas l'équipe du joueur : choix par défaut confirmé (2026-11-18).
+- **D191** Plus petit groupe que de pouvoirs demandés : choix par défaut confirmé (2026-11-18).
+- **D192** Obstacles en faux blocs : la salle les laisse vides : choix par défaut confirmé (2026-11-18).
+- **D193** Partenaire : suit sans physique, visible de tous les vivants du groupe : choix par défaut confirmé (2026-11-18).

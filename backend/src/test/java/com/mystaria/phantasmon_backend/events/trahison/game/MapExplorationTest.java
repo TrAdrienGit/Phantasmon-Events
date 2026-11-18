@@ -131,13 +131,14 @@ class MapExplorationTest {
 	}
 
 	@Test
-	void theNamesOfThePlacesComeWithTheDrawAndAPlayerOnlyLearnsTheRoundsThatBegan() {
+	void theNamesOfAllThePlacesComeWithTheDrawForEveryone() {
+		assertThat(rooms(ids[0])).isEmpty(); // no draw yet
 		drawRooms();
-		assertThat(rooms(ids[0])).isEmpty(); // lobby
+		assertThat(rooms(ids[0])).containsOnlyKeys("place_1_0", "place_2_0"); // D151: started rounds or not
 		assertThat(rooms(gm)).containsKeys("place_1_0", "place_2_0");
 		service.start(HUB);
 		drawRooms(); // the start draws its own rooms
-		assertThat(rooms(ids[0])).containsOnlyKeys("place_1_0");
+		assertThat(rooms(ids[0])).containsOnlyKeys("place_1_0", "place_2_0");
 		assertThat(rooms(ids[0]).get("place_1_0")).isEqualTo(Map.of("name", "First room", "round", 1, "group", 0));
 		assertThat(rooms(watcher)).containsOnlyKeys("place_1_0", "place_2_0");
 	}

@@ -331,7 +331,7 @@
 - Écran du joueur : un bloc « Ton rôle secret » avec le nom et le texte du rôle. Aucun autre joueur ne le voit ; seuls les maîtres du jeu (superviseur ou qui joue) ont tous les rôles, dans leur bloc `gm`.
 - Gardien : cliquer « Trahir » est refusé avec un message privé ; « Allier » passe.
 - Infiltré : trahir à la manche 1 donne +1 aux résultats (le tableau montre +4 face à un « Allier »), pas à la manche 2.
-- Voyant (en `VOTE`) : après qu'un camp a voté, un bouton « Porte n, paire/solo » lui montre ce vote, une seule fois ; refus avant le vote de ce camp.
+- Voyant (en `VOTE`) : après qu'un camp a voté, un bouton « Cabine n » par cabine fermée (pas la sienne) lui montre ce vote, une seule fois ; refus tant que la cabine n'est pas fermée ou n'a pas voté.
 - Parieur : un pari par manche avant le vote du camp d'en face ; un pari juste donne +1, une seule fois dans la partie.
 - Fin de partie (porte finale, ou le maître du jeu termine) : l'écran liste tous les rôles avec « (objectif atteint) » pour ceux qui l'ont rempli.
 - Cachettes : en temps libre, près d'une cachette, « Fouiller ici » donne un objet (visible seulement de soi). Une cachette vide est refusée. Trop loin est refusé.
@@ -347,10 +347,10 @@
 À faire avec deux joueurs, un maître du jeu et un spectateur, après un tirage des salles. Plan : au moins deux étages déclarés dans l'onglet « Étages » de l'éditeur (par exemple y 60 à 69 et y 70 à 79).
 
 1. **Étages.** Éditeur du plan, onglet « Étages » : créer deux étages, essayer de les chevaucher (par exemple 60..70 et 70..80) puis enregistrer : la liste des erreurs cite « Des étages se chevauchent ». Corriger, enregistrer, recharger (`reload`) : les deux étages sont identiques.
-2. **Ouverture.** Dans une partie sortie du lobby, appuyer sur Z (touche réglable) : la carte s'ouvre sur l'étage où l'on se tient, avec une flèche à la couleur de son bracelet, orientée comme le regard (nord en haut). Dans le lobby, Z affiche seulement « La carte n'est pas encore disponible ». Z (ou Échap) la referme.
+2. **Ouverture.** Dans une partie sortie du lobby, appuyer sur M (touche réglable) : la carte s'ouvre sur l'étage où l'on se tient, avec une flèche à la couleur de son bracelet, orientée comme le regard (nord en haut). Dans le lobby, M affiche seulement « La carte n'est pas encore disponible ». Z (ou Échap) la referme.
 3. **Étages.** Cliquer les onglets d'étage, puis tourner la molette sur eux : l'étage change. Un escalier à cheval sur deux étages apparaît sur les deux. « Suivre » recentre la carte sur soi et prend l'étage où l'on est.
 4. **Exploration.** Au début, les places de salle sont hachurées et nommées ; entrer dans une place : elle perd ses hachures. L'autre joueur voit **les siennes** seulement. Se déconnecter, revenir : l'exploration est restée. Redémarrer le backend en pleine partie : elle est restée aussi.
-5. **Noms.** Les noms des salles de la manche en cours sont affichés, ceux des manches suivantes ne le sont pas (D151). Le maître du jeu et le spectateur voient tous les noms.
+5. **Noms.** Dès que le tirage est fait, tout le monde voit les noms de toutes les salles, manches commencées ou non (D151).
 6. **Portes.** Ouvrir une porte (par la barre des bracelets ou `set_door` du maître du jeu) : sur la carte ouverte, elle passe de la barre rouge pleine à deux montants verts, sans rouvrir l'écran. Une porte de couleur montre les symboles de ses deux couleurs quand on zoome. Survol : « Porte rouge et verte : ouverte ».
 7. **Zoom et déplacement.** Molette sur la carte : zoom autour du curseur ; clic droit tiré : déplacement ; « Cadrer » : tout l'étage. Les noms trop petits disparaissent, l'infobulle les donne.
 8. **Dessin.** Crayon : tracer, changer d'encre ; zoomer : les traits restent à leur place. Gomme : effacer un trait. « Tout effacer » demande confirmation, annuler ne perd rien. Tracer sur chaque étage : les traits sont par étage.
@@ -412,3 +412,11 @@ Cette étape n'a été vérifiée que par la compilation et `./gradlew test --te
 10. **Redémarrage du backend en cours de salle.** Les partenaires et leurs pouvoirs sont les mêmes (ils se retirent de la graine) ; l'avancement du rocher reste.
 11. **Groupe trop petit.** Avec deux joueurs (le troisième est un factice) : si un pouvoir demandé n'est tenu par personne, n'importe qui peut cliquer ce pad.
 12. **Éditeur.** `power_spot` est dans la liste des mécanismes, les emplacements de genre « emplacement de pouvoir » s'ajoutent, `spot` n'accepte que ce genre (et plate, pedestal, lever) ; un `power` inconnu ou plus de trois pouvoirs différents est refusé à l'enregistrement.
+
+## Décisions D143, D144, D150, D151 (Infiltré, Voyant, touche de la carte, noms des salles)
+
+1. **Infiltré en paire.** Infiltré dans une paire à la manche 1 : son partenaire vote « Trahir » pour la paire, lui ne vote pas. Aux résultats il reçoit le point du rôle (D143) ; son panneau de rôle dit « fait ». Avec un vote « Allier » de la paire, rien.
+2. **Voyant : cabine.** Voyant, en `VOTE`, panneau du rôle : un bouton « Cabine n » n'apparaît que pour les cabines fermées (verrouillées ou libérées) autres que la sienne. Cliquer sur une cabine qui a voté montre son vote, une seule fois ; plus aucun bouton ensuite (D144).
+3. **Voyant : refus.** Tant qu'une cabine n'est pas fermée, pas de bouton ; une cabine fermée mais sans vote déposé est refusée avec le message « pas encore voté », sans dépenser le pouvoir (réessayer après le vote).
+4. **Touche de la carte.** Sans rien rebinder, M ouvre la carte (D150) ; la touche reste réglable dans les commandes (catégorie Phantasmon Events). Si Cobblemon répond aussi à M, rebinder l'une des deux.
+5. **Noms des salles.** Au début de la partie, ouvrir la carte en manche 1 : les noms des salles des manches 2 et 3 sont déjà affichés sur leurs places (D151).
