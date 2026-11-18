@@ -2,6 +2,7 @@ package com.mystaria.events.trahison.edit;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -60,6 +61,9 @@ public final class RoomEditor {
 	static final Selection selection = new Selection();
 	static String selectedSlot;
 	static String selectedStep;
+	/** "Create from a sheet": the hint of each slot of the template, and the slots whose proposed position is not confirmed yet. */
+	static final Map<String, String> hints = new HashMap<>();
+	static final Set<String> unplaced = new LinkedHashSet<>();
 	/** The problems found by the last save attempt (local or from the backend). */
 	static List<RoomChecks.Issue> saveIssues = new ArrayList<>();
 
@@ -91,6 +95,7 @@ public final class RoomEditor {
 		UseItemCallback.EVENT.register((player, level, hand) -> wandInHand(player, level.isClientSide)
 				? InteractionResultHolder.fail(player.getItemInHand(hand)) : InteractionResultHolder.pass(player.getItemInHand(hand)));
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(RoomWorld::render);
+		RoomHud.register();
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> client.execute(RoomEditor::reset));
 	}
 
@@ -112,6 +117,8 @@ public final class RoomEditor {
 		selectedSlot = null;
 		selectedStep = null;
 		saveIssues = new ArrayList<>();
+		hints.clear();
+		unplaced.clear();
 		status = null;
 		changedRevision();
 	}
@@ -158,7 +165,12 @@ public final class RoomEditor {
 	/** The problems the editor finds in the room as it is now (cached until the next change). */
 	static List<RoomChecks.Issue> live() {
 		if (liveRevision != revision) {
-			live = RoomChecks.check(room);
+			List<RoomChecks.Issue> found = new ArrayList<>(RoomChecks.check(room));
+			if (!unplaced.isEmpty()) {
+				// Not tied to one slot (no id): every row of the list would turn red; the info lists them in chain order.
+				found.add(new RoomChecks.Issue("LOCAL_SLOTS_UNPLACED", List.of(), String.join(", ", todo())));
+			}
+			live = found;
 			liveRevision = revision;
 		}
 		return live;
@@ -215,6 +227,33 @@ public final class RoomEditor {
 
 	/** {@code room new <id>}. */
 	public static void start(String id) {
+		start(id, null);
+	}
+
+	/** The template ids the command offers (tab completion). */
+	public static List<String> templateIds() {
+		return RoomTemplates.IDS;
+	}
+
+	/** {@code room templates}: the nine sheets the editor can start from. */
+	public static void templates() {
+		chat(t("templates.title", RoomTemplates.IDS.size()));
+		for (String template : RoomTemplates.IDS) {
+			try {
+				RoomTemplates.Loaded loaded = RoomTemplates.load(template);
+				chat(t("templates.line", template, loaded.room().name, loaded.room().difficulty, loaded.room().steps.size(), loaded.room().slots.size()));
+			} catch (IOException | RuntimeException ex) {
+				chat(t("templates.broken", template));
+			}
+		}
+		chat(t("templates.usage"));
+	}
+
+	/**
+	 * {@code room new <id> [template]}: with a template (one of {@link RoomTemplates#IDS}), the room starts with the chain of the
+	 * sheet and all its slots at their proposed positions, shown as ghosts until the builder places them.
+	 */
+	public static void start(String id, String template) {
 		Component refused = refusal();
 		if (refused != null) {
 			chat(refused);
@@ -237,11 +276,34 @@ public final class RoomEditor {
 			chat(t("refuse.height"));
 			return;
 		}
-		begin(f, new RoomDto());
+		RoomTemplates.Loaded loaded = null;
+		if (template != null) {
+			if (!RoomTemplates.known(template)) {
+				chat(t("refuse.bad_template", template, String.join(", ", RoomTemplates.IDS)));
+				return;
+			}
+			try {
+				loaded = RoomTemplates.load(template);
+			} catch (IOException | RuntimeException ex) {
+				chat(t("refuse.template_unreadable", template, String.valueOf(ex.getMessage())));
+				return;
+			}
+		}
+		begin(f, loaded == null ? new RoomDto() : loaded.room());
 		room.id = id;
-		room.name = id;
+		room.name = loaded == null || loaded.room().name == null ? id : loaded.room().name;
 		room.author = Minecraft.getInstance().player.getGameProfile().getName();
 		dirty = true;
+		if (loaded != null) {
+			hints.putAll(loaded.hints());
+			unplaced.addAll(loaded.unplaced());
+			selectedSlot = todo().isEmpty() ? null : todo().get(0);
+			RoomScreen.showTodo();
+			setStatus(t("status.new_template", template, unplaced.size()), false);
+			chat(t("started_template", id, template, room.steps.size(), unplaced.size(), TrahisonEditor.OPEN_KEY.getTranslatedKeyMessage(),
+					Items.STICK.getDescription()));
+			return;
+		}
 		setStatus(t("status.new"), false);
 		chat(t("started", id, TrahisonEditor.OPEN_KEY.getTranslatedKeyMessage(), Items.STICK.getDescription()));
 	}
@@ -257,6 +319,8 @@ public final class RoomEditor {
 		selectedSlot = null;
 		selectedStep = null;
 		saveIssues = new ArrayList<>();
+		hints.clear();
+		unplaced.clear();
 		changedRevision();
 	}
 
@@ -441,12 +505,35 @@ public final class RoomEditor {
 		slot.size = new P(box.maxX - box.minX + 1, box.maxY - box.minY + 1, box.maxZ - box.minZ + 1);
 	}
 
-	/** The slot takes the selected box (position and size). */
+	/** The slot takes the selected box (position and size); a template slot counts as placed from then on. */
 	static void setSlotBox(SlotDto slot) {
 		Box box = selectionCanonical();
 		if (box != null) {
 			placeOn(slot, box);
+			unplaced.remove(slot.id);
 			changed();
+		}
+	}
+
+	/** The slots a template proposed that are not confirmed yet, in the order of the chain. */
+	static List<String> todo() {
+		return RoomTemplates.order(room, unplaced);
+	}
+
+	/** "Keep the proposed position": the slot counts as placed where it is; the next one to place is selected. */
+	static void keepPosition(String id) {
+		if (unplaced.remove(id)) {
+			selectedSlot = todo().isEmpty() ? id : todo().get(0);
+			changed();
+		}
+	}
+
+	/** "Place on the selection": the slot takes the selected box and counts as placed; the next one to place is selected. */
+	static void placeOnSelection(String id) {
+		SlotDto slot = slot(id);
+		if (slot != null && selectionCanonical() != null) {
+			setSlotBox(slot);
+			selectedSlot = todo().isEmpty() ? id : todo().get(0);
 		}
 	}
 
@@ -473,6 +560,8 @@ public final class RoomEditor {
 		if (id.equals(selectedSlot)) {
 			selectedSlot = null;
 		}
+		unplaced.remove(id);
+		hints.remove(id);
 		changed();
 	}
 
@@ -494,6 +583,13 @@ public final class RoomEditor {
 		}
 		if (from.equals(selectedSlot)) {
 			selectedSlot = to;
+		}
+		if (unplaced.remove(from)) {
+			unplaced.add(to);
+		}
+		String hint = hints.remove(from);
+		if (hint != null) {
+			hints.put(to, hint);
 		}
 		changed();
 		return true;
@@ -647,6 +743,12 @@ public final class RoomEditor {
 			return;
 		}
 		List<RoomChecks.Issue> early = new ArrayList<>(live());
+		if (!unplaced.isEmpty()) {
+			// A clear local refusal before anything else: the template's slots are only proposals until confirmed.
+			saveIssues = early;
+			setStatus(t("status.unplaced", unplaced.size()), true);
+			return;
+		}
 		if (!RoomChecks.passes(early)) {
 			// Do not even read the world: the definition is not fit to send.
 			saveIssues = early;

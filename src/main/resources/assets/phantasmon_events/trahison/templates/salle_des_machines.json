@@ -1,0 +1,581 @@
+{
+ "id": "salle_des_machines",
+ "name": "La Salle des machines",
+ "difficulty": 3,
+ "slots": [
+  {
+   "id": "sortie",
+   "kind": "exit",
+   "position": {
+    "x": 22,
+    "y": 1,
+    "z": 0
+   },
+   "orientation": "south",
+   "size": {
+    "x": 3,
+    "y": 3,
+    "z": 1
+   },
+   "hint": "Mur nord, au centre : l'ouverture de la sortie. À laisser vide, le jeu la ferme.",
+   "placed": false
+  },
+  {
+   "id": "fusible_1",
+   "kind": "pickup",
+   "position": {
+    "x": 10,
+    "y": 6,
+    "z": 12
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Passerelle ouest, en hauteur : un fusible.",
+   "placed": false
+  },
+  {
+   "id": "fusible_2",
+   "kind": "pickup",
+   "position": {
+    "x": 36,
+    "y": 8,
+    "z": 10
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Passerelle nord-est, très haut : un fusible.",
+   "placed": false
+  },
+  {
+   "id": "fusible_3",
+   "kind": "pickup",
+   "position": {
+    "x": 20,
+    "y": 1,
+    "z": 26
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Au sol, derrière un tuyau du centre : un fusible.",
+   "placed": false
+  },
+  {
+   "id": "fusible_4",
+   "kind": "pickup",
+   "position": {
+    "x": 40,
+    "y": 3,
+    "z": 30
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Contre les tuyaux de l'est : un fusible.",
+   "placed": false
+  },
+  {
+   "id": "fusible_5",
+   "kind": "pickup",
+   "position": {
+    "x": 12,
+    "y": 2,
+    "z": 40
+   },
+   "orientation": "north",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Au sol, côté sud-ouest : un fusible.",
+   "placed": false
+  },
+  {
+   "id": "pad_tableau",
+   "kind": "terminal",
+   "position": {
+    "x": 1,
+    "y": 1,
+    "z": 24
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur ouest : le tableau électrique à câbler.",
+   "placed": false
+  },
+  {
+   "id": "mur_schema",
+   "kind": "wall_clue",
+   "position": {
+    "x": 1,
+    "y": 3,
+    "z": 24
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 2,
+    "z": 2
+   },
+   "hint": "Mur ouest, au-dessus du tableau : le schéma de câblage.",
+   "placed": false
+  },
+  {
+   "id": "bureau_notice",
+   "kind": "document",
+   "position": {
+    "x": 3,
+    "y": 2,
+    "z": 40
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Bureau du sud-ouest : la notice du câblage.",
+   "placed": false
+  },
+  {
+   "id": "pad_engrenages",
+   "kind": "terminal",
+   "position": {
+    "x": 30,
+    "y": 1,
+    "z": 1
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur nord : le pupitre des engrenages.",
+   "placed": false
+  },
+  {
+   "id": "mur_engrenages",
+   "kind": "wall_clue",
+   "position": {
+    "x": 46,
+    "y": 3,
+    "z": 10
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 2,
+    "z": 2
+   },
+   "hint": "Cadre sur la grille de l'est : la séquence de symboles.",
+   "placed": false
+  },
+  {
+   "id": "manette_1",
+   "kind": "lever",
+   "position": {
+    "x": 46,
+    "y": 1,
+    "z": 14
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est, manette 1 sur 4 : alignée avec les autres.",
+   "placed": false
+  },
+  {
+   "id": "marque_1",
+   "kind": "wall_clue",
+   "position": {
+    "x": 46,
+    "y": 2,
+    "z": 14
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est, juste au-dessus de la manette 1 : la marque de type.",
+   "placed": false
+  },
+  {
+   "id": "manette_2",
+   "kind": "lever",
+   "position": {
+    "x": 46,
+    "y": 1,
+    "z": 17
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est, manette 2 sur 4 : alignée avec les autres.",
+   "placed": false
+  },
+  {
+   "id": "marque_2",
+   "kind": "wall_clue",
+   "position": {
+    "x": 46,
+    "y": 2,
+    "z": 17
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est, juste au-dessus de la manette 2 : la marque de type.",
+   "placed": false
+  },
+  {
+   "id": "manette_3",
+   "kind": "lever",
+   "position": {
+    "x": 46,
+    "y": 1,
+    "z": 20
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est, manette 3 sur 4 : alignée avec les autres.",
+   "placed": false
+  },
+  {
+   "id": "marque_3",
+   "kind": "wall_clue",
+   "position": {
+    "x": 46,
+    "y": 2,
+    "z": 20
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est, juste au-dessus de la manette 3 : la marque de type.",
+   "placed": false
+  },
+  {
+   "id": "manette_4",
+   "kind": "lever",
+   "position": {
+    "x": 46,
+    "y": 1,
+    "z": 23
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est, manette 4 sur 4 : alignée avec les autres.",
+   "placed": false
+  },
+  {
+   "id": "marque_4",
+   "kind": "wall_clue",
+   "position": {
+    "x": 46,
+    "y": 2,
+    "z": 23
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est, juste au-dessus de la manette 4 : la marque de type.",
+   "placed": false
+  },
+  {
+   "id": "bureau_types",
+   "kind": "document",
+   "position": {
+    "x": 3,
+    "y": 2,
+    "z": 43
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Bureau du sud-ouest : la fiche des types.",
+   "placed": false
+  },
+  {
+   "id": "poste_a",
+   "kind": "terminal",
+   "position": {
+    "x": 46,
+    "y": 1,
+    "z": 4
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Nord-est : le premier pupitre de pression.",
+   "placed": false
+  },
+  {
+   "id": "poste_b",
+   "kind": "terminal",
+   "position": {
+    "x": 1,
+    "y": 1,
+    "z": 42
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Sud-ouest : le second pupitre de pression, loin du premier.",
+   "placed": false
+  },
+  {
+   "id": "cachette_1",
+   "kind": "secret",
+   "position": {
+    "x": 24,
+    "y": 1,
+    "z": 22
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Compartiment de maintenance sous la chaudière, au centre.",
+   "placed": false
+  },
+  {
+   "id": "cachette_2",
+   "kind": "secret",
+   "position": {
+    "x": 3,
+    "y": 4,
+    "z": 14
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Derrière un tuyau de la passerelle ouest.",
+   "placed": false
+  }
+ ],
+ "steps": [
+  {
+   "id": "fusibles",
+   "mechanism": "pickup_set",
+   "params": {
+    "spots": 5,
+    "filled": 4
+   },
+   "slots": {},
+   "needs": [],
+   "gives": [
+    {
+     "clue": "spot_1",
+     "slot": "fusible_1"
+    },
+    {
+     "clue": "spot_2",
+     "slot": "fusible_2"
+    },
+    {
+     "clue": "spot_3",
+     "slot": "fusible_3"
+    },
+    {
+     "clue": "spot_4",
+     "slot": "fusible_4"
+    },
+    {
+     "clue": "spot_5",
+     "slot": "fusible_5"
+    }
+   ],
+   "hints": [
+    "Le tableau manque de pièces.",
+    "Cherchez derrière les tuyaux et sur les passerelles.",
+    "5 endroits, 4 fusibles : balayez la halle en trois."
+   ]
+  },
+  {
+   "id": "tableau",
+   "mechanism": "wiring",
+   "params": {
+    "wires": 5,
+    "colors": 4
+   },
+   "slots": {
+    "panel": "pad_tableau"
+   },
+   "needs": [
+    "fusibles"
+   ],
+   "gives": [
+    {
+     "clue": "scheme",
+     "slot": "mur_schema"
+    },
+    {
+     "clue": "scheme_text",
+     "slot": "bureau_notice"
+    }
+   ],
+   "hints": [
+    "Chaque fil a sa couleur.",
+    "Le schéma est sur le mur et la notice du bureau.",
+    "La n-ième couleur est celle de la borne de gauche n."
+   ]
+  },
+  {
+   "id": "engrenages",
+   "mechanism": "ring_dial",
+   "params": {
+    "rings": 3,
+    "symbols": 6,
+    "links": 1
+   },
+   "slots": {
+    "terminal": "pad_engrenages"
+   },
+   "needs": [
+    "tableau"
+   ],
+   "gives": [
+    {
+     "clue": "symbols",
+     "slot": "mur_engrenages"
+    }
+   ],
+   "hints": [
+    "Les anneaux se gênent entre eux.",
+    "Tournez un anneau et regardez les autres.",
+    "Un anneau en entraîne un autre : tenez-en compte avant de tourner."
+   ]
+  },
+  {
+   "id": "vannes",
+   "mechanism": "type_chain",
+   "params": {
+    "count": 4
+   },
+   "slots": {
+    "lever_1": "manette_1",
+    "lever_2": "manette_2",
+    "lever_3": "manette_3",
+    "lever_4": "manette_4"
+   },
+   "needs": [
+    "fusibles"
+   ],
+   "gives": [
+    {
+     "clue": "mark_1",
+     "slot": "marque_1"
+    },
+    {
+     "clue": "mark_2",
+     "slot": "marque_2"
+    },
+    {
+     "clue": "mark_3",
+     "slot": "marque_3"
+    },
+    {
+     "clue": "mark_4",
+     "slot": "marque_4"
+    },
+    {
+     "clue": "type_sheet",
+     "slot": "bureau_types"
+    }
+   ],
+   "hints": [
+    "Chaque manette porte un type.",
+    "Le plus fort contre le suivant ; la fiche aide.",
+    "Tirez dans l'ordre : chaque type bat le suivant ; la fiche le dit."
+   ]
+  },
+  {
+   "id": "pression",
+   "mechanism": "twin_screens",
+   "params": {},
+   "slots": {
+    "left": "poste_a",
+    "right": "poste_b",
+    "exit": "sortie"
+   },
+   "needs": [
+    "engrenages",
+    "vannes"
+   ],
+   "gives": [
+    {
+     "clue": "left_code",
+     "slot": "poste_a"
+    },
+    {
+     "clue": "right_code",
+     "slot": "poste_b"
+    }
+   ],
+   "hints": [
+    "Deux pupitres, deux moitiés.",
+    "L'un lit, l'autre commande.",
+    "Dites-vous les valeurs à voix haute."
+   ]
+  }
+ ]
+}

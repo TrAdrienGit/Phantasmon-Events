@@ -33,11 +33,20 @@ final class WorldDraw {
 	}
 
 	/** One box to draw: of local blocks, an outline (twice, for a strong one) and a translucent fill. */
-	record Cmd(Box box, int color, boolean strong, float fill) {
+	record Cmd(Box box, int color, boolean strong, float fill, boolean dashed) {
+
+		Cmd(Box box, int color, boolean strong, float fill) {
+			this(box, color, strong, fill, false);
+		}
 	}
 
 	static void queue(List<Cmd> cmds, Box box, int color, boolean strong, float fill) {
 		cmds.add(new Cmd(box, color, strong, fill));
+	}
+
+	/** A ghost: an outline of moving dashes and a fill that the caller makes pulse (a position that is only proposed). */
+	static void queueGhost(List<Cmd> cmds, Box box, int color, boolean strong, float fill) {
+		cmds.add(new Cmd(box, color, strong, fill, true));
 	}
 
 	/** The selection: the box between the corners, and each corner. */
@@ -71,12 +80,55 @@ final class WorldDraw {
 		VertexConsumer lines = buffers.getBuffer(RenderType.lines());
 		for (Cmd cmd : cmds) {
 			AABB aabb = aabb(cmd.box());
+			if (cmd.dashed()) {
+				dashedBox(pose, lines, aabb, red(cmd.color()), green(cmd.color()), blue(cmd.color()), 1f);
+				continue;
+			}
 			LevelRenderer.renderLineBox(pose, lines, aabb, red(cmd.color()), green(cmd.color()), blue(cmd.color()), cmd.strong() ? 1f : 0.8f);
 			if (cmd.strong()) {
 				LevelRenderer.renderLineBox(pose, lines, aabb.inflate(0.02), red(cmd.color()), green(cmd.color()), blue(cmd.color()), 1f);
 			}
 		}
 		buffers.endBatch(RenderType.lines());
+	}
+
+	private static final double DASH = 0.3;
+	private static final double PERIOD = 0.6;
+
+	/** The twelve edges as dashes that slowly march along them, so a proposed slot cannot be mistaken for a placed one. */
+	private static void dashedBox(PoseStack pose, VertexConsumer lines, AABB b, float r, float g, float bl, float a) {
+		double shift = System.currentTimeMillis() % 2400 / 2400.0 * PERIOD;
+		double[] xs = { b.minX, b.maxX };
+		double[] ys = { b.minY, b.maxY };
+		double[] zs = { b.minZ, b.maxZ };
+		for (double y : ys) {
+			for (double z : zs) {
+				dashes(pose, lines, new Vec3(b.minX, y, z), new Vec3(b.maxX, y, z), shift, r, g, bl, a);
+			}
+		}
+		for (double x : xs) {
+			for (double z : zs) {
+				dashes(pose, lines, new Vec3(x, b.minY, z), new Vec3(x, b.maxY, z), shift, r, g, bl, a);
+			}
+		}
+		for (double x : xs) {
+			for (double y : ys) {
+				dashes(pose, lines, new Vec3(x, y, b.minZ), new Vec3(x, y, b.maxZ), shift, r, g, bl, a);
+			}
+		}
+	}
+
+	private static void dashes(PoseStack pose, VertexConsumer lines, Vec3 from, Vec3 to, double shift, float r, float g, float b, float a) {
+		double length = from.distanceTo(to);
+		Vec3 dir = to.subtract(from).normalize();
+		for (double start = shift - PERIOD; start < length; start += PERIOD) {
+			double s = Math.max(0, start);
+			double e = Math.min(length, start + DASH);
+			if (e > s) {
+				// A box with no thickness draws as the single line between its two corners.
+				LevelRenderer.renderLineBox(pose, lines, new AABB(from.add(dir.scale(s)), from.add(dir.scale(e))), r, g, b, a);
+			}
+		}
 	}
 
 	/** A small grow so the outline and the fill do not fight with the blocks' own faces. */

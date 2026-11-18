@@ -123,6 +123,16 @@ public record RoomView(String hub, int round, int group, String room, String nam
 			return out;
 		}
 
+		/** D228: a candidate hiding place of the free time. The backend lists every candidate the same way, so none can be told apart. */
+		public boolean searchable() {
+			for (Show s : shows) {
+				if ("search".equals(s.type())) {
+					return true;
+				}
+			}
+			return false;
+		}
+
 		/** The room's exit slot: it is drawn by the plan's blocks, not by an object of ours. */
 		public boolean isExit() {
 			return "exit".equals(kind);

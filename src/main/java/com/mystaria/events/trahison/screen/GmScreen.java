@@ -545,7 +545,10 @@ public final class GmScreen extends TrahisonScreen {
 		cx += TrahisonUi.pill(g, cx, y + 29, state, TrahisonPalette.PANEL_SUNKEN, room.exitOpen() ? TrahisonPalette.SUCCESS : TrahisonPalette.ACCENT) + 3;
 		cx += TrahisonUi.pill(g, cx, y + 29, Component.translatable(T + "room.hints", room.hints().size()), TrahisonPalette.PANEL_SUNKEN, TrahisonPalette.TEXT_SECONDARY) + 3;
 		if (room.secret() != null) { // D228: the live hiding place of the free time, among the room's candidates
-			TrahisonUi.pill(g, cx, y + 29, Component.translatable(T + "room.secret", room.secret()), TrahisonPalette.PANEL_SUNKEN, TrahisonPalette.GAME_MASTER);
+			String lying = GmData.hiddenAt("room:" + room.round() + ":" + room.group() + ":" + room.secret()); // the object that lies there, if any
+			Component pill = lying == null ? Component.translatable(T + "room.secret", room.secret())
+					: Component.translatable(T + "room.secret.item", room.secret(), itemName(lying));
+			TrahisonUi.pill(g, cx, y + 29, pill, TrahisonPalette.PANEL_SUNKEN, TrahisonPalette.GAME_MASTER);
 		}
 		boolean live = rooming && !room.exitOpen();
 		int bw = 52;

@@ -1,0 +1,502 @@
+{
+ "id": "archives",
+ "name": "Les Archives",
+ "difficulty": 2,
+ "slots": [
+  {
+   "id": "sortie",
+   "kind": "exit",
+   "position": {
+    "x": 22,
+    "y": 1,
+    "z": 0
+   },
+   "orientation": "south",
+   "size": {
+    "x": 3,
+    "y": 3,
+    "z": 1
+   },
+   "hint": "Mur nord, au centre : l'ouverture de la sortie. À laisser vide, le jeu la ferme.",
+   "placed": false
+  },
+  {
+   "id": "fiche_1",
+   "kind": "pickup",
+   "position": {
+    "x": 15,
+    "y": 2,
+    "z": 12
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Rayonnage ouest, au nord : première cachette de fiche.",
+   "placed": false
+  },
+  {
+   "id": "fiche_2",
+   "kind": "pickup",
+   "position": {
+    "x": 15,
+    "y": 3,
+    "z": 26
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Rayonnage ouest, au sud : deuxième cachette de fiche.",
+   "placed": false
+  },
+  {
+   "id": "fiche_3",
+   "kind": "pickup",
+   "position": {
+    "x": 32,
+    "y": 2,
+    "z": 16
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Rayonnage est, au nord : troisième cachette de fiche.",
+   "placed": false
+  },
+  {
+   "id": "fiche_4",
+   "kind": "pickup",
+   "position": {
+    "x": 32,
+    "y": 4,
+    "z": 30
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Rayonnage est, au sud, en hauteur : quatrième cachette.",
+   "placed": false
+  },
+  {
+   "id": "bureau_registre",
+   "kind": "document",
+   "position": {
+    "x": 3,
+    "y": 2,
+    "z": 38
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Bureau de l'archiviste, à l'ouest près de l'entrée : le registre.",
+   "placed": false
+  },
+  {
+   "id": "pad_casier",
+   "kind": "keypad",
+   "position": {
+    "x": 6,
+    "y": 1,
+    "z": 46
+   },
+   "orientation": "north",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur sud, côté ouest : le digicode du casier.",
+   "placed": false
+  },
+  {
+   "id": "mur_casier",
+   "kind": "wall_clue",
+   "position": {
+    "x": 1,
+    "y": 2,
+    "z": 18
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 2,
+    "z": 2
+   },
+   "hint": "Mur ouest, derrière un rayonnage : la plaque du code du casier.",
+   "placed": false
+  },
+  {
+   "id": "pad_index",
+   "kind": "terminal",
+   "position": {
+    "x": 46,
+    "y": 1,
+    "z": 24
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est, au milieu : le panneau du fichier à tiroirs.",
+   "placed": false
+  },
+  {
+   "id": "mur_index",
+   "kind": "wall_clue",
+   "position": {
+    "x": 46,
+    "y": 2,
+    "z": 17
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 2,
+    "z": 2
+   },
+   "hint": "Mur est, près du fichier : le schéma en couleurs.",
+   "placed": false
+  },
+  {
+   "id": "bureau_index",
+   "kind": "document",
+   "position": {
+    "x": 3,
+    "y": 2,
+    "z": 42
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Bureau de l'archiviste, côté sud : le schéma en texte.",
+   "placed": false
+  },
+  {
+   "id": "pad_cadran",
+   "kind": "terminal",
+   "position": {
+    "x": 46,
+    "y": 1,
+    "z": 6
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est, au fond : le coffre à molettes.",
+   "placed": false
+  },
+  {
+   "id": "mur_cadran",
+   "kind": "wall_clue",
+   "position": {
+    "x": 23,
+    "y": 2,
+    "z": 24
+   },
+   "orientation": "south",
+   "size": {
+    "x": 2,
+    "y": 2,
+    "z": 1
+   },
+   "hint": "Centre, sur un pilier : le dos d'une affiche qui porte la date.",
+   "placed": false
+  },
+  {
+   "id": "pad_rayons",
+   "kind": "terminal",
+   "position": {
+    "x": 12,
+    "y": 1,
+    "z": 1
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur nord, devant le mobile de rayonnage : le pupitre des chariots.",
+   "placed": false
+  },
+  {
+   "id": "levier_1",
+   "kind": "lever",
+   "position": {
+    "x": 1,
+    "y": 1,
+    "z": 3
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Coin nord-ouest : manette de rayonnage, un des trois coins à tenir ensemble.",
+   "placed": false
+  },
+  {
+   "id": "levier_2",
+   "kind": "lever",
+   "position": {
+    "x": 46,
+    "y": 1,
+    "z": 3
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Coin nord-est : manette de rayonnage, un des trois coins à tenir ensemble.",
+   "placed": false
+  },
+  {
+   "id": "levier_3",
+   "kind": "lever",
+   "position": {
+    "x": 1,
+    "y": 1,
+    "z": 44
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Coin sud-ouest : manette de rayonnage, un des trois coins à tenir ensemble.",
+   "placed": false
+  },
+  {
+   "id": "cachette_1",
+   "kind": "secret",
+   "position": {
+    "x": 45,
+    "y": 6,
+    "z": 26
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Haut du rayonnage le plus à l'est : un livre vide.",
+   "placed": false
+  },
+  {
+   "id": "cachette_2",
+   "kind": "secret",
+   "position": {
+    "x": 3,
+    "y": 1,
+    "z": 34
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Tiroir du bureau de l'archiviste.",
+   "placed": false
+  },
+  {
+   "id": "cachette_3",
+   "kind": "secret",
+   "position": {
+    "x": 20,
+    "y": 1,
+    "z": 4
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Sous le mobile de rayonnage, au nord.",
+   "placed": false
+  }
+ ],
+ "steps": [
+  {
+   "id": "fiches",
+   "mechanism": "pickup_set",
+   "params": {
+    "spots": 4,
+    "filled": 3,
+    "document": "Registre de l'archiviste\nTrois fiches manquent aux rayons.\nChaque fiche porte un numéro de casier."
+   },
+   "slots": {},
+   "needs": [],
+   "gives": [
+    {
+     "clue": "spot_1",
+     "slot": "fiche_1"
+    },
+    {
+     "clue": "spot_2",
+     "slot": "fiche_2"
+    },
+    {
+     "clue": "spot_3",
+     "slot": "fiche_3"
+    },
+    {
+     "clue": "spot_4",
+     "slot": "fiche_4"
+    },
+    {
+     "clue": "document",
+     "slot": "bureau_registre"
+    }
+   ],
+   "hints": [
+    "Les rayons n'ont pas tous la même poussière.",
+    "Cherchez des fiches qui dépassent des étagères, pas sur le bureau.",
+    "Il y a 4 endroits, 3 fiches : regardez tous les rayons, chacun le sien."
+   ]
+  },
+  {
+   "id": "casier",
+   "mechanism": "keypad",
+   "params": {
+    "length": 4
+   },
+   "slots": {
+    "keypad": "pad_casier"
+   },
+   "needs": [],
+   "gives": [
+    {
+     "clue": "code",
+     "slot": "mur_casier"
+    }
+   ],
+   "hints": [
+    "Le casier ne parle pas : un chiffre est ailleurs.",
+    "Cherchez une plaque chiffrée contre un mur.",
+    "Le code de 4 chiffres est sur la plaque derrière le rayonnage ouest."
+   ]
+  },
+  {
+   "id": "index",
+   "mechanism": "wiring",
+   "params": {
+    "wires": 4,
+    "colors": 3
+   },
+   "slots": {
+    "panel": "pad_index"
+   },
+   "needs": [
+    "fiches"
+   ],
+   "gives": [
+    {
+     "clue": "scheme",
+     "slot": "mur_index"
+    },
+    {
+     "clue": "scheme_text",
+     "slot": "bureau_index"
+    }
+   ],
+   "hints": [
+    "Les étiquettes de couleur de l'index sont une consigne.",
+    "Le schéma est sur le mur et sur le bureau.",
+    "La n-ième couleur du schéma est celle de la borne de gauche n."
+   ]
+  },
+  {
+   "id": "cadran",
+   "mechanism": "three_dials",
+   "params": {},
+   "slots": {
+    "dials": "pad_cadran"
+   },
+   "needs": [
+    "casier"
+   ],
+   "gives": [
+    {
+     "clue": "code",
+     "slot": "mur_cadran"
+    }
+   ],
+   "hints": [
+    "Trois molettes, trois chiffres : une date.",
+    "Une affiche porte la date au dos.",
+    "Alignez les trois molettes sur les trois chiffres de l'affiche."
+   ]
+  },
+  {
+   "id": "rayons",
+   "mechanism": "sliding_blocks",
+   "params": {},
+   "slots": {
+    "terminal": "pad_rayons"
+   },
+   "needs": [
+    "index",
+    "cadran"
+   ],
+   "gives": [],
+   "hints": [
+    "Un chariot en bloque un autre.",
+    "Dégagez d'abord les chariots qui gênent le rail.",
+    "Faites sortir le chariot marqué en le glissant pas à pas hors du rail."
+   ]
+  },
+  {
+   "id": "porte",
+   "mechanism": "three_levers",
+   "params": {
+    "ordered": false,
+    "gap": 5,
+    "hold": 12
+   },
+   "slots": {
+    "lever_1": "levier_1",
+    "lever_2": "levier_2",
+    "lever_3": "levier_3",
+    "exit": "sortie"
+   },
+   "needs": [
+    "rayons"
+   ],
+   "gives": [],
+   "hints": [
+    "Trois manettes, trois personnes.",
+    "Chacune à un coin de la salle, en même temps.",
+    "Comptez à voix haute, tirez ensemble."
+   ]
+  }
+ ]
+}

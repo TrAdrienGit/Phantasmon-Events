@@ -76,6 +76,9 @@ public final class RoomViews {
 		ArrayNode slots = out.putArray("slots");
 		for (Slot slot : room.definition.slots()) {
 			ArrayNode shows = shows(room, slot);
+			if (RoomSecrets.candidates(room.definition).contains(slot.id())) { // every candidate looks the same: only the backend knows the live one
+				shows.addObject().put("type", "search");
+			}
 			if (shows.isEmpty()) {
 				continue;
 			}

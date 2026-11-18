@@ -26,9 +26,10 @@ public final class RoomInstance {
 	public final long seed;
 	/**
 	 * D228: the one candidate hiding place (slot id) of the free time this room plays, drawn from {@link #seed}; null when the
-	 * room declares none. The other candidates are inert. Not stored: the seed recomputes it.
+	 * room declares none. The other candidates are inert. A replay (D8) keeps it, so the object hidden there stays reachable; the
+	 * snapshot stores it for that reason (an old snapshot without it recomputes it from the seed).
 	 */
-	public final String activeSecret;
+	public String activeSecret;
 	/** Player indices of the group: only they may act. */
 	public final List<Integer> members;
 	/** In definition order. */

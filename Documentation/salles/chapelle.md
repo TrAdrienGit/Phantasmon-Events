@@ -60,7 +60,9 @@ s'annoncer. Voir D223.
 
 ## Secret de la salle
 
-Cachette du temps libre : à l'intérieur du pupitre de l'orgue, sous le clavier. Emplacement `cachette`.
+Cachette du temps libre : à l'intérieur du pupitre de l'orgue, sous le clavier.
+
+Candidats à la cachette (D228, genre `secret`, la graine en tire **un seul** par partie) : `cachette_1`, `cachette_2`. Ils sont déjà dans le gabarit (`room new <id> chapelle`) ; la fiche en propose 2 ; 2 ou 3 candidats au total conviennent.
 
 ## Fragment de lore
 
@@ -86,7 +88,8 @@ Cachette du temps libre : à l'intérieur du pupitre de l'orgue, sous le clavier
 | `reliquaire` | `terminal` | devant l'autel | 1 × 1 × 1 | rôle de `reliquaire` (à confirmer) |
 | `pad_orgue` | `terminal` | mur sud | 1 × 1 × 1 | rôle `terminal` de `orgue` |
 | `cloche_1` à `cloche_3` | `lever` | trois coins | 1 × 1 × 1 | `lever_1..3` de `cloches` |
-| `cachette` | `secret` | pupitre de l'orgue | 1 × 1 × 1 | cachette |
+| `cachette_1` | `secret` | Dans le pupitre de l'orgue, sous le clavier | 1 × 1 × 1 | candidat de cachette (D228) |
+| `cachette_2` | `secret` | Dans le tabernacle de l'autel | 1 × 1 × 1 | candidat de cachette (D228) |
 
 - **Ids des étapes** : `inscriptions`, `saints`, `bancs`, `reliquaire`, `orgue`, `cloches`.
 - **À laisser vide** : air devant chaque emplacement ; les niches (statues dessinées par le jeu) ; le rail des bancs (à préciser au codage de `sliding_blocks`).

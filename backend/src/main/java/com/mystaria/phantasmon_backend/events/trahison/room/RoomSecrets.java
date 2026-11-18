@@ -46,4 +46,29 @@ public final class RoomSecrets {
 		}
 		return Optional.of(all.get(new Random(seed ^ SALT).nextInt(all.size())));
 	}
+
+	/** The id the game gives the hiding place {@code slot} of room (round, group): what the {@code search} action names. */
+	public static String spotId(int round, int group, String slot) {
+		return "room:" + round + ":" + group + ":" + slot;
+	}
+
+	/** A parsed {@link #spotId}. */
+	public record Spot(int round, int group, String slot) {
+	}
+
+	/** The room hiding place a spot id names, empty when it is not one (a plan spot, or malformed). */
+	public static Optional<Spot> parseSpot(String id) {
+		if (id == null || !id.startsWith("room:")) {
+			return Optional.empty();
+		}
+		String[] parts = id.split(":", 4);
+		if (parts.length != 4 || parts[3].isEmpty()) {
+			return Optional.empty();
+		}
+		try {
+			return Optional.of(new Spot(Integer.parseInt(parts[1]), Integer.parseInt(parts[2]), parts[3]));
+		} catch (NumberFormatException ex) {
+			return Optional.empty();
+		}
+	}
 }

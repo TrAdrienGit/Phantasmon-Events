@@ -14,6 +14,7 @@ import net.minecraft.world.phys.Vec3;
 import com.mystaria.events.trahison.edit.LayoutDto.Box;
 import com.mystaria.events.trahison.edit.RoomDto.SlotDto;
 import com.mystaria.events.trahison.ui.TrahisonPalette;
+import com.mystaria.events.trahison.ui.TrahisonUi;
 
 /**
  * The room editor's view in the world (solution S14, {@code WorldRenderEvents.AFTER_TRANSLUCENT}): the 48 x 48 x 24 template
@@ -71,8 +72,17 @@ final class RoomWorld {
 		Box exit = frame.toWorld(RoomTemplate.EXIT);
 		WorldDraw.queue(cmds, entry, ENTRY_COLOR, true, 0.25f);
 		WorldDraw.queue(cmds, exit, EXIT_COLOR, true, 0.25f);
+		List<String> todo = RoomEditor.todo();
+		String next = todo.isEmpty() ? null : todo.get(0);
+		float pulse = TrahisonUi.pulse(1600);
 		for (SlotDto slot : RoomEditor.room.slots) {
 			boolean selected = slot.id.equals(RoomEditor.selectedSlot);
+			if (RoomEditor.unplaced.contains(slot.id)) {
+				// A proposed position (template): dashes and a pulsing fill; the next one to place and the selected one are stronger.
+				boolean strong = selected || slot.id.equals(next);
+				WorldDraw.queueGhost(cmds, frame.toWorld(slotBox(slot)), kindColor(slot.kind), strong, (strong ? 0.10f : 0.04f) + (strong ? 0.25f : 0.12f) * pulse);
+				continue;
+			}
 			WorldDraw.queue(cmds, frame.toWorld(slotBox(slot)), kindColor(slot.kind), selected, selected ? 0.45f : 0.25f);
 		}
 		WorldDraw.selection(cmds, RoomEditor.selection);
@@ -82,7 +92,8 @@ final class RoomWorld {
 		WorldDraw.label(context, buffers, camera, exit, Component.translatable("phantasmon_events.trahison.room_edit.world.exit").getString(), EXIT_COLOR, false);
 		for (SlotDto slot : RoomEditor.room.slots) {
 			// The orientation shown is the room's own (canonical): the entry is on its south side, whichever way the builder faced.
-			String text = slot.id + " [" + slot.orientation + "]";
+			String text = RoomEditor.unplaced.contains(slot.id) ? slot.id + " : " + RoomUi.kind(slot.kind).getString()
+					: slot.id + " [" + slot.orientation + "]";
 			WorldDraw.label(context, buffers, camera, frame.toWorld(slotBox(slot)), text, kindColor(slot.kind), slot.id.equals(RoomEditor.selectedSlot));
 		}
 		buffers.endBatch();

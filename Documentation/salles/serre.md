@@ -64,7 +64,9 @@ répartir. Le temps total vient du dernier mini-jeu à deux.
 
 ## Secret de la salle
 
-Cachette du temps libre : sous un bac renversé, au pied de la plus grosse plante, en zone ouest. Emplacement `cachette`.
+Cachette du temps libre : sous un bac renversé, au pied de la plus grosse plante, en zone ouest.
+
+Candidats à la cachette (D228, genre `secret`, la graine en tire **un seul** par partie) : `cachette_1`, `cachette_2`. Ils sont déjà dans le gabarit (`room new <id> serre`) ; la fiche en propose 2 ; 2 ou 3 candidats au total conviennent.
 
 ## Fragment de lore
 
@@ -92,7 +94,8 @@ Cachette du temps libre : sous un bac renversé, au pied de la plus grosse plant
 | `pad_thermo` | `terminal` | mur nord-est | 1 × 1 × 1 | rôle `dials` de `thermo` |
 | `mur_thermo` | `wall_clue` | mur nord, au-dessus des tuyaux | 2 × 2 × 1 | `code` de `thermo` |
 | `poste_a`, `poste_b` | `terminal` | nord-ouest et sud-est | 1 × 1 × 1 | rôles de `arrosage` (à confirmer au codage) |
-| `cachette` | `secret` | sous un bac, ouest | 1 × 1 × 1 | cachette |
+| `cachette_1` | `secret` | Sous un bac renversé, au pied de la plus grosse plante, côté ouest | 1 × 1 × 1 | candidat de cachette (D228) |
+| `cachette_2` | `secret` | Dans un pot du fond, près du nord | 1 × 1 × 1 | candidat de cachette (D228) |
 
 - **Ids des étapes** : `graines`, `statues`, `hauteur`, `digicode`, `thermo`, `arrosage`.
 - **À laisser vide** : air devant chaque emplacement, la case des 4 `pickup`, les socles (rien de posé dessus : le jeu affiche les statues).

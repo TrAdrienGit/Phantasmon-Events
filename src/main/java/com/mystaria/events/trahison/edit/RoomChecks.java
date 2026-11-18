@@ -257,7 +257,8 @@ final class RoomChecks {
 		list.sort((a, b) -> a.id.compareTo(b.id));
 		for (int i = 0; i < list.size(); i++) {
 			SlotDto a = list.get(i);
-			if (touches(a, RoomTemplate.ENTRY) || touches(a, RoomTemplate.EXIT)) {
+			// The exit slot is the opening itself (the sheets put it there): only the other kinds must stay clear of it.
+			if (!"exit".equals(a.kind) && (touches(a, RoomTemplate.ENTRY) || touches(a, RoomTemplate.EXIT))) {
 				out.add(new Issue("LOCAL_SLOT_ON_OPENING", List.of(a.id), "", true));
 			}
 			for (int j = i + 1; j < list.size(); j++) {

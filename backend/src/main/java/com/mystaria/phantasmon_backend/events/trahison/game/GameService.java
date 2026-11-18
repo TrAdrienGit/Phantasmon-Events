@@ -32,6 +32,8 @@ import com.mystaria.phantasmon_backend.events.trahison.rules.DoorGroup;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Doors;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Item;
 import com.mystaria.phantasmon_backend.events.trahison.rules.ItemDraw;
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomInstance;
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomSecrets;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Role;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Roles;
 import com.mystaria.phantasmon_backend.events.trahison.rules.Outcome;
@@ -1755,6 +1757,7 @@ public class GameService {
 				if (rooms != null) {
 					// After the stage view went out, so a client gets ROOMS first, then its room.
 					rooms.startRound(g, g.currentRound(), planOf(g));
+					hideInRoomSecrets(g, g.currentRound());
 				}
 			}
 			case ROOMS -> {
@@ -2078,6 +2081,32 @@ public class GameService {
 			"hidden", g.hiddenItems, "unplaced", g.unplacedItems));
 	}
 
+	/**
+	 * The rooms of the round just started are in the hub: the live secret of each (D228, "la cachette du temps libre") joins the
+	 * hiding places, and the items the plan had no spot for are drawn among them (one object per secret). Seeded by the round.
+	 */
+	private void hideInRoomSecrets(Game g, RoundState r) {
+		GameRooms gr = rooms;
+		if (gr == null || r == null || g.unplacedItems.isEmpty()) {
+			return;
+		}
+		List<String> spots = gr.secretSpots(g, r);
+		if (spots.isEmpty()) {
+			return;
+		}
+		Map<Item, Integer> counts = new java.util.EnumMap<>(Item.class);
+		for (String name : g.unplacedItems) {
+			counts.merge(Item.valueOf(name), 1, Integer::sum);
+		}
+		ItemDraw.Result res = ItemDraw.draw(r.seed ^ 0x5EC12E7D141L, counts, spots);
+		res.placed().forEach((spot, item) -> g.hiddenItems.put(spot, item.name()));
+		g.unplacedItems = new ArrayList<>(res.unplaced().stream().map(Item::name).toList());
+		event(g, "items_in_rooms", Map.of("round", r.number, "hidden", res.placed().entrySet().stream()
+			.collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, e -> e.getValue().name())), "unplaced", g.unplacedItems));
+		persist(g);
+		notifyChanged(g, "items");
+	}
+
 	/** T7.1: each holder of a role learns it, in private, as the prologue starts (the game master who plays included). */
 	private void whisperRoles(Game g) {
 		for (int i = 0; i < g.players.size(); i++) {
@@ -2226,23 +2255,43 @@ public class GameService {
 			if (g.phase != Phase.FREE_TIME && !canRoam(g, p)) {
 				throw new TrahisonException(TrahisonException.CANNOT_SEARCH_NOW, "not now");
 			}
+			PlayerState me = g.players.get(p);
+			var roomSpot = RoomSecrets.parseSpot(spot);
+			if (roomSpot.isPresent()) { // D228: a secret candidate of a room; the inert ones answer exactly like an empty spot
+				var rs = roomSpot.get();
+				var room = rooms == null ? java.util.Optional.<RoomInstance>empty() : rooms.roomWithCandidate(g, rs.round(), rs.group(), rs.slot());
+				if (room.isEmpty()) {
+					throw new TrahisonException(TrahisonException.NO_SPOT, "no such hiding spot");
+				}
+				double[] box = GameRooms.hubBox(room.get(), rs.slot());
+				if (me.x == null || me.z == null || me.y == null
+						|| Math.hypot(Math.max(Math.max(box[0] - me.x, 0), me.x - box[3]), Math.max(Math.max(box[2] - me.z, 0), me.z - box[5])) > SEARCH_RANGE
+						|| Math.max(Math.max(box[1] - me.y, 0), me.y - box[4]) > SEARCH_RANGE) {
+					throw new TrahisonException(TrahisonException.SPOT_TOO_FAR, "too far from the hiding spot");
+				}
+				return takeHidden(g, p, spot);
+			}
 			var found = planOf(g).hidingSpots().stream().filter(s -> s.id().equals(spot)).findFirst().orElseThrow(
 				() -> new TrahisonException(TrahisonException.NO_SPOT, "no such hiding spot"));
-			PlayerState me = g.players.get(p);
 			if (me.x == null || me.z == null || Math.hypot(me.x - (found.position().x() + 0.5), me.z - (found.position().z() + 0.5)) > SEARCH_RANGE
 					|| me.y != null && Math.abs(me.y - found.position().y()) > SEARCH_RANGE) {
 				throw new TrahisonException(TrahisonException.SPOT_TOO_FAR, "too far from the hiding spot");
 			}
-			String item = g.hiddenItems.remove(found.id());
-			if (item == null) {
-				throw new TrahisonException(TrahisonException.SPOT_EMPTY, "nothing there");
-			}
-			me.items.add(item);
-			event(g, "item_found", Map.of("player", p, "spot", found.id(), "item", item));
-			persist(g);
-			notifyChanged(g, "items");
-			return g;
+			return takeHidden(g, p, found.id());
 		}
+	}
+
+	/** What lay in the hiding spot {@code spot} goes into the personal items of seat {@code p}; an empty spot (or an inert candidate) refuses. */
+	private Game takeHidden(Game g, int p, String spot) {
+		String item = g.hiddenItems.remove(spot);
+		if (item == null) {
+			throw new TrahisonException(TrahisonException.SPOT_EMPTY, "nothing there");
+		}
+		g.players.get(p).items.add(item);
+		event(g, "item_found", Map.of("player", p, "spot", spot, "item", item));
+		persist(g);
+		notifyChanged(g, "items");
+		return g;
 	}
 
 	/**

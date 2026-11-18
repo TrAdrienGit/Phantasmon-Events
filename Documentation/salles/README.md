@@ -67,6 +67,14 @@ mécanismes à coder de T9.3 (priorités 1 à 4) servent tous au moins deux fois
 | Étapes de coopération | 3 | 3 | 3 |
 | Mécanismes à coder | 3 étapes | 3 étapes | 5 étapes |
 
+## Construire d'après une fiche (gabarits)
+
+Chaque fiche existe aussi sous forme de **gabarit** que l'éditeur de salle du mod charge : la chaîne complète et tous les
+emplacements, à une place proposée (fantômes à confirmer). `room new <id> <fiche>` ; pas à pas dans
+`trahison/guide-editeur-salle.md`. Les fichiers sont `src/main/resources/assets/phantasmon_events/trahison/templates/<fiche>.json`
+(à garder d'accord avec la fiche : chaîne, aides, liste de construction). Un test du backend prouve que les 9 sont des
+définitions valides ; chaque fiche déclare 2 ou 3 cachettes candidates (D228).
+
 ## Ce qui reste à faire pour chaque fiche
 
 1. La propriétaire valide ou corrige la fiche (retirer « Brouillon à valider »).

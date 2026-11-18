@@ -27,6 +27,7 @@ public final class GmData {
 
 	private static List<String> roles = List.of();
 	private static List<List<String>> carried = List.of();
+	private static Map<String, String> hidden = Map.of();
 	private static List<Entry> log = List.of();
 	private static Offer offer = new Offer(-1, false, false);
 	private static Options options = new Options(true, true, true, false, 3, List.of(), Map.of());
@@ -44,6 +45,11 @@ public final class GmData {
 		return seat >= 0 && seat < carried.size() ? carried.get(seat) : List.of();
 	}
 
+	/** The item still lying in a hiding spot (plan spot id, or {@code room:<round>:<group>:<slot>} for a room's live secret), or null. */
+	public static String hiddenAt(String spot) {
+		return hidden.get(spot);
+	}
+
 	public static List<Entry> log() {
 		return log;
 	}
@@ -59,6 +65,7 @@ public final class GmData {
 	static void clear() {
 		roles = List.of();
 		carried = List.of();
+		hidden = Map.of();
 		log = List.of();
 		offer = new Offer(-1, false, false);
 	}
@@ -84,6 +91,13 @@ public final class GmData {
 			c.add(own);
 		}
 		carried = c;
+		Map<String, String> h = new LinkedHashMap<>();
+		for (Object o : list(gm.get("hidden_items"))) {
+			if (o instanceof Map<?, ?> m && m.get("spot") != null && m.get("item") != null) {
+				h.put(m.get("spot").toString(), m.get("item").toString());
+			}
+		}
+		hidden = h;
 		List<Entry> entries = new ArrayList<>();
 		for (Object o : list(gm.get("log"))) {
 			if (o instanceof Map<?, ?> m && m.get("type") != null) {

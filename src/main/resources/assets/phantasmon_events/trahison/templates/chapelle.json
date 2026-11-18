@@ -1,0 +1,482 @@
+{
+ "id": "chapelle",
+ "name": "La Chapelle",
+ "difficulty": 4,
+ "slots": [
+  {
+   "id": "sortie",
+   "kind": "exit",
+   "position": {
+    "x": 22,
+    "y": 1,
+    "z": 0
+   },
+   "orientation": "south",
+   "size": {
+    "x": 3,
+    "y": 3,
+    "z": 1
+   },
+   "hint": "Mur nord, au centre : l'ouverture de la sortie. À laisser vide, le jeu la ferme.",
+   "placed": false
+  },
+  {
+   "id": "pad_inscriptions",
+   "kind": "keypad",
+   "position": {
+    "x": 1,
+    "y": 1,
+    "z": 28
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur ouest : le digicode des inscriptions.",
+   "placed": false
+  },
+  {
+   "id": "mur_inscriptions",
+   "kind": "wall_clue",
+   "position": {
+    "x": 1,
+    "y": 5,
+    "z": 14
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 2,
+    "z": 3
+   },
+   "hint": "Mur ouest, en haut : les inscriptions (3 de large).",
+   "placed": false
+  },
+  {
+   "id": "sacristie",
+   "kind": "document",
+   "position": {
+    "x": 19,
+    "y": 2,
+    "z": 3
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Derrière l'autel, au nord : la sacristie cachée, avec l'alphabet.",
+   "placed": false
+  },
+  {
+   "id": "pad_saints",
+   "kind": "terminal",
+   "position": {
+    "x": 46,
+    "y": 1,
+    "z": 34
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est : le pupitre pour ranger les saints.",
+   "placed": false
+  },
+  {
+   "id": "niche_1",
+   "kind": "pedestal",
+   "position": {
+    "x": 45,
+    "y": 2,
+    "z": 8
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est, niche 1 sur 5 : alignée avec les autres.",
+   "placed": false
+  },
+  {
+   "id": "niche_2",
+   "kind": "pedestal",
+   "position": {
+    "x": 45,
+    "y": 2,
+    "z": 12
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est, niche 2 sur 5 : alignée avec les autres.",
+   "placed": false
+  },
+  {
+   "id": "niche_3",
+   "kind": "pedestal",
+   "position": {
+    "x": 45,
+    "y": 2,
+    "z": 16
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est, niche 3 sur 5 : alignée avec les autres.",
+   "placed": false
+  },
+  {
+   "id": "niche_4",
+   "kind": "pedestal",
+   "position": {
+    "x": 45,
+    "y": 2,
+    "z": 20
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est, niche 4 sur 5 : alignée avec les autres.",
+   "placed": false
+  },
+  {
+   "id": "niche_5",
+   "kind": "pedestal",
+   "position": {
+    "x": 45,
+    "y": 2,
+    "z": 24
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est, niche 5 sur 5 : alignée avec les autres.",
+   "placed": false
+  },
+  {
+   "id": "pupitre_mesures",
+   "kind": "document",
+   "position": {
+    "x": 44,
+    "y": 1,
+    "z": 29
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Près des niches : le pupitre des mesures.",
+   "placed": false
+  },
+  {
+   "id": "pad_bancs",
+   "kind": "terminal",
+   "position": {
+    "x": 16,
+    "y": 1,
+    "z": 9
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Devant l'autel, à gauche : le pupitre des bancs.",
+   "placed": false
+  },
+  {
+   "id": "reliquaire",
+   "kind": "terminal",
+   "position": {
+    "x": 30,
+    "y": 1,
+    "z": 9
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Devant l'autel, à droite : le reliquaire à molette.",
+   "placed": false
+  },
+  {
+   "id": "pad_orgue",
+   "kind": "terminal",
+   "position": {
+    "x": 30,
+    "y": 1,
+    "z": 46
+   },
+   "orientation": "north",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur sud : les tuyaux de l'orgue.",
+   "placed": false
+  },
+  {
+   "id": "cloche_1",
+   "kind": "lever",
+   "position": {
+    "x": 1,
+    "y": 1,
+    "z": 3
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Coin nord-ouest : cloche, un des trois coins à tenir ensemble.",
+   "placed": false
+  },
+  {
+   "id": "cloche_2",
+   "kind": "lever",
+   "position": {
+    "x": 46,
+    "y": 1,
+    "z": 3
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Coin nord-est : cloche, un des trois coins à tenir ensemble.",
+   "placed": false
+  },
+  {
+   "id": "cloche_3",
+   "kind": "lever",
+   "position": {
+    "x": 1,
+    "y": 1,
+    "z": 44
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Coin sud-ouest : cloche, un des trois coins à tenir ensemble.",
+   "placed": false
+  },
+  {
+   "id": "cachette_1",
+   "kind": "secret",
+   "position": {
+    "x": 32,
+    "y": 1,
+    "z": 44
+   },
+   "orientation": "north",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Dans le pupitre de l'orgue, sous le clavier.",
+   "placed": false
+  },
+  {
+   "id": "cachette_2",
+   "kind": "secret",
+   "position": {
+    "x": 23,
+    "y": 3,
+    "z": 6
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Dans le tabernacle de l'autel.",
+   "placed": false
+  }
+ ],
+ "steps": [
+  {
+   "id": "inscriptions",
+   "mechanism": "unown_text",
+   "params": {
+    "length": 4
+   },
+   "slots": {
+    "terminal": "pad_inscriptions"
+   },
+   "needs": [],
+   "gives": [
+    {
+     "clue": "wall_text",
+     "slot": "mur_inscriptions"
+    },
+    {
+     "clue": "alphabet",
+     "slot": "sacristie"
+    }
+   ],
+   "hints": [
+    "Les murs parlent un autre alphabet.",
+    "La clé de l'alphabet est cachée derrière l'autel.",
+    "Chaque signe est une lettre : la phrase épelle 4 chiffres en toutes lettres."
+   ]
+  },
+  {
+   "id": "saints",
+   "mechanism": "weigh_in",
+   "params": {
+    "count": 5,
+    "by": "height"
+   },
+   "slots": {
+    "row": "pad_saints"
+   },
+   "needs": [],
+   "gives": [
+    {
+     "clue": "pedestal_1",
+     "slot": "niche_1"
+    },
+    {
+     "clue": "pedestal_2",
+     "slot": "niche_2"
+    },
+    {
+     "clue": "pedestal_3",
+     "slot": "niche_3"
+    },
+    {
+     "clue": "pedestal_4",
+     "slot": "niche_4"
+    },
+    {
+     "clue": "pedestal_5",
+     "slot": "niche_5"
+    },
+    {
+     "clue": "scale_sheet",
+     "slot": "pupitre_mesures"
+    }
+   ],
+   "hints": [
+    "Les statues sont de tailles inégales.",
+    "Le plus petit à gauche.",
+    "La fiche du pupitre donne les tailles."
+   ]
+  },
+  {
+   "id": "bancs",
+   "mechanism": "sliding_blocks",
+   "params": {},
+   "slots": {
+    "terminal": "pad_bancs"
+   },
+   "needs": [
+    "inscriptions"
+   ],
+   "gives": [],
+   "hints": [
+    "Un banc en bloque un autre.",
+    "Dégagez d'abord les bancs sur le rail.",
+    "Faites sortir le banc marqué en le glissant pas à pas."
+   ]
+  },
+  {
+   "id": "reliquaire",
+   "mechanism": "safe_dial",
+   "params": {},
+   "slots": {
+    "terminal": "reliquaire"
+   },
+   "needs": [
+    "saints"
+   ],
+   "gives": [],
+   "hints": [
+    "Écoutez les cloches.",
+    "Le son change près du bon réglage.",
+    "Tournez lentement : la cloche sonne plus fort près de la bonne valeur."
+   ]
+  },
+  {
+   "id": "orgue",
+   "mechanism": "code_breaker",
+   "params": {
+    "length": 5,
+    "alphabet": 8,
+    "kind": "symbols",
+    "maxTries": 14
+   },
+   "slots": {
+    "terminal": "pad_orgue"
+   },
+   "needs": [
+    "bancs",
+    "reliquaire"
+   ],
+   "gives": [],
+   "hints": [
+    "« Bien placé » et « mal placé » disent tout.",
+    "14 essais : n'en gaspillez pas.",
+    "Cherchez d'abord les symboles présents."
+   ]
+  },
+  {
+   "id": "cloches",
+   "mechanism": "three_levers",
+   "params": {
+    "ordered": true,
+    "gap": 4,
+    "hold": 10
+   },
+   "slots": {
+    "lever_1": "cloche_1",
+    "lever_2": "cloche_2",
+    "lever_3": "cloche_3",
+    "exit": "sortie"
+   },
+   "needs": [
+    "orgue"
+   ],
+   "gives": [],
+   "hints": [
+    "Trois cloches, trois coins.",
+    "Un mauvais ordre ou un retard fait tout lâcher.",
+    "Un joueur par coin ; annoncez chaque tirage à voix haute."
+   ]
+  }
+ ]
+}

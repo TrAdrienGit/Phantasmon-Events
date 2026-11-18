@@ -466,3 +466,30 @@ Chaque mini-jeu se teste d'abord hors ligne (`/phantasmon event trahison minigam
 - Une cabine écoutée (objet Écoute) pendant un vote : un mort caché de la cabine n'est pas entendu non plus.
 - Éditeur de salle : une salle avec un seul emplacement de genre cachette donne un avertissement jaune (« Une seule cachette ») mais s'enregistre. Avec deux, plus d'avertissement.
 - Lancer deux parties avec des graines différentes sur la même salle à deux cachettes : l'écran du MJ montre « cachette : id » dans la carte de la salle, et l'id change d'une graine à l'autre ; rejouer la même graine donne le même id. Un joueur ne voit jamais cette ligne.
+
+## Cachettes des salles (D228, D260)
+
+- Plan avec moins de cachettes que d'objets : au début de la partie, l'écran du MJ montre des objets « sans cachette » ; une fois les salles de la manche 1 lancées, ce nombre baisse de trois au plus (un objet par salle posée) et la pastille de cachette de chaque salle du MJ affiche l'objet qui s'y trouve.
+- En temps libre, aller près d'un candidat de cachette d'une salle : la visée affiche « Fouiller » sans nom d'objet ; tous les candidats (le vrai et les inertes) s'affichent de la même façon (rien de dessiné, même libellé).
+- Fouiller un candidat inerte : « rien ici », comme une cachette vide. Fouiller le candidat actif : l'objet arrive dans ton inventaire personnel, la pastille du MJ n'affiche plus d'objet.
+- Fouiller de loin (plus de 3 blocs du volume de l'emplacement) : refus « trop loin » ; pendant la manche d'une salle qu'on n'a pas finie : « pas maintenant ».
+- Salle jouée en rotation est/sud/ouest : la distance de fouille suit bien l'emplacement vu dans le monde.
+- Rejouer une salle en temps libre (rejeu) puis redémarrer le serveur : l'objet reste dans le même candidat.
+
+## Créer une salle d'après une fiche (gabarits, éditeur de salle)
+
+Guide pas à pas : [`guide-editeur-salle.md`](guide-editeur-salle.md), section « Créer une salle à partir d'une fiche ». Monde solo plat en créatif, compte admin.
+
+- `room templates` : les 9 fiches avec nom, difficulté, nombre d'étapes et d'emplacements ; aucune « fichier illisible ».
+- `room new` puis Tab : après l'id, Tab propose les 9 fiches. Une fiche inconnue (`room new x truc`) est refusée avec la liste.
+- `room new archives archives` : la boîte, l'entrée verte, la sortie orange ; un fantôme par emplacement (20 pour `archives`), en **pointillés qui avancent**, au remplissage qui pulse, avec l'étiquette « id : genre ». Le premier (`fiche_1`) est le plus marqué.
+- Le panneau s'ouvre sur l'onglet **À placer (20)** ; la ligne en haut à gauche dit « Prochain : fiche_1 — ... (20 restants) » quand aucun écran n'est ouvert ; elle disparaît quand le panneau s'ouvre.
+- Onglet **À placer** : l'ordre est celui de la chaîne (fiches, registre, digicode du casier...), les cachettes en dernier ; survoler une ligne montre son repère en entier ; à 320 x 180 la liste défile et les deux boutons restent lisibles ; à 854 x 480 chaque ligne montre le repère sous l'id.
+- **Garder la position proposée** : le fantôme devient un emplacement normal (plein, sans pointillés), le suivant est sélectionné, le compteur baisse de 1, la ligne « Prochain » avance.
+- **Placer sur la sélection** : grisé tant qu'aucune zone n'est sélectionnée (la bulle explique comment) ; avec une sélection au bâton, le fantôme saute sur la zone et compte comme placé.
+- Depuis l'onglet Emplacements, la fiche d'un fantôme montre son repère et « Garder la position proposée » ; « Placer sur la sélection » de la fiche le confirme aussi ; renommer ou supprimer un fantôme garde la liste juste.
+- **Enregistrer** avec des emplacements restants : refusé, « Non enregistré : il reste n emplacement(s) à placer », la liste est dans les problèmes (un seul problème, aucune ligne de la liste d'emplacements n'est rougie à cause de lui). À zéro, la liste dit « Tout est placé », l'enregistrement part.
+- Une salle faite sans fiche (`room new essai`) ne montre aucun fantôme ni « Prochain », et l'onglet affiche « À placer (0) ».
+- Construire `archives` en entier d'après sa fiche (décor, 20 emplacements dont 3 cachettes), enregistrer (version 1), puis `room load archives` dans un autre monde : tout revient placé (aucun fantôme).
+- Essai seul : étape `porte` (`three_levers`), `solo` = `true` et `hold` = 30, enregistrer ; partie avec `test_room` = `archives` ; jouer la chaîne ; retirer `solo`, remettre `hold` 12, enregistrer.
+- Mêmes gestes pour `serre` (deux postes `twin_screens`), `bal` (zone sombre `power_spot`, boîte vide) et `crypte` (récompense `battle_puzzle` donnée à la résolution) : chacune s'enregistre sans autre erreur que ce qu'on n'a pas construit.

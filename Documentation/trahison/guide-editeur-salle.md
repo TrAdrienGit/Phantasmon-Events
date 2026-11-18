@@ -4,6 +4,90 @@
 > avec un compte admin de Phantasmon. Le mod ne marche pas sur un serveur : les blocs et leurs entités (panneaux, bannières)
 > ne se lisent en entier que sur le serveur intégré du monde solo.
 
+## Créer une salle à partir d'une fiche, pas à pas
+
+> Le chemin guidé pour construire une des 9 salles de la première soirée (fiches dans `Documentation/salles/`). Le mod connaît
+> déjà la chaîne de chaque fiche (mécanismes, paramètres, indices donnés, trois aides, prérequis) et **propose** une place pour
+> chaque emplacement : il reste à construire le décor et à confirmer ou déplacer chaque emplacement. Exemple suivi ici : `archives`.
+
+**Avant de commencer** : compte admin de Phantasmon, backend joignable (pour enregistrer et tester), jeu en **solo** et en **créatif**.
+
+### 1. Un monde vide
+
+1. Créer un monde **plat** (Superflat), en créatif, avec les commandes permises, et se placer dans une grande zone vide : 48 blocs de large,
+   48 de long, 24 de haut, plus une marge. Rien ne doit gêner (arbres, maisons).
+2. Se placer **au sud** de la zone, regarder **vers le nord**. Le bloc sous les pieds sera le sol au milieu de l'entrée ; la salle
+   s'étendra devant toi (la sortie est 48 blocs plus loin, au nord).
+
+### 2. Commencer d'après la fiche
+
+1. `/phantasmon event trahison room templates` : les 9 fiches, avec difficulté, nombre d'étapes et d'emplacements.
+2. `/phantasmon event trahison room new archives archives` : le premier mot est **l'id de ta salle** (celui qui sera enregistré),
+   le second **la fiche** (la touche Tab propose les 9). Pour garder le même nom, répète-le.
+3. Le panneau s'ouvre à la touche de l'éditeur (`K`, onglet **À placer**). Dans le monde apparaissent :
+   - la boîte de la salle (48 x 48 x 24), l'entrée (vert) et la sortie (orange) ;
+   - un **fantôme** par emplacement : un cadre en **pointillés qui avancent**, au remplissage qui pulse, avec l'étiquette
+     « id : genre ». Le prochain à placer est plus marqué ;
+   - en haut à gauche, quand aucun écran n'est ouvert : **Prochain : id — repère (n restants)**.
+
+### 3. Construire le décor
+
+Garde la fiche ouverte (liste de construction et thème). Construis d'abord ce qui ne bouge pas : sol, murs, plafond, puis le décor
+(rayonnages, bureau, coffre mural...). Les positions proposées supposent des **murs d'un bloc** posés sur le bord de la boîte
+(x = 0 et 47, z = 0 et 47, sol à y = 0) : les emplacements muraux sont dans la rangée d'air juste devant. Murs plus épais : déplace
+ces emplacements (voir 4).
+
+**À laisser en air** (le jeu y dessine ses propres éléments) :
+
+- l'**entrée** et la **sortie** (3 de large, 3 de haut) : jamais bouchées ;
+- la **boîte de chaque emplacement** (les fantômes) : rien de construit dedans, et au moins un bloc d'air **devant** ;
+- la boîte entière d'un `power_spot` (zone sombre, rocher, feuilles...) ;
+- les cases de ramassage (`pickup`) : une case vide n'affiche rien, et c'est elle que le jeu remplit ;
+- les écrans : un terminal ou un digicode n'est **pas** un vrai bloc, le jeu y affiche une entité.
+
+Ce qui se construit **autour** : le bureau sous un `document`, le mur derrière une plaque (`wall_clue`), le lit au-dessus d'un
+`pickup`, le rayonnage qui cache un indice. Pas de vrai coffre, levier ni bouton « pour faire vrai ».
+
+### 4. Placer chaque emplacement
+
+Ouvre l'onglet **À placer** : il liste ce qui reste, **dans l'ordre de la chaîne**, avec le repère de chacun (zone et rôle). Le
+premier est déjà sélectionné et son fantôme est le plus marqué.
+
+- **La position proposée convient** (le fantôme est au bon endroit du décor construit) : bouton **Garder la position proposée**.
+- **Elle ne convient pas** : sélectionne la bonne zone dans le monde, **bâton en main** (clic gauche : coin A ; clic droit : coin B ;
+  accroupi : le bloc devant la face visée, pour de l'air), puis **Placer sur la sélection**. Le fantôme saute à la sélection et
+  l'emplacement compte comme placé.
+- Après chaque geste, le suivant est sélectionné. L'onglet affiche son nombre entre parenthèses ; à zéro : « Tout est placé ».
+
+Pour tourner un emplacement vers soi : onglet **Emplacements**, double-clic sur la ligne, **Face à moi** (tu te tiens devant
+l'élément, face à lui). Un mur ouest regarde vers l'est, etc. : une salle est toujours enregistrée « sortie au nord ».
+Les **cachettes** (`cachette_1`, `cachette_2`...) sont des candidats : le jeu en tire **un** par partie, place-les tous (2 ou 3).
+
+### 5. Vérifier, puis enregistrer
+
+1. Bouton **Chaîne** : relis les étapes (elles sont complètes ; on peut régler un paramètre). Rien n'est à écrire.
+2. Onglet **Salle** : nom, auteur (le nom de la fiche est repris).
+3. **Enregistrer**. Tant qu'un emplacement reste à placer, c'est refusé avec « Non enregistré : il reste n emplacement(s) à placer » et
+   la liste dans les problèmes. Les autres problèmes (entrée obstruée, emplacement hors boîte, étape sans emplacement...) sont listés
+   de même ; un clic dessus mène à l'élément. Les avertissements (jaunes) ne bloquent pas.
+4. Réussite : « version 1, n blocs ». Refais **Enregistrer** à chaque retouche : la version monte.
+
+### 6. L'essayer seul
+
+1. Pour les étapes de coopération, rends-les jouables à un joueur, **le temps de l'essai** : dans **Chaîne**, étape `porte`
+   (`three_levers`), ajoute le paramètre `solo` = `true` et mets `hold` à `30`. Une seule personne enclenche alors les trois leviers.
+   Les étapes à deux postes (`twin_screens`) se jouent en allant d'un poste à l'autre (à confirmer en jeu pour un joueur seul).
+2. Enregistre, puis crée une partie dont le réglage **`test_room`** est l'id de ta salle (écran du MJ, ou `create` avec `test_room`) :
+   tous les groupes jouent cette salle, sans tirage et sans exiger neuf salles (D73).
+3. Joue la chaîne en entier : chaque indice apparaît là où la fiche le dit, les codes se tapent, les aides arrivent, la sortie
+   s'ouvre.
+4. **Retire `solo` et remets `hold` à sa valeur** (celle de la fiche), puis enregistre de nouveau : un levier jouable seul ne doit
+   jamais rester dans une vraie salle.
+
+Retoucher plus tard : `room load archives` (attention, il vide d'abord la boîte, voir plus bas). `room off` quitte l'éditeur.
+
+---
+
 ## En bref
 
 1. Créer un monde solo plat, créatif, et s'y placer dans une grande zone vide.
@@ -18,7 +102,8 @@
 
 | Commande | Effet |
 |---|---|
-| `/phantasmon event trahison room new <id>` | Commence une salle. `<id>` : lettres, chiffres, `_` et `-`, 40 au plus. |
+| `/phantasmon event trahison room new <id> [fiche]` | Commence une salle. `<id>` : lettres, chiffres, `_` et `-`, 40 au plus. Avec une **fiche** (`archives`, `serre`, `dortoir`, `salle_des_machines`, `infirmerie`, `bal`, `observatoire`, `chapelle`, `crypte` ; Tab complète), la chaîne et les emplacements arrivent préremplis, les emplacements en fantômes à placer. |
+| `/phantasmon event trahison room templates` | Les 9 fiches : nom, difficulté, nombre d'étapes et d'emplacements. |
 | `/phantasmon event trahison room load <id>` | Colle une salle enregistrée là où tu te tiens, et ramène ses emplacements et sa chaîne. |
 | `/phantasmon event trahison room list` | Les salles du backend : id, nom, version, difficulté, étapes, emplacements, blocs présents ou non. |
 | `/phantasmon event trahison room off` | Quitte l'éditeur. Rien n'est enregistré par cela ; les blocs restent dans le monde. |
@@ -80,7 +165,7 @@ Un emplacement est une boîte marquée dans la salle où le jeu affichera quelqu
 3. Dans sa fiche : id (modifiable, ce qui le renomme partout où il est utilisé), genre, orientation, position et taille
    (« Placer sur la sélection » pour les refaire), « En faire la cachette » (ancien réglage : un emplacement de n'importe quel genre devient candidat à la cachette ; un seul par salle).
 
-   **La cachette du temps libre est tirée au sort (D228).** Déclare **deux emplacements de genre `cachette` ou plus** dans la salle (livre vide, tiroir, miroir voilé...) : ce sont les candidats. À chaque partie, la graine de la salle en active un seul ; les autres ne donnent rien. Le maître du jeu voit sur la carte de la salle (onglet des salles) laquelle est active (« cachette : id »). Avec un seul candidat, l'éditeur avertit (jaune) mais enregistre : la cachette serait alors toujours au même endroit. Une ancienne salle à une seule cachette reste valide.
+   **La cachette du temps libre est tirée au sort (D228).** Déclare **deux emplacements de genre `secret` ou plus** dans la salle (livre vide, tiroir, miroir voilé...) : ce sont les candidats. À chaque partie, la graine de la salle en active un seul ; les autres ne donnent rien. Le maître du jeu voit sur la carte de la salle (onglet des salles) laquelle est active (« cachette : id »). Avec un seul candidat, l'éditeur avertit (jaune) mais enregistre : la cachette serait alors toujours au même endroit. Une ancienne salle à une seule cachette reste valide.
 4. La fiche dit quelles étapes l'utilisent.
 
 Un emplacement ne remplace jamais un vrai bloc interactif : le jeu y affiche une entité locale. Ne mets pas de vrai coffre, vrai

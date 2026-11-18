@@ -106,6 +106,7 @@ public class RoomService {
 		synchronized (old) {
 			room = build(hub, old.round, group, old.members, old.definition, newSeed);
 			room.place = old.place;
+			room.activeSecret = old.activeSecret;
 			rooms.put(key(hub, old.round, group), room);
 		}
 		synchronized (room) {
@@ -376,6 +377,7 @@ public class RoomService {
 	private void replay(RoomInstance old) {
 		RoomInstance room = build(old.hub, old.round, old.group, old.members, old.definition, replaySeed(old.seed, old.replays + 1));
 		room.place = old.place;
+		room.activeSecret = old.activeSecret; // the hiding place does not move with a replay
 		room.replays = old.replays + 1;
 		rooms.put(key(old.hub, old.round, old.group), room);
 		synchronized (room) {

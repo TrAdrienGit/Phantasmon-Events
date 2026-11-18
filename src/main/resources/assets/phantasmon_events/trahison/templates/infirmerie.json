@@ -1,0 +1,335 @@
+{
+ "id": "infirmerie",
+ "name": "L'Infirmerie",
+ "difficulty": 3,
+ "slots": [
+  {
+   "id": "sortie",
+   "kind": "exit",
+   "position": {
+    "x": 22,
+    "y": 1,
+    "z": 0
+   },
+   "orientation": "south",
+   "size": {
+    "x": 3,
+    "y": 3,
+    "z": 1
+   },
+   "hint": "Mur nord, au centre : l'ouverture de la sortie. À laisser vide, le jeu la ferme.",
+   "placed": false
+  },
+  {
+   "id": "pad_armoire",
+   "kind": "keypad",
+   "position": {
+    "x": 38,
+    "y": 1,
+    "z": 1
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur nord-est : le digicode de l'armoire.",
+   "placed": false
+  },
+  {
+   "id": "mur_dossier",
+   "kind": "wall_clue",
+   "position": {
+    "x": 4,
+    "y": 2,
+    "z": 1
+   },
+   "orientation": "south",
+   "size": {
+    "x": 2,
+    "y": 2,
+    "z": 1
+   },
+   "hint": "Nord-ouest, derrière le rideau du dernier lit : le dossier.",
+   "placed": false
+  },
+  {
+   "id": "pupitre_cris",
+   "kind": "terminal",
+   "position": {
+    "x": 12,
+    "y": 1,
+    "z": 46
+   },
+   "orientation": "north",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur sud : le pupitre du haut-parleur des cris.",
+   "placed": false
+  },
+  {
+   "id": "pad_perfusion",
+   "kind": "terminal",
+   "position": {
+    "x": 1,
+    "y": 2,
+    "z": 26
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur ouest, à hauteur des yeux : le panneau de perfusion.",
+   "placed": false
+  },
+  {
+   "id": "pad_pc",
+   "kind": "terminal",
+   "position": {
+    "x": 46,
+    "y": 1,
+    "z": 42
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Angle sud-est : le PC de soins.",
+   "placed": false
+  },
+  {
+   "id": "pad_pharmacie",
+   "kind": "terminal",
+   "position": {
+    "x": 42,
+    "y": 1,
+    "z": 1
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur nord-est, près de l'armoire : l'armoire à produits.",
+   "placed": false
+  },
+  {
+   "id": "bip_1",
+   "kind": "lever",
+   "position": {
+    "x": 1,
+    "y": 1,
+    "z": 3
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Coin nord-ouest : interrupteur de lit, un des trois coins à tenir ensemble.",
+   "placed": false
+  },
+  {
+   "id": "bip_2",
+   "kind": "lever",
+   "position": {
+    "x": 46,
+    "y": 1,
+    "z": 3
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Coin nord-est : interrupteur de lit, un des trois coins à tenir ensemble.",
+   "placed": false
+  },
+  {
+   "id": "bip_3",
+   "kind": "lever",
+   "position": {
+    "x": 1,
+    "y": 1,
+    "z": 44
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Coin sud-ouest : interrupteur de lit, un des trois coins à tenir ensemble.",
+   "placed": false
+  },
+  {
+   "id": "cachette_1",
+   "kind": "secret",
+   "position": {
+    "x": 30,
+    "y": 1,
+    "z": 20
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Tiroir sous le moniteur cardiaque.",
+   "placed": false
+  },
+  {
+   "id": "cachette_2",
+   "kind": "secret",
+   "position": {
+    "x": 10,
+    "y": 1,
+    "z": 22
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Derrière le rideau d'un lit de l'ouest.",
+   "placed": false
+  }
+ ],
+ "steps": [
+  {
+   "id": "dossier",
+   "mechanism": "keypad",
+   "params": {
+    "length": 4
+   },
+   "slots": {
+    "keypad": "pad_armoire"
+   },
+   "needs": [],
+   "gives": [
+    {
+     "clue": "code",
+     "slot": "mur_dossier"
+    }
+   ],
+   "hints": [
+    "Un dossier manque sur le bureau.",
+    "Regardez derrière les rideaux des lits.",
+    "Le code de 4 chiffres est sur le dossier du dernier lit du fond."
+   ]
+  },
+  {
+   "id": "cris",
+   "mechanism": "cry_match",
+   "params": {
+    "count": 3
+   },
+   "slots": {
+    "console": "pupitre_cris"
+   },
+   "needs": [],
+   "gives": [],
+   "hints": [
+    "Écoutez, puis regardez les formes.",
+    "Les silhouettes sont de Pokémon connus.",
+    "Associez cri et silhouette, puis validez : l'écran donne le nombre de bonnes paires."
+   ]
+  },
+  {
+   "id": "perfusion",
+   "mechanism": "rotating_tiles",
+   "params": {},
+   "slots": {
+    "terminal": "pad_perfusion"
+   },
+   "needs": [
+    "dossier"
+   ],
+   "gives": [],
+   "hints": [
+    "La perfusion est coupée.",
+    "Tournez un tuyau à la fois du sac au lit.",
+    "Reliez le sac (en haut) au bras du lit (en bas)."
+   ]
+  },
+  {
+   "id": "pc_soins",
+   "mechanism": "pc_box",
+   "params": {
+    "count": 6,
+    "fixed": 3
+   },
+   "slots": {
+    "terminal": "pad_pc"
+   },
+   "needs": [
+    "cris"
+   ],
+   "gives": [],
+   "hints": [
+    "Les Pokémon déjà rangés montrent la règle.",
+    "Comparez leurs numéros, types, poids ou tailles.",
+    "La règle se lit sur les trois Pokémon bloqués ; rangez les autres de même."
+   ]
+  },
+  {
+   "id": "pharmacie",
+   "mechanism": "code_breaker",
+   "params": {
+    "length": 4,
+    "alphabet": 6,
+    "kind": "symbols"
+   },
+   "slots": {
+    "terminal": "pad_pharmacie"
+   },
+   "needs": [
+    "perfusion",
+    "pc_soins"
+   ],
+   "gives": [],
+   "hints": [
+    "Chaque essai répond « bien placé » et « mal placé ».",
+    "Notez les essais ; ils restent à l'écran.",
+    "Cherchez d'abord les symboles présents, puis leur place."
+   ]
+  },
+  {
+   "id": "bips",
+   "mechanism": "three_levers",
+   "params": {
+    "ordered": true,
+    "gap": 5,
+    "hold": 12
+   },
+   "slots": {
+    "lever_1": "bip_1",
+    "lever_2": "bip_2",
+    "lever_3": "bip_3",
+    "exit": "sortie"
+   },
+   "needs": [
+    "pharmacie"
+   ],
+   "gives": [],
+   "hints": [
+    "Trois interrupteurs, trois coins.",
+    "Un mauvais ordre fait tout lâcher.",
+    "Essayez : 1-2-3, puis les autres ordres, un joueur par coin."
+   ]
+  }
+ ]
+}

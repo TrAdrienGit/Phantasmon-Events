@@ -1,0 +1,494 @@
+{
+ "id": "crypte",
+ "name": "La Crypte",
+ "difficulty": 4,
+ "slots": [
+  {
+   "id": "sortie",
+   "kind": "exit",
+   "position": {
+    "x": 22,
+    "y": 1,
+    "z": 0
+   },
+   "orientation": "south",
+   "size": {
+    "x": 3,
+    "y": 3,
+    "z": 1
+   },
+   "hint": "Mur nord, au centre : l'ouverture de la sortie. À laisser vide, le jeu la ferme.",
+   "placed": false
+  },
+  {
+   "id": "os_1",
+   "kind": "pickup",
+   "position": {
+    "x": 8,
+    "y": 1,
+    "z": 12
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Caveau de l'ouest, au nord : une clef d'os.",
+   "placed": false
+  },
+  {
+   "id": "os_2",
+   "kind": "pickup",
+   "position": {
+    "x": 14,
+    "y": 2,
+    "z": 22
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Niche du caveau du centre-ouest : une clef d'os.",
+   "placed": false
+  },
+  {
+   "id": "os_3",
+   "kind": "pickup",
+   "position": {
+    "x": 38,
+    "y": 1,
+    "z": 12
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Caveau de l'est, au nord : une clef d'os.",
+   "placed": false
+  },
+  {
+   "id": "os_4",
+   "kind": "pickup",
+   "position": {
+    "x": 34,
+    "y": 2,
+    "z": 24
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Niche du caveau du centre-est : une clef d'os.",
+   "placed": false
+  },
+  {
+   "id": "os_5",
+   "kind": "pickup",
+   "position": {
+    "x": 24,
+    "y": 1,
+    "z": 30
+   },
+   "orientation": "north",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Caveau du sud, au centre : une clef d'os.",
+   "placed": false
+  },
+  {
+   "id": "pad_grille",
+   "kind": "terminal",
+   "position": {
+    "x": 12,
+    "y": 1,
+    "z": 46
+   },
+   "orientation": "north",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur sud : la grille d'entrée du caveau.",
+   "placed": false
+  },
+  {
+   "id": "mur_grille",
+   "kind": "wall_clue",
+   "position": {
+    "x": 14,
+    "y": 4,
+    "z": 46
+   },
+   "orientation": "north",
+   "size": {
+    "x": 2,
+    "y": 2,
+    "z": 1
+   },
+   "hint": "Mur sud, en haut : le schéma de la grille.",
+   "placed": false
+  },
+  {
+   "id": "pierre_grille",
+   "kind": "document",
+   "position": {
+    "x": 12,
+    "y": 1,
+    "z": 43
+   },
+   "orientation": "north",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Dalle devant la grille : le schéma en texte.",
+   "placed": false
+  },
+  {
+   "id": "pad_caveau",
+   "kind": "terminal",
+   "position": {
+    "x": 24,
+    "y": 1,
+    "z": 24
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Au centre : les molettes du caveau central.",
+   "placed": false
+  },
+  {
+   "id": "mur_caveau",
+   "kind": "wall_clue",
+   "position": {
+    "x": 22,
+    "y": 2,
+    "z": 20
+   },
+   "orientation": "south",
+   "size": {
+    "x": 2,
+    "y": 2,
+    "z": 1
+   },
+   "hint": "Caveau central : la gravure du code.",
+   "placed": false
+  },
+  {
+   "id": "pad_boite",
+   "kind": "terminal",
+   "position": {
+    "x": 6,
+    "y": 1,
+    "z": 6
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Sarcophage nord-ouest : le PC de la crypte.",
+   "placed": false
+  },
+  {
+   "id": "arene",
+   "kind": "terminal",
+   "position": {
+    "x": 40,
+    "y": 1,
+    "z": 6
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Sarcophage nord-est : l'arène du duel.",
+   "placed": false
+  },
+  {
+   "id": "mur_sceau",
+   "kind": "wall_clue",
+   "position": {
+    "x": 46,
+    "y": 2,
+    "z": 20
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 2,
+    "z": 2
+   },
+   "hint": "Mur est : le sceau, qui n'apparaît qu'une fois le duel gagné.",
+   "placed": false
+  },
+  {
+   "id": "pupitre_a",
+   "kind": "terminal",
+   "position": {
+    "x": 1,
+    "y": 1,
+    "z": 24
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur ouest : le premier pupitre du sceau.",
+   "placed": false
+  },
+  {
+   "id": "pupitre_b",
+   "kind": "terminal",
+   "position": {
+    "x": 46,
+    "y": 1,
+    "z": 36
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est : le second pupitre du sceau, loin du premier.",
+   "placed": false
+  },
+  {
+   "id": "cachette_1",
+   "kind": "secret",
+   "position": {
+    "x": 25,
+    "y": 2,
+    "z": 17
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Niche scellée au fond du caveau central.",
+   "placed": false
+  },
+  {
+   "id": "cachette_2",
+   "kind": "secret",
+   "position": {
+    "x": 6,
+    "y": 1,
+    "z": 10
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Sous la dalle d'un sarcophage de l'ouest.",
+   "placed": false
+  },
+  {
+   "id": "cachette_3",
+   "kind": "secret",
+   "position": {
+    "x": 40,
+    "y": 1,
+    "z": 40
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Dans un ossuaire du sud-est.",
+   "placed": false
+  }
+ ],
+ "steps": [
+  {
+   "id": "os",
+   "mechanism": "pickup_set",
+   "params": {
+    "spots": 5,
+    "filled": 4
+   },
+   "slots": {},
+   "needs": [],
+   "gives": [
+    {
+     "clue": "spot_1",
+     "slot": "os_1"
+    },
+    {
+     "clue": "spot_2",
+     "slot": "os_2"
+    },
+    {
+     "clue": "spot_3",
+     "slot": "os_3"
+    },
+    {
+     "clue": "spot_4",
+     "slot": "os_4"
+    },
+    {
+     "clue": "spot_5",
+     "slot": "os_5"
+    }
+   ],
+   "hints": [
+    "Les caveaux ne sont pas tous vides.",
+    "Regardez dans les niches et derrière les sarcophages.",
+    "5 endroits, 4 clefs : un secteur par joueur."
+   ]
+  },
+  {
+   "id": "grille",
+   "mechanism": "wiring",
+   "params": {
+    "wires": 5,
+    "colors": 4
+   },
+   "slots": {
+    "panel": "pad_grille"
+   },
+   "needs": [
+    "os"
+   ],
+   "gives": [
+    {
+     "clue": "scheme",
+     "slot": "mur_grille"
+    },
+    {
+     "clue": "scheme_text",
+     "slot": "pierre_grille"
+    }
+   ],
+   "hints": [
+    "Chaque fil a sa couleur.",
+    "Le schéma est sur le mur et sur la pierre.",
+    "La n-ième couleur est celle de la borne de gauche n."
+   ]
+  },
+  {
+   "id": "caveau",
+   "mechanism": "three_dials",
+   "params": {},
+   "slots": {
+    "dials": "pad_caveau"
+   },
+   "needs": [
+    "grille"
+   ],
+   "gives": [
+    {
+     "clue": "code",
+     "slot": "mur_caveau"
+    }
+   ],
+   "hints": [
+    "Trois molettes, trois chiffres.",
+    "Le chiffre est gravé près du caveau.",
+    "Alignez sur les 3 chiffres du mur du caveau."
+   ]
+  },
+  {
+   "id": "boite",
+   "mechanism": "pc_box",
+   "params": {
+    "count": 8,
+    "fixed": 3
+   },
+   "slots": {
+    "terminal": "pad_boite"
+   },
+   "needs": [],
+   "gives": [],
+   "hints": [
+    "Les Pokémon déjà rangés montrent la règle.",
+    "Comparez leurs numéros, types, poids ou tailles.",
+    "La règle se lit sur les trois bloqués ; rangez les autres de même."
+   ]
+  },
+  {
+   "id": "duel",
+   "mechanism": "battle_puzzle",
+   "params": {
+    "turns": 3,
+    "mons": 2,
+    "moves": 3
+   },
+   "slots": {
+    "arena": "arene"
+   },
+   "needs": [
+    "caveau",
+    "boite"
+   ],
+   "gives": [
+    {
+     "clue": "reward",
+     "slot": "mur_sceau",
+     "when": "solved"
+    }
+   ],
+   "hints": [
+    "Un seul enchaînement gagne.",
+    "Chaque tour compte : testez dans l'ordre.",
+    "Un échec remet la position de départ : réessayez en variant un tour à la fois."
+   ]
+  },
+  {
+   "id": "sarcophage",
+   "mechanism": "twin_screens",
+   "params": {},
+   "slots": {
+    "left": "pupitre_a",
+    "right": "pupitre_b",
+    "exit": "sortie"
+   },
+   "needs": [
+    "duel"
+   ],
+   "gives": [
+    {
+     "clue": "left_code",
+     "slot": "pupitre_a"
+    },
+    {
+     "clue": "right_code",
+     "slot": "pupitre_b"
+    }
+   ],
+   "hints": [
+    "Deux pupitres, deux moitiés.",
+    "Chacun décrit son sceau.",
+    "Alignez les deux sceaux en parlant."
+   ]
+  }
+ ]
+}

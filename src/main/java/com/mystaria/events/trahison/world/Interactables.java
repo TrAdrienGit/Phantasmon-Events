@@ -58,7 +58,7 @@ public final class Interactables {
 			return round * 10 + group;
 		}
 
-		/** What a click does now: {@code use_item}, {@code use}, {@code pickup}, {@code examine}, or null (nothing to do). */
+		/** What a click does now: {@code use_item}, {@code use}, {@code pickup}, {@code examine}, {@code search}, or null (nothing to do). */
 		public String action(String held) {
 			if (slot.openPuzzle() != null) {
 				return held != null ? "use_item" : "use";
@@ -66,7 +66,16 @@ public final class Interactables {
 			if (slot.item() != null) {
 				return "pickup";
 			}
-			return slot.readable().isEmpty() ? null : "examine";
+			if (!slot.readable().isEmpty()) {
+				return "examine";
+			}
+			// D228: a hiding place of the free time; the backend decides what (if anything) lies there
+			return slot.searchable() && Rooms.roaming(GameView.current()) ? "search" : null;
+		}
+
+		/** The spot id the backend knows this slot by (the same rule as {@code RoomSecrets.spotId}). */
+		public String spotId() {
+			return "room:" + round + ":" + group + ":" + slot.id();
 		}
 	}
 
@@ -247,6 +256,10 @@ public final class Interactables {
 			return;
 		}
 		SlotView slot = item.slot();
+		if ("search".equals(action)) {
+			Messages.search(item.spotId());
+			return;
+		}
 		Messages.inRoom(item.round(), item.group(), () -> {
 			switch (action) {
 				case "use_item" -> Inventory.useOn(Inventory.held(), slot.id());

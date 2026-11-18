@@ -117,7 +117,19 @@ public final class EventsCommands {
 									.then(ClientCommandManager.argument("id", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(context -> {
 										com.mystaria.events.trahison.edit.RoomEditor.start(com.mojang.brigadier.arguments.StringArgumentType.getString(context, "id"));
 										return 1;
-									})))
+									})
+										// "Create from a sheet": the nine templates of Documentation/salles, tab-completed.
+										.then(ClientCommandManager.argument("template", com.mojang.brigadier.arguments.StringArgumentType.word())
+											.suggests((context, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggest(com.mystaria.events.trahison.edit.RoomEditor.templateIds(), builder))
+											.executes(context -> {
+												com.mystaria.events.trahison.edit.RoomEditor.start(com.mojang.brigadier.arguments.StringArgumentType.getString(context, "id"),
+														com.mojang.brigadier.arguments.StringArgumentType.getString(context, "template"));
+												return 1;
+											}))))
+								.then(ClientCommandManager.literal("templates").executes(context -> {
+									com.mystaria.events.trahison.edit.RoomEditor.templates();
+									return 1;
+								}))
 								.then(ClientCommandManager.literal("load")
 									.then(ClientCommandManager.argument("id", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(context -> {
 										com.mystaria.events.trahison.edit.RoomEditor.load(com.mojang.brigadier.arguments.StringArgumentType.getString(context, "id"));

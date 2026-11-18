@@ -57,7 +57,9 @@ compter et se répartir les coins. L'ordre n'est pas imposé en première manche
 
 ## Secret de la salle
 
-Cachette du temps libre : une latte du plancher sous le dernier lit de l'est. Emplacement `cachette`.
+Cachette du temps libre : une latte du plancher sous le dernier lit de l'est.
+
+Candidats à la cachette (D228, genre `secret`, la graine en tire **un seul** par partie) : `cachette_1`, `cachette_2`. Ils sont déjà dans le gabarit (`room new <id> dortoir`) ; la fiche en propose 2 ; 2 ou 3 candidats au total conviennent.
 
 ## Fragment de lore
 
@@ -82,7 +84,8 @@ Cachette du temps libre : une latte du plancher sous le dernier lit de l'est. Em
 | `pad_malle` | `keypad` | au pied d'un lit, centre | 1 × 1 × 1 | rôle `keypad` de `malle` |
 | `mur_malle` | `wall_clue` | derrière un cadre, fond | 2 × 2 × 1 | `code` de `malle` |
 | `lampe_1` à `lampe_3` | `lever` | trois coins de la salle | 1 × 1 × 1 | `lever_1..3` de `lampes` |
-| `cachette` | `secret` | plancher sous un lit | 1 × 1 × 1 | cachette |
+| `cachette_1` | `secret` | Une latte du plancher sous le dernier lit de l'est | 1 × 1 × 1 | candidat de cachette (D228) |
+| `cachette_2` | `secret` | Dans l'oreiller du lit du fond, au nord | 1 × 1 × 1 | candidat de cachette (D228) |
 
 - **Ids des étapes** : `peluches`, `dessins`, `veilleuse`, `malle`, `lampes`.
 - **À laisser vide** : air devant chaque emplacement, les cases `pickup`, l'espace sous les lits (au moins 1 bloc de haut).

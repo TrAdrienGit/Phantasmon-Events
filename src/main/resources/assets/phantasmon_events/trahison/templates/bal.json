@@ -1,0 +1,438 @@
+{
+ "id": "bal",
+ "name": "La Salle de bal",
+ "difficulty": 3,
+ "slots": [
+  {
+   "id": "sortie",
+   "kind": "exit",
+   "position": {
+    "x": 22,
+    "y": 1,
+    "z": 0
+   },
+   "orientation": "south",
+   "size": {
+    "x": 3,
+    "y": 3,
+    "z": 1
+   },
+   "hint": "Mur nord, au centre : l'ouverture de la sortie. À laisser vide, le jeu la ferme.",
+   "placed": false
+  },
+  {
+   "id": "zone_sombre",
+   "kind": "power_spot",
+   "position": {
+    "x": 2,
+    "y": 1,
+    "z": 14
+   },
+   "orientation": "east",
+   "size": {
+    "x": 5,
+    "y": 3,
+    "z": 5
+   },
+   "hint": "Aile ouest : la zone noire, 5 x 3 x 5. Ne rien construire dedans.",
+   "placed": false
+  },
+  {
+   "id": "pad_dex",
+   "kind": "keypad",
+   "position": {
+    "x": 1,
+    "y": 1,
+    "z": 34
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur ouest, hors de la zone sombre : le digicode des portraits.",
+   "placed": false
+  },
+  {
+   "id": "cadre_1",
+   "kind": "wall_clue",
+   "position": {
+    "x": 1,
+    "y": 2,
+    "z": 15
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 2,
+    "z": 2
+   },
+   "hint": "Mur ouest, dans la zone sombre : le premier portrait.",
+   "placed": false
+  },
+  {
+   "id": "cadre_2",
+   "kind": "wall_clue",
+   "position": {
+    "x": 1,
+    "y": 2,
+    "z": 18
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 2,
+    "z": 2
+   },
+   "hint": "Mur ouest, dans la zone sombre : le second portrait.",
+   "placed": false
+  },
+  {
+   "id": "table_dex",
+   "kind": "document",
+   "position": {
+    "x": 30,
+    "y": 2,
+    "z": 43
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Table près de l'entrée : la page du Pokédex.",
+   "placed": false
+  },
+  {
+   "id": "pad_vestiaire",
+   "kind": "keypad",
+   "position": {
+    "x": 10,
+    "y": 1,
+    "z": 46
+   },
+   "orientation": "north",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur sud : le digicode du vestiaire.",
+   "placed": false
+  },
+  {
+   "id": "carnet_bal",
+   "kind": "document",
+   "position": {
+    "x": 24,
+    "y": 2,
+    "z": 24
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Sur le piano, au centre : le carnet de bal.",
+   "placed": false
+  },
+  {
+   "id": "boite_musique",
+   "kind": "terminal",
+   "position": {
+    "x": 30,
+    "y": 1,
+    "z": 6
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Piédestal au nord : la boîte à musique.",
+   "placed": false
+  },
+  {
+   "id": "pad_pendule",
+   "kind": "terminal",
+   "position": {
+    "x": 46,
+    "y": 1,
+    "z": 24
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est : le cadran de la pendule.",
+   "placed": false
+  },
+  {
+   "id": "mur_miroir",
+   "kind": "wall_clue",
+   "position": {
+    "x": 46,
+    "y": 2,
+    "z": 30
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 2,
+    "z": 2
+   },
+   "hint": "Mur est, le grand miroir : les symboles gravés.",
+   "placed": false
+  },
+  {
+   "id": "chaine_1",
+   "kind": "lever",
+   "position": {
+    "x": 46,
+    "y": 1,
+    "z": 3
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Coin nord-est : chaîne de lustre, un des trois coins à tenir ensemble.",
+   "placed": false
+  },
+  {
+   "id": "chaine_2",
+   "kind": "lever",
+   "position": {
+    "x": 46,
+    "y": 1,
+    "z": 44
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Coin sud-est : chaîne de lustre, un des trois coins à tenir ensemble.",
+   "placed": false
+  },
+  {
+   "id": "chaine_3",
+   "kind": "lever",
+   "position": {
+    "x": 1,
+    "y": 1,
+    "z": 44
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Coin sud-ouest : chaîne de lustre, un des trois coins à tenir ensemble.",
+   "placed": false
+  },
+  {
+   "id": "cachette_1",
+   "kind": "secret",
+   "position": {
+    "x": 46,
+    "y": 3,
+    "z": 38
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Derrière un miroir voilé du mur est.",
+   "placed": false
+  },
+  {
+   "id": "cachette_2",
+   "kind": "secret",
+   "position": {
+    "x": 24,
+    "y": 1,
+    "z": 28
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Dans le piano, côté sud.",
+   "placed": false
+  },
+  {
+   "id": "cachette_3",
+   "kind": "secret",
+   "position": {
+    "x": 28,
+    "y": 1,
+    "z": 8
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Sous une latte du parquet, près de la boîte à musique.",
+   "placed": false
+  }
+ ],
+ "steps": [
+  {
+   "id": "lumiere",
+   "mechanism": "power_spot",
+   "params": {
+    "power": "FLASH",
+    "radius": 4
+   },
+   "slots": {
+    "spot": "zone_sombre"
+   },
+   "needs": [],
+   "gives": [],
+   "hints": [
+    "Un côté de la salle reste noir.",
+    "Le Pokémon qui éclaire doit marcher dans le noir.",
+    "Le porteur de Flash éclaire la zone, les autres cherchent dedans."
+   ]
+  },
+  {
+   "id": "portraits",
+   "mechanism": "dex_code",
+   "params": {
+    "count": 2
+   },
+   "slots": {
+    "terminal": "pad_dex"
+   },
+   "needs": [
+    "lumiere"
+   ],
+   "gives": [
+    {
+     "clue": "portrait_1",
+     "slot": "cadre_1"
+    },
+    {
+     "clue": "portrait_2",
+     "slot": "cadre_2"
+    },
+    {
+     "clue": "dex_page",
+     "slot": "table_dex"
+    }
+   ],
+   "hints": [
+    "Chaque portrait est un Pokémon connu.",
+    "Le numéro est dans le Pokédex ; la page de la table aide.",
+    "Tapez 3 chiffres par portrait, dans l'ordre de la galerie."
+   ]
+  },
+  {
+   "id": "vestiaire",
+   "mechanism": "keypad",
+   "params": {
+    "length": 4
+   },
+   "slots": {
+    "keypad": "pad_vestiaire"
+   },
+   "needs": [],
+   "gives": [
+    {
+     "clue": "code",
+     "slot": "carnet_bal"
+    }
+   ],
+   "hints": [
+    "Le code est écrit quelque part dans la salle.",
+    "Cherchez un carnet de bal.",
+    "Le code de 4 chiffres est sur le carnet posé sur le piano."
+   ]
+  },
+  {
+   "id": "musique",
+   "mechanism": "safe_dial",
+   "params": {},
+   "slots": {
+    "terminal": "boite_musique"
+   },
+   "needs": [
+    "portraits"
+   ],
+   "gives": [],
+   "hints": [
+    "Écoutez le tic.",
+    "Le son change près du bon réglage.",
+    "Tournez lentement : le tic s'accélère près de la bonne valeur."
+   ]
+  },
+  {
+   "id": "miroirs",
+   "mechanism": "ring_dial",
+   "params": {
+    "rings": 3,
+    "symbols": 6,
+    "links": 1
+   },
+   "slots": {
+    "terminal": "pad_pendule"
+   },
+   "needs": [
+    "vestiaire"
+   ],
+   "gives": [
+    {
+     "clue": "symbols",
+     "slot": "mur_miroir"
+    }
+   ],
+   "hints": [
+    "Les anneaux de la pendule se gênent.",
+    "Tournez un anneau et regardez les autres.",
+    "Un anneau en entraîne un autre : repérez le lien."
+   ]
+  },
+  {
+   "id": "lustres",
+   "mechanism": "three_levers",
+   "params": {
+    "ordered": true,
+    "gap": 5,
+    "hold": 12
+   },
+   "slots": {
+    "lever_1": "chaine_1",
+    "lever_2": "chaine_2",
+    "lever_3": "chaine_3",
+    "exit": "sortie"
+   },
+   "needs": [
+    "musique",
+    "miroirs"
+   ],
+   "gives": [],
+   "hints": [
+    "Trois chaînes, trois coins.",
+    "Un mauvais ordre fait tout lâcher.",
+    "Un joueur par coin ; essayez les ordres l'un après l'autre."
+   ]
+  }
+ ]
+}

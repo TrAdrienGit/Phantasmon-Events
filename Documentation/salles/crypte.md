@@ -60,7 +60,9 @@ est proche. Pensée pour une fin de soirée : peu de texte, beaucoup de pièces 
 
 ## Secret de la salle
 
-Cachette du temps libre : dans une niche scellée au fond du caveau central. Emplacement `cachette`.
+Cachette du temps libre : dans une niche scellée au fond du caveau central.
+
+Candidats à la cachette (D228, genre `secret`, la graine en tire **un seul** par partie) : `cachette_1`, `cachette_2`, `cachette_3`. Ils sont déjà dans le gabarit (`room new <id> crypte`) ; la fiche en propose 3 ; 2 ou 3 candidats au total conviennent.
 
 ## Fragment de lore
 
@@ -86,7 +88,9 @@ Cachette du temps libre : dans une niche scellée au fond du caveau central. Emp
 | `arene` | `terminal` | sarcophage nord-est | 1 × 1 × 1 | rôle `arena` de `duel` |
 | `mur_sceau` | `wall_clue` | mur est | 2 × 2 × 1 | `reward` de `duel` (une fois résolue) |
 | `pupitre_a`, `pupitre_b` | `terminal` | ouest et est | 1 × 1 × 1 | rôles de `sarcophage` (à confirmer) |
-| `cachette` | `secret` | niche scellée | 1 × 1 × 1 | cachette |
+| `cachette_1` | `secret` | Niche scellée au fond du caveau central | 1 × 1 × 1 | candidat de cachette (D228) |
+| `cachette_2` | `secret` | Sous la dalle d'un sarcophage de l'ouest | 1 × 1 × 1 | candidat de cachette (D228) |
+| `cachette_3` | `secret` | Dans un ossuaire du sud-est | 1 × 1 × 1 | candidat de cachette (D228) |
 
 - **Ids des étapes** : `os`, `grille`, `caveau`, `boite`, `duel`, `sarcophage`.
 - **À laisser vide** : air devant chaque emplacement ; les cases `pickup`.

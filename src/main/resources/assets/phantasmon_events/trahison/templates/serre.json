@@ -1,0 +1,557 @@
+{
+ "id": "serre",
+ "name": "La Serre",
+ "difficulty": 2,
+ "slots": [
+  {
+   "id": "sortie",
+   "kind": "exit",
+   "position": {
+    "x": 22,
+    "y": 1,
+    "z": 0
+   },
+   "orientation": "south",
+   "size": {
+    "x": 3,
+    "y": 3,
+    "z": 1
+   },
+   "hint": "Mur nord, au centre : l'ouverture de la sortie. À laisser vide, le jeu la ferme.",
+   "placed": false
+  },
+  {
+   "id": "graine_1",
+   "kind": "pickup",
+   "position": {
+    "x": 12,
+    "y": 1,
+    "z": 14
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Premier bac, allée ouest : un sachet de graines.",
+   "placed": false
+  },
+  {
+   "id": "graine_2",
+   "kind": "pickup",
+   "position": {
+    "x": 20,
+    "y": 1,
+    "z": 22
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Pot de l'allée du centre, au nord : un sachet.",
+   "placed": false
+  },
+  {
+   "id": "graine_3",
+   "kind": "pickup",
+   "position": {
+    "x": 28,
+    "y": 2,
+    "z": 16
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Bac surélevé de l'allée centrale : un sachet.",
+   "placed": false
+  },
+  {
+   "id": "graine_4",
+   "kind": "pickup",
+   "position": {
+    "x": 24,
+    "y": 1,
+    "z": 32
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Bac de l'allée du sud : un sachet.",
+   "placed": false
+  },
+  {
+   "id": "pad_dex",
+   "kind": "keypad",
+   "position": {
+    "x": 1,
+    "y": 1,
+    "z": 24
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur ouest, au milieu : le digicode des statues.",
+   "placed": false
+  },
+  {
+   "id": "statue_1",
+   "kind": "wall_clue",
+   "position": {
+    "x": 1,
+    "y": 3,
+    "z": 12
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 2,
+    "z": 2
+   },
+   "hint": "Mur ouest, au-dessus des bacs : la première statue.",
+   "placed": false
+  },
+  {
+   "id": "statue_2",
+   "kind": "wall_clue",
+   "position": {
+    "x": 1,
+    "y": 3,
+    "z": 18
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 2,
+    "z": 2
+   },
+   "hint": "Mur ouest, au-dessus des bacs : la deuxième statue.",
+   "placed": false
+  },
+  {
+   "id": "bureau_dex",
+   "kind": "document",
+   "position": {
+    "x": 3,
+    "y": 2,
+    "z": 34
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Bureau de l'ouest : la page du Pokédex.",
+   "placed": false
+  },
+  {
+   "id": "pad_hauteur",
+   "kind": "terminal",
+   "position": {
+    "x": 46,
+    "y": 1,
+    "z": 32
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est, au milieu : le pupitre pour ranger les socles.",
+   "placed": false
+  },
+  {
+   "id": "socle_1",
+   "kind": "pedestal",
+   "position": {
+    "x": 43,
+    "y": 1,
+    "z": 18
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est, premier socle d'exposition de la rangée.",
+   "placed": false
+  },
+  {
+   "id": "socle_2",
+   "kind": "pedestal",
+   "position": {
+    "x": 43,
+    "y": 1,
+    "z": 22
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est, deuxième socle, aligné avec le premier.",
+   "placed": false
+  },
+  {
+   "id": "socle_3",
+   "kind": "pedestal",
+   "position": {
+    "x": 43,
+    "y": 1,
+    "z": 26
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est, troisième socle, aligné avec les autres.",
+   "placed": false
+  },
+  {
+   "id": "bureau_mesures",
+   "kind": "document",
+   "position": {
+    "x": 45,
+    "y": 2,
+    "z": 38
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Bureau de l'est : la fiche des mesures.",
+   "placed": false
+  },
+  {
+   "id": "pad_local",
+   "kind": "keypad",
+   "position": {
+    "x": 40,
+    "y": 1,
+    "z": 46
+   },
+   "orientation": "north",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Coin sud-est, mur sud : le digicode du local technique.",
+   "placed": false
+  },
+  {
+   "id": "mur_local",
+   "kind": "wall_clue",
+   "position": {
+    "x": 34,
+    "y": 2,
+    "z": 46
+   },
+   "orientation": "north",
+   "size": {
+    "x": 2,
+    "y": 2,
+    "z": 1
+   },
+   "hint": "Mur sud, derrière une plante : la plaque du local.",
+   "placed": false
+  },
+  {
+   "id": "pad_thermo",
+   "kind": "terminal",
+   "position": {
+    "x": 40,
+    "y": 1,
+    "z": 1
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur nord-est : le thermostat à trois molettes.",
+   "placed": false
+  },
+  {
+   "id": "mur_thermo",
+   "kind": "wall_clue",
+   "position": {
+    "x": 30,
+    "y": 3,
+    "z": 1
+   },
+   "orientation": "south",
+   "size": {
+    "x": 2,
+    "y": 2,
+    "z": 1
+   },
+   "hint": "Mur nord, au-dessus des tuyaux : le thermomètre cassé.",
+   "placed": false
+  },
+  {
+   "id": "poste_a",
+   "kind": "terminal",
+   "position": {
+    "x": 1,
+    "y": 1,
+    "z": 4
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Coin nord-ouest : le premier poste d'arrosage.",
+   "placed": false
+  },
+  {
+   "id": "poste_b",
+   "kind": "terminal",
+   "position": {
+    "x": 46,
+    "y": 1,
+    "z": 42
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Coin sud-est : le second poste d'arrosage, loin du premier.",
+   "placed": false
+  },
+  {
+   "id": "cachette_1",
+   "kind": "secret",
+   "position": {
+    "x": 8,
+    "y": 1,
+    "z": 28
+   },
+   "orientation": "north",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Sous un bac renversé, au pied de la plus grosse plante, côté ouest.",
+   "placed": false
+  },
+  {
+   "id": "cachette_2",
+   "kind": "secret",
+   "position": {
+    "x": 30,
+    "y": 1,
+    "z": 6
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Dans un pot du fond, près du nord.",
+   "placed": false
+  }
+ ],
+ "steps": [
+  {
+   "id": "graines",
+   "mechanism": "pickup_set",
+   "params": {
+    "spots": 4,
+    "filled": 3
+   },
+   "slots": {},
+   "needs": [],
+   "gives": [
+    {
+     "clue": "spot_1",
+     "slot": "graine_1"
+    },
+    {
+     "clue": "spot_2",
+     "slot": "graine_2"
+    },
+    {
+     "clue": "spot_3",
+     "slot": "graine_3"
+    },
+    {
+     "clue": "spot_4",
+     "slot": "graine_4"
+    }
+   ],
+   "hints": [
+    "Les graines ne sont pas toutes sur le sol.",
+    "Regardez dans les pots et sous les bacs.",
+    "4 endroits, 3 sachets : fouillez chaque bac."
+   ]
+  },
+  {
+   "id": "statues",
+   "mechanism": "dex_code",
+   "params": {
+    "count": 2
+   },
+   "slots": {
+    "terminal": "pad_dex"
+   },
+   "needs": [],
+   "gives": [
+    {
+     "clue": "portrait_1",
+     "slot": "statue_1"
+    },
+    {
+     "clue": "portrait_2",
+     "slot": "statue_2"
+    },
+    {
+     "clue": "dex_page",
+     "slot": "bureau_dex"
+    }
+   ],
+   "hints": [
+    "Chaque statue est un Pokémon connu.",
+    "Le numéro est dans le Pokédex ; la page abîmée du bureau aide.",
+    "Tapez les 3 chiffres de chaque statue, dans l'ordre des statues."
+   ]
+  },
+  {
+   "id": "hauteur",
+   "mechanism": "weigh_in",
+   "params": {
+    "count": 3,
+    "by": "height"
+   },
+   "slots": {
+    "row": "pad_hauteur"
+   },
+   "needs": [],
+   "gives": [
+    {
+     "clue": "pedestal_1",
+     "slot": "socle_1"
+    },
+    {
+     "clue": "pedestal_2",
+     "slot": "socle_2"
+    },
+    {
+     "clue": "pedestal_3",
+     "slot": "socle_3"
+    },
+    {
+     "clue": "scale_sheet",
+     "slot": "bureau_mesures"
+    }
+   ],
+   "hints": [
+    "Les piédestaux ne sont pas dans l'ordre.",
+    "Le plus petit à gauche.",
+    "La fiche du bureau donne les tailles."
+   ]
+  },
+  {
+   "id": "digicode",
+   "mechanism": "keypad",
+   "params": {
+    "length": 3
+   },
+   "slots": {
+    "keypad": "pad_local"
+   },
+   "needs": [
+    "graines"
+   ],
+   "gives": [
+    {
+     "clue": "code",
+     "slot": "mur_local"
+    }
+   ],
+   "hints": [
+    "Le code est inscrit quelque part dans la serre.",
+    "Cherchez sur le mur du local technique.",
+    "Le code de 3 chiffres est sur la plaque du local."
+   ]
+  },
+  {
+   "id": "thermo",
+   "mechanism": "three_dials",
+   "params": {},
+   "slots": {
+    "dials": "pad_thermo"
+   },
+   "needs": [
+    "statues",
+    "hauteur"
+   ],
+   "gives": [
+    {
+     "clue": "code",
+     "slot": "mur_thermo"
+    }
+   ],
+   "hints": [
+    "Trois molettes, trois chiffres.",
+    "Un thermomètre cassé porte le nombre.",
+    "Alignez les molettes sur les 3 chiffres du mur du thermostat."
+   ]
+  },
+  {
+   "id": "arrosage",
+   "mechanism": "twin_screens",
+   "params": {},
+   "slots": {
+    "left": "poste_a",
+    "right": "poste_b",
+    "exit": "sortie"
+   },
+   "needs": [
+    "digicode",
+    "thermo"
+   ],
+   "gives": [
+    {
+     "clue": "left_code",
+     "slot": "poste_a"
+    },
+    {
+     "clue": "right_code",
+     "slot": "poste_b"
+    }
+   ],
+   "hints": [
+    "Deux postes, deux moitiés.",
+    "Chacun décrit à l'autre ce qu'il voit.",
+    "Associez chaque vanne d'un écran à son tuyau sur l'autre."
+   ]
+  }
+ ]
+}

@@ -17,7 +17,9 @@ import com.mystaria.phantasmon_backend.events.trahison.room.ActionResult;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomAction;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomDefinition;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomDraw;
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomInstance;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomPlace;
+import com.mystaria.phantasmon_backend.events.trahison.room.RoomSecrets;
 import com.mystaria.phantasmon_backend.events.trahison.room.RoomService;
 import com.mystaria.phantasmon_backend.events.trahison.room.Slot;
 import com.mystaria.phantasmon_backend.events.trahison.room.Step;
@@ -139,6 +141,41 @@ public final class GameRooms {
 			}
 		}
 		return out;
+	}
+
+	/**
+	 * The hiding places the rooms of round {@code r} offer the item draw: the live secret of each room that stands in a place of the
+	 * plan (spot ids, see {@link RoomSecrets#spotId}), in group order. The inert candidates are not listed.
+	 */
+	List<String> secretSpots(Game g, RoundState r) {
+		List<String> out = new ArrayList<>();
+		for (int k = 0; k < 3; k++) {
+			Optional<RoomInstance> room = rooms.find(g.hub, r.number, k);
+			if (room.isPresent() && room.get().place != null && room.get().activeSecret != null) {
+				out.add(RoomSecrets.spotId(r.number, k, room.get().activeSecret));
+			}
+		}
+		return out;
+	}
+
+	/** The room of (round, group) when it stands in the plan and the slot is one of its secret candidates (live or inert), else empty. */
+	Optional<RoomInstance> roomWithCandidate(Game g, int round, int group, String slot) {
+		return rooms.find(g.hub, round, group)
+				.filter(room -> room.place != null && RoomSecrets.candidates(room.definition).contains(slot));
+	}
+
+	/**
+	 * The box of a slot in hub coordinates, {@code {minX, minY, minZ, maxX, maxY, maxZ}} (max exclusive): the slot's own box turned and
+	 * moved by the room's place, exactly as the client puts it in the world.
+	 */
+	static double[] hubBox(RoomInstance room, String slotId) {
+		var slot = room.definition.slot(slotId).orElseThrow();
+		var p = slot.position();
+		var s = slot.size();
+		var a = room.place.toHub(p);
+		var b = room.place.toHub(new com.mystaria.phantasmon_backend.events.trahison.layout.Pos(p.x() + s.x() - 1, p.y() + s.y() - 1, p.z() + s.z() - 1));
+		return new double[] { Math.min(a.x(), b.x()), Math.min(a.y(), b.y()), Math.min(a.z(), b.z()),
+			Math.max(a.x(), b.x()) + 1, Math.max(a.y(), b.y()) + 1, Math.max(a.z(), b.z()) + 1 };
 	}
 
 	/** Forgets all the hub's rooms, those of earlier rounds too (the game ended). A new round keeps them (D8). */

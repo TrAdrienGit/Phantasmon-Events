@@ -60,7 +60,9 @@ troisième joueur fait la navette ou tient la notice. Voir D223.
 
 ## Secret de la salle
 
-Cachette du temps libre : un compartiment de maintenance sous la chaudière, au centre. Emplacement `cachette`.
+Cachette du temps libre : un compartiment de maintenance sous la chaudière, au centre.
+
+Candidats à la cachette (D228, genre `secret`, la graine en tire **un seul** par partie) : `cachette_1`, `cachette_2`. Ils sont déjà dans le gabarit (`room new <id> salle_des_machines`) ; la fiche en propose 2 ; 2 ou 3 candidats au total conviennent.
 
 ## Fragment de lore
 
@@ -86,7 +88,8 @@ Cachette du temps libre : un compartiment de maintenance sous la chaudière, au 
 | `marque_1` à `marque_4` | `wall_clue` | au-dessus de chaque manette | 1 × 1 × 1 | `mark_1..4` |
 | `bureau_types` | `document` | bureau sud-ouest | 1 × 1 × 1 | `type_sheet` |
 | `poste_a`, `poste_b` | `terminal` | nord-est et sud-ouest | 1 × 1 × 1 | rôles de `pression` (à confirmer) |
-| `cachette` | `secret` | sous la chaudière | 1 × 1 × 1 | cachette |
+| `cachette_1` | `secret` | Compartiment de maintenance sous la chaudière, au centre | 1 × 1 × 1 | candidat de cachette (D228) |
+| `cachette_2` | `secret` | Derrière un tuyau de la passerelle ouest | 1 × 1 × 1 | candidat de cachette (D228) |
 
 - **Ids des étapes** : `fusibles`, `tableau`, `engrenages`, `vannes`, `pression`.
 - **À laisser vide** : air devant chaque emplacement ; les cases `pickup` ; les emplacements `marque_*` (le jeu y affiche le type).

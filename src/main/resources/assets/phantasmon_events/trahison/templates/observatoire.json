@@ -1,0 +1,346 @@
+{
+ "id": "observatoire",
+ "name": "L'Observatoire",
+ "difficulty": 4,
+ "slots": [
+  {
+   "id": "sortie",
+   "kind": "exit",
+   "position": {
+    "x": 22,
+    "y": 1,
+    "z": 0
+   },
+   "orientation": "south",
+   "size": {
+    "x": 3,
+    "y": 3,
+    "z": 1
+   },
+   "hint": "Mur nord, au centre : l'ouverture de la sortie. À laisser vide, le jeu la ferme.",
+   "placed": false
+  },
+  {
+   "id": "pad_carte",
+   "kind": "keypad",
+   "position": {
+    "x": 6,
+    "y": 1,
+    "z": 46
+   },
+   "orientation": "north",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur sud-ouest : le digicode du tiroir des cartes.",
+   "placed": false
+  },
+  {
+   "id": "carte_ciel",
+   "kind": "document",
+   "position": {
+    "x": 4,
+    "y": 2,
+    "z": 38
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Table des cartes, au sud-ouest : la carte qui porte le code (les autres sont du décor).",
+   "placed": false
+  },
+  {
+   "id": "radio",
+   "kind": "terminal",
+   "position": {
+    "x": 1,
+    "y": 1,
+    "z": 20
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur ouest : la radio qui capte les cris.",
+   "placed": false
+  },
+  {
+   "id": "pad_astrolabe",
+   "kind": "terminal",
+   "position": {
+    "x": 24,
+    "y": 1,
+    "z": 24
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Au centre : le pupitre de l'astrolabe.",
+   "placed": false
+  },
+  {
+   "id": "mur_constellation",
+   "kind": "wall_clue",
+   "position": {
+    "x": 46,
+    "y": 8,
+    "z": 8
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 2,
+    "z": 2
+   },
+   "hint": "Mur est, en haut : la constellation gravée.",
+   "placed": false
+  },
+  {
+   "id": "pad_plafond",
+   "kind": "terminal",
+   "position": {
+    "x": 14,
+    "y": 1,
+    "z": 1
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur nord : le pupitre des tuiles du plafond.",
+   "placed": false
+  },
+  {
+   "id": "pad_serrure",
+   "kind": "terminal",
+   "position": {
+    "x": 46,
+    "y": 1,
+    "z": 28
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur est : la lunette de visée de la serrure.",
+   "placed": false
+  },
+  {
+   "id": "lunette_a",
+   "kind": "terminal",
+   "position": {
+    "x": 3,
+    "y": 7,
+    "z": 4
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Balcon nord-ouest, à 6 de haut : la première lunette.",
+   "placed": false
+  },
+  {
+   "id": "lunette_b",
+   "kind": "terminal",
+   "position": {
+    "x": 44,
+    "y": 7,
+    "z": 42
+   },
+   "orientation": "north",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Balcon sud-est, à 6 de haut : la seconde lunette, loin de la première.",
+   "placed": false
+  },
+  {
+   "id": "cachette_1",
+   "kind": "secret",
+   "position": {
+    "x": 24,
+    "y": 1,
+    "z": 18
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Dans le pied du grand télescope, au centre.",
+   "placed": false
+  },
+  {
+   "id": "cachette_2",
+   "kind": "secret",
+   "position": {
+    "x": 40,
+    "y": 1,
+    "z": 16
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Sous le fauteuil de l'observateur, côté est.",
+   "placed": false
+  }
+ ],
+ "steps": [
+  {
+   "id": "carte",
+   "mechanism": "keypad",
+   "params": {
+    "length": 5
+   },
+   "slots": {
+    "keypad": "pad_carte"
+   },
+   "needs": [],
+   "gives": [
+    {
+     "clue": "code",
+     "slot": "carte_ciel"
+    }
+   ],
+   "hints": [
+    "Plusieurs cartes, une seule compte.",
+    "Cherchez des chiffres écrits à l'encre rouge.",
+    "Le code de 5 chiffres est sur la carte épinglée sous le télescope."
+   ]
+  },
+  {
+   "id": "radio",
+   "mechanism": "cry_match",
+   "params": {
+    "count": 4
+   },
+   "slots": {
+    "console": "radio"
+   },
+   "needs": [],
+   "gives": [],
+   "hints": [
+    "Le bruit couvre un cri sur deux.",
+    "Associez d'abord ceux dont vous êtes sûrs.",
+    "L'écran donne le nombre de bonnes paires : changez une paire à la fois."
+   ]
+  },
+  {
+   "id": "astrolabe",
+   "mechanism": "ring_dial",
+   "params": {
+    "rings": 4,
+    "symbols": 7,
+    "links": 2
+   },
+   "slots": {
+    "terminal": "pad_astrolabe"
+   },
+   "needs": [
+    "carte"
+   ],
+   "gives": [
+    {
+     "clue": "symbols",
+     "slot": "mur_constellation"
+    }
+   ],
+   "hints": [
+    "Les quatre anneaux ne tournent pas seuls.",
+    "Tournez-en un et regardez les autres.",
+    "Deux liens cachés : notez qui entraîne qui."
+   ]
+  },
+  {
+   "id": "constellation",
+   "mechanism": "rotating_tiles",
+   "params": {},
+   "slots": {
+    "terminal": "pad_plafond"
+   },
+   "needs": [
+    "radio"
+   ],
+   "gives": [],
+   "hints": [
+    "Les étoiles sont reliées par des tuiles.",
+    "Tournez une tuile à la fois.",
+    "Reliez l'étoile du haut à celle du bas."
+   ]
+  },
+  {
+   "id": "serrure",
+   "mechanism": "code_breaker",
+   "params": {
+    "length": 4,
+    "alphabet": 7,
+    "kind": "symbols",
+    "maxTries": 12
+   },
+   "slots": {
+    "terminal": "pad_serrure"
+   },
+   "needs": [
+    "astrolabe",
+    "constellation"
+   ],
+   "gives": [],
+   "hints": [
+    "« Bien placé » et « mal placé » disent tout.",
+    "12 essais : n'en gaspillez pas.",
+    "Cherchez d'abord les symboles présents."
+   ]
+  },
+  {
+   "id": "lunettes",
+   "mechanism": "twin_screens",
+   "params": {},
+   "slots": {
+    "left": "lunette_a",
+    "right": "lunette_b",
+    "exit": "sortie"
+   },
+   "needs": [
+    "serrure"
+   ],
+   "gives": [
+    {
+     "clue": "left_code",
+     "slot": "lunette_a"
+    },
+    {
+     "clue": "right_code",
+     "slot": "lunette_b"
+    }
+   ],
+   "hints": [
+    "Deux lunettes, deux moitiés.",
+    "Chacun décrit ce qu'il voit.",
+    "Alignez les deux étoiles marquées."
+   ]
+  }
+ ]
+}

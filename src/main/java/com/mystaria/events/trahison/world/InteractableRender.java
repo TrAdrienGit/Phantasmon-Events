@@ -147,7 +147,7 @@ final class InteractableRender {
 			default -> {
 				if (puzzle || solved) {
 					terminal(vc, camera, item, puzzle, solved, now);
-				} else if (item.slot().item() == null && item.slot().readable().isEmpty()) {
+				} else if (item.slot().item() == null && item.slot().readable().isEmpty() && !item.slot().searchable()) {
 					floating(vc, camera, item.box().getCenter(), 0.14f, TrahisonPalette.ACCENT, now);
 				}
 			}
@@ -598,6 +598,9 @@ final class InteractableRender {
 			if (step != null) {
 				return Component.translatable(T + "power.spot", Powers.name(step.power()));
 			}
+		}
+		if (slot.searchable()) {
+			return null; // every candidate hiding place reads the same
 		}
 		String key = T + "slot." + slot.kind();
 		return net.minecraft.client.resources.language.I18n.exists(key) ? Component.translatable(key) : null;

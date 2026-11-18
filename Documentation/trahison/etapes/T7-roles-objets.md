@@ -49,6 +49,7 @@ Backend, paquet `game`.
 - Au début de la partie, le backend répartit les objets dans les **cachettes** du plan (T2.1) et les emplacements
   `secret` des salles (D228 : une salle en déclare plusieurs, la graine de la salle n'en active qu'une par partie). Une cachette garnie se fouille comme un emplacement (T3.3) ; l'objet va dans l'inventaire
   personnel, que les autres ne voient pas.
+- D260 : les objets que le plan n'a pas pu loger ne sont plus écartés pour de bon : au démarrage de chaque manche, la cachette active (D228) de chaque salle posée y reçoit un objet (un par salle, tirage d'après la graine de la manche), le reste demeurant `unplaced_items`. Les candidats inertes sont fouillables et répondent « rien ». Le choix de l'active survit à un rejeu (D8) et à un redémarrage.
 - Effets (action `use_item`, cible et lieu vérifiés par le backend) :
 
 | Objet | Condition | Effet |

@@ -1,0 +1,428 @@
+{
+ "id": "dortoir",
+ "name": "Le Dortoir",
+ "difficulty": 2,
+ "slots": [
+  {
+   "id": "sortie",
+   "kind": "exit",
+   "position": {
+    "x": 22,
+    "y": 1,
+    "z": 0
+   },
+   "orientation": "south",
+   "size": {
+    "x": 3,
+    "y": 3,
+    "z": 1
+   },
+   "hint": "Mur nord, au centre : l'ouverture de la sortie. À laisser vide, le jeu la ferme.",
+   "placed": false
+  },
+  {
+   "id": "jouet_1",
+   "kind": "pickup",
+   "position": {
+    "x": 8,
+    "y": 1,
+    "z": 12
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Sous un lit de la rangée ouest, au nord : un jouet perdu.",
+   "placed": false
+  },
+  {
+   "id": "jouet_2",
+   "kind": "pickup",
+   "position": {
+    "x": 8,
+    "y": 1,
+    "z": 28
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Sous un lit de la rangée ouest, au sud : un jouet perdu.",
+   "placed": false
+  },
+  {
+   "id": "jouet_3",
+   "kind": "pickup",
+   "position": {
+    "x": 38,
+    "y": 1,
+    "z": 16
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Sous un lit de la rangée est : un jouet perdu.",
+   "placed": false
+  },
+  {
+   "id": "jouet_4",
+   "kind": "pickup",
+   "position": {
+    "x": 30,
+    "y": 1,
+    "z": 38
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Dans une malle, côté sud : un jouet perdu.",
+   "placed": false
+  },
+  {
+   "id": "chevet_journal",
+   "kind": "document",
+   "position": {
+    "x": 3,
+    "y": 2,
+    "z": 6
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Chevet ouest, au fond : la page de journal.",
+   "placed": false
+  },
+  {
+   "id": "pad_dessins",
+   "kind": "keypad",
+   "position": {
+    "x": 18,
+    "y": 1,
+    "z": 46
+   },
+   "orientation": "north",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur sud, près des dessins : le digicode du message.",
+   "placed": false
+  },
+  {
+   "id": "mur_dessins",
+   "kind": "wall_clue",
+   "position": {
+    "x": 12,
+    "y": 3,
+    "z": 46
+   },
+   "orientation": "north",
+   "size": {
+    "x": 3,
+    "y": 2,
+    "z": 1
+   },
+   "hint": "Mur sud, au-dessus du lit : le message dessiné (3 de large).",
+   "placed": false
+  },
+  {
+   "id": "chevet_alphabet",
+   "kind": "document",
+   "position": {
+    "x": 45,
+    "y": 2,
+    "z": 28
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Chevet est : la page de l'alphabet.",
+   "placed": false
+  },
+  {
+   "id": "pad_veilleuse",
+   "kind": "terminal",
+   "position": {
+    "x": 40,
+    "y": 2,
+    "z": 1
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Mur nord-est, à hauteur des yeux : le panneau de tuyaux de la veilleuse.",
+   "placed": false
+  },
+  {
+   "id": "pad_malle",
+   "kind": "keypad",
+   "position": {
+    "x": 23,
+    "y": 1,
+    "z": 26
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Au pied d'un lit, au centre : le digicode de la malle.",
+   "placed": false
+  },
+  {
+   "id": "mur_malle",
+   "kind": "wall_clue",
+   "position": {
+    "x": 12,
+    "y": 3,
+    "z": 1
+   },
+   "orientation": "south",
+   "size": {
+    "x": 2,
+    "y": 2,
+    "z": 1
+   },
+   "hint": "Mur du fond, derrière un cadre : la date.",
+   "placed": false
+  },
+  {
+   "id": "lampe_1",
+   "kind": "lever",
+   "position": {
+    "x": 1,
+    "y": 1,
+    "z": 3
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Coin nord-ouest : interrupteur de lit, un des trois coins à tenir ensemble.",
+   "placed": false
+  },
+  {
+   "id": "lampe_2",
+   "kind": "lever",
+   "position": {
+    "x": 46,
+    "y": 1,
+    "z": 3
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Coin nord-est : interrupteur de lit, un des trois coins à tenir ensemble.",
+   "placed": false
+  },
+  {
+   "id": "lampe_3",
+   "kind": "lever",
+   "position": {
+    "x": 1,
+    "y": 1,
+    "z": 44
+   },
+   "orientation": "east",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Coin sud-ouest : interrupteur de lit, un des trois coins à tenir ensemble.",
+   "placed": false
+  },
+  {
+   "id": "cachette_1",
+   "kind": "secret",
+   "position": {
+    "x": 41,
+    "y": 1,
+    "z": 38
+   },
+   "orientation": "west",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Une latte du plancher sous le dernier lit de l'est.",
+   "placed": false
+  },
+  {
+   "id": "cachette_2",
+   "kind": "secret",
+   "position": {
+    "x": 12,
+    "y": 2,
+    "z": 4
+   },
+   "orientation": "south",
+   "size": {
+    "x": 1,
+    "y": 1,
+    "z": 1
+   },
+   "hint": "Dans l'oreiller du lit du fond, au nord.",
+   "placed": false
+  }
+ ],
+ "steps": [
+  {
+   "id": "peluches",
+   "mechanism": "pickup_set",
+   "params": {
+    "spots": 4,
+    "filled": 3,
+    "document": "Journal de la dormeuse\nLes jouets ont disparu cette nuit.\nIls dorment sous les lits."
+   },
+   "slots": {},
+   "needs": [],
+   "gives": [
+    {
+     "clue": "spot_1",
+     "slot": "jouet_1"
+    },
+    {
+     "clue": "spot_2",
+     "slot": "jouet_2"
+    },
+    {
+     "clue": "spot_3",
+     "slot": "jouet_3"
+    },
+    {
+     "clue": "spot_4",
+     "slot": "jouet_4"
+    },
+    {
+     "clue": "document",
+     "slot": "chevet_journal"
+    }
+   ],
+   "hints": [
+    "Des jouets manquent aux lits.",
+    "Regardez sous les lits et dans les malles.",
+    "4 endroits, 3 jouets : un lit chacun."
+   ]
+  },
+  {
+   "id": "dessins",
+   "mechanism": "unown_text",
+   "params": {
+    "length": 3
+   },
+   "slots": {
+    "terminal": "pad_dessins"
+   },
+   "needs": [
+    "peluches"
+   ],
+   "gives": [
+    {
+     "clue": "wall_text",
+     "slot": "mur_dessins"
+    },
+    {
+     "clue": "alphabet",
+     "slot": "chevet_alphabet"
+    }
+   ],
+   "hints": [
+    "Le dessin au mur est une phrase.",
+    "L'alphabet est sur la page du journal.",
+    "Chaque signe est une lettre ; la phrase épelle 3 chiffres en toutes lettres."
+   ]
+  },
+  {
+   "id": "veilleuse",
+   "mechanism": "rotating_tiles",
+   "params": {},
+   "slots": {
+    "terminal": "pad_veilleuse"
+   },
+   "needs": [],
+   "gives": [],
+   "hints": [
+    "Le circuit est coupé.",
+    "Tournez un tuyau à la fois, de la prise à l'ampoule.",
+    "Reliez la prise (haut gauche) à l'ampoule (bas droite)."
+   ]
+  },
+  {
+   "id": "malle",
+   "mechanism": "keypad",
+   "params": {
+    "length": 4
+   },
+   "slots": {
+    "keypad": "pad_malle"
+   },
+   "needs": [
+    "dessins",
+    "veilleuse"
+   ],
+   "gives": [
+    {
+     "clue": "code",
+     "slot": "mur_malle"
+    }
+   ],
+   "hints": [
+    "Le code est une date.",
+    "Cherchez une date derrière un cadre.",
+    "4 chiffres, sur le cadre du mur du fond."
+   ]
+  },
+  {
+   "id": "lampes",
+   "mechanism": "three_levers",
+   "params": {
+    "ordered": false,
+    "gap": 6,
+    "hold": 14
+   },
+   "slots": {
+    "lever_1": "lampe_1",
+    "lever_2": "lampe_2",
+    "lever_3": "lampe_3",
+    "exit": "sortie"
+   },
+   "needs": [
+    "malle"
+   ],
+   "gives": [],
+   "hints": [
+    "Trois interrupteurs, trois coins.",
+    "Il faut trois personnes, une par coin.",
+    "Comptez à voix haute et tirez ensemble, chacun le sien."
+   ]
+  }
+ ]
+}

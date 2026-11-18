@@ -45,6 +45,9 @@ final class RoomSnapshot {
 		putTime(out, "finishedAt", room.finishedAt);
 		out.put("exitOpen", room.exitOpen);
 		out.put("replays", room.replays);
+		if (room.activeSecret != null) {
+			out.put("activeSecret", room.activeSecret); // D228: a replayed room keeps its hiding place
+		}
 		out.put("autoHints", room.autoHints);
 		putTime(out, "autoHintMark", room.autoHintMark);
 		ArrayNode inventory = out.putArray("inventory");
@@ -90,6 +93,9 @@ final class RoomSnapshot {
 		room.finishedAt = time(in, "finishedAt");
 		room.exitOpen = in.path("exitOpen").asBoolean(false);
 		room.replays = in.path("replays").asInt(0);
+		if (in.path("activeSecret").isString()) {
+			room.activeSecret = in.path("activeSecret").asString();
+		}
 		room.autoHints = in.path("autoHints").asInt(0);
 		room.autoHintMark = time(in, "autoHintMark");
 		in.path("inventory").forEach(i -> room.inventory.add(i.asString()));

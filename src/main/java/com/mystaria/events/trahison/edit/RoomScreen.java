@@ -35,7 +35,7 @@ public final class RoomScreen extends Screen {
 	private static final int FORM_PITCH = 22;
 	private static final int BUTTON_W = 68;
 
-	private enum View { SLOTS, FORM, ROOM, ERRORS }
+	private enum View { SLOTS, TODO, FORM, ROOM, ERRORS }
 
 	private record Confirm(Component title, Component text, Component yes, Runnable action) {
 	}
@@ -52,6 +52,7 @@ public final class RoomScreen extends Screen {
 	private final PanelUi.Field authorField = new PanelUi.Field(40, true);
 	private Confirm confirm;
 	private int listScroll;
+	private int todoScroll;
 	private int formScroll;
 	private int errorScroll;
 	private long lastRowClick;
@@ -72,6 +73,11 @@ public final class RoomScreen extends Screen {
 		current = this;
 		nameField.value = RoomEditor.room.name == null ? "" : RoomEditor.room.name;
 		authorField.value = RoomEditor.room.author == null ? "" : RoomEditor.room.author;
+	}
+
+	/** A room started from a template opens on the "to place" list. */
+	static void showTodo() {
+		view = View.TODO;
 	}
 
 	/** A save was refused: when problems were listed, show them. */
@@ -127,6 +133,10 @@ public final class RoomScreen extends Screen {
 				drawTabs(g);
 				drawList(g);
 			}
+			case TODO -> {
+				drawTabs(g);
+				drawTodo(g);
+			}
 			case FORM -> drawForm(g);
 			case ROOM -> {
 				drawTabs(g);
@@ -160,11 +170,13 @@ public final class RoomScreen extends Screen {
 
 	private void drawTabs(GuiGraphics g) {
 		int x = cx;
-		for (View tab : new View[] { View.SLOTS, View.ROOM }) {
+		for (View tab : new View[] { View.SLOTS, View.TODO, View.ROOM }) {
 			boolean selected = tab == view;
-			boolean hovered = ui.hovered(x, py + 28, 56, ROW_H);
-			TrahisonUi.tab(g, x, py + 28, 56, ROW_H, t("tab." + tab.name().toLowerCase()), selected, hovered);
-			ui.zone(x, py + 28, 56, ROW_H, button -> {
+			Component label = tab == View.TODO ? t("tab.todo", RoomEditor.unplaced.size()) : t("tab." + tab.name().toLowerCase());
+			int w = Math.max(56, TrahisonUi.width(label) + 14);
+			boolean hovered = ui.hovered(x, py + 28, w, ROW_H);
+			TrahisonUi.tab(g, x, py + 28, w, ROW_H, label, selected, hovered);
+			ui.zone(x, py + 28, w, ROW_H, button -> {
 				commitId();
 				view = tab;
 				if (tab == View.ROOM) {
@@ -172,8 +184,82 @@ public final class RoomScreen extends Screen {
 					authorField.value = RoomEditor.room.author == null ? "" : RoomEditor.room.author;
 				}
 			});
-			x += 60;
+			x += w + 4;
 		}
+	}
+
+	// ---------------------------------------------------------------- slots to place (template)
+
+	private void drawTodo(GuiGraphics g) {
+		List<String> todo = RoomEditor.todo();
+		int keepY = actionY - 4 - ROW_H;
+		int listH = keepY - 4 - listY;
+		TrahisonUi.well(g, cx, listY, cw, listH);
+		if (RoomEditor.selectedSlot == null || !RoomEditor.unplaced.contains(RoomEditor.selectedSlot)) {
+			RoomEditor.selectedSlot = todo.isEmpty() ? RoomEditor.selectedSlot : todo.get(0);
+		}
+		boolean two = listH >= 70;
+		int pitch = two ? 32 : ROW_PITCH;
+		int content = 4 + todo.size() * pitch;
+		todoScroll = RoomUi.clamp(todoScroll, content - listH);
+		ui.clip(g, cx + 1, listY + 1, cx + cw - 1, listY + listH - 1);
+		int y = listY + 2 - todoScroll;
+		int rowW = cw - (content > listH ? 8 : 4);
+		for (String id : todo) {
+			drawTodoRow(g, id, cx + 2, y, rowW, pitch - 2, two);
+			y += pitch;
+		}
+		if (todo.isEmpty()) {
+			MenuUi.paragraph(g, t("todo.empty"), cx + 8, listY + 8, cw - 16, TrahisonPalette.SUCCESS);
+		}
+		ui.unclip(g);
+		RoomUi.scrollbar(g, cx + cw - 5, listY + 2, listH - 4, todoScroll, content);
+		String selected = RoomEditor.selectedSlot;
+		boolean canAct = selected != null && RoomEditor.unplaced.contains(selected);
+		boolean hasSelection = RoomEditor.selectionCanonical() != null;
+		ui.button(g, cx, keepY, cw, ROW_H, t("todo.keep"), ButtonKind.DEFAULT, t("todo.keep.tip"),
+				canAct ? () -> RoomEditor.keepPosition(selected) : null);
+		ui.button(g, cx, actionY, cw, ROW_H, t("place_on_selection"), ButtonKind.PRIMARY, t(hasSelection ? "todo.place.tip" : "todo.place.none"),
+				canAct && hasSelection ? () -> RoomEditor.placeOnSelection(selected) : null);
+	}
+
+	private void drawTodoRow(GuiGraphics g, String id, int x, int y, int w, int h, boolean two) {
+		SlotDto slot = RoomEditor.slot(id);
+		if (slot == null) {
+			return;
+		}
+		boolean selected = id.equals(RoomEditor.selectedSlot);
+		boolean hovered = ui.hovered(x, y, w, h);
+		TrahisonUi.row(g, x, y, w, h, hovered, selected);
+		g.fill(x + 7, y + 4, x + 17, y + 14, RoomWorld.kindColor(slot.kind));
+		g.fill(x + 9, y + 6, x + 15, y + 12, TrahisonPalette.PANEL);
+		String hint = RoomEditor.hints.getOrDefault(id, "");
+		Component pillText = RoomUi.kind(slot.kind);
+		int pillW = TrahisonUi.width(pillText) + 10;
+		int idW = TrahisonUi.width(Component.literal(id));
+		if (two) {
+			TrahisonUi.textEllipsis(g, Component.literal(id), x + 22, y + 5, w - 22 - pillW - 8, TrahisonPalette.TEXT);
+			TrahisonUi.pill(g, x + w - pillW - 4, y + 3, pillText, TrahisonPalette.PANEL_RAISED, TrahisonPalette.TEXT_SECONDARY);
+			TrahisonUi.textEllipsis(g, Component.literal(hint), x + 22, y + 18, w - 26, TrahisonPalette.TEXT_MUTED);
+		} else {
+			TrahisonUi.textEllipsis(g, Component.literal(id), x + 22, y + 5, Math.min(idW, w - 30), TrahisonPalette.TEXT);
+			int hintX = x + 22 + idW + 6;
+			if (w - (hintX - x) - 4 > 20) {
+				TrahisonUi.textEllipsis(g, Component.literal(hint), hintX, y + 5, w - (hintX - x) - 4, TrahisonPalette.TEXT_MUTED);
+			}
+		}
+		if (hovered && !hint.isEmpty()) {
+			ui.tooltip = Component.literal(id + " : " + hint);
+		}
+		ui.zone(x, y, w, h, button -> {
+			RoomEditor.selectedSlot = id;
+			long now = System.currentTimeMillis();
+			if (id.equals(lastRowId) && now - lastRowClick < 400) {
+				openForm();
+			}
+			lastRowId = id;
+			lastRowClick = now;
+		});
 	}
 
 	// ---------------------------------------------------------------- slot list
@@ -215,6 +301,10 @@ public final class RoomScreen extends Screen {
 		TrahisonUi.row(g, x, y, w, ROW_H, hovered, selected);
 		g.fill(x + 7, y + 4, x + 17, y + 14, TrahisonPalette.BORDER);
 		g.fill(x + 8, y + 5, x + 16, y + 13, RoomWorld.kindColor(slot.kind));
+		if (RoomEditor.unplaced.contains(slot.id)) {
+			// Only proposed by a template: a hollow swatch.
+			g.fill(x + 10, y + 7, x + 14, y + 11, TrahisonPalette.PANEL);
+		}
 		Component pillText = RoomUi.kind(slot.kind);
 		int pillW = TrahisonUi.width(pillText) + 10;
 		TrahisonUi.textEllipsis(g, Component.literal(slot.id), x + 22, y + 5, w - 22 - pillW - 8, TrahisonPalette.TEXT);
@@ -351,6 +441,17 @@ public final class RoomScreen extends Screen {
 		TrahisonUi.textEllipsis(g, users.isEmpty() ? t("none") : Component.literal(String.join(", ", users)), cxl, y + 5, cw2,
 				users.isEmpty() ? TrahisonPalette.TEXT_MUTED : TrahisonPalette.TEXT_SECONDARY);
 		y += FORM_PITCH;
+		String hint = RoomEditor.hints.get(slot.id);
+		if (hint != null) {
+			label(g, x, y, "hint");
+			Component text = Component.literal(hint);
+			MenuUi.paragraph(g, text, cxl, y + 5, cw2, TrahisonPalette.TEXT_SECONDARY);
+			y += Math.max(FORM_PITCH, MenuUi.paragraphHeight(text, cw2) + 10);
+		}
+		if (RoomEditor.unplaced.contains(slot.id)) {
+			ui.button(g, x, y, w, ROW_H, t("todo.keep"), ButtonKind.PRIMARY, t("todo.keep.tip"), () -> RoomEditor.keepPosition(slot.id));
+			y += FORM_PITCH;
+		}
 		return y + 4;
 	}
 
@@ -525,6 +626,7 @@ public final class RoomScreen extends Screen {
 		int delta = (int) (-scrollY * ROW_PITCH);
 		switch (view) {
 			case SLOTS -> listScroll += delta;
+			case TODO -> todoScroll += delta;
 			case FORM -> formScroll += delta;
 			case ERRORS -> errorScroll += delta;
 			default -> {

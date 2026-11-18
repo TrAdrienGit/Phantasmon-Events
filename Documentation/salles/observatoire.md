@@ -58,7 +58,9 @@ carte. Voir D223.
 
 ## Secret de la salle
 
-Cachette du temps libre : dans le pied du grand télescope, centre. Emplacement `cachette`.
+Cachette du temps libre : dans le pied du grand télescope, centre.
+
+Candidats à la cachette (D228, genre `secret`, la graine en tire **un seul** par partie) : `cachette_1`, `cachette_2`. Ils sont déjà dans le gabarit (`room new <id> observatoire`) ; la fiche en propose 2 ; 2 ou 3 candidats au total conviennent.
 
 ## Fragment de lore
 
@@ -82,7 +84,8 @@ Cachette du temps libre : dans le pied du grand télescope, centre. Emplacement 
 | `pad_plafond` | `terminal` | mur nord | 1 × 1 × 1 | rôle de `constellation` (à confirmer au codage) |
 | `pad_serrure` | `terminal` | mur est | 1 × 1 × 1 | rôle `terminal` de `serrure` |
 | `lunette_a`, `lunette_b` | `terminal` | balcons nord-ouest et sud-est | 1 × 1 × 1 | rôles de `lunettes` (à confirmer) |
-| `cachette` | `secret` | pied du télescope | 1 × 1 × 1 | cachette |
+| `cachette_1` | `secret` | Dans le pied du grand télescope, au centre | 1 × 1 × 1 | candidat de cachette (D228) |
+| `cachette_2` | `secret` | Sous le fauteuil de l'observateur, côté est | 1 × 1 × 1 | candidat de cachette (D228) |
 
 - **Ids des étapes** : `carte`, `radio`, `astrolabe`, `constellation`, `serrure`, `lunettes`.
 - **À laisser vide** : air devant chaque emplacement ; rien dans les écrans.

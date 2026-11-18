@@ -60,7 +60,9 @@ tourne : à confirmer au codage de `safe_dial` (voir D222 et D223).
 
 ## Secret de la salle
 
-Cachette du temps libre : derrière un miroir voilé, mur est. Emplacement `cachette`.
+Cachette du temps libre : derrière un miroir voilé, mur est.
+
+Candidats à la cachette (D228, genre `secret`, la graine en tire **un seul** par partie) : `cachette_1`, `cachette_2`, `cachette_3`. Ils sont déjà dans le gabarit (`room new <id> bal`) ; la fiche en propose 3 ; 2 ou 3 candidats au total conviennent.
 
 ## Fragment de lore
 
@@ -86,7 +88,9 @@ Cachette du temps libre : derrière un miroir voilé, mur est. Emplacement `cach
 | `pad_pendule` | `terminal` | mur est | 1 × 1 × 1 | rôle `terminal` de `miroirs` |
 | `mur_miroir` | `wall_clue` | grand miroir, est | 2 × 2 × 1 | `symbols` |
 | `chaine_1` à `chaine_3` | `lever` | trois coins | 1 × 1 × 1 | `lever_1..3` de `lustres` |
-| `cachette` | `secret` | derrière un miroir voilé | 1 × 1 × 1 | cachette |
+| `cachette_1` | `secret` | Derrière un miroir voilé du mur est | 1 × 1 × 1 | candidat de cachette (D228) |
+| `cachette_2` | `secret` | Dans le piano, côté sud | 1 × 1 × 1 | candidat de cachette (D228) |
+| `cachette_3` | `secret` | Sous une latte du parquet, près de la boîte à musique | 1 × 1 × 1 | candidat de cachette (D228) |
 
 - **Ids des étapes** : `lumiere`, `portraits`, `vestiaire`, `musique`, `miroirs`, `lustres`.
 - **À laisser vide** : **toute la boîte de `zone_sombre`** (rien de construit dedans : le jeu y pose la pénombre) ; air devant chaque emplacement.

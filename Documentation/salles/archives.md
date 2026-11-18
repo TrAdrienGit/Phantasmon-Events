@@ -66,8 +66,9 @@ Repère : la sortie est au nord, l'entrée au sud, l'ouest est à gauche en entr
 
 ## Secret de la salle
 
-Cachette du temps libre : un livre vide, en haut du rayonnage le plus à l'est, derrière les fiches ramassées. Emplacement
-`cachette` (genre `secret`). D228 : une salle déclare plusieurs candidats (genre `secret`) et la graine en active un par partie ; cette salle en aura au moins deux, à ajouter à l'écriture de la salle.
+Cachette du temps libre : un livre vide, en haut du rayonnage le plus à l'est, derrière les fiches ramassées.
+
+Candidats à la cachette (D228, genre `secret`, la graine en tire **un seul** par partie) : `cachette_1`, `cachette_2`, `cachette_3`. Ils sont déjà dans le gabarit (`room new <id> archives`) ; la fiche en propose 3 ; 2 ou 3 candidats au total conviennent.
 
 ## Fragment de lore
 
@@ -97,7 +98,9 @@ Gabarit 48 × 48 × 24, sortie au nord (z = 0), entrée au sud. Positions : zone
 | `mur_cadran` | `wall_clue` | dos d'une affiche, centre | 2 × 2 × 1 | `code` de `cadran` |
 | `pad_rayons` | `terminal` | mur nord, devant le mobile | 1 × 1 × 1 | rôle `terminal` de `rayons` (à confirmer au codage) |
 | `levier_1` à `levier_3` | `lever` | trois coins de la salle | 1 × 1 × 1 | `lever_1..3` de `porte` |
-| `cachette` | `secret` | haut du rayonnage est | 1 × 1 × 1 | cachette (« En faire la cachette ») |
+| `cachette_1` | `secret` | Haut du rayonnage le plus à l'est : un livre vide | 1 × 1 × 1 | candidat de cachette (D228) |
+| `cachette_2` | `secret` | Tiroir du bureau de l'archiviste | 1 × 1 × 1 | candidat de cachette (D228) |
+| `cachette_3` | `secret` | Sous le mobile de rayonnage, au nord | 1 × 1 × 1 | candidat de cachette (D228) |
 
 - **Ids des étapes** : `fiches`, `casier`, `index`, `cadran`, `rayons`, `porte`.
 - **À laisser vide** : l'air devant chaque emplacement (au moins 1 bloc), les 4 emplacements `pickup` (une case vide n'affiche rien), la hauteur d'un bloc au-dessus de `pad_*`. Aucun vrai coffre, levier ni bouton.

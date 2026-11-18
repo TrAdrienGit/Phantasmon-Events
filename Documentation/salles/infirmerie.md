@@ -60,7 +60,9 @@ lâcher, il faut se parler pour essayer sans se couper.
 
 ## Secret de la salle
 
-Cachette du temps libre : un tiroir sous le moniteur cardiaque. Emplacement `cachette`.
+Cachette du temps libre : un tiroir sous le moniteur cardiaque.
+
+Candidats à la cachette (D228, genre `secret`, la graine en tire **un seul** par partie) : `cachette_1`, `cachette_2`. Ils sont déjà dans le gabarit (`room new <id> infirmerie`) ; la fiche en propose 2 ; 2 ou 3 candidats au total conviennent.
 
 ## Fragment de lore
 
@@ -83,7 +85,8 @@ Cachette du temps libre : un tiroir sous le moniteur cardiaque. Emplacement `cac
 | `pad_pc` | `terminal` | angle sud-est | 1 × 1 × 1 | rôle `terminal` de `pc_soins` |
 | `pad_pharmacie` | `terminal` | mur nord-est, près de l'armoire | 1 × 1 × 1 | rôle `terminal` de `pharmacie` |
 | `bip_1` à `bip_3` | `lever` | trois coins | 1 × 1 × 1 | `lever_1..3` de `bips` |
-| `cachette` | `secret` | sous le moniteur | 1 × 1 × 1 | cachette |
+| `cachette_1` | `secret` | Tiroir sous le moniteur cardiaque | 1 × 1 × 1 | candidat de cachette (D228) |
+| `cachette_2` | `secret` | Derrière le rideau d'un lit de l'ouest | 1 × 1 × 1 | candidat de cachette (D228) |
 
 - **Ids des étapes** : `dossier`, `cris`, `perfusion`, `pc_soins`, `pharmacie`, `bips`.
 - **À laisser vide** : air devant chaque emplacement ; rien dans les zones d'écran.
