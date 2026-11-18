@@ -8,7 +8,8 @@ import java.util.UUID;
  * (only admins see the others), {@code teamSpecies} for admins only. {@code hub}: the hub it belongs to (Adrien
  * 2026-11-03), then {@code x, y, z, yaw} are hub coordinates and it stands in each of that hub's zones; null: a place
  * in this world. {@code aiDebug}: its AI explains each decision in the chat of the player battling it (admins only).
+ * {@code intro}, {@code ambiance}: the Showtime intro and ambiance its battles impose (2026-11-18); null: the player's.
  */
 public record EventNpcDto(UUID uuid, String event, boolean open, String name, String skin, double x, double y, double z,
-		float yaw, String ai, String formatId, int teamSize, List<String> teamSpecies, String hub, boolean aiDebug) {
+		float yaw, String ai, String formatId, int teamSize, List<String> teamSpecies, String hub, boolean aiDebug, String intro, String ambiance) {
 }

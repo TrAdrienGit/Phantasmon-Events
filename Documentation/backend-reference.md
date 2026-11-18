@@ -78,7 +78,7 @@ défient que si l'événement est ouvert, les admins toujours (pour le régler).
   l'événement est créé (fermé) s'il n'existe pas. `400 ERROR_EVENT_NAME` (minuscules, chiffres, `_`, 32 au plus),
   `ERROR_NPC_NAME`.
 - `POST /admin/events/npcs/{uuid}` : chaque champ facultatif — `name`, `skin` (pseudo Minecraft, vide : aucun,
-  `ERROR_NPC_SKIN`), `event`, `ai` (`random`, `easy`, `normal`, `hard`, `veryhard`, `expert`, `reborn`, `reborn_tweak`, `ERROR_NPC_AI`), `ai_debug` (bool : l'IA explique chaque décision dans le chat du joueur), `format_id`, et
+  `ERROR_NPC_SKIN`), `event`, `ai` (`random`, `easy`, `normal`, `hard`, `veryhard`, `expert`, `reborn`, `reborn_tweak`, `ERROR_NPC_AI`), `ai_debug` (bool : l'IA explique chaque décision dans le chat du joueur), `format_id`, `intro` et `ambiance` (intro et ambiance de Cobblemon Battle Showtime imposées à ses combats, le PNJ en vedette de l'intro ; `""` ou null : au choix du joueur ; `ERROR_NPC_INTRO`, `ERROR_NPC_AMBIANCE`), et
   la place (`server_fingerprint`, `dimension`, `x`, `y`, `z`, `yaw` ensemble, et `hub` : le nom du hub si la place est
   donnée dans ses coordonnées, absent ou null sinon). `404 ERROR_NPC_NOT_FOUND`, `ERROR_HUB_NOT_FOUND`. `POST
   /admin/events/npcs` accepte aussi `hub`.
@@ -166,6 +166,7 @@ en V18-V19 et V22-V24), la ligne de base `0` puis les `IF NOT EXISTS` ne changen
 | 2 | `V2__event_npcs.sql` | Ancien V22 à V24 : `event_groups`, `event_npcs` (§5.3) |
 | 9 | `V9__trahison_step_times.sql` | `trahison_step_times` (2026-11-16) : le temps mesuré de chaque étape réellement résolue (T3.6, §5.8) |
 | 10 | `V10__trahison_map_notes.sql` | `trahison_map_notes` (2026-11-17) : traits et bloc-notes de la carte, une ligne par partie et par compte (T11.4, §5.9) |
+| 11 | `V11__event_npc_intro_ambiance.sql` | `event_npcs.intro`, `event_npcs.ambiance` (2026-11-18) : intro et ambiance Showtime imposées aux combats du PNJ |
 | 8 | `V8__trahison_rooms.sql` | `trahison_rooms` (2026-11-16) : la banque de salles du jeu de trahison, une ligne par salle (§5.7) |
 | 7 | `V7__trahison_layouts.sql` | `trahison_layouts` (2026-11-16) : les versions du plan fixe du jeu de trahison, par hub (§5.6) |
 | 6 | `V6__trahison_games.sql` | `trahison_games` (2026-11-16) : une ligne par partie du jeu de trahison (§5.5) |
@@ -211,6 +212,8 @@ en V18-V19 et V22-V24), la ligne de base `0` puis les `IF NOT EXISTS` ne changen
 | `team` | JSONB | NOT NULL, défaut `[]` | Copie de Pokémon (même forme que les équipes d'un combat), 6 au plus |
 | `ai` | VARCHAR(16) | NOT NULL, défaut `normal` | `random`, `easy`, `normal`, `hard`, `veryhard`, `expert`, `reborn`, `reborn_tweak` (contrôle applicatif) |
 | `ai_debug` | BOOLEAN | NOT NULL, défaut `false` (V24) | Son IA explique chaque décision dans le chat du joueur qui l'affronte |
+| `intro` | VARCHAR(130) | null (V11 du module) | Intro Showtime imposée à ses combats, le PNJ en vedette ; null : au choix du joueur |
+| `ambiance` | VARCHAR(130) | null (V11 du module) | Ambiance Showtime imposée à ses combats ; null : au choix du joueur |
 | `format_id` | VARCHAR(64) | NOT NULL, défaut `free` | Format de combat (inconnu : Libre) |
 | `created_by` | UUID | NOT NULL | L'admin (pas de FK) |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | |

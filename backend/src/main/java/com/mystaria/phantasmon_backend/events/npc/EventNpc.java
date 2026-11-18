@@ -66,6 +66,14 @@ public class EventNpc {
 	@Column(name = "ai_debug", nullable = false)
 	private boolean aiDebug;
 
+	/** The Showtime intro its battles impose, the NPC starring (V11); null: the player's pick. */
+	@Column
+	private String intro;
+
+	/** The Showtime ambiance its battles impose (V11); null: the player's pick. */
+	@Column
+	private String ambiance;
+
 	@Column(name = "format_id", nullable = false)
 	private String formatId;
 

@@ -144,6 +144,13 @@ public class EventNpcService implements NpcOpponentProvider {
 		if (body.containsKey("format_id")) {
 			npc.setFormatId(required(body, "format_id"));
 		}
+		// Showtime's intro and ambiance (2026-11-18): "" or null lets the player pick.
+		if (body.containsKey("intro")) {
+			npc.setIntro(showtimeId(body.get("intro"), INTRO, "ERROR_NPC_INTRO"));
+		}
+		if (body.containsKey("ambiance")) {
+			npc.setAmbiance(showtimeId(body.get("ambiance"), AMBIANCE, "ERROR_NPC_AMBIANCE"));
+		}
 		if (body.containsKey("event")) {
 			String event = text(body, "event", EVENT, "ERROR_EVENT_NAME");
 			events.findById(event).orElseGet(() -> events.save(new EventGroup(event, clock.instant())));
@@ -214,7 +221,22 @@ public class EventNpcService implements NpcOpponentProvider {
 			return null;
 		}
 		return new NpcOpponent(npc.getUuid(), npc.getName(), npc.getSkin(), npc.getAi(), npc.isAiDebug(),
-				npc.getFormatId(), List.copyOf(npc.getTeam()));
+				npc.getFormatId(), List.copyOf(npc.getTeam()), npc.getIntro(), npc.getAmbiance());
+	}
+
+	/** A Showtime intro name ({@code PBR_ENTRANCE}) or a mod's namespaced one, as the core's lobby takes them. */
+	private static final java.util.regex.Pattern INTRO = java.util.regex.Pattern.compile("[A-Z0-9_]{1,40}|[a-z0-9_.-]{1,64}:[a-z0-9_./-]{1,64}");
+	private static final java.util.regex.Pattern AMBIANCE = java.util.regex.Pattern.compile("[a-z0-9_.-]{1,64}:[a-z0-9_./-]{1,64}");
+
+	private static String showtimeId(Object value, java.util.regex.Pattern pattern, String error) {
+		if (value == null || value.toString().isBlank()) {
+			return null;
+		}
+		String id = value.toString().strip();
+		if (!pattern.matcher(id).matches()) {
+			throw new ApiException(HttpStatus.BAD_REQUEST, error, Map.of());
+		}
+		return id;
 	}
 
 	/** {@code hub} (a hub's name) when the place is given in that hub's coordinates; absent or null: a world place. */
@@ -252,6 +274,8 @@ public class EventNpcService implements NpcOpponentProvider {
 		view.put("ai", npc.getAi());
 		view.put("ai_debug", npc.isAiDebug());
 		view.put("format_id", npc.getFormatId());
+		view.put("intro", npc.getIntro());
+		view.put("ambiance", npc.getAmbiance());
 		List<String> species = new ArrayList<>();
 		for (PokemonResponse pokemon : npc.getTeam()) {
 			species.add(pokemon.species());
