@@ -50,8 +50,10 @@ public final class Rooms {
 	private static void onRoom(Map<String, Object> data) {
 		RoomView room = RoomView.parse(data);
 		String hub = Link.hub();
-		if (room == null || hub != null && !room.hub().isEmpty() && !room.hub().equals(hub)) {
-			return;
+		boolean trial = room != null && com.mystaria.events.trahison.edit.RoomTry.owns(room.hub());
+		if (trial ? !com.mystaria.events.trahison.edit.RoomTry.active()
+				: room == null || hub != null && !room.hub().isEmpty() && !room.hub().equals(hub)) {
+			return; // a trial room only counts while the editor's try runs
 		}
 		boolean known = ROOMS.containsKey(room.key());
 		ROOMS.put(room.key(), room);
@@ -94,6 +96,9 @@ public final class Rooms {
 
 	private static void onView() {
 		View v = GameView.current();
+		if (com.mystaria.events.trahison.edit.RoomTry.active()) {
+			return; // the editor's try has no game: its room stays whatever the view says
+		}
 		if (v == null) {
 			clear();
 			return;
@@ -133,6 +138,9 @@ public final class Rooms {
 
 	/** The index of the local player in the game when he plays (alive, not a spectator), else -1. */
 	public static int ownIndex() {
+		if (com.mystaria.events.trahison.edit.RoomTry.active()) {
+			return 0; // the editor's try: the one player of the trial room
+		}
 		View v = GameView.current();
 		if (v == null || !v.hasGame() || v.viewer().kind() != ViewerKind.PLAYER || v.viewer().index() == null) {
 			return -1;
@@ -197,6 +205,9 @@ public final class Rooms {
 
 	/** Whether the local player is a living player and the stage lets him act in {@code room}: his own in ROOMS, any in FREE_TIME. */
 	public static boolean canAct(RoomView room) {
+		if (room != null && com.mystaria.events.trahison.edit.RoomTry.owns(room.hub())) {
+			return com.mystaria.events.trahison.edit.RoomTry.active() && !room.finished();
+		}
 		View v = GameView.current();
 		int own = ownIndex();
 		if (room == null || v == null || own < 0) {

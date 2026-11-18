@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.SplittableRandom;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -180,6 +181,116 @@ public class RoomService {
 		}
 	}
 
+	// ---------------------------------------------------------------- admin trial (room editor)
+
+	/** Hub name prefix of the trial rooms: never the name of a mirror hub, so a trial never meets a game. */
+	public static final String TRIAL_PREFIX = "try:";
+
+	/** The hub name of the admin's trial room. */
+	public static String trialHub(UUID admin) {
+		return TRIAL_PREFIX + admin;
+	}
+
+	/** The admin a trial hub belongs to, or null when {@code hub} is not a trial hub. */
+	public static UUID trialAdmin(String hub) {
+		if (hub == null || !hub.startsWith(TRIAL_PREFIX)) {
+			return null;
+		}
+		try {
+			return UUID.fromString(hub.substring(TRIAL_PREFIX.length()));
+		} catch (IllegalArgumentException ex) {
+			return null;
+		}
+	}
+
+	/**
+	 * Starts (or replaces) the admin's trial of a room: one player (index 0), group 0 of round 0 in the admin's own hub, no
+	 * place, no telemetry; the cooperative mechanisms accept that single player. Held in memory only, never part of a game.
+	 */
+	public RoomInstance startTrial(UUID admin, RoomDefinition definition, long seed) {
+		String hub = trialHub(admin);
+		RoomInstance room = build(hub, 0, 0, List.of(0), definition, seed, true);
+		rooms.put(key(hub, 0, 0), room);
+		synchronized (room) {
+			notifyRoom(room);
+		}
+		return room;
+	}
+
+	/** The admin's trial room, if one is running. */
+	public Optional<RoomInstance> findTrial(UUID admin) {
+		return find(trialHub(admin), 0, 0);
+	}
+
+	/** Back to a fresh state with another seed (new solutions), the same room. */
+	public RoomInstance resetTrial(UUID admin, long newSeed) {
+		RoomInstance old = requireTrial(admin);
+		RoomInstance room;
+		synchronized (old) {
+			room = build(old.hub, 0, 0, old.members, old.definition, newSeed, true);
+			rooms.put(key(old.hub, 0, 0), room);
+		}
+		synchronized (room) {
+			for (StepRuntime s : room.steps.values()) {
+				notifyPuzzle(room, new PuzzleUpdate(s.step.id(), "reset", null, List.of(), null));
+			}
+			notifyRoom(room);
+		}
+		return room;
+	}
+
+	/**
+	 * Solves the step(s) open right now (not the whole room) like a real solution would: the next steps open, the exit opens
+	 * when it was the last. Does nothing when the room is finished.
+	 */
+	public RoomInstance skipTrial(UUID admin) {
+		RoomInstance room = requireTrial(admin);
+		synchronized (room) {
+			if (room.exitOpen) {
+				return room;
+			}
+			Instant now = clock.instant();
+			for (StepRuntime s : room.steps.values()) {
+				if (s.open && !s.solved) {
+					s.solved = true;
+					s.solvedAt = now;
+					notifyPuzzle(room, new PuzzleUpdate(s.step.id(), "solved", null, List.of(), null));
+				}
+			}
+			room.lastProgressAt = now;
+			openReady(room, now);
+			if (room.steps.values().stream().allMatch(x -> x.solved)) {
+				room.exitOpen = true;
+				room.finishedAt = now;
+			}
+			notifyRoom(room);
+			return room;
+		}
+	}
+
+	/** An action of the admin in his trial room (player 0); refused ones raise a {@link RoomException}. */
+	public ActionResult applyTrial(UUID admin, RoomAction action) {
+		return apply(requireTrial(admin), 0, 0, action, false);
+	}
+
+	/** The view of the admin's trial room. */
+	public ObjectNode trialView(UUID admin) {
+		return roomView(requireTrial(admin), ViewerKind.PLAYER);
+	}
+
+	/** Ends the admin's trial; true when there was one. Nobody is told (the caller answers). */
+	public boolean stopTrial(UUID admin) {
+		return rooms.remove(key(trialHub(admin), 0, 0)) != null;
+	}
+
+	private RoomInstance requireTrial(UUID admin) {
+		RoomInstance room = rooms.get(key(trialHub(admin), 0, 0));
+		if (room == null) {
+			throw new RoomException(RoomException.NO_ROOM, "no trial room running");
+		}
+		return room;
+	}
+
 	// ---------------------------------------------------------------- persistence
 
 	/** The JSON form of a room (everything needed to resume it, solution included: it never leaves the backend). */
@@ -243,13 +354,20 @@ public class RoomService {
 	}
 
 	private RoomInstance build(String hub, int round, int group, Collection<Integer> members, RoomDefinition definition, long seed) {
+		return build(hub, round, group, members, definition, seed, false);
+	}
+
+	private RoomInstance build(String hub, int round, int group, Collection<Integer> members, RoomDefinition definition, long seed,
+			boolean trial) {
 		Instant now = clock.instant();
 		RoomInstance room = new RoomInstance(hub, round, group, definition, seed, List.copyOf(members));
+		room.trial = trial;
 		room.partners.addAll(com.mystaria.phantasmon_backend.events.trahison.pokemon.Partners.draw(seed, room.members, requiredPowers(definition)));
 		for (Step step : definition.steps()) {
 			Mechanism m = registry.get(step.mechanism());
 			MechanismState generated = m.generate(rngFor(seed, step.id()), step.params());
-			room.steps.put(step.id(), new StepRuntime(step, m, m.bind(generated, room.partners)));
+			MechanismState bound = m.bind(generated, room.partners);
+			room.steps.put(step.id(), new StepRuntime(step, m, trial ? m.solo(bound) : bound));
 		}
 		room.startedAt = now;
 		room.lastProgressAt = now;
@@ -693,7 +811,7 @@ public class RoomService {
 	/** Sends the measure of a step just solved to the telemetry, when it was a real play (not a free-time replay). */
 	private void measure(RoomInstance room, StepRuntime s) {
 		StepTimeSink out = sink;
-		if (out == null || room.replays > 0 || s.openedAt == null) {
+		if (out == null || room.trial || room.replays > 0 || s.openedAt == null) {
 			return;
 		}
 		try {

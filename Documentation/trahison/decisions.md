@@ -162,3 +162,77 @@ Le lien est implicite : la N-ième paire d'une manche mène à la N-ième place 
 - [ ] Ajouter un champ `place` à chaque porte de couleur
 
 Ta réponse :
+
+## D280 : ce que l'essai joue
+
+`room try` démarre le backend sur la salle **enregistrée** de l'éditeur (la version du backend, pas le brouillon du client) ; l'éditeur refuse donc si la salle a des changements non enregistrés.
+
+- [x] La salle enregistrée, refus s'il y a des changements non enregistrés *(par défaut)*
+- [ ] Envoyer le brouillon du client sans l'enregistrer (le backend n'a pas d'entrée pour cela aujourd'hui)
+
+Ta réponse :
+
+## D281 : modifier pendant l'essai
+
+- [x] Toute modification de l'éditeur (ou `room off`, `room load`, `room new`) arrête l'essai *(par défaut)*
+- [ ] L'édition est suspendue pendant l'essai (panneau et sélection bloqués jusqu'à `room try stop`)
+
+Ta réponse :
+
+## D282 : coopération jouée seule
+
+- [x] Un drapeau de l'instance d'essai, que `Mechanism.solo` traduit (`three_levers`, `twin_screens`) ; jamais présent dans une partie *(par défaut)*
+- [ ] Garder le paramètre `solo` des étapes (le rend modifiable dans la chaîne, au risque de l'oublier dans une vraie salle)
+
+Ta réponse :
+
+## D283 : graine de l'essai
+
+- [x] Au hasard à chaque `try` et `try reset` : les solutions changent, comme en partie *(par défaut)*
+- [ ] Une graine fixe par salle, pour reproduire une erreur
+
+Ta réponse :
+
+## D284 : `room try skip`
+
+- [x] Résout les étapes ouvertes à cet instant, la chaîne continue *(par défaut)*
+- [ ] Résout toute la salle d'un coup (comme `solve_room` du maître du jeu)
+
+Ta réponse :
+
+## D285 : aides pendant l'essai
+
+- [x] Les aides automatiques (10, 18, 25 min sans progrès) arrivent comme en partie ; pas de commande pour en demander une *(par défaut)*
+- [ ] Ajouter `room try hint` qui donne l'aide suivante tout de suite
+
+Ta réponse :
+
+## D286 : où l'essai tourne
+
+- [x] Seulement hors d'un hub de partie (monde solo de construction) *(par défaut)*
+- [ ] Aussi dans un hub, avec une salle posée sur une place du plan
+
+Ta réponse :
+
+## D287 : mémoire de l'essai
+
+- [x] En mémoire seulement : arrêté à la déconnexion, ni sauvegardé ni compté comme temps d'étape *(par défaut)*
+- [ ] Garder l'essai sur le disque pour le reprendre après un redémarrage du backend
+
+Ta réponse :
+
+## D288 : pouvoirs des partenaires (`power_spot`)
+
+L'emplacement répond en essai, mais les décors du pouvoir (rocher, feuilles, barrières, voile) et le compagnon dépendent de la partie et ne sont pas dessinés.
+
+- [x] Laisser tel quel pour cette version *(par défaut)*
+- [ ] Les dessiner aussi dans l'essai (ancrer `PowerWorld` et `PartnerEntities` sur le cadre de l'éditeur)
+
+Ta réponse :
+
+## D289 : contenu du panneau d'essai
+
+- [x] Id de la salle, étape(s) en cours avec leur mécanisme, « sortie ouverte » à la fin, rappel de `room try stop` *(par défaut)*
+- [ ] Ajouter le chrono de l'essai et le nombre d'aides données
+
+Ta réponse :

@@ -28,7 +28,7 @@ final class RoomHud {
 
 	private static void render(GuiGraphics g) {
 		Minecraft mc = Minecraft.getInstance();
-		if (!RoomEditor.isActive() || mc.screen != null || !TrahisonUi.hudVisible()) {
+		if (!RoomEditor.isActive() || RoomTry.active() || mc.screen != null || !TrahisonUi.hudVisible()) {
 			return;
 		}
 		List<String> todo = RoomEditor.todo();

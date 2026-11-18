@@ -187,7 +187,9 @@ public final class PuzzleScreens {
 
 	private static void onPuzzle(Map<String, Object> data) {
 		Msg m = parse(data);
-		if (m == null || (group >= 0 && m.group() != group && !freeTime) || (!hub.isEmpty() && !m.hub().isEmpty() && !hub.equals(m.hub()))) {
+		boolean trial = m != null && com.mystaria.events.trahison.edit.RoomTry.owns(m.hub());
+		if (trial ? !com.mystaria.events.trahison.edit.RoomTry.active()
+				: m == null || (group >= 0 && m.group() != group && !freeTime) || (!hub.isEmpty() && !m.hub().isEmpty() && !hub.equals(m.hub()))) {
 			return;
 		}
 		STATES.put(key(m.hub(), m.round(), m.group(), m.step()), m);
@@ -212,6 +214,12 @@ public final class PuzzleScreens {
 				mc.setScreen(screen);
 			}
 		}
+	}
+
+	/** Forgets what the editor's try told (its states and stamps); the try ended. */
+	public static void clearTrial() {
+		STATES.keySet().removeIf(k -> k.startsWith(com.mystaria.events.trahison.edit.RoomTry.HUB_PREFIX));
+		STAMPS.keySet().removeIf(k -> k.startsWith(com.mystaria.events.trahison.edit.RoomTry.HUB_PREFIX));
 	}
 
 	/** The latest state of a step, or null: lets a screen opened later start from it. */

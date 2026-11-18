@@ -75,9 +75,14 @@ public class TrahisonWsHandler implements WsMessageHandler {
 	private final Broadcaster broadcaster;
 	private volatile HubGate hubGate;
 	private final MapNotesService mapNotes;
+	private final RoomService rooms;
+	private final com.mystaria.phantasmon_backend.events.trahison.room.RoomCatalog catalog;
 
 	public TrahisonWsHandler(SessionRegistry sessionRegistry, GameService games, AdminService admins, PlayerService players,
-			HubGate hubGate, RoomService rooms, MapNotesService mapNotes) {
+			HubGate hubGate, RoomService rooms, MapNotesService mapNotes,
+			com.mystaria.phantasmon_backend.events.trahison.room.RoomCatalog catalog) {
+		this.rooms = rooms;
+		this.catalog = catalog;
 		this.sessionRegistry = sessionRegistry;
 		this.games = games;
 		this.admins = admins;
@@ -131,6 +136,7 @@ public class TrahisonWsHandler implements WsMessageHandler {
 	@Override
 	public void onDisconnect(UUID playerUuid) {
 		broadcaster.forget(playerUuid);
+		rooms.stopTrial(playerUuid); // an admin's room try never outlives his connection
 		Game g = games.findByPlayer(playerUuid);
 		if (g != null) {
 			games.setConnected(g.hub, playerUuid, false);
@@ -196,12 +202,47 @@ public class TrahisonWsHandler implements WsMessageHandler {
 			case "foresee" -> games.foresee(hubOf(who, in, false), who, text(in, "cabin", true));
 			case "bet" -> games.bet(hubOf(who, in, false), who, parseVote(in.get("vote")));
 			case "debug_solve" -> games.debugSolve(hubOf(who, in, false), who);
+			case "try_start", "try_reset", "try_skip", "try_stop" -> trial(who, action, in);
 			case "use_slot", "puzzle_input", "pick_up", "give_item", "use_item", "combine", "replay" -> {
 				ObjectNode data = MAPPER.valueToTree(in);
 				data.put("action", action);
+				if (Boolean.TRUE.equals(in.get("try"))) { // an admin playing the room he tries in the editor: no game
+					requireAdmin(who);
+					rooms.applyTrial(who, RoomAction.parse(data));
+					return;
+				}
 				games.roomAction(hubOf(who, in, false), who, RoomAction.parse(data), RoomAction.targetGroup(data), RoomAction.targetRound(data));
 			}
 			default -> throw new TrahisonException(TrahisonException.UNKNOWN_ACTION, String.valueOf(action));
+		}
+	}
+
+	private void requireAdmin(UUID who) {
+		if (!admins.isAdmin(who)) {
+			throw new TrahisonException(TrahisonException.ADMIN_REQUIRED, "only admins try a room");
+		}
+	}
+
+	/**
+	 * The room editor's try (admins only, nothing to do with a game): {@code try_start {room, seed?}} starts the saved room
+	 * {@code room}, {@code try_reset {seed?}} draws it again, {@code try_skip} solves the open step(s), {@code try_stop} ends it.
+	 * The answers are the room views ({@code EventsTrahisonRoom}, {@code EventsTrahisonPuzzle}) sent to this admin only.
+	 */
+	private void trial(UUID who, String action, Map<String, Object> in) {
+		requireAdmin(who);
+		long seed = in.get("seed") instanceof Number n ? n.longValue() : System.nanoTime();
+		switch (action) {
+			case "try_start" -> {
+				if (!(in.get("room") instanceof String id) || !RoomValidator.validId(id)) {
+					throw new TrahisonException(TrahisonException.BAD_ARGUMENT, "room required (a room id)");
+				}
+				var definition = catalog.find(id).orElseThrow(
+					() -> new TrahisonException(com.mystaria.phantasmon_backend.events.trahison.room.RoomException.NO_ROOM, "room " + id + " is not saved"));
+				rooms.startTrial(who, definition, seed);
+			}
+			case "try_reset" -> rooms.resetTrial(who, seed);
+			case "try_skip" -> rooms.skipTrial(who);
+			default -> rooms.stopTrial(who); // nothing is sent back: the client ends its try itself
 		}
 	}
 

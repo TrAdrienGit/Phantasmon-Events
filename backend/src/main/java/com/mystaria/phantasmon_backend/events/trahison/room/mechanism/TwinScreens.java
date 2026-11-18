@@ -188,6 +188,14 @@ public class TwinScreens implements Mechanism {
 		return List.copyOf(pool.subList(0, length));
 	}
 
+	/** The editor's try (room trial): a single player takes both seats. Never set in a game. */
+	@Override
+	public MechanismState solo(MechanismState state) {
+		ObjectNode data = state.copyData();
+		data.put("solo", true);
+		return state.withData(data);
+	}
+
 	// ---------------------------------------------------------------- gestures
 
 	@Override
@@ -199,8 +207,9 @@ public class TwinScreens implements Mechanism {
 		String other = LEFT.equals(role) ? RIGHT : LEFT;
 		ObjectNode event = Json.object();
 		event.put("seat", role);
-		if (old.path("solved").asBoolean(false) || old.get("seats").get(other).asInt() == player
-				|| old.get("by").get(other).asInt() == player) {
+		boolean solo = old.path("solo").asBoolean(false); // the editor's try: one player plays both terminals
+		if (old.path("solved").asBoolean(false) || !solo && (old.get("seats").get(other).asInt() == player
+				|| old.get("by").get(other).asInt() == player)) {
 			event.put("type", "seat_refused");
 			return new InputResult(state, List.of(event), false);
 		}
@@ -238,7 +247,7 @@ public class TwinScreens implements Mechanism {
 		if (old.path("solved").asBoolean(false) || old.get("latched").get(seat).asBoolean()) {
 			return InputResult.unchanged(state);
 		}
-		if (old.get("by").get(other).asInt() == player) {
+		if (!old.path("solo").asBoolean(false) && old.get("by").get(other).asInt() == player) {
 			throw new IllegalArgumentException("another player must use this terminal");
 		}
 		boolean ok = entry.equals(list(old.get(LEFT.equals(seat) ? RIGHT_CODE : LEFT_CODE)));

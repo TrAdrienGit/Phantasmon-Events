@@ -211,6 +211,9 @@ public abstract class MiniGameScreen extends Screen {
 				message.put("round", round);
 			}
 		}
+		if (com.mystaria.events.trahison.edit.RoomTry.active()) {
+			message.put("try", true); // the editor's try: played in the admin's own trial room
+		}
 		if (!PhantasmonApi.send("EventsTrahisonAction", message)) {
 			fail();
 		}

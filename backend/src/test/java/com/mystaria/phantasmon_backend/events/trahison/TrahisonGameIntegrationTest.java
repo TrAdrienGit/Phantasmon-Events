@@ -677,6 +677,39 @@ class TrahisonGameIntegrationTest {
 		}
 	}
 
+	@Test
+	void anAdminTriesASavedRoomThroughTheHandlerAndNobodyElseSeesIt() throws Exception {
+		String roomId = "try_" + UUID.randomUUID().toString().substring(0, 8);
+		catalog.save(admin.uuid, roomId, chain(roomId));
+		try {
+			admin.act("{\"action\":\"try_start\",\"room\":\"no_such_room\"}");
+			assertThat(admin.errors()).contains("ERROR_TRAHISON_NO_ROOM");
+			a.act("{\"action\":\"try_start\",\"room\":\"" + roomId + "\"}");
+			assertThat(a.errors()).contains("ERROR_TRAHISON_ADMIN_REQUIRED");
+			a.act("{\"action\":\"use_slot\",\"slot\":\"btn\",\"try\":true}");
+			assertThat(a.errors()).contains("ERROR_TRAHISON_ADMIN_REQUIRED");
+			assertThat(rooms.findTrial(a.uuid)).isEmpty();
+			admin.act("{\"action\":\"try_start\",\"room\":\"" + roomId + "\",\"seed\":3}");
+			assertThat(admin.ofType("EventsTrahisonRoom")).hasSize(1);
+			assertThat(admin.ofType("EventsTrahisonRoom").get(0).get("room").asString()).isEqualTo(roomId);
+			admin.act("{\"action\":\"use_slot\",\"slot\":\"btn\",\"try\":true}");
+			assertThat(rooms.findTrial(admin.uuid).orElseThrow().steps.get("s1").solved).isTrue();
+			admin.act("{\"action\":\"try_skip\"}");
+			assertThat(rooms.findTrial(admin.uuid).orElseThrow().steps.get("s2").solved).isTrue();
+			admin.act("{\"action\":\"try_reset\",\"seed\":4}");
+			assertThat(rooms.findTrial(admin.uuid).orElseThrow().steps.get("s1").solved).isFalse();
+			assertThat(a.ofType("EventsTrahisonRoom")).isEmpty();
+			assertThat(rooms.rooms(hub)).isEmpty(); // no game room
+			admin.act("{\"action\":\"try_stop\"}");
+			assertThat(rooms.findTrial(admin.uuid)).isEmpty();
+			admin.act("{\"action\":\"try_start\",\"room\":\"" + roomId + "\"}");
+			handler.onDisconnect(admin.uuid); // the try never outlives the connection
+			assertThat(rooms.findTrial(admin.uuid)).isEmpty();
+		} finally {
+			catalog.delete(roomId);
+		}
+	}
+
 	/** The group of every {@code EventsTrahisonRoom} the client received. */
 	private static List<Integer> roomGroups(Client c) {
 		List<Integer> out = new ArrayList<>();

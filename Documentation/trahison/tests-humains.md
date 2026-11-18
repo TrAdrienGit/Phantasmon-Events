@@ -501,3 +501,14 @@ Guide pas à pas : [`guide-editeur-salle.md`](guide-editeur-salle.md), section �
 - Retirer la 3e place de la manche 2 : refus `DOOR_PLACE` sur la porte vert-bleu de la manche 2, qui dit « place 3 de la manche 2 ».
 - Enregistrer un plan complet avec moins de 12 cachettes, ou une zone de couloir dans la boîte d'une place : l'enregistrement passe et `warnings[]` (GET du plan) contient `FEW_SPOTS` / `PLACE_ZONE`.
 - Déclarer un étage 0..10 alors qu'une place est à y = 64 : avertissement `PLACE_FLOOR`.
+
+## Essai de salle de l'éditeur (`room try`)
+- Dans le monde solo où une salle est construite et **enregistrée** (éditeur ouvert dessus), `/phantasmon event trahison room try` : message « Essai lancé », panneau en haut à gauche « Essai en cours : <id> » avec « Étape 1/n : … ».
+- Avant d'enregistrer (ou après une retouche non enregistrée) : refus « Enregistre d'abord la salle ». Hors éditeur : « Ouvre d'abord l'éditeur ».
+- Les terminaux, leviers, documents et objets de la salle réagissent au clic, exactement là où l'éditeur les dessinait, quel que soit le sens où tu t'es tenue pour construire (refaire l'essai avec une salle tournée à l'est ou au sud).
+- Jouer la chaîne entière : mini-jeux, indices lus, ramasser et utiliser des objets, `I` ouvre le sac ; une aide automatique arrive après 10 min sans progrès ; à la dernière étape : « la sortie est ouverte » et le panneau passe au vert.
+- Une étape à trois leviers (`three_levers`) et une étape à deux postes (`twin_screens`) se jouent **seule**, sans toucher `solo` ni `hold`.
+- `room try skip` : l'étape en cours se résout, la suivante s'ouvre. `room try reset` : nouvelles solutions, retour à l'étape 1. `room try stop` : le panneau et les objets disparaissent, les emplacements fantômes de l'éditeur reviennent.
+- Modifier quoi que ce soit dans l'éditeur pendant l'essai (renommer un emplacement, ajouter une étape) : l'essai s'arrête avec un message.
+- Quitter le monde puis revenir : aucun essai ne reste ; relancer `room try` repart de zéro. Un compte non admin n'obtient pas la commande.
+- Pendant un essai, une partie en cours sur le serveur (autres joueurs) n'est ni modifiée ni signalée.

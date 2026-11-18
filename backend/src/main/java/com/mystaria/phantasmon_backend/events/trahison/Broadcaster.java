@@ -259,6 +259,11 @@ class Broadcaster implements GameListener, RoomListener {
 
 	@Override
 	public void roomChanged(RoomInstance room) {
+		UUID tester = RoomService.trialAdmin(room.hub);
+		if (tester != null) { // an admin's trial of a room (room editor): only he sees it, no game involved
+			sessions.send(tester, WsMessage.of(ROOM, data(RoomViews.room(room, ViewerKind.PLAYER))));
+			return;
+		}
 		Audience audience = audiences.get(room.hub);
 		if (audience == null) {
 			return;
@@ -274,6 +279,11 @@ class Broadcaster implements GameListener, RoomListener {
 
 	@Override
 	public void puzzleChanged(RoomInstance room, PuzzleUpdate update) {
+		UUID tester = RoomService.trialAdmin(room.hub);
+		if (tester != null) {
+			sessions.send(tester, WsMessage.of(PUZZLE, data(RoomViews.puzzle(room, update, ViewerKind.PLAYER))));
+			return;
+		}
 		Audience audience = audiences.get(room.hub);
 		if (audience == null) {
 			return;

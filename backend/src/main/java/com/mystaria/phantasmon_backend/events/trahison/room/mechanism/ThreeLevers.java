@@ -228,6 +228,14 @@ public class ThreeLevers implements Mechanism {
 		return lever.path("until").asLong(0) >= now && lever.path("until").asLong(0) > 0;
 	}
 
+	/** The editor's try (room trial): a single player engages the three levers. Never set in a game. */
+	@Override
+	public MechanismState solo(MechanismState state) {
+		ObjectNode data = state.copyData();
+		data.put("solo", true);
+		return state.withData(data);
+	}
+
 	private InputResult engage(MechanismState state, int player, int lever, long now) {
 		ObjectNode old = state.data();
 		if (old.path("solved").asBoolean(false)) {

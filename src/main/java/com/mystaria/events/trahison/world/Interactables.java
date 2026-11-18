@@ -126,15 +126,17 @@ public final class Interactables {
 		}
 		HubAnchorDto anchor = PhantasmonApi.hubs() == null ? null : PhantasmonApi.hubs().joinedAnchor();
 		View view = GameView.current();
-		boolean show = anchor != null && view != null && view.hasGame() && anchor.hub().equals(Link.hub()) && !Rooms.all().isEmpty();
+		boolean trial = com.mystaria.events.trahison.edit.RoomTry.active();
+		boolean show = trial ? !Rooms.all().isEmpty()
+				: anchor != null && view != null && view.hasGame() && anchor.hub().equals(Link.hub()) && !Rooms.all().isEmpty();
 		if (!show) {
 			if (!ITEMS.isEmpty()) {
 				clear();
 			}
 			return;
 		}
-		HubBlocks blocks = HubBlocks.of(anchor);
-		if (dirty || !blocks.equals(lastBlocks) || ++sinceSync >= REFRESH_TICKS) {
+		HubBlocks blocks = trial ? null : HubBlocks.of(anchor); // the editor's try has no hub: its slots stand on the editor's frame
+		if (dirty || blocks != null && !blocks.equals(lastBlocks) || ++sinceSync >= REFRESH_TICKS) {
 			dirty = false;
 			sinceSync = 0;
 			lastBlocks = blocks;
@@ -168,17 +170,29 @@ public final class Interactables {
 		Map<String, Item> wanted = new LinkedHashMap<>();
 		for (RoomView room : Rooms.all().values()) {
 			RoomView.Place place = room.place();
-			if (place == null) {
+			boolean trial = com.mystaria.events.trahison.edit.RoomTry.owns(room.hub());
+			if (trial ? !com.mystaria.events.trahison.edit.RoomTry.active() : place == null || blocks == null) {
 				continue;
 			}
-			int k = RoomFrame.quarterTurns(place.orientation());
+			int k = trial ? 0 : RoomFrame.quarterTurns(place.orientation());
 			for (SlotView slot : room.slots()) {
 				if (slot.shows().isEmpty() || slot.isExit() && slot.openPuzzle() == null && !slot.solvedPuzzle() && slot.item() == null) {
 					continue;
 				}
-				double[] b = RoomFrame.box(place.x(), place.y(), place.z(), k, slot.x(), slot.y(), slot.z(), slot.sx(), slot.sy(), slot.sz());
-				AABB box = new AABB(blocks.originX() + b[0], b[1], blocks.originZ() + b[2], blocks.originX() + b[3], b[4], blocks.originZ() + b[5]);
-				int[] face = RoomFrame.direction(RoomFrame.facing(slot.orientation(), k));
+				AABB box;
+				int[] face;
+				if (trial) {
+					double[] w = com.mystaria.events.trahison.edit.RoomTry.worldBox(slot);
+					if (w == null) {
+						continue;
+					}
+					box = new AABB(w[0], w[1], w[2], w[3], w[4], w[5]);
+					face = com.mystaria.events.trahison.edit.RoomTry.face(slot);
+				} else {
+					double[] b = RoomFrame.box(place.x(), place.y(), place.z(), k, slot.x(), slot.y(), slot.z(), slot.sx(), slot.sy(), slot.sz());
+					box = new AABB(blocks.originX() + b[0], b[1], blocks.originZ() + b[2], blocks.originX() + b[3], b[4], blocks.originZ() + b[5]);
+					face = RoomFrame.direction(RoomFrame.facing(slot.orientation(), k));
+				}
 				String key = room.key() + "#" + slot.id();
 				Item old = ITEMS.get(key);
 				InteractableEntity entity = old != null && old.box().equals(box) && !old.entity().isRemoved() ? old.entity() : null;

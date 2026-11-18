@@ -1121,6 +1121,25 @@ Erreurs : `ERROR_TRAHISON_NO_ROOM`, `ERROR_TRAHISON_NOT_IN_ROOM`, `ERROR_TRAHISO
 `ERROR_TRAHISON_ROOM_FINISHED`, `ERROR_TRAHISON_NO_SUCH_ITEM` (on ne porte pas l'objet), `ERROR_TRAHISON_TOO_FAR`,
 `ERROR_TRAHISON_NO_COMBINATION`, `ERROR_TRAHISON_ITEM_REFUSED` (section 5).
 
+### Essai de salle de l'éditeur (`try`, D280 à D289)
+
+Réservé aux **admins** (`ERROR_TRAHISON_ADMIN_REQUIRED` sinon). Une salle jouée par un seul admin, hors de toute partie : le backend
+la tient en mémoire (`RoomService.startTrial`), sous le hub `try:<uuid de l'admin>`, manche 0, groupe 0, joueur d'indice 0, sans place, sans
+télémétrie, jamais persistée, retirée à la déconnexion. Aucune partie ne la voit ni ne la touche, et deux admins ont chacun la leur.
+
+| Action (`EventsTrahisonAction`) | Champs | Effet |
+|---|---|---|
+| `try_start` | `room` (id d'une salle **enregistrée**), `seed?` | Démarre (ou remplace) l'essai. Salle inconnue : `ERROR_TRAHISON_NO_ROOM` |
+| `try_reset` | `seed?` | Retire la salle au sort (nouvelle graine) |
+| `try_skip` | aucun | Résout les étapes ouvertes à cet instant (pas toute la salle) ; les suivantes s'ouvrent, la sortie s'ouvre si c'était la dernière |
+| `try_stop` | aucun | Ferme l'essai (aucune réponse) |
+| `use_slot`, `puzzle_input`, `pick_up`, `give_item`, `use_item`, `combine` | comme en partie, plus **`"try": true`** | Joués dans l'essai de l'admin (`hub`, `group`, `round` ignorés). Sortie ouverte : `ERROR_TRAHISON_ROOM_FINISHED` |
+
+Réponses : les mêmes `EventsTrahisonRoom` (`hub: "try:<uuid>"`) et `EventsTrahisonPuzzle`, envoyées **à cet admin seul**. Le client ne retient
+un message de ce hub que pendant son essai. Les mécanismes de coopération y acceptent un seul joueur (`Mechanism.solo`, jamais appelé pour une salle de
+partie) : `three_levers` (trois leviers par le même joueur) et `twin_screens` (les deux postes). Le réglage `solo` des paramètres
+reste un réglage d'essai à ne pas laisser dans une vraie salle.
+
 ## 4. Routes HTTP
 
 Préfixe `/events/trahison/…` (définitions de salles, schématiques, plan). Chaque route ajoutée est aussi reportée

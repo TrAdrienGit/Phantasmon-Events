@@ -12,7 +12,7 @@ import com.mystaria.events.hub.MirrorHubCommands;
  * <ul>
  * <li>{@code tournament}: opens the tournaments menu, where players register and check in, and admins create and run
  * the tournaments;</li>
- * <li>{@code trahison}: the betrayal game: bare or {@code ping} checks the link with its backend module, {@code edit} (admins) toggles the plan editor, {@code door <id> open|close} (admins) opens or closes a door of the plan, {@code room new|load|list|off} (admins) the room editor, {@code export [room ids]} (admins) writes the nine rooms' Axiom files, {@code check} (admins) lists the places whose blocks differ from the drawn room, {@code minigame <mechanism>} (admins) opens a puzzle screen offline, {@code voice <player> <gain>|reset} (admins) forces the gain of a player's voice to try the filter;</li>
+ * <li>{@code trahison}: the betrayal game: bare or {@code ping} checks the link with its backend module, {@code edit} (admins) toggles the plan editor, {@code door <id> open|close} (admins) opens or closes a door of the plan, {@code room new|load|list|off} (admins) the room editor, {@code room try [reset|skip|stop]} (admins) plays the editor's saved room alone, {@code export [room ids]} (admins) writes the nine rooms' Axiom files, {@code check} (admins) lists the places whose blocks differ from the drawn room, {@code minigame <mechanism>} (admins) opens a puzzle screen offline, {@code voice <player> <gain>|reset} (admins) forces the gain of a player's voice to try the filter;</li>
  * <li>{@code hub ...}: the mirror hubs, admins only ({@link MirrorHubCommands});</li>
  * <li>{@code npc ...}, {@code open}, {@code close}, {@code list}: events and their trainer NPCs, admins only
  * ({@link com.mystaria.events.npc.NpcCommands}).</li>
@@ -142,7 +142,25 @@ public final class EventsCommands {
 								.then(ClientCommandManager.literal("off").executes(context -> {
 									com.mystaria.events.trahison.edit.RoomEditor.stop();
 									return 1;
-								})))
+								}))
+								// The try (D280): plays the saved room of the editor, alone, where it stands.
+								.then(ClientCommandManager.literal("try")
+									.executes(context -> {
+										com.mystaria.events.trahison.edit.RoomTry.start();
+										return 1;
+									})
+									.then(ClientCommandManager.literal("reset").executes(context -> {
+										com.mystaria.events.trahison.edit.RoomTry.reset();
+										return 1;
+									}))
+									.then(ClientCommandManager.literal("skip").executes(context -> {
+										com.mystaria.events.trahison.edit.RoomTry.skip();
+										return 1;
+									}))
+									.then(ClientCommandManager.literal("stop").executes(context -> {
+										com.mystaria.events.trahison.edit.RoomTry.stop();
+										return 1;
+									}))))
 							// The files of the nine drawn rooms for Axiom (T4.2): bare, the draw's rooms; with room ids, those, in the places' order.
 							.then(ClientCommandManager.literal("export").requires(source -> com.mystaria.phantasmon.client.api.PhantasmonApi.isAdmin())
 								.executes(context -> {

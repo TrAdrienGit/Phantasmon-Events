@@ -148,6 +148,11 @@ public final class Messages {
 		send(ACTION, "replay", null, true);
 	}
 
+	/** The room editor's try (admins): {@code try_start}, {@code try_reset}, {@code try_skip} or {@code try_stop}; false when not connected. */
+	public static boolean tryAction(String action, Map<String, Object> extra) {
+		return send(ACTION, action, extra, true);
+	}
+
 	/** {@code use_slot}: uses an active slot; a puzzle bound to it opens its screen ({@code EventsTrahisonPuzzle}, {@code open}). */
 	public static void useSlot(String slot) {
 		send(ACTION, "use_slot", Map.of("slot", slot), true);
@@ -330,6 +335,9 @@ public final class Messages {
 					data.put("round", room.round());
 				}
 			}
+		}
+		if (ROOM_ACTIONS.contains(action) && com.mystaria.events.trahison.edit.RoomTry.active()) {
+			data.put("try", true); // the editor's try: the backend plays it in the admin's own trial room
 		}
 		String hub = Link.hub();
 		if (hub != null) {

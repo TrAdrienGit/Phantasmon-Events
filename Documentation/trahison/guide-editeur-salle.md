@@ -74,17 +74,29 @@ Les **cachettes** (`cachette_1`, `cachette_2`...) sont des candidats : le jeu en
    de même ; un clic dessus mène à l'élément. Les avertissements (jaunes) ne bloquent pas.
 4. Réussite : « version 1, n blocs ». Refais **Enregistrer** à chaque retouche : la version monte.
 
-### 6. L'essayer seul
+### 6. L'essayer seul (`room try`)
 
-1. Pour les étapes de coopération, rends-les jouables à un joueur, **le temps de l'essai** : dans **Chaîne**, étape `porte`
-   (`three_levers`), ajoute le paramètre `solo` = `true` et mets `hold` à `30`. Une seule personne enclenche alors les trois leviers.
-   Les étapes à deux postes (`twin_screens`) se jouent en allant d'un poste à l'autre (à confirmer en jeu pour un joueur seul).
-2. Enregistre, puis crée une partie dont le réglage **`test_room`** est l'id de ta salle (écran du MJ, ou `create` avec `test_room`) :
-   tous les groupes jouent cette salle, sans tirage et sans exiger neuf salles (D73).
-3. Joue la chaîne en entier : chaque indice apparaît là où la fiche le dit, les codes se tapent, les aides arrivent, la sortie
-   s'ouvre.
-4. **Retire `solo` et remets `hold` à sa valeur** (celle de la fiche), puis enregistre de nouveau : un levier jouable seul ne doit
-   jamais rester dans une vraie salle.
+Le mode d'essai joue la salle **là où tu l'as construite**, sans partie, sans hub, sans neuf salles : le backend en tient une
+instance réservée à toi (aucune partie, rien d'enregistré). Il faut que la salle soit **enregistrée** (étape 5) et que tu sois
+admin, dans ton monde solo, l'éditeur ouvert dessus.
+
+1. `/phantasmon event trahison room try` : les emplacements de ce que tu as construit deviennent utilisables (terminaux, leviers,
+   objets, documents), au même endroit et dans le même sens que dans l'éditeur. Les mini-jeux s'ouvrent, les indices se lisent,
+   le sac (`I`) et les objets marchent, les aides automatiques arrivent, la sortie s'ouvre à la dernière étape.
+2. Un panneau en haut à gauche dit l'**étape en cours** (« Étape 2/5 : porte (trois leviers) ») et rappelle
+   « Essai en cours : <id> - room try stop ». Les étapes de coopération (`three_levers`, `twin_screens`) se jouent **seule** pendant
+   l'essai : il n'y a rien à régler dans la chaîne (ni `solo`, ni `hold`).
+3. `room try reset` retire la salle au sort (nouvelles solutions, indices du début) ; `room try skip` résout l'étape en cours
+   (les étapes qui en dépendent s'ouvrent : pratique pour aller voir la fin) ; `room try stop` ferme l'essai.
+4. **Modifier la salle pendant un essai l'arrête** (D281) : toute retouche dans l'éditeur, `room off`, `room load` ou `room new`
+   ferment l'essai. Retouche, enregistre, relance `room try`.
+
+Ce que l'essai ne montre pas : les décors de la partie (portes, faux blocs), et le pouvoir des Pokémon partenaires
+(`power_spot` : l'emplacement répond, mais ni obstacle ni compagnon dessinés).
+
+*Ancienne méthode (toujours possible) :* enregistre, puis crée une partie dont le réglage **`test_room`** est l'id de ta salle (écran
+du MJ, ou `create` avec `test_room`) : tous les groupes jouent cette salle (D73). Pour y jouer seule une étape à trois leviers, il
+fallait y mettre le paramètre `solo` = `true` et `hold` = `30`, puis les retirer ensuite : l'essai rend cela inutile.
 
 Retoucher plus tard : `room load archives` (attention, il vide d'abord la boîte, voir plus bas). `room off` quitte l'éditeur.
 
@@ -108,6 +120,7 @@ Retoucher plus tard : `room load archives` (attention, il vide d'abord la boîte
 | `/phantasmon event trahison room templates` | Les 9 fiches : nom, difficulté, nombre d'étapes et d'emplacements. |
 | `/phantasmon event trahison room load <id>` | Colle une salle enregistrée là où tu te tiens, et ramène ses emplacements et sa chaîne. |
 | `/phantasmon event trahison room list` | Les salles du backend : id, nom, version, difficulté, étapes, emplacements, blocs présents ou non. |
+| `/phantasmon event trahison room try [reset\|skip\|stop]` | Joue seule la salle **enregistrée** de l'éditeur, là où elle est construite (étape 6) : `reset` la retire au sort, `skip` résout l'étape en cours, `stop` ferme l'essai. |
 | `/phantasmon event trahison room off` | Quitte l'éditeur. Rien n'est enregistré par cela ; les blocs restent dans le monde. |
 
 Refus clairs : pas admin, pas en solo, pas en créatif, id invalide, changements non enregistrés (utiliser `room off` pour les jeter),

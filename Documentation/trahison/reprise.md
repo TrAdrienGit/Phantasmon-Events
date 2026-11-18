@@ -11,7 +11,7 @@
 > - **Questions ouvertes** dans [`decisions.md`](decisions.md) : D250 à D259 (création guidée), D260 (cachettes des
 >   salles), D270 à D274 (contrôles du plan).
 >
-> **Prochaine tâche (demandée par Gwen le 2026-11-18, pas commencée, limite à 80 %) :** le mode d'essai `room try` de
+> **Mode d'essai fait le 2026-11-18 (code et tests verts, non vu en jeu ; non commité, non déployé) :** le mode d'essai `room try` de
 > l'éditeur de salle. Dans le monde solo où la salle est construite, sans partie ni hub ni factices :
 > `/phantasmon event trahison room try` rend la salle de l'éditeur jouable (instance de salle admin seule côté backend,
 > ancrée sur la boîte de l'éditeur ; emplacements interactifs, mini-jeux, indices, aides, sortie) ; les étapes de

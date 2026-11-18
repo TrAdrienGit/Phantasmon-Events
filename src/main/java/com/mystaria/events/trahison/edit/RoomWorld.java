@@ -58,7 +58,7 @@ final class RoomWorld {
 	static void render(WorldRenderContext context) {
 		Minecraft mc = Minecraft.getInstance();
 		RoomTemplate.Frame frame = RoomEditor.frame;
-		if (!RoomEditor.isActive() || mc.player == null || frame == null) {
+		if (!RoomEditor.isActive() || mc.player == null || frame == null || RoomTry.active()) {
 			return;
 		}
 		Vec3 camera = context.camera().getPosition();

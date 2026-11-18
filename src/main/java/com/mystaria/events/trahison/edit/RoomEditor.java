@@ -96,6 +96,7 @@ public final class RoomEditor {
 				? InteractionResultHolder.fail(player.getItemInHand(hand)) : InteractionResultHolder.pass(player.getItemInHand(hand)));
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(RoomWorld::render);
 		RoomHud.register();
+		RoomTry.register();
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> client.execute(RoomEditor::reset));
 	}
 
@@ -108,6 +109,7 @@ public final class RoomEditor {
 	}
 
 	private static void reset() {
+		RoomTry.stop(false, null);
 		active = false;
 		frame = null;
 		room = new RoomDto();
@@ -158,6 +160,7 @@ public final class RoomEditor {
 
 	/** Marks the room as changed since the last save or load. */
 	static void changed() {
+		RoomTry.stop(true, t("try_stopped_edit")); // D281: editing ends the try
 		dirty = true;
 		changedRevision();
 	}
@@ -309,6 +312,7 @@ public final class RoomEditor {
 	}
 
 	private static void begin(RoomTemplate.Frame f, RoomDto loaded) {
+		RoomTry.stop(true, null);
 		TrahisonEditor.deactivate();
 		MechanismCatalog.refresh();
 		active = true;
@@ -330,6 +334,7 @@ public final class RoomEditor {
 			chat(t("off.not_active"));
 			return;
 		}
+		RoomTry.stop(true, null);
 		reset();
 		chat(t("off"));
 	}

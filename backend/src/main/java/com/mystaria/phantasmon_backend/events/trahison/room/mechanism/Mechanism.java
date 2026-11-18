@@ -103,6 +103,15 @@ public interface Mechanism {
 	}
 
 	/**
+	 * The editor's try (a room played by one admin outside any game): lets a cooperative mechanism accept a single player where
+	 * it asks for several distinct ones. Called by {@code RoomService} after {@link #bind}, for a trial room only; never in a game.
+	 * Default: nothing to change.
+	 */
+	default MechanismState solo(MechanismState state) {
+		return state;
+	}
+
+	/**
 	 * What the world around the slot needs to show, carried by the room view next to the step ({@code world}): never a secret, only
 	 * what every player can already see happen (T8.3: which power is asked and how far it got). Empty (the default): nothing.
 	 */

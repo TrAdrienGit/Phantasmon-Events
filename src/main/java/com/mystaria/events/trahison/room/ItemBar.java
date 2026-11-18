@@ -38,7 +38,8 @@ public final class ItemBar {
 	private static void render(GuiGraphics g) {
 		Minecraft mc = Minecraft.getInstance();
 		View view = GameView.current();
-		if (mc.screen != null || view == null || !view.hasGame() || !TrahisonUi.hudVisible() || HudSuppression.hidden()
+		boolean trial = com.mystaria.events.trahison.edit.RoomTry.active();
+		if (mc.screen != null || !trial && (view == null || !view.hasGame()) || !TrahisonUi.hudVisible() || HudSuppression.hidden()
 				|| com.mystaria.events.trahison.minigame.MiniGameScreen.isOpen()) {
 			return;
 		}
