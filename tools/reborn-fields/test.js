@@ -129,6 +129,137 @@ test('Cave: the second quake brings the ceiling down', () => {
 	assert.ok(b.log.some((l) => l.includes('|-leaguereborn|text|cave_collapsed')));
 });
 
+// --- the four terrain fields' own code (HOOKS) -----------------------------------------------------------------
+
+const active = (b, side) => b.sides[side].active[0];
+
+test('Electric Terrain: a grounded Pokémon cannot be put to sleep, a flying one can', () => {
+	const b = battle('electerrain', [mon('Breloom', ['spore'])], [mon('Snorlax', ['splash'])]);
+	const log = turn(b);
+	assert.strictEqual(active(b, 1).status, '');
+	assert.ok(lines(log, /-leaguereborn\|text\|electric_awake/).length === 1, log.join('\n'));
+	const air = battle('electerrain', [mon('Breloom', ['spore'])], [mon('Pidgeot', ['splash'])]);
+	turn(air);
+	assert.strictEqual(active(air, 1).status, 'slp');
+});
+
+test('Electric Terrain: Focus Punch never lands', () => {
+	const b = battle('electerrain', [mon('Machamp', ['focuspunch'])], [mon('Snorlax', ['splash'])]);
+	const log = turn(b);
+	assert.strictEqual(lost(b, 1), 0);
+	assert.ok(lines(log, /-leaguereborn\|text\|focus_lost/).length === 1);
+});
+
+test('Electric Terrain: Comatose is awake (Sleep Talk fails), not elsewhere', () => {
+	const b = battle('electerrain', [mon('Komala', ['sleeptalk', 'tackle'], {ability: 'comatose'})], [mon('Snorlax', ['splash'])]);
+	turn(b);
+	assert.strictEqual(lost(b, 1), 0);
+	const v = battle('grassy', [mon('Komala', ['sleeptalk', 'tackle'], {ability: 'comatose'})], [mon('Snorlax', ['splash'])]);
+	turn(v);
+	assert.ok(lost(v, 1) > 0);
+});
+
+test('Electric Terrain: Motor Drive speeds up each turn, Eerie Impulse -3, Charge +2', () => {
+	const b = battle('electerrain', [mon('Electivire', ['charge'], {ability: 'motordrive'})], [mon('Snorlax', ['splash'])]);
+	turn(b);
+	assert.strictEqual(active(b, 0).boosts.spe, 1);
+	assert.strictEqual(active(b, 0).boosts.spd, 2);
+	const e = battle('electerrain', [mon('Pikachu', ['eerieimpulse'])], [mon('Snorlax', ['splash'])]);
+	turn(e);
+	assert.strictEqual(active(e, 1).boosts.spa, -3);
+});
+
+test('Electric Terrain: Wild Charge has no recoil', () => {
+	const b = battle('electerrain', [mon('Raichu', ['wildcharge'])], [mon('Snorlax', ['splash'])]);
+	turn(b);
+	assert.strictEqual(lost(b, 0), 0);
+});
+
+test('Ion Deluge lays Electric Terrain for 3 turns', () => {
+	const b = battle('burning', [mon('Heliolisk', ['iondeluge', 'splash'])], [mon('Snorlax', ['splash'])]);
+	turn(b);
+	assert.strictEqual(LR.field(b), 'electerrain');
+	turn(b, 'move 2');
+	turn(b, 'move 2');
+	assert.strictEqual(LR.field(b), 'burning');
+});
+
+test('Electric Terrain: Thunder Cage binds harder (1/6)', () => {
+	const b = battle('electerrain', [mon('Regieleki', ['thundercage'])], [mon('Snorlax', ['splash'])]);
+	turn(b);
+	assert.strictEqual(active(b, 1).volatiles.partiallytrapped.boundDivisor, 6);
+});
+
+test('Grassy Terrain: grounded Pokémon heal 1/16 at the end of the turn', () => {
+	const b = battle('grassy', [mon('Rattata', ['tackle'])], [mon('Snorlax', ['splash'])]);
+	const log = turn(b);
+	assert.ok(lines(log, /\|-heal\|p2a: .*Grassy Terrain/).length > 0, log.join('\n'));
+	assert.ok(lines(log, /\|-heal\|p1a: /).length === 0); // full HP: nothing to heal
+});
+
+test('Grassy Terrain: Coil +2 everywhere, Cotton Down -2 Speed', () => {
+	const b = battle('grassy', [mon('Arbok', ['coil', 'tackle'])], [mon('Eldegoss', ['splash'], {ability: 'cottondown'})]);
+	turn(b);
+	assert.deepStrictEqual([active(b, 0).boosts.atk, active(b, 0).boosts.def, active(b, 0).boosts.accuracy], [2, 2, 2]);
+	turn(b, 'move 2');
+	assert.strictEqual(active(b, 0).boosts.spe, -2);
+});
+
+test('Mimicry takes the field type', () => {
+	const b = battle('grassy', [mon('Stunfisk-Galar', ['splash'], {ability: 'mimicry'})], [mon('Snorlax', ['splash'])]);
+	assert.deepStrictEqual(active(b, 0).getTypes(), ['Grass']);
+});
+
+test('Misty Terrain: no status nor confusion on the ground', () => {
+	const b = battle('misty', [mon('Jolteon', ['thunderwave', 'confuseray'])], [mon('Snorlax', ['splash'])]);
+	const log = turn(b);
+	assert.strictEqual(active(b, 1).status, '');
+	turn(b, 'move 2');
+	assert.ok(!active(b, 1).volatiles.confusion);
+	assert.ok(lines(log, /-leaguereborn\|text\|misty_status/).length === 1);
+});
+
+test('Misty Terrain: Wish heals 75%', () => {
+	const b = battle('misty', [mon('Togekiss', ['wish'])], [mon('Snorlax', ['splash'])]);
+	turn(b);
+	const wish = b.sides[0].slotConditions[0].wish;
+	assert.strictEqual(wish.hp, Math.floor((active(b, 0).maxhp + 1) * 0.75));
+});
+
+test('Psychic Terrain: priority cannot touch a grounded target', () => {
+	const b = battle('psyterrain', [mon('Rattata', ['quickattack'])], [mon('Snorlax', ['splash'])]);
+	turn(b);
+	assert.strictEqual(lost(b, 1), 0);
+	const air = battle('psyterrain', [mon('Rattata', ['quickattack'])], [mon('Pidgeot', ['splash'])]);
+	turn(air);
+	assert.ok(lost(air, 1) > 0);
+});
+
+test('Psychic Terrain: Nasty Plot +3, Trick Room 8 turns', () => {
+	const b = battle('psyterrain', [mon('Alakazam', ['nastyplot'])], [mon('Slowbro', ['trickroom'])]);
+	turn(b);
+	assert.strictEqual(active(b, 0).boosts.spa, 3);
+	assert.strictEqual(b.field.pseudoWeather.trickroom.duration, 7); // 8, one turn already gone
+});
+
+test('Psychic Terrain: Pure Power doubles the special side instead', () => {
+	const b = battle('psyterrain', [mon('Medicham', ['splash'], {ability: 'purepower'})], [mon('Snorlax', ['splash'])]);
+	const m = active(b, 0);
+	assert.strictEqual(b.runEvent('ModifySpA', m, null, null, m.storedStats.spa), m.storedStats.spa * 2);
+	assert.strictEqual(b.runEvent('ModifyAtk', m, null, null, m.storedStats.atk), m.storedStats.atk);
+});
+
+test('without the rule, the patched Showdown code is Showdown\'s', () => {
+	const komala = battle(null, [mon('Komala', ['sleeptalk', 'tackle'], {ability: 'comatose'})], [mon('Snorlax', ['splash'])]);
+	turn(komala);
+	assert.ok(lost(komala, 1) > 0);
+	const b = battle(null, [mon('Medicham', ['splash'], {ability: 'purepower'})], [mon('Snorlax', ['splash'])]);
+	const m = active(b, 0);
+	assert.strictEqual(b.runEvent('ModifyAtk', m, null, null, m.storedStats.atk), m.storedStats.atk * 2);
+	const fish = battle(null, [mon('Stunfisk-Galar', ['splash'], {ability: 'mimicry'})], [mon('Snorlax', ['splash'])]);
+	assert.deepStrictEqual(active(fish, 0).getTypes(), ['Ground', 'Steel']);
+});
+
 // --- run -------------------------------------------------------------------------------------------------------
 
 let failed = 0;

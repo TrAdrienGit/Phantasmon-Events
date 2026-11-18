@@ -204,8 +204,41 @@ installé), et les dégâts comparés au calcul de Reborn, avant d'aller en jeu.
 Essai en jeu validé par Adrien (PNJ sur Cave, Séisme fait s'effondrer la grotte). Affichage du terrain en haut au centre
 (`LeagueRebornHud`, style Battle Extras, sous ses lignes) avec les tours restants d'un terrain temporaire.
 
-Reste à faire : les textes propres
-à chaque message ; puis l'étape 2 (le code propre à chaque terrain dans `HOOKS`).
+**2026-11-18 (suite) : le code propre aux 4 terrains de base (validé en jeu par Adrien : Spore, Vive-Attaque, soin Herbu, Cage-Éclair).**
+
+Le code écrit à la main dans les scripts de Reborn (hors Rejuvenation) pour Electric, Grassy, Misty et Psychic, dans
+`engine.js` :
+
+- `HOOKS.<terrain>` et `ALL` (tous terrains : capacités qui posent un terrain, effets partagés par une liste de
+  terrains). Points d'accroche : `setStatus`, `tryAddVolatile`, `tryMove`, `tryHit`, `modifyMove`, `basePower`,
+  `modifyDamage`, `modifySpD`, `entry`, `afterMove`, `residual`.
+- Tables : `BOOSTS` (capacités de statut renforcées : Enroulement, Croissance, Chargeur, Ondes Étranges, Brume Aromatique,
+  Doux Parfum, Force Cosmique, Plénitude, Machination, Yoga, Kinésie, Lévikinésie), `SELF_BOOSTS`,
+  `SECONDARY_BOOSTS` (Sprint Bouclier, Aile Psychique, Force Mystique), `LONG_ROOMS` (Distorsion, Zone Magique,
+  Zone Étrange, Gravité : 8 tours), Vœu à 75 %. Les listes reprennent tous les terrains que nomme Reborn, pas
+  seulement les 4.
+- Electric : pas de sommeil au sol (Bâillement compris), Mitra-Poing échoue, Turbo +1 Vitesse par tour, Début Calme
+  compte double, Comatose n'est pas endormi (Blabla Dodo, Ronflement, Châtiment, Réveil Forcé… et il peut être
+  statué), Galvanisation ×1,5, Transistor reçoit Sol ×0,5, Éclair Fou sans contrecoup, Vol Magnétik 8 tours, Cage
+  Éclair serre plus fort, Déluge Plasmique et Poing Plasma posent Electric 3 tours, Gobe-Bombe en forme Gobe-Tout.
+- Grassy : soin de 1/16 au sol en fin de tour, Ire de la Nature 75 %, Soin Floral complet, Effilochage −2,
+  Troquenard serre plus fort.
+- Misty : pas de statut ni de confusion au sol, Fée Déf. Spé. ×1,5, Peau Sèche soigne 1/16, Anneau Hydro double,
+  Écaille Spéciale toujours active, Voile Pastel contre Poison, Peau Féérique ×1,5, Animacœur +1 Déf. Spé., Sable
+  Humide +2 Déf. à l'entrée, Brume pose Misty 3 tours.
+- Psychic : priorité bloquée contre une cible au sol, Force Pure double l'Atq. Spé. au lieu de l'Atq., Télépathie
+  double la Vitesse, Power Spot ×1,5, Anticipation +2 Atq. Spé. à l'entrée, Force Cachée confond, Confidence a
+  son texte.
+- Mimétisme prend le type du terrain (donnée `mimicry`, tous terrains) ; un changement de terrain relance
+  `TerrainChange` de Showdown (Charge Quantique, Mimétisme, graines).
+- Le code de Showdown modifié (talents, capacités, conditions) l'est par `PATCHES`, une fois par Dex : Showdown gèle
+  ses entrées, on remplace donc l'entrée brute et on vide son cache. Hors League Reborn, chaque patch rend le
+  comportement de Showdown (testé).
+- `test.js` : 28 tests, tous verts.
+
+Reste à faire : les textes propres à chaque message ; les autres terrains (étape 2) ; les graines de Reborn (les
+graines de Showdown réagissent pour l'instant à ses 4 terrains) ; Force Cachée sur les autres terrains (Showdown ne
+lui donne d'effet que sur ses 4 terrains).
 
 Écarts connus avec Reborn, à traiter : l'efficacité combinée de Reborn ne descend pas sous ×0,25 (arrondi
 `ceil` de `fieldTypeChange`) ; Showdown arrondit les multiplicateurs au 4096e, Reborn calcule en flottants (écarts
