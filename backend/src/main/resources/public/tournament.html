@@ -26,6 +26,11 @@
   .top .wrap { display: flex; align-items: center; gap: 12px; height: 54px; }
   .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .02em; }
   .gem { width: 22px; height: 22px; border-radius: 5px; background: linear-gradient(135deg, var(--accent), #1f7f7a); box-shadow: 0 0 0 2px rgba(56,196,188,.2); }
+  .site-nav { display: flex; gap: 2px; align-self: stretch; flex: none; }
+  .site-nav a { display: flex; align-items: center; padding: 0 12px; color: var(--muted); font-weight: 600; border-bottom: 2px solid transparent; }
+  .site-nav a:hover { color: var(--ink); }
+  .site-nav a.on { color: var(--ink); border-bottom-color: var(--accent); }
+  @media (max-width: 480px) { .brand { font-size: 0; gap: 0; } .site-nav { margin-left: 0; } .site-nav a { padding: 0 9px; } }
   .crumb { color: var(--muted); }
   .crumb a:hover { color: var(--ink); }
   .live-dot { margin-left: auto; color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 8px; }
@@ -144,7 +149,7 @@
 </head>
 <body>
 <header class="top"><div class="wrap">
-  <a class="brand" href="/t"><span class="gem"></span>Phantasmon</a><span class="crumb" id="crumb">/ Tournois</span>
+  <a class="brand" href="/t"><span class="gem"></span>Phantasmon</a><nav class="site-nav"><a class="on" href="/t">Tournoi</a><a href="/d">Téléchargement</a></nav><span class="crumb" id="crumb">/ Tournois</span>
   <span class="live-dot"><i></i><b>En direct</b></span>
 </div></header>
 <main class="wrap" id="app"><p class="empty">Chargement…</p></main>
