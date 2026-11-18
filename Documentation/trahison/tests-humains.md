@@ -433,3 +433,19 @@ Cette étape n'a été vérifiée que par la compilation et `./gradlew test --te
 8. **Annonce du maître du jeu.** Un maître du jeu règle la touche « Trahison : annoncer à tout le monde » (non assignée par défaut), la tient et parle : tous les joueurs, vivants, cabines fermées comprises, l'entendent à plein volume. Il lâche la touche : il redevient un spectateur (silencieux pour les vivants). La touche ne fait rien pour un autre joueur.
 9. **Écoute.** Un joueur avec l'objet Écoute, pendant un vote, l'utilise sur une cabine fermée : il entend ceux qui sont dedans, même loin ; le vote fini, plus rien. Si la cabine est hors de la portée du serveur de Simple Voice Chat, il n'entend rien (D203).
 10. **Sans Simple Voice Chat.** Events sans Simple Voice Chat se lance et joue normalement (aucun plantage, aucun filtre).
+
+## T9.3 : sliding_blocks, rotating_tiles, safe_dial, twin_screens
+
+Chaque mini-jeu se teste d'abord hors ligne (`/phantasmon event trahison minigame <id>`), puis dans une salle d'essai avec deux joueurs.
+
+- [ ] `sliding_blocks` hors ligne : faire glisser un bloc le long de son axe, le bloc suit la souris sans traverser un autre bloc, flèches après un clic, Tab change de bloc ; sortir la pièce marquée déclenche l'animation de réussite.
+- [ ] `sliding_blocks` en ligne, deux joueurs : un glissement de l'un se voit chez l'autre avec le curseur de couleur et le son ; le compteur de coups suit.
+- [ ] `sliding_blocks` : un bloc glissé pendant qu'un autre joueur en bouge un autre en même temps ne laisse pas l'écran dans un état faux après la vue suivante.
+- [ ] `rotating_tiles` hors ligne : clic gauche tourne dans un sens, clic droit dans l'autre, molette idem, flèches et Entrée au clavier ; les cases atteintes s'éclairent, la lampe s'allume à la fin ; la tuile au rivet refuse avec l'erreur.
+- [ ] `rotating_tiles` en ligne : l'éclairage suit la vue du backend (pas d'éclairage tant que la réponse n'est pas arrivée est normal), jamais de solution visible.
+- [ ] `safe_dial` hors ligne : tourner la molette fait un clic de plus en plus aigu en approchant, une cloche près du nombre, un bruit sourd dessus ; Verrouiller dans le bon sens valide un rond ; dans le mauvais sens (ou à côté) l'erreur sonne et les ronds se vident.
+- [ ] `safe_dial` en ligne : les sons viennent bien de la réponse du backend (écouter avec le son coupé côté serveur ne change rien), le voyant suit ; le sens demandé s'affiche et alterne.
+- [ ] `twin_screens` dans une salle : poser les deux terminaux loin l'un de l'autre, chacun avec son indice (`left_code` au terminal gauche, `right_code` au droit). Le joueur A ouvre le gauche, le joueur B le droit ; chacun lit à l'autre ce que son terminal montre, saisit ce qu'on lui dicte ; le premier terminal juste se verrouille, le second ouvre la porte.
+- [ ] `twin_screens` : le même joueur ouvre les deux terminaux : le second refuse (aucun siège) ; une saisie fausse vide l'entrée avec l'erreur.
+- [ ] `twin_screens` : la définition sans indice au bon emplacement est refusée à l'enregistrement dans l'éditeur (`BAD_GIVE`).
+- [ ] Les quatre écrans à 320 × 180 et à 854 × 480 : rien ne déborde du cadre, le texte est lisible, l'aide (`?`) s'ouvre ; Échap ferme sans rien perdre.

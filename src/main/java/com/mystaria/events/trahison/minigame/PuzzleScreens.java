@@ -66,6 +66,10 @@ public final class PuzzleScreens {
 		register("cry_match", CryMatchScreen::new);
 		register("pc_box", PcBoxScreen::new);
 		register("battle_puzzle", BattlePuzzleScreen::new);
+		register("sliding_blocks", SlidingBlocksScreen::new);
+		register("rotating_tiles", RotatingTilesScreen::new);
+		register("safe_dial", SafeDialScreen::new);
+		register("twin_screens", TwinScreensScreen::new);
 		// three_levers is played in the world (a click on a lever slot): no screen opens for it, only a preview offline.
 		PREVIEWS.put("three_levers", ThreeLeversScreen::new);
 		// type_chain is played in the world too (levers marked with a type): preview only.

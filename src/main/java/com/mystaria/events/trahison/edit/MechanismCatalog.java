@@ -67,7 +67,11 @@ final class MechanismCatalog {
 			new Info("battle_puzzle", true, 3, 300),
 			new Info("cry_match", true, 2, 160),
 			new Info("pc_box", true, 2, 110),
-			new Info("power_spot", true, 1, 70));
+			new Info("power_spot", true, 1, 70),
+			new Info("sliding_blocks", true, 2, 170),
+			new Info("rotating_tiles", true, 2, 150),
+			new Info("safe_dial", true, 2, 170),
+			new Info("twin_screens", true, 2, 150));
 
 	/** The backend's answer, null until a call succeeds. */
 	private static volatile List<Info> remote;

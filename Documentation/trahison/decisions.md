@@ -147,3 +147,63 @@ Les ids sont en minuscules sans accents, avec des soulignés (`salle_des_machine
 - [ ] Ids numérotés (`salle_1_1` ...) pour que l'ordre ressorte
 
 Ta réponse :
+
+## D210 : twin_screens, où se lit la moitié du problème
+
+Chaque terminal montre sa moitié comme un indice posé dans la salle à son emplacement (le secret ne sort ainsi que là où la définition le met). L'écran de saisie ne répète pas cette moitié : le joueur la lit dans la salle, puis ouvre le terminal.
+
+- [x] La moitié n'est qu'un indice de la salle, l'écran n'est que le clavier *(par défaut)*
+- [ ] L'écran du terminal affiche aussi sa propre moitié (demande une vue propre à chaque joueur, donc un changement du contrat `Mechanism.view` et de la diffusion)
+- [ ] Les deux : indice dans la salle et rappel sur l'écran
+
+Ta réponse :
+
+## D211 : safe_dial, un voyant en plus du son
+
+Le coffre se joue au son (sons vanilla : clic de comparateur plus aigu en approchant, cloche près du nombre, bruit sourd dessus). Un voyant dessiné répète le repère pour les joueurs qui n'entendent pas.
+
+- [x] Voyant toujours présent, discret (accessibilité) *(par défaut)*
+- [ ] Au son seul (plus dur, plus fidèle à l'idée de salle sonore)
+- [ ] Voyant réglable par un paramètre de l'étape (à coder)
+
+Ta réponse :
+
+## D212 : safe_dial, un mauvais verrouillage
+
+Verrouiller ailleurs que sur le nombre, ou en arrivant dans le mauvais sens, fait oublier au coffre tous les nombres déjà trouvés.
+
+- [x] Tout est à refaire, avec un son d'erreur *(par défaut)*
+- [ ] On revient seulement au dernier nombre trouvé
+- [ ] Un mauvais verrouillage ne coûte rien (seulement un son)
+
+Ta réponse :
+
+## D213 : sliding_blocks, la sortie
+
+L'ouverture est toujours au bord droit, sur la ligne de la pièce à sortir (qui change d'une graine à l'autre). La grille n'est pas animée de façon à gêner : un glissement bloqué est refusé par le backend.
+
+- [x] Sortie fixe à droite, ligne tirée *(par défaut)*
+- [ ] Sortie tirée sur un des quatre bords (pièce verticale possible)
+- [ ] Ligne de sortie fixe au milieu
+
+Ta réponse :
+
+## D214 : rotating_tiles, la source et la lampe
+
+Le courant entre toujours par le bord gauche et la lampe est toujours au bord droit, sur des lignes tirées. Les tuiles `fixed` sont un cadeau de difficulté (0 par défaut).
+
+- [x] Gauche vers droite, lignes tirées, `fixed` à 0 par défaut *(par défaut)*
+- [ ] Source et lampe sur des bords tirés
+- [ ] Plusieurs lampes à allumer (à coder)
+
+Ta réponse :
+
+## D215 : twin_screens, qui tient un terminal
+
+Utiliser un emplacement prend le siège ; un joueur qui tient un siège ou en a verrouillé un ne peut pas prendre l'autre ; le dernier à utiliser un siège libre le tient. Les saisies fausses ne coûtent rien (pas de blocage comme le digicode, D30).
+
+- [x] Siège pris à l'usage, pas de blocage après les erreurs *(par défaut)*
+- [ ] Blocage de quelques secondes après trois erreurs, comme le digicode
+- [ ] Siège rendu quand on ferme l'écran (à coder : le backend ne voit pas la fermeture)
+
+Ta réponse :

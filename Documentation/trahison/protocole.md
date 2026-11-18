@@ -696,6 +696,59 @@ les joueurs les découvrent en tournant.
 - Génération : voir `RingDial` (javadoc). L'énigme est résoluble par construction (brouillage par des coups légaux depuis
   l'état résolu) et ne commence jamais résolue ; les tests le vérifient par parcours en largeur sur tout l'espace d'états.
 
+#### Vues des mécanismes de T9.3 (`sliding_blocks`, `rotating_tiles`, `safe_dial`, `twin_screens`)
+
+Notes de conception : `minijeux-t9.md`. Tous répondent à `puzzle_input` comme `ring_dial` ; un geste mal formé ou refusé donne
+`ERROR_TRAHISON_BAD_INPUT`, et une étape résolue ignore les gestes. Aucun ne montre sa solution à un joueur ni à un spectateur.
+
+**`sliding_blocks`** (blocs coulissants ; rôle `terminal` : `terminal`, `pedestal` ; aucun indice).
+
+- Paramètres : `size` 5 à 7 (défaut 6), `blocks` 3 à 10 (défaut 6, hors la pièce à sortir), `shuffle` 6 à 60 (défaut 24 glissements de mélange).
+- Vue : `{ "size", "exitRow", "blocks": [{ "r", "c", "len", "h" }...], "moves", "solved" }`. Le bloc 0 est la pièce à sortir (`h`
+  vrai, 2 cases, ligne `exitRow`) ; `r`, `c` = case en haut à gauche, `h` = horizontal. Résolu quand `c + len == size` pour le bloc 0.
+  Rien n'est secret : la vue est identique pour tous.
+- Geste : `{ "block": 0..n, "delta": -(size-1)..(size-1), sauf 0 }` : glisse le bloc de `delta` cases (droite ou bas positif) si
+  chaque case traversée est libre ; sinon `ERROR_TRAHISON_BAD_INPUT`. Événement : `{ "type": "slide", "block", "delta" }`.
+- Génération : pièce contre l'ouverture, autres blocs sans chevauchement, puis glissements légaux au hasard (réversibles) ; jamais
+  résolu au départ. Test : parcours en largeur indépendant sur 1000 tirages.
+
+**`rotating_tiles`** (tuiles tournantes ; rôle `terminal` : `terminal`, `pedestal` ; aucun indice).
+
+- Paramètres : `size` 3 à 5 (défaut 4), `fixed` 0 à 6 (défaut 0 : tuiles du circuit déjà en place et verrouillées).
+- Vue : `{ "size", "source", "sink", "types": ["straight" | "corner" | "tee" | "end" | "empty"...], "rots": [0..3...], "fixed": [bool...],
+  "powered": [bool...], "lit", "solved" }`, tableaux en ordre ligne par ligne. Le courant entre par le bord gauche de la ligne `source`,
+  la lampe est au bord droit de la ligne `sink` ; `powered` = cases atteintes, `lit` = lampe allumée. Le maître du jeu reçoit en plus
+  `solution` (rotations d'un circuit qui marche).
+- Geste : `{ "cell": ligne * size + colonne, "delta": 1 | -1 }` (+1 = quart de tour dans le sens des aiguilles) ; tuile fixe : refusé.
+  Événement : `{ "type": "turn", "cell", "delta" }`.
+- Génération : chemin aléatoire sans croisement de la source à la lampe (droites et coudes), leurres ailleurs, rotations mélangées ;
+  jamais allumé au départ.
+
+**`safe_dial`** (coffre à molette, au son ; rôle `terminal` : `terminal`, `pedestal` ; aucun indice).
+
+- Paramètres : `positions` 24 à 60 (défaut 40), `numbers` 3 à 5 (défaut 3), `wide` (défaut `true` : le repère `mid` existe).
+- Vue : `{ "positions", "position", "numbers", "stage", "turn": 1 | -1, "cue": "far" | "mid" | "near" | "hit", "lastDir", "resets", "solved" }`.
+  `stage` = nombres déjà trouvés, `turn` = sens imposé au prochain nombre (+1 droite), `cue` = repère de la position courante par rapport au
+  nombre cherché (le seul retour que la règle exige ; la combinaison n'est jamais envoyée sauf au maître du jeu : `combination`). Le client
+  joue le repère avec des sons vanilla (`MiniGameSounds.cue`) et le double d'un voyant.
+- Gestes : `{ "delta": 1 | -1 }` tourne d'un cran ; `{ "lock": true }` tente le nombre : juste si le cadran est dessus et que le dernier
+  cran allait dans le sens voulu (on doit tourner de nouveau avant le suivant), sinon la combinaison repart de zéro (`resets` + 1).
+  Événements : `{ "type": "tick", "delta", "cue" }`, `{ "type": "lock", "ok", "stage" }`.
+
+**`twin_screens`** (terminaux jumeaux ; rôles `left` et `right` : `terminal`, `pedestal` ; indices `left_code` et `right_code` de type `symbols`).
+
+- Paramètres : `length` 3 à 6 (défaut 4), `alphabet` 6 à 16 (défaut 10, au moins `length`).
+- La définition donne `left_code` à l'emplacement du rôle `left` et `right_code` à celui du rôle `right` (ouverts dès le début) ; le
+  validateur refuse sinon (`ERROR_TRAHISON_ROOM_BAD_GIVE`, `info` : `missing=slot:left`, `missing=left_code;when=open`, `same_slot=left,right`). Ce qu'on
+  tape à un terminal est l'indice de l'**autre**.
+- Utiliser l'emplacement prend le siège (`onUse`) : un joueur qui tient un siège, ou en a verrouillé un, ne peut pas prendre l'autre
+  (événement `{ "type": "seat_refused", "seat" }`) ; le dernier à utiliser un siège libre le tient.
+- Vue : `{ "alphabet": [id...], "length", "seats": { "left": index | null, "right": index | null }, "latched": { "left", "right" }, "wrong", "solved" }`.
+  Jamais les suites (le maître du jeu reçoit `left_code` et `right_code`).
+- Geste : `{ "seat": "left" | "right", "symbols": [id...] }`, une suite entière de `length` symboles de l'alphabet, du joueur qui tient ce
+  siège et n'a pas verrouillé l'autre. Juste : le siège est verrouillé (`{ "type": "latch", "seat" }`) ; faux : `wrong` + 1 (`{ "type": "wrong", "seat" }`).
+  Résolu quand les deux sont verrouillés, par deux joueurs différents.
+
 #### Vue du mécanisme `keypad` (digicode mural)
 
 Un digicode : le groupe tape un code et le valide. Le code est tiré par la graine et produit comme indice, que la salle place ailleurs ; le digicode ne le dit jamais.
@@ -1012,7 +1065,7 @@ change cela pour tout le monde (D8, plus bas).
 | Action | Champs | Effet | Réponse |
 |---|---|---|---|
 | `use_slot` | `slot` (texte) | Utiliser un emplacement actif. Si une étape ouverte et non résolue y est liée, son écran s'ouvre : `EventsTrahisonPuzzle` (`reason: open`) à ce joueur seul ; un mécanisme qui réagit à l'usage direct (levier, bouton) est actionné | Aucune réponse propre : `EventsTrahisonPuzzle` et `EventsTrahisonRoom` |
-| `puzzle_input` | `step` (texte), `input` (objet propre au mécanisme) | Un geste sur l'écran du mini-jeu : `three_dials` attend `{ "dial": 0..2, "delta": -9..9 }`, `ring_dial` `{ "ring": 0..4, "delta": 1 | -1 }`, `keypad` `{ "key": "0".."9" | "del" | "clear" | "enter" }`, `pickup_set` aucun geste, `code_breaker` `{ "key": "0".."9" | "del" | "clear" | "enter" }`, `wiring` `{ "op": "connect", "left": 0..5, "right": 0..5 }` ou `{ "op": "disconnect", "left" | "right": 0..5 }`. Appliqué dans l'ordre d'arrivée | `EventsTrahisonPuzzle` (`input`, puis `solved` si résolu) à tous ceux qui regardent ; `EventsTrahisonRoom` si une étape est résolue |
+| `puzzle_input` | `step` (texte), `input` (objet propre au mécanisme) | Un geste sur l'écran du mini-jeu : `three_dials` attend `{ "dial": 0..2, "delta": -9..9 }`, `ring_dial` `{ "ring": 0..4, "delta": 1 | -1 }`, `keypad` `{ "key": "0".."9" | "del" | "clear" | "enter" }`, `pickup_set` aucun geste, `code_breaker` `{ "key": "0".."9" | "del" | "clear" | "enter" }`, `wiring` `{ "op": "connect", "left": 0..5, "right": 0..5 }` ou `{ "op": "disconnect", "left" | "right": 0..5 }`, `sliding_blocks` `{ "block", "delta" }`, `rotating_tiles` `{ "cell", "delta": 1 | -1 }`, `safe_dial` `{ "delta": 1 | -1 }` ou `{ "lock": true }`, `twin_screens` `{ "seat": "left" | "right", "symbols": [id...] }` (voir la sous-section de T9.3). Appliqué dans l'ordre d'arrivée | `EventsTrahisonPuzzle` (`input`, puis `solved` si résolu) à tous ceux qui regardent ; `EventsTrahisonRoom` si une étape est résolue |
 | `pick_up` | `slot` (texte) | Ramasser les objets (`type: item`) visibles dans l'emplacement : ils vont dans le sac de la salle, **au nom de celui qui ramasse** (`items[].holder`) | `EventsTrahisonRoom` |
 | `give_item` | `item` (texte), `to` (indice de joueur) | Remettre un objet qu'on porte à un autre joueur. Le backend vérifie la portée : 4 blocs (plus 1 de tolérance pour l'âge des positions) d'après les positions que les clients envoient (`EventsTrahisonZone`) ; sans position, être dans la même zone connue suffit ; sinon `ERROR_TRAHISON_TOO_FAR`. Le destinataire doit être vivant et, hors temps libre, membre du groupe | `EventsTrahisonRoom` (le porteur change) |
 | `use_item` | `item`, `slot` | Utiliser un objet qu'on porte sur un emplacement actif : l'étape ouverte qui y est liée doit le prendre (`Mechanism.onItem`), l'objet est alors consommé et l'étape peut se résoudre. Sinon `ERROR_TRAHISON_ITEM_REFUSED` et l'objet reste | `EventsTrahisonPuzzle` / `EventsTrahisonRoom` |
@@ -1215,7 +1268,7 @@ section 5. Mécanismes connus à ce jour (rôle d'emplacement : genres acceptés
 `plate`, `pedestal`, `secret`, `inner_door`), `three_dials` (trois molettes de 0 à 9 ; indice `code` de type `digits` ; `dials` : `terminal`, `pedestal`),
 `ring_dial` (anneaux de symboles liés ; indice `symbols` de type `symbols`, voir la vue plus haut ; `terminal` : `terminal`, `pedestal`), `keypad` (digicode mural ;
 indice `code` de type `digits` ; `keypad` : `keypad`, `terminal` ; voir plus haut), `pickup_set` (objets cachés ; indices `spot_1`..`spot_6` de type `item` et `document` de type
-`document` ; aucun rôle d'emplacement : on ramasse seulement ; voir plus haut), `code_breaker` (décodeur ; aucun indice ; `terminal` : `terminal`, `pedestal` ; voir plus haut), `wiring` (câblage ; indices `scheme` de type `colors` et `scheme_text` de type `document`, l'un ou l'autre ; `panel` : `terminal`, `pedestal` ; voir plus haut), `three_levers` (trois leviers ; aucun indice ; `lever_1`, `lever_2`, `lever_3` : `lever` ; voir plus haut).
+`document` ; aucun rôle d'emplacement : on ramasse seulement ; voir plus haut), `code_breaker` (décodeur ; aucun indice ; `terminal` : `terminal`, `pedestal` ; voir plus haut), `wiring` (câblage ; indices `scheme` de type `colors` et `scheme_text` de type `document`, l'un ou l'autre ; `panel` : `terminal`, `pedestal` ; voir plus haut), `three_levers` (trois leviers ; aucun indice ; `lever_1`, `lever_2`, `lever_3` : `lever` ; voir plus haut), `sliding_blocks`, `rotating_tiles` et `safe_dial` (aucun indice ; `terminal` : `terminal`, `pedestal`), `twin_screens` (indices `left_code` et `right_code` de type `symbols` ; `left` et `right` : `terminal`, `pedestal`) ; voir la sous-section de T9.3.
 
 Le validateur contrôle en plus les liaisons des rôles : un rôle que le mécanisme ne déclare pas (hors `exit`), ou lié à un emplacement d'un genre qu'il n'accepte pas, donne
 `ERROR_TRAHISON_ROOM_BAD_KIND` (`info` : `role=<rôle>;unknown` ou `role=<rôle>;needs=<genre>|<genre>`) ; et `keypad`, `pickup_set`, `wiring` et `three_levers` (rôle `lever_n` non lié : `missing=slot:lever_n` ; deux rôles sur le même emplacement : `duplicate=slot:lever_n`) refusent une étape dont un indice dont les joueurs
