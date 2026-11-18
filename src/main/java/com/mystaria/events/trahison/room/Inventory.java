@@ -156,7 +156,7 @@ public final class Inventory {
 	public static ResourceLocation icon(String id) {
 		ResourceLocation cached = ICONS.get(id);
 		if (cached == null) {
-			ResourceLocation rl = ResourceLocation.fromNamespaceAndPath("phantasmon_events", "textures/trahison/items/" + id + ".png");
+			ResourceLocation rl = ResourceLocation.fromNamespaceAndPath("phantasmon_events", "textures/trahison/items/" + com.mystaria.events.trahison.room.Pictures.clean(id) + ".png");
 			cached = Minecraft.getInstance().getResourceManager().getResource(rl).isPresent() ? rl : NONE;
 			ICONS.put(id, cached);
 		}

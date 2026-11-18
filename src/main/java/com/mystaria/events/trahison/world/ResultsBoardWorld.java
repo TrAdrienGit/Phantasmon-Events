@@ -107,7 +107,7 @@ public final class ResultsBoardWorld {
 				}
 				case TRIANGLE -> {
 					for (int row = 0; row < size; row++) {
-						int half = Math.min(size / 2, 1 + row * size / (2 * size - 2));
+						int half = Math.min(size / 2, 1 + row * size / Math.max(1, 2 * size - 2));
 						rect(x + size / 2f - half, y + row, x + size / 2f + half, y + row + 1, layer, color);
 					}
 				}

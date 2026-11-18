@@ -42,7 +42,7 @@ public final class Pictures {
 	}
 
 	/** An id kept to {@code a-z 0-9 _ -} so a room definition can never name a stray path. */
-	static String clean(String id) {
+	public static String clean(String id) {
 		return id.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9_-]", "_");
 	}
 

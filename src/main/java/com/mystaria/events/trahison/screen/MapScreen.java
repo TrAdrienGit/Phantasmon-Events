@@ -492,7 +492,7 @@ public final class MapScreen extends TrahisonScreen {
 		Component hover = null;
 		if (map != null && !map.isEmpty()) {
 			// An optional hand-made picture of the floor, over the floor's bounds, replaces the flat colours.
-			ResourceLocation picture = ResourceLocation.fromNamespaceAndPath(Pictures.NAMESPACE, "textures/trahison/map/" + floorId() + ".png");
+			ResourceLocation picture = ResourceLocation.fromNamespaceAndPath(Pictures.NAMESPACE, "textures/trahison/map/" + Pictures.clean(floorId()) + ".png");
 			int[] size = Pictures.size(picture);
 			boolean flat = size == null;
 			if (!flat && map.bounds() != null) {
