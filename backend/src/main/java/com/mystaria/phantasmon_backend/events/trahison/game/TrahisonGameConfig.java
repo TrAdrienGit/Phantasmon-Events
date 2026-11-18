@@ -32,6 +32,7 @@ public class TrahisonGameConfig {
 		service.useRooms(rooms);
 		service.useDraws(draws);
 		service.useLayouts(layouts::version);
+		service.requireCompletePlan();
 		return service;
 	}
 

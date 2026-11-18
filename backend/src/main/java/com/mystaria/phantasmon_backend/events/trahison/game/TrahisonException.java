@@ -57,6 +57,8 @@ public class TrahisonException extends RuntimeException {
 	public static final String SPOT_EMPTY = "ERROR_TRAHISON_SPOT_EMPTY";
 	public static final String SPOT_TOO_FAR = "ERROR_TRAHISON_SPOT_TOO_FAR";
 	public static final String CANNOT_SEARCH_NOW = "ERROR_TRAHISON_CANNOT_SEARCH_NOW";
+	/** The hub's plan is incomplete or invalid: a game does not start on it. */
+	public static final String PLAN_INVALID = "ERROR_TRAHISON_PLAN_INVALID";
 	public static final String UNKNOWN_ACTION = "ERROR_TRAHISON_UNKNOWN_ACTION";
 
 	private final String code;

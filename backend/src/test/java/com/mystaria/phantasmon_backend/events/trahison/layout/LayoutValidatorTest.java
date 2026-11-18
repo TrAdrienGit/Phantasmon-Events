@@ -241,4 +241,55 @@ class LayoutValidatorTest {
 		assertThat(Floor.floorsOf(List.of(), -64, 300)).containsExactly(Floor.IMPLICIT_ID);
 		assertThat(Floor.effective(null)).hasSize(1);
 	}
+
+	@Test
+	void theCompletePlanHasNoWarningsOnPlaces() {
+		assertThat(LayoutValidator.warnings(LayoutFixtures.complete()).stream().map(Issue::code))
+				.containsExactly(LayoutValidator.WARN_FEW_SPOTS); // one spot only, there are more items than that
+	}
+
+	@Test
+	void twoOverlappingRoomPlacesAreRefusedEvenInADraft() {
+		LayoutContent base = LayoutFixtures.complete();
+		List<RoomSlot> slots = new ArrayList<>(base.roomSlots());
+		RoomSlot first = slots.get(0);
+		slots.set(1, new RoomSlot(slots.get(1).id(), slots.get(1).round(), new Pos(first.origin().x() + 47, first.origin().y() + 23, first.origin().z() + 47), "north"));
+		LayoutContent plan = LayoutFixtures.with(base, null, null, slots, null);
+		for (boolean draft : new boolean[] { true, false }) {
+			assertThat(LayoutValidator.validate(plan, draft))
+					.anyMatch(i -> i.code().equals(LayoutValidator.PLACE_OVERLAP) && i.ids().equals(List.of(first.id(), slots.get(1).id())));
+		}
+		// touching boxes (48 blocks apart) are fine
+		slots.set(1, new RoomSlot(slots.get(1).id(), slots.get(1).round(), new Pos(first.origin().x() + 48, first.origin().y(), first.origin().z()), "north"));
+		assertThat(codes(LayoutFixtures.with(base, null, null, slots, null), false)).doesNotContain(LayoutValidator.PLACE_OVERLAP);
+	}
+
+	@Test
+	void aColourDoorWhosePlaceIsMissingNamesTheMapping() {
+		LayoutContent base = LayoutFixtures.complete();
+		List<RoomSlot> slots = new ArrayList<>(base.roomSlots());
+		slots.removeIf(s -> s.id().equals("place_2_2")); // round 2 keeps 2 places: the green-blue door (3rd pair) has none
+		List<Issue> issues = LayoutValidator.validate(LayoutFixtures.with(base, null, null, slots, null), false);
+		assertThat(issues).filteredOn(i -> i.code().equals(LayoutValidator.DOOR_PLACE)).singleElement().satisfies(i -> {
+			assertThat(i.ids()).containsExactly("door_2_green_blue");
+			assertThat(i.info()).contains("round=2", "pair=green_blue", "expects=place_3_of_round_2", "places_in_round=2");
+		});
+		assertThat(LayoutValidator.validate(base, false)).noneMatch(i -> i.code().equals(LayoutValidator.DOOR_PLACE));
+	}
+
+	@Test
+	void warningsFlagAPlaceOnAForeignZoneAFloorMissingItsHeightAndFewSpots() {
+		LayoutContent base = LayoutFixtures.complete();
+		RoomSlot place = base.roomSlots().get(0);
+		List<LayoutZone> zones = new ArrayList<>(base.zones());
+		Box b = LayoutValidator.placeBox(place);
+		zones.add(new LayoutZone("stray", "corridor", List.of(new Box(b.minX() + 1, b.minY(), b.minZ() + 1, b.minX() + 3, b.minY() + 2, b.minZ() + 3))));
+		LayoutContent plan = new LayoutContent(zones, base.doors(), base.roomSlots(), base.cabins(), base.hidingSpots(), null,
+				List.of(new Floor("f1", "Ground", 0, 10)));
+		List<Issue> warnings = LayoutValidator.warnings(plan);
+		assertThat(warnings).anyMatch(i -> i.code().equals(LayoutValidator.WARN_PLACE_ZONE) && i.ids().equals(List.of(place.id(), "stray")));
+		assertThat(warnings).anyMatch(i -> i.code().equals(LayoutValidator.WARN_PLACE_FLOOR) && i.info().equals("y=64"));
+		assertThat(warnings).anyMatch(i -> i.code().equals(LayoutValidator.WARN_FEW_SPOTS));
+		assertThat(LayoutValidator.validate(plan, false)).noneMatch(i -> i.code().startsWith("WARN"));
+	}
 }

@@ -1455,5 +1455,8 @@
   "phantasmon_events.trahison.room_edit.mechanism.sliding_blocks": "sliding_blocks",
   "phantasmon_events.trahison.room_edit.mechanism.rotating_tiles": "rotating_tiles",
   "phantasmon_events.trahison.room_edit.mechanism.safe_dial": "safe_dial",
-  "phantasmon_events.trahison.room_edit.mechanism.twin_screens": "twin_screens"
+  "phantasmon_events.trahison.room_edit.mechanism.twin_screens": "twin_screens",
+  "phantasmon_events.error.error_trahison_plan_invalid": "Trahison : le plan du hub est incomplet ou invalide, la partie ne peut pas démarrer. Corrigez-le dans l'éditeur de plan.",
+  "phantasmon_events.trahison.edit.error.error_trahison_layout_place_overlap": "Deux places de salle se chevauchent (48 x 48 x 24 blocs depuis leur origine) : %1$s.",
+  "phantasmon_events.trahison.edit.error.error_trahison_layout_door_place": "Une porte de couleur n'a pas de place où mener (la Nième paire d'une manche mène à la Nième place de cette manche). [%2$s] %1$s"
 }

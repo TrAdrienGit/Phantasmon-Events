@@ -15,6 +15,11 @@ public record Layout(String hub, int version, boolean draft, Instant updatedAt, 
 				content.cabins(), content.hidingSpots(), content.resultsBoard(), content.floors());
 	}
 
+	/** Non-blocking remarks on this plan ({@link LayoutValidator#warnings}); sent with it so the editor can show them. */
+	public List<LayoutValidator.Issue> getWarnings() {
+		return LayoutValidator.warnings(content());
+	}
+
 	public LayoutContent content() {
 		return new LayoutContent(zones, doors, roomSlots, cabins, hidingSpots, resultsBoard, floors);
 	}

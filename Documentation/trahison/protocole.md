@@ -1183,7 +1183,10 @@ lisible par machine, par exemple `round=2;missing=red_blue`).
 | Niveau | Contrôles | Brouillon |
 |---|---|---|
 | Structure (toujours) | Identifiants valides (`[A-Za-z0-9_-]`, 1 à 40) et uniques par genre ; types connus ; boîtes bien formées (minimum <= maximum) ; manches de 1 à 3 ; couleurs valides et différentes ; **aucune zone ne chevauche une autre** (des boîtes qui se touchent ne se chevauchent pas ; les boîtes d'une même zone peuvent se recouvrir) | Contrôlée |
-| Complétude | Champs obligatoires remplis ; chaque référence (zones d'une porte, zone et porte d'une cabine) existe et a le bon type ; par manche, exactement 3 portes de couleur, une par paire de couleurs ; 6 cabines, une par paire de couleurs et par côté ; 3 places par manche (9) ; exactement une porte finale | Sautée |
+| Structure, suite | **Deux places de salle ne se chevauchent pas** (boîtes de 48 x 48 x 24 depuis l'origine ; `ERROR_TRAHISON_LAYOUT_PLACE_OVERLAP`) | Contrôlée |
+| Complétude | Champs obligatoires remplis ; chaque référence (zones d'une porte, zone et porte d'une cabine) existe et a le bon type ; par manche, exactement 3 portes de couleur, une par paire de couleurs ; 6 cabines, une par paire de couleurs et par côté ; 3 places par manche (9) ; exactement une porte finale ; **chaque porte de couleur a sa place** : la N-ième paire de la manche (rouge-vert, rouge-bleu, vert-bleu) mène à la N-ième place de la manche, sinon `ERROR_TRAHISON_LAYOUT_DOOR_PLACE` (`info` : `door=…;round=…;pair=…;expects=place_N_of_round_R;places_in_round=…`) | Sautée |
+
+**Avertissements** (jamais bloquants) : la réponse de `GET`/`PUT` porte `warnings[]`, mêmes éléments `{ code, ids, info }` : `WARN_TRAHISON_LAYOUT_PLACE_ZONE` (une place recouvre une zone qui n'est pas de type `room_slot`), `WARN_TRAHISON_LAYOUT_FEW_SPOTS` (moins de cachettes que d'objets au tirage par défaut), `WARN_TRAHISON_LAYOUT_PLACE_FLOOR` (aucun étage ne contient la hauteur de l'origine d'une place). Pas de contrôle « place dans les limites du hub » : aucune limite n'existe dans le plan.
 
 Un hub reçoit au plus une écriture à la fois par numéro de version (clé primaire `hub, version`) : deux enregistrements
 simultanés donnent un `409 ERROR_TRAHISON_LAYOUT_CONFLICT` au second.
@@ -1292,6 +1295,7 @@ Préfixe `ERROR_TRAHISON_`. Tous sont envoyés par `EventsTrahisonSay` (genre `e
 | `ERROR_TRAHISON_ADMIN_REQUIRED` | WS | `create` ou `set_game_master` envoyé par un non-admin | `phantasmon_events.error.error_trahison_admin_required` |
 | `ERROR_TRAHISON_NOT_GAME_MASTER` | WS | `EventsTrahisonGm` d'un compte qui n'est pas maître du jeu de la partie (et, en `LOBBY`, n'est pas admin) | `phantasmon_events.error.error_trahison_not_game_master` |
 | `ERROR_TRAHISON_NO_DRAW` | WS | `redraw` ou `replace_room` quand la partie n'a pas de tirage | `phantasmon_events.error.error_trahison_no_draw` |
+| `ERROR_TRAHISON_PLAN_INVALID` | WS | `start` alors que le plan du hub est incomplet ou invalide (la validation complète de la section 4.1 échoue, y compris sans plan) | `phantasmon_events.error.error_trahison_plan_invalid` |
 | `ERROR_TRAHISON_NO_GAME_MASTER` | WS | `start` en mode `GAME_MASTER` sans aucun maître du jeu nommé | `phantasmon_events.error.error_trahison_no_game_master` |
 | `ERROR_TRAHISON_GAME_MASTER_PLAYS` | WS | **Plus émise depuis D12** (un maître du jeu peut jouer) ; le code reste défini | `phantasmon_events.error.error_trahison_game_master_plays` |
 | `ERROR_TRAHISON_NO_HUB` | WS | `hub` absent, ou qui n'est pas un hub miroir, et l'expéditeur ne joue ni ne dirige aucune partie | `phantasmon_events.error.error_trahison_no_hub` |

@@ -272,18 +272,14 @@ Ce que le code ne dit pas (ou ne vérifie pas) et qu'il faudra trancher ou const
 1. **Aucun hub, aucun rayon ni aucune position du complexe n'est fixé.** Le code ne dit ni le nom du hub de la soirée, ni son rayon, ni où
    se place l'origine par rapport au monde du serveur dédié. À décider par le propriétaire.
 2. **Pas de notion d'« aile » ni de « salle des portes » dans le plan** : ce sont des zones de type `doors`. Rien ne force trois ailes.
-3. **Le lien « porte de couleur -> bonne place » n'est pas validé** : seul l'ordre des places d'une manche compte (1re = rouge-vert, 2e = rouge-bleu,
-   3e = vert-bleu). Une erreur donne une salle dans la mauvaise aile, sans message.
+3. **Le lien « porte de couleur -> bonne place » est validé** (`ERROR_TRAHISON_LAYOUT_DOOR_PLACE`) : la N-ième paire d'une manche (rouge-vert, rouge-bleu, vert-bleu) mène à la N-ième place de cette manche, dans l'ordre de la liste ; une place manquante est refusée avec ce lien écrit dans le message. Ce qui reste non vérifié : que l'ordre des places corresponde à ce que tu as construit.
 4. **La `Zone B` d'une porte de couleur n'a pas à être une `room_slot`** pour que le plan soit accepté (seule la `room_exit` en dépend pour son lien de groupe).
-5. **Pas de contrôle** que la boîte d'une place soit libre des autres zones, que deux places ne se recouvrent pas, que le complexe tienne dans le rayon du hub,
-   que les ouvertures d'une place soient raccordées, qu'il y ait un hall, un nombre de portes `room_exit` ou de cachettes.
+5. **Pas de contrôle** que les ouvertures d'une place soient raccordées, qu'il y ait un hall, un nombre de portes `room_exit`, ni que le complexe tienne dans un rayon de hub (**aucun rayon de hub n'existe**, voir le point 1 : le contrôle « place hors du hub » est donc sauté). Désormais contrôlés : deux places qui se chevauchent (erreur `PLACE_OVERLAP`), une boîte de place qui recouvre une zone autre que `room_slot` (avertissement `WARN_TRAHISON_LAYOUT_PLACE_ZONE`).
 6. **Taille et position exactes des boîtes de porte** : aucune règle (ni qu'une porte de couleur soit à l'entrée de la place plutôt que dans le couloir). Seul
    conseil : couvrir toute l'ouverture, 2 blocs de large au moins pour les couleurs.
 7. **Pas de réglage de symbole ni de bloc de fermeture par porte dans le plan** (tout est dans `DoorBlocks` et `DoorPanels`).
 8. **La porte `plain` ne sert à rien de précis** dans le code (toujours ouverte, forçable par le maître du jeu). Le cadenas des objets agit sur « une porte ordinaire ou
    une cabine » ; je n'ai pas vérifié quelles portes il accepte.
-9. **Un jeu ne démarre-t-il que sur un plan complet ?** La documentation de `Layout` le dit ; je n'ai trouvé aucun contrôle au démarrage. Enregistre en
-   complet par prudence.
+9. **Un jeu ne démarre que sur un plan complet et valide** (corrigé) : `start` refuse sinon avec `ERROR_TRAHISON_PLAN_INVALID`, y compris un hub sans plan, sauf pour une partie d'essai d'une salle (`test_room`), qui se joue sans le complexe. Les **avertissements** (non bloquants) sont renvoyés avec le plan (`warnings[]`) : `WARN_TRAHISON_LAYOUT_PLACE_ZONE`, `WARN_TRAHISON_LAYOUT_FEW_SPOTS` (moins de cachettes dans le plan que d'objets au tirage par défaut), `WARN_TRAHISON_LAYOUT_PLACE_FLOOR` (des étages existent mais aucun ne contient la hauteur de l'origine d'une place). L'éditeur du client ne les affiche pas encore.
 10. **Le rôle exact des types `corridor` et `alcove` pour le son** (T5) : lu seulement dans `plan.md` et `T5-vocal.md` (une zone = un groupe sonore) ; non vérifié dans le code du vocal.
-11. **Sol de la place** : la salle est écrite avec son sol à `y = 0` ; que le sol de ton couloir soit au même niveau que `origine.y` est une
-    condition de raccordement que rien ne vérifie.
+11. **Sol de la place** : la salle est écrite avec son sol à `y = 0` ; que le sol de ton couloir soit au même niveau que `origine.y` reste une condition de raccordement non vérifiée (seul l'avertissement `PLACE_FLOOR` regarde la hauteur par rapport aux étages).

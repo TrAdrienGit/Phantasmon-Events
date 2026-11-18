@@ -43,6 +43,20 @@ public final class LayoutValidator {
 	public static final String ROOM_SLOTS = "ERROR_TRAHISON_LAYOUT_ROOM_SLOTS";
 	public static final String FINAL_DOOR = "ERROR_TRAHISON_LAYOUT_FINAL_DOOR";
 	public static final String FLOOR_OVERLAP = "ERROR_TRAHISON_LAYOUT_FLOOR_OVERLAP";
+	/** Two room places (48 x 48 x 24 boxes from their origin) share blocks. */
+	public static final String PLACE_OVERLAP = "ERROR_TRAHISON_LAYOUT_PLACE_OVERLAP";
+	/** A colour door whose linked place (the Nth place of its round for the Nth colour pair) does not exist. */
+	public static final String DOOR_PLACE = "ERROR_TRAHISON_LAYOUT_DOOR_PLACE";
+
+	/** Warnings (non-blocking, see {@link #warnings}). */
+	public static final String WARN_PLACE_ZONE = "WARN_TRAHISON_LAYOUT_PLACE_ZONE";
+	public static final String WARN_FEW_SPOTS = "WARN_TRAHISON_LAYOUT_FEW_SPOTS";
+	public static final String WARN_PLACE_FLOOR = "WARN_TRAHISON_LAYOUT_PLACE_FLOOR";
+
+	/** Size of a room place, in blocks (x, y, z). */
+	public static final int PLACE_SIZE_X = 48;
+	public static final int PLACE_SIZE_Y = 24;
+	public static final int PLACE_SIZE_Z = 48;
 
 	private static final Pattern ID = Pattern.compile("[A-Za-z0-9_-]{1,40}");
 
@@ -138,6 +152,15 @@ public final class LayoutValidator {
 			}
 			if (board.height() != null && (board.height() < ResultsBoard.MIN_SIZE || board.height() > ResultsBoard.MAX_SIZE)) {
 				issues.add(new Issue(BAD_BOX, l("results_board"), "height=" + board.height()));
+			}
+		}
+		for (int i = 0; i < layout.roomSlots().size(); i++) {
+			for (int j = i + 1; j < layout.roomSlots().size(); j++) {
+				RoomSlot a = layout.roomSlots().get(i);
+				RoomSlot b = layout.roomSlots().get(j);
+				if (a.origin() != null && b.origin() != null && placeBox(a).overlaps(placeBox(b))) {
+					issues.add(new Issue(PLACE_OVERLAP, l(a.id(), b.id()), null));
+				}
 			}
 		}
 		for (RoomSlot slot : layout.roomSlots()) {
@@ -293,6 +316,7 @@ public final class LayoutValidator {
 		}
 
 		roundDoors(layout, issues);
+		doorPlaces(layout, issues);
 		cabins(layout, issues);
 		roomSlots(layout, issues);
 		long finals = layout.doors().stream().filter(d -> "final".equals(d.type())).count();
@@ -388,5 +412,72 @@ public final class LayoutValidator {
 						.map(RoomSlot::id).toList(), "round=" + round + ";count=" + count));
 			}
 		}
+	}
+
+	/** The box of blocks a place covers: its origin is the minimum corner. */
+	public static Box placeBox(RoomSlot slot) {
+		Pos o = slot.origin();
+		return new Box(o.x(), o.y(), o.z(), o.x() + PLACE_SIZE_X - 1, o.y() + PLACE_SIZE_Y - 1, o.z() + PLACE_SIZE_Z - 1);
+	}
+
+	/**
+	 * A colour door of round r and colour pair number n (0 red-green, 1 red-blue, 2 green-blue) leads to the (n+1)th place of
+	 * round r, in the order of the plan's list. A missing place is an error that says the whole mapping.
+	 */
+	private static void doorPlaces(LayoutContent layout, List<Issue> issues) {
+		for (LayoutDoor door : layout.doors()) {
+			if (!"color".equals(door.type()) || door.round() == null || door.round() < 1 || door.round() > ROUNDS) {
+				continue;
+			}
+			java.util.Optional<Door> pair = doorPair(door);
+			if (pair.isEmpty()) {
+				continue;
+			}
+			int n = Door.ALL.indexOf(pair.get());
+			long places = layout.roomSlots().stream().filter(s -> s.round() != null && s.round().equals(door.round())).count();
+			if (n >= 0 && places <= n) {
+				issues.add(new Issue(DOOR_PLACE, l(door.id()), "door=" + door.id() + ";round=" + door.round() + ";pair="
+						+ pairId(pair.get()) + ";expects=place_" + (n + 1) + "_of_round_" + door.round() + ";places_in_round=" + places));
+			}
+		}
+	}
+
+	/**
+	 * Non-blocking remarks on a plan, for the editor to show and the game master to weigh; never refuse a save or a start:
+	 * <ul>
+	 * <li>a place's box overlaps a zone that is not of type {@code room_slot} (a room_slot zone inside its place is the
+	 * intended nesting; two zones overlapping each other are an error already, {@link #ZONE_OVERLAP});</li>
+	 * <li>fewer hiding places in the plan than objects in the default item draw (the rooms' own hiding places take the rest);</li>
+	 * <li>floors are declared and none contains a place's origin height.</li>
+	 * </ul>
+	 */
+	public static List<Issue> warnings(LayoutContent layout) {
+		List<Issue> out = new ArrayList<>();
+		for (RoomSlot slot : layout.roomSlots()) {
+			if (slot.origin() == null) {
+				continue;
+			}
+			Box box = placeBox(slot);
+			for (LayoutZone zone : layout.zones()) {
+				if ("room_slot".equals(zone.type())) {
+					continue;
+				}
+				for (Box zb : zone.boxes()) {
+					if (zb != null && zb.isValid() && box.overlaps(zb)) {
+						out.add(new Issue(WARN_PLACE_ZONE, l(slot.id(), zone.id()), null));
+						break;
+					}
+				}
+			}
+			List<Floor> declared = layout.floors().stream().filter(f -> f.yMin() != null && f.yMax() != null).toList();
+			if (!declared.isEmpty() && declared.stream().noneMatch(f -> slot.origin().y() >= f.yMin() && slot.origin().y() <= f.yMax())) {
+				out.add(new Issue(WARN_PLACE_FLOOR, l(slot.id()), "y=" + slot.origin().y()));
+			}
+		}
+		int items = com.mystaria.phantasmon_backend.events.trahison.rules.Item.values().length;
+		if (layout.hidingSpots().size() < items) {
+			out.add(new Issue(WARN_FEW_SPOTS, l(), "spots=" + layout.hidingSpots().size() + ";items=" + items));
+		}
+		return out;
 	}
 }

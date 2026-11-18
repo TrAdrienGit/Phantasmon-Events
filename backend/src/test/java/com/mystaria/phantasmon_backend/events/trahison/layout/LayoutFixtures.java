@@ -4,21 +4,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** A complete, valid plan for the tests: the three rounds, six cabins, nine places and a final door. */
-final class LayoutFixtures {
+public final class LayoutFixtures {
 
-	static final String[] PAIRS = { "red_green", "red_blue", "green_blue" };
+	public static final String[] PAIRS = { "red_green", "red_blue", "green_blue" };
 	static final String[][] COLORS = { { "red", "green" }, { "red", "blue" }, { "green", "blue" } };
 
 	private LayoutFixtures() {
 	}
 
 	/** A 5 x 5 x 5 box at grid cell {@code n} (cells never touch). */
-	static Box cell(int n) {
+	public static Box cell(int n) {
 		int x = n * 10;
 		return new Box(x, 64, 0, x + 4, 68, 4);
 	}
 
-	static LayoutContent complete() {
+	public static LayoutContent complete() {
 		List<LayoutZone> zones = new ArrayList<>();
 		List<LayoutDoor> doors = new ArrayList<>();
 		List<RoomSlot> slots = new ArrayList<>();
@@ -34,7 +34,7 @@ final class LayoutFixtures {
 				zones.add(new LayoutZone("slot_" + round + "_" + p, "room_slot", List.of(cell(n++))));
 				doors.add(new LayoutDoor("door_" + round + "_" + PAIRS[p], "color", cell(n++), "doors_" + round,
 						"slot_" + round + "_" + p, round, List.of(COLORS[p])));
-				slots.add(new RoomSlot("place_" + round + "_" + p, round, new Pos(n * 10, 64, 100), "north"));
+				slots.add(new RoomSlot("place_" + round + "_" + p, round, new Pos(slots.size() * 60, 64, 100), "north"));
 			}
 		}
 		for (int p = 0; p < 3; p++) {

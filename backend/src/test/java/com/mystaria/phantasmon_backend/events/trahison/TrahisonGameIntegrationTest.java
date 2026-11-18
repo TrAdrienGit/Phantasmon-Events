@@ -157,11 +157,18 @@ class TrahisonGameIntegrationTest {
 		}
 	}
 
+	/** Saves {@code plan} as the hub's complete plan (the production wiring refuses to start a game without one). */
+	private int savePlan(com.mystaria.phantasmon_backend.events.trahison.layout.LayoutContent plan) {
+		return layouts.save(admin.uuid, hub, new com.mystaria.phantasmon_backend.events.trahison.layout.LayoutRequest(null, false,
+			plan.zones(), plan.doors(), plan.roomSlots(), plan.cabins(), plan.hidingSpots(), plan.resultsBoard(), plan.floors())).version();
+	}
+
 	@BeforeEach
 	void setUp() throws Exception {
 		hub = "t_" + UUID.randomUUID().toString().substring(0, 8);
 		String adminName = "Op" + UUID.randomUUID().toString().substring(0, 8);
 		admin = new Client(adminName);
+		savePlan(com.mystaria.phantasmon_backend.events.trahison.layout.LayoutFixtures.complete()); // a game only starts on a complete plan
 		a = new Client("Pa" + UUID.randomUUID().toString().substring(0, 8));
 		b = new Client("Pb" + UUID.randomUUID().toString().substring(0, 8));
 		spectator = new Client("Sp" + UUID.randomUUID().toString().substring(0, 8));
@@ -498,13 +505,20 @@ class TrahisonGameIntegrationTest {
 
 	@Test
 	void doorsAndZonesGoThroughTheHandler() throws Exception {
+		// The complete plan, with its first colour door renamed d_color and a plain door d_plain added.
+		var base = com.mystaria.phantasmon_backend.events.trahison.layout.LayoutFixtures.complete();
 		var box = new com.mystaria.phantasmon_backend.events.trahison.layout.Box(0, 64, 0, 0, 66, 2);
-		var door = new com.mystaria.phantasmon_backend.events.trahison.layout.LayoutDoor("d_plain", "plain", box, "hall", "hall", null, null);
-		var color = new com.mystaria.phantasmon_backend.events.trahison.layout.LayoutDoor("d_color", "color", box, "hall", "hall", 1,
-			List.of("red", "green"));
-		var zone = new com.mystaria.phantasmon_backend.events.trahison.layout.LayoutZone("hall", "hall", List.of(box));
-		int version = layouts.save(admin.uuid, hub, new com.mystaria.phantasmon_backend.events.trahison.layout.LayoutRequest(null, true,
-			List.of(zone), List.of(door, color), List.of(), List.of(), List.of())).version();
+		var doors = new ArrayList<>(base.doors());
+		for (int i = 0; i < doors.size(); i++) {
+			var d = doors.get(i);
+			if (d.id().equals("door_1_red_green")) {
+				doors.set(i, new com.mystaria.phantasmon_backend.events.trahison.layout.LayoutDoor("d_color", "color", d.block(),
+					d.zoneA(), d.zoneB(), d.round(), d.colors(), d.threshold()));
+			}
+		}
+		doors.add(new com.mystaria.phantasmon_backend.events.trahison.layout.LayoutDoor("d_plain", "plain", box, "hall", "hall", null, null));
+		int version = savePlan(new com.mystaria.phantasmon_backend.events.trahison.layout.LayoutContent(base.zones(), doors,
+			base.roomSlots(), base.cabins(), base.hidingSpots()));
 		createGame("{\"action\":\"create\",\"test_room\":\"room0\",\"mode\":\"GAME_MASTER\",\"fast\":60}");
 		act(a, "{\"action\":\"join\"}");
 		act(b, "{\"action\":\"join\"}");

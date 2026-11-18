@@ -493,3 +493,11 @@ Guide pas à pas : [`guide-editeur-salle.md`](guide-editeur-salle.md), section �
 - Construire `archives` en entier d'après sa fiche (décor, 20 emplacements dont 3 cachettes), enregistrer (version 1), puis `room load archives` dans un autre monde : tout revient placé (aucun fantôme).
 - Essai seul : étape `porte` (`three_levers`), `solo` = `true` et `hold` = 30, enregistrer ; partie avec `test_room` = `archives` ; jouer la chaîne ; retirer `solo`, remettre `hold` 12, enregistrer.
 - Mêmes gestes pour `serre` (deux postes `twin_screens`), `bal` (zone sombre `power_spot`, boîte vide) et `crypte` (récompense `battle_puzzle` donnée à la résolution) : chacune s'enregistre sans autre erreur que ce qu'on n'a pas construit.
+
+## Plan : démarrage refusé, places qui se chevauchent, portes sans place
+
+- Sur un hub sans plan (ou avec un brouillon incomplet), inscrire 9 joueurs et lancer `start` : la partie reste au salon, message « le plan du hub est incomplet ou invalide ».
+- Dans l'éditeur, décaler une place de salle de moins de 48 blocs de sa voisine puis enregistrer en complet : refus `PLACE_OVERLAP` avec les deux identifiants. À 48 blocs exactement : accepté.
+- Retirer la 3e place de la manche 2 : refus `DOOR_PLACE` sur la porte vert-bleu de la manche 2, qui dit « place 3 de la manche 2 ».
+- Enregistrer un plan complet avec moins de 12 cachettes, ou une zone de couloir dans la boîte d'une place : l'enregistrement passe et `warnings[]` (GET du plan) contient `FEW_SPOTS` / `PLACE_ZONE`.
+- Déclarer un étage 0..10 alors qu'une place est à y = 64 : avertissement `PLACE_FLOOR`.

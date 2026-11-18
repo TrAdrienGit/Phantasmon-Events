@@ -117,3 +117,48 @@ Pour essayer une salle seule, la propriétaire règle à la main `solo` et `hold
 - [ ] Une salle d'essai séparée par fiche (`<id>_essai`) qui garde `solo` en permanence
 
 Ta réponse :
+
+## D270 : démarrer une partie sans aucun plan
+
+`start` refuse désormais tout hub dont le plan n'est pas complet et valide, même sans plan du tout. Les essais sans plan ne sont plus possibles en production.
+
+- [x] Refuser aussi un hub sans plan *(par défaut)*
+- [ ] Laisser démarrer un hub sans aucun plan (essais), refuser seulement un plan partiel
+
+Ta réponse :
+
+## D271 : place hors des limites du hub
+
+Aucun rayon ni limite de hub n'existe dans le plan : le contrôle « place hors du hub » est sauté.
+
+- [x] Sauter le contrôle tant qu'aucune limite n'est enregistrée *(par défaut)*
+- [ ] Ajouter au plan une boîte de limites du hub (`bounds`) et refuser une place qui en sort
+
+Ta réponse :
+
+## D272 : recouvrements de zones
+
+Tout recouvrement entre deux zones est déjà une erreur bloquante ; l'avertissement porte donc sur la boîte d'une place qui recouvre une zone autre que `room_slot`.
+
+- [x] Avertir seulement pour les zones qui ne sont pas `room_slot` *(par défaut)*
+- [ ] Autoriser l'imbrication volontaire de zones (une zone dans une autre) et la signaler par un avertissement
+
+Ta réponse :
+
+## D273 : où voir les avertissements du plan
+
+Le backend renvoie `warnings[]` avec le plan, mais l'éditeur du client ne les affiche pas encore.
+
+- [x] Backend seulement pour l'instant *(par défaut)*
+- [ ] Les afficher dans l'écran d'enregistrement de l'éditeur
+
+Ta réponse :
+
+## D274 : lien porte de couleur, place
+
+Le lien est implicite : la N-ième paire d'une manche mène à la N-ième place de la manche (ordre de la liste).
+
+- [x] Garder l'ordre de la liste, avec un message explicite *(par défaut)*
+- [ ] Ajouter un champ `place` à chaque porte de couleur
+
+Ta réponse :

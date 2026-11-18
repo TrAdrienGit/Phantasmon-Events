@@ -25,6 +25,9 @@ class GamePersistenceIntegrationTest {
 	private GameStore store;
 
 	@Autowired
+	private com.mystaria.phantasmon_backend.events.trahison.layout.LayoutService layouts;
+
+	@Autowired
 	private JdbcTemplate jdbc;
 
 	@Test
@@ -32,10 +35,13 @@ class GamePersistenceIntegrationTest {
 		String hub = "persist-" + UUID.randomUUID();
 		Settings withRoom = Settings.fast(60);
 		withRoom.testRoom = "room0"; // D73: a game needs nine rooms in the bank, or a test room
+		var plan = com.mystaria.phantasmon_backend.events.trahison.layout.LayoutFixtures.complete();
 		Game g = service.create(hub, withRoom, 77L);
 		for (int i = 0; i < 9; i++) {
 			service.join(hub, new UUID(1, i), "p" + i);
 		}
+		layouts.save(new UUID(9, 9), hub, new com.mystaria.phantasmon_backend.events.trahison.layout.LayoutRequest(null, false,
+			plan.zones(), plan.doors(), plan.roomSlots(), plan.cabins(), plan.hidingSpots())); // a game only starts on a complete plan
 		service.start(hub);
 		service.next(hub); // DOORS
 

@@ -84,6 +84,7 @@ public class GameService {
 	private volatile GameDraws draws;
 	/** Where the plan of a hub comes from; null in tests that play without a plan (then there is no door). */
 	private volatile LayoutLookup layouts;
+	private volatile boolean completePlanRequired;
 	/** The plan of each game, as of the version it started with (read once, then kept). */
 	private final Map<UUID, LayoutContent> plans = new ConcurrentHashMap<>();
 	/** Game id to when the game masters last got a zone update, and the games with one scheduled. */
@@ -108,6 +109,11 @@ public class GameService {
 	/** Plugs the room draw in: a game then draws its nine rooms when it is created (T4.1). */
 	public void useDraws(GameDraws gameDraws) {
 		this.draws = gameDraws;
+	}
+
+	/** From now on {@link #start} refuses a hub whose plan is incomplete or invalid (production wiring; tests opt in). */
+	public void requireCompletePlan() {
+		this.completePlanRequired = true;
 	}
 
 	/** Plugs the plan source in: a game then reads the plan of its hub when it starts and computes its doors from it. */
@@ -260,6 +266,24 @@ public class GameService {
 		}
 	}
 
+	/** When a complete plan is required: refuses the start unless the hub's latest plan passes the complete validation. */
+	private void checkPlan(Game g) {
+		LayoutLookup lookup = layouts;
+		if (!completePlanRequired || lookup == null) {
+			return;
+		}
+		if (g.settings.testRoom != null && !g.settings.testRoom.isBlank()) {
+			return; // trying one room (D73) must work in a builder's world without the full complex
+		}
+		List<com.mystaria.phantasmon_backend.events.trahison.layout.LayoutValidator.Issue> issues =
+			com.mystaria.phantasmon_backend.events.trahison.layout.LayoutValidator.validate(lookup.find(g.hub, 0).content(), false);
+		if (!issues.isEmpty()) {
+			StringBuilder sb = new StringBuilder("the plan of hub " + g.hub + " is incomplete or invalid (" + issues.size() + " problems): ");
+			issues.stream().limit(5).forEach(i -> sb.append(i.code()).append(i.ids()).append(i.info() == null ? "" : " " + i.info()).append("; "));
+			throw new TrahisonException(TrahisonException.PLAN_INVALID, sb.toString());
+		}
+	}
+
 	/** Needs exactly nine players. Player {@code i} (join order) gets bracelet {@code i} at 3 points. */
 	public Game start(String hub) {
 		Game g = require(hub);
@@ -274,6 +298,7 @@ public class GameService {
 			if (g.settings.mode == Mode.GAME_MASTER && g.gameMasters.isEmpty()) {
 				throw new TrahisonException(TrahisonException.NO_GAME_MASTER, "game master mode needs a game master");
 			}
+			checkPlan(g);
 			g.bracelets = new ArrayList<>();
 			for (int i = 0; i < PLAYERS; i++) {
 				g.bracelets.add(new BraceletState(i, Outcome.START_POINTS));

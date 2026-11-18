@@ -1455,5 +1455,8 @@
   "phantasmon_events.trahison.room_edit.mechanism.sliding_blocks": "sliding_blocks",
   "phantasmon_events.trahison.room_edit.mechanism.rotating_tiles": "rotating_tiles",
   "phantasmon_events.trahison.room_edit.mechanism.safe_dial": "safe_dial",
-  "phantasmon_events.trahison.room_edit.mechanism.twin_screens": "twin_screens"
+  "phantasmon_events.trahison.room_edit.mechanism.twin_screens": "twin_screens",
+  "phantasmon_events.error.error_trahison_plan_invalid": "Trahison: the hub plan is incomplete or invalid, the game cannot start. Fix it in the plan editor.",
+  "phantasmon_events.trahison.edit.error.error_trahison_layout_place_overlap": "Two room places overlap (48 x 48 x 24 blocks from their origins): %1$s.",
+  "phantasmon_events.trahison.edit.error.error_trahison_layout_door_place": "A colour door has no place to lead to (the Nth pair of a round leads to the Nth place of that round). [%2$s] %1$s"
 }
