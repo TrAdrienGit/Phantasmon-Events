@@ -322,8 +322,25 @@ spéciaux désactivés sur Glitch (Lunettes Choix, Veste de Combat, Évoluroc en
 Écaille Océan, Force Soleil, Batterie), Bénédiction Lunaire 1/3, Grelot Coque 1/4 sur Ashen Beach, Mode Transe de
 Darumacho (Ashen Beach, et Burning/Superheated pour la forme de Galar).
 
-Restent hors de portée : les graines de Reborn (objets absents de Cobblemon : Elemental, Magical, Telluric,
-Synthetic Seed) ; Frénésie et Repli Factice (absents de Showdown) ; Boule Roc qui continue sur Crystal Cavern (pas
+Restent hors de portée : Frénésie et Repli Factice (absents de Showdown) ; Boule Roc qui continue sur Crystal Cavern (pas
 de coup à 0 dégât dans Showdown) ; le second Pion d'un combat double sauvage ; sur Glitch, en attaque de zone, la Déf.
 Spé. retenue est celle de la dernière cible. Médic Nature, Régé-Force et les « 5 capacités de zone » de Flower Garden
 n'ont en fait pas de code de terrain dans Reborn.
+
+**2026-11-19 : les objets propres à Reborn.**
+
+- Graines Élémentaire, Magique, Tellurique, Synthétique et Roche Amplifield : déclarées dans le Dex de Showdown
+  (`ITEMS` dans `engine.js`, nom, Dégommage) et tenues « virtuellement » comme les Méga-Gemmes de Phantasmon : Events
+  les ajoute à la liste de l'éditeur de PC par `VirtualItems.register` (point d'extension du client, le cœur ne les
+  nomme pas). Icônes : `tools/reborn_item_icons.py`.
+- `seedCheck` (Battle.rb) : à l'entrée d'un Pokémon et à chaque changement de terrain, chaque porteur de la graine du
+  terrain l'utilise, du plus rapide au plus lent : ses stats (`seed.stats` de fields.json, Contestation comprise), le
+  code propre au terrain (Vœu de 3/4 des PV sur Misty/Rainbow/Starlight, Toxik grave sur Corrosive Mist et Murkwater,
+  pics de glace sur Icy selon les Picots, chute de pierres sur Rocky et Cave selon l'efficacité Roche, Piège de Roc
+  des deux côtés sur Wasteland, type Eau sous l'eau, ??? sur Glitch, confusion sur Psychic Terrain), puis l'effet
+  (Chargeur, Racines, Reflet Magik, Coup d'Main, Anneau Hydro, Affilage, Vol Magnétik, Puissance, Torche, Blockhaus,
+  Pico-Défense, Bouclier Royal, Danse Flamme / Tourbi-Sable sur soi, recharge façon Ultralaser), la graine consommée,
+  et Flower Garden qui pousse d'un stade.
+- Écart : Carapiège (Superheated) ne donne que sa Déf. +1 (le piège demande la capacité choisie) ; Puissance donne le
+  +2 de Showdown.
+- Textes `league_reborn.text.seed_*` FR/EN. `test.js` : 5 tests de plus, tous verts.

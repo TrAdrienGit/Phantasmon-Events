@@ -155,6 +155,8 @@
 			for (const pokemon of battle.getAllActive()) battle.runEvent('LeagueRebornField', pokemon, null, null, to);
 			// Showdown's terrain watchers (Quark Drive, Mimicry, the seeds) look again (field.isTerrain is ours).
 			battle.eachEvent('TerrainChange');
+			// Every active seed holder looks again (seedCheck after setField).
+			seedCheck(battle, battle.getAllActive());
 		},
 		backup(battle) {
 			const s = LR.state(battle);
@@ -2156,6 +2158,12 @@
 	function patchDex(dex) {
 		if (PATCHED_DEX.has(dex)) return;
 		PATCHED_DEX.add(dex);
+		// Reborn's items, in a mod's Dex loaded before the engine.
+		for (const id of Object.keys(ITEMS)) {
+			if (dex.data.Items[id]) continue;
+			dex.data.Items[id] = Dex.data.Items[id];
+			if (dex.items.itemCache) dex.items.itemCache.delete(id);
+		}
 		const byEntry = new Map();
 		for (const [kind, id, key, make] of PATCHES) {
 			const k = kind + ':' + id;
@@ -2186,6 +2194,134 @@
 			dex.conditions.conditionCache.delete(id);
 			if (dex.items.itemCache) dex.items.itemCache.delete(id);
 		}
+	}
+
+	// --- Reborn's own items (2026-11-19) ----------------------------------------------------------------------
+
+	/**
+	 * The four seeds and the Amplifield Rock: Reborn items Showdown never had. Known to the Dex so a Pokémon may hold
+	 * them (names, Fling, Knock Off); what they do is the engine's (seedCheck below, the field durations above).
+	 */
+	const ITEMS = {
+		elementalseed: ['Elemental Seed', 'Boosts and adds an effect on an elemental field (Electric, Grassy, Misty, Burning...). Single use.'],
+		magicalseed: ['Magical Seed', 'Boosts and adds an effect on a magical field (Crystal Cavern, Holy, Fairy Tale, Starlight...). Single use.'],
+		telluricseed: ['Telluric Seed', 'Boosts and adds an effect on an earthly field (Swamp, Desert, Rocky, Forest, Mountain...). Single use.'],
+		syntheticseed: ['Synthetic Seed', 'Boosts and adds an effect on a synthetic field (Factory, Chess Board, Big Top, Mirror...). Single use.'],
+		amplifieldrock: ['Amplifield Rock', 'Holder\'s fields and terrains last twice as long.'],
+	};
+	let itemNum = -9100;
+	for (const [id, [name, desc]] of Object.entries(ITEMS)) {
+		Dex.data.Items[id] = {name, num: itemNum--, gen: 9, fling: {basePower: id === 'amplifieldrock' ? 60 : 10}, desc, shortDesc: desc};
+		if (Dex.items.itemCache) Dex.items.itemCache.delete(id);
+	}
+
+	/** Reborn's Protect-like seed effects, and the volatile each one is in Showdown. */
+	const SEED_VOLATILES = {
+		Charge: 'charge', Ingrain: 'ingrain', MagicCoat: 'magiccoat', HelpingHand: 'helpinghand', AquaRing: 'aquaring',
+		LaserFocus: 'laserfocus', MagnetRise: 'magnetrise', FocusEnergy: 'focusenergy', FlashFire: 'flashfire',
+		BanefulBunker: 'banefulbunker', SpikyShield: 'spikyshield', KingsShield: 'kingsshield',
+	};
+
+	/**
+	 * seedCheck (Battle.rb): every active Pokémon holding the field's seed uses it, fastest first: its stat boosts,
+	 * the field's own extra, the effect, the seed gone. Run on a field change and when a Pokémon comes in.
+	 */
+	function seedCheck(battle, pokemons) {
+		const d = LR.data(battle);
+		const seed = d && d.seed;
+		if (!seed || !seed.item) return;
+		const list = pokemons.filter((p) => p && p.isActive && !p.fainted && p.hp > 0 && p.item === seed.item && !p.ignoringItem());
+		if (list.length > 1) battle.speedSort(list);
+		const field = LR.field(battle);
+		for (const pokemon of list) {
+			if (LR.field(battle) !== field || pokemon.item !== seed.item) continue;
+			LR.say(battle, 'text', 'seed_' + seed.item, pokemon.name);
+			const stats = seed.stats || {};
+			if (Object.keys(stats).length) battle.boost(Object.assign({}, stats), pokemon, pokemon, battle.dex.items.get(seed.item));
+			seedExtra(battle, pokemon, field);
+			seedEffect(battle, pokemon, seed);
+			pokemon.useItem();
+			// Flower Garden grows a stage on its seed (stages 1 to 4).
+			const stage = FLOWERGARDEN.indexOf(LR.field(battle));
+			if (stage >= 0 && stage < 4) {
+				LR.say(battle, 'text', 'seed_garden');
+				LR.set(battle, FLOWERGARDEN[stage + 1], 0, {growth: true});
+			}
+		}
+	}
+
+	/** The part of seedCheck written per field. */
+	function seedExtra(battle, pokemon, field) {
+		switch (field) {
+		case 'misty': case 'rainbow': case 'starlight': {
+			// Wish, healing three quarters of the holder's HP.
+			if (pokemon.side.addSlotCondition(pokemon, 'wish', pokemon)) {
+				const wish = pokemon.side.slotConditions[pokemon.position].wish;
+				if (wish) wish.hp = Math.floor((pokemon.maxhp + 1) * 0.75);
+				LR.say(battle, 'text', 'seed_wish', pokemon.name);
+			}
+			break;
+		}
+		case 'corrosivemist': case 'murkwatersurface':
+			pokemon.trySetStatus('tox', pokemon);
+			break;
+		case 'icy': {
+			if (pokemon.isGrounded() && !pokemon.hasAbility('magicguard')) {
+				const spikes = pokemon.side.sideConditions.spikes;
+				const layers = spikes ? spikes.layers || 1 : 0;
+				battle.damage(pokemon.baseMaxhp / [8, 8, 6, 4][Math.min(layers, 3)], pokemon, pokemon);
+				LR.say(battle, 'text', 'seed_spikes', pokemon.name);
+			}
+			break;
+		}
+		case 'rocky': case 'cave': {
+			if (!pokemon.hasAbility(['magicguard', 'rockhead'])) {
+				const eff = Math.pow(2, Math.max(-6, Math.min(6, battle.dex.getEffectiveness('Rock', pokemon))));
+				battle.damage(pokemon.baseMaxhp * eff / 4, pokemon, pokemon);
+				LR.say(battle, 'text', 'seed_rocks', pokemon.name);
+			}
+			break;
+		}
+		case 'wasteland':
+			for (const side of battle.sides) side.addSideCondition('stealthrock', pokemon);
+			break;
+		case 'underwater':
+			if (pokemon.setType('Water')) battle.add('-start', pokemon, 'typechange', 'Water');
+			break;
+		case 'glitch':
+			if (pokemon.setType('???')) battle.add('-start', pokemon, 'typechange', '???');
+			break;
+		case 'psyterrain':
+			pokemon.addVolatile('confusion', pokemon);
+			break;
+		default:
+		}
+	}
+
+	/** The seed's effect (effects[effect] = duration in Reborn), as Showdown's matching volatile. */
+	function seedEffect(battle, pokemon, seed) {
+		const effect = seed.effect;
+		if (!effect) return;
+		if (effect === 'MultiTurnAttack') {
+			// Caught in its own Fire Spin / Sand Tomb, as Reborn does: four turns of the trap's damage.
+			const move = battle.dex.moves.get(toID(seed.duration));
+			if (pokemon.addVolatile('partiallytrapped', pokemon, move)) {
+				const trap = pokemon.volatiles.partiallytrapped;
+				if (trap) trap.duration = 5;
+			}
+			return;
+		}
+		if (effect === 'HyperBeam') {
+			// It must recharge: its next turn is lost (the volatile goes when that turn is).
+			pokemon.addVolatile('mustrecharge', pokemon);
+			return;
+		}
+		if (effect === 'ShellTrap') return; // stats only: Shell Trap's trap needs the move chosen
+		const id = SEED_VOLATILES[effect === 'Protect' ? seed.duration : effect];
+		if (!id) return;
+		pokemon.addVolatile(id, pokemon);
+		const v = pokemon.volatiles[id];
+		if (v && typeof seed.duration === 'number' && seed.duration > 0 && id !== 'focusenergy') v.duration = seed.duration;
 	}
 
 	// --- The rule ----------------------------------------------------------------------------------------------
@@ -2391,6 +2527,7 @@
 		},
 		onSwitchIn(pokemon) {
 			for (const h of LR.hooks(this, 'entry')) h.call(this, pokemon);
+			seedCheck(this, [pokemon]);
 		},
 
 		/** A temporary field counts its turns down at the end of the turn (Battle#pbEndOfRoundPhase, "Terrain"). */
@@ -2405,5 +2542,5 @@
 		},
 	};
 
-	return {LR, HOOKS, ALL, CONDITIONS, EFFECTS, FIELDS};
+	return {LR, HOOKS, ALL, CONDITIONS, EFFECTS, FIELDS, seedCheck};
 });

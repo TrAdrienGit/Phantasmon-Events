@@ -544,6 +544,57 @@ test('Big Top: the strength meter, Belly Drum +1 Def, Clangorous Soul half HP fo
 	assert.strictEqual(lost(b, 0), Math.floor(active(b, 0).maxhp / 2));
 });
 
+test('Seeds: Elemental Seed on Electric Terrain, +1 Spe, Charge, used up', () => {
+	const b = battle('electerrain', [mon('Pikachu', ['thunderbolt'], {item: 'elementalseed'})], [mon('Snorlax', ['splash'])]);
+	const p = b.sides[0].active[0];
+	assert.strictEqual(p.boosts.spe, 1);
+	assert.ok(p.volatiles.charge, 'charged');
+	assert.strictEqual(p.item, '');
+	assert.ok(b.log.includes('|-leaguereborn|text|seed_elementalseed|Pikachu'));
+});
+
+test('Seeds: the wrong seed does nothing', () => {
+	const b = battle('electerrain', [mon('Pikachu', ['thunderbolt'], {item: 'telluricseed'})], [mon('Snorlax', ['splash'])]);
+	const p = b.sides[0].active[0];
+	assert.strictEqual(p.boosts.spe, 0);
+	assert.strictEqual(p.item, 'telluricseed');
+});
+
+test('Seeds: Telluric Seed on Rocky hurts (rock damage), Synthetic Seed grows the Flower Garden', () => {
+	const b = battle('rocky', [mon('Snorlax', ['splash'], {item: 'telluricseed'})], [mon('Snorlax', ['splash'])]);
+	const p = b.sides[0].active[0];
+	assert.strictEqual(p.boosts.def, 1);
+	assert.strictEqual(p.maxhp - p.hp, Math.floor(p.maxhp / 4)); // neutral Rock: a quarter
+	const g = battle('flowergarden1', [mon('Venusaur', ['splash'], {item: 'syntheticseed'})], [mon('Snorlax', ['splash'])]);
+	assert.strictEqual(LR.field(g), 'flowergarden2');
+	assert.ok(g.sides[0].active[0].volatiles.ingrain);
+});
+
+test('Seeds: Magical Seed on New World, all +1 then a lost turn', () => {
+	const b = battle('newworld', [mon('Mew', ['tackle'], {item: 'magicalseed'})], [mon('Snorlax', ['splash'])]);
+	const p = b.sides[0].active[0];
+	assert.deepStrictEqual([p.boosts.atk, p.boosts.def, p.boosts.spa, p.boosts.spd, p.boosts.spe], [1, 1, 1, 1, 1]);
+	const log = turn(b);
+	assert.ok(lines(log, /\|cant\|p1a[^|]*\|recharge/).length === 1, 'recharges turn 1');
+	const log2 = turn(b);
+	assert.ok(lines(log2, /\|move\|p1a[^|]*\|Tackle/).length === 1, 'moves turn 2');
+});
+
+test('Seeds: Burning traps its holder, Misty sends a Wish, a field change triggers the seed', () => {
+	const b = battle('burning', [mon('Arcanine', ['splash'], {item: 'elementalseed'})], [mon('Snorlax', ['splash'])]);
+	assert.ok(b.sides[0].active[0].volatiles.partiallytrapped, 'trapped');
+	turn(b);
+	assert.ok(b.sides[0].active[0].volatiles.partiallytrapped, 'still trapped after turn 1');
+	const m = battle('misty', [mon('Clefable', ['splash'], {item: 'elementalseed'})], [mon('Snorlax', ['splash'])]);
+	assert.ok(m.sides[0].slotConditions[0].wish);
+	const c = battle('rocky', [mon('Venusaur', ['grassyterrain'], {item: 'elementalseed'})], [mon('Snorlax', ['splash'])]);
+	assert.strictEqual(c.sides[0].active[0].item, 'elementalseed');
+	turn(c);
+	assert.strictEqual(LR.field(c), 'grassy');
+	assert.strictEqual(c.sides[0].active[0].item, '');
+	assert.ok(c.sides[0].active[0].volatiles.ingrain);
+});
+
 // --- run -------------------------------------------------------------------------------------------------------
 
 let failed = 0;

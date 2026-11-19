@@ -51,6 +51,21 @@ public final class LeagueReborn {
 				(battle, instructionSet, message, messages) -> new Line(message));
 		LeagueRebornHud.register();
 		RebornAmbiance.register();
+		registerItems();
+	}
+
+	/**
+	 * Reborn's own items (the seeds, Amplifield Rock): no Minecraft item, so held virtually like Phantasmon's Mega
+	 * Stones; the engine knows them (engine.js, ITEMS). Icons from tools/reborn_item_icons.py.
+	 */
+	private static void registerItems() {
+		String[][] items = {
+				{"elementalseed", "Elemental Seed"}, {"magicalseed", "Magical Seed"}, {"telluricseed", "Telluric Seed"},
+				{"syntheticseed", "Synthetic Seed"}, {"amplifieldrock", "Amplifield Rock"}};
+		for (String[] item : items) {
+			com.mystaria.phantasmon.client.pokemon.VirtualItems.register(item[0], item[1],
+					net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("phantasmon_events", "textures/gui/held_items/" + item[0] + ".png"));
+		}
 	}
 
 	/** The engine, called with Showdown's Dex (index.js's global) and the field data; kept as globalThis.LeagueReborn. */
