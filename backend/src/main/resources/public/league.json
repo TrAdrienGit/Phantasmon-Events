@@ -1,5 +1,9 @@
 {
-  "_comment": "Page Ligue du site Village 14 (/league). Ce fichier se modifie dans Nextcloud : Public/Phantasmon/site/ligue.json (la page le relit dans la minute). L'icône de la ligue : déposer site/ligue.png à côté. Chaque texte a sa version française (fr) et anglaise (en). Pour une personne : minecraft = pseudo en jeu (pour son skin), discord = pseudo Discord, type = son type (en français ou en anglais, ex. \"Fée\"), field = son terrain (identifiant du wiki, ex. \"burning\"), coords = coordonnées de l'arène \"X Y Z\", server = son serveur (vide = defaultServer). DONNÉES D'EXEMPLE pour l'aperçu : à remplacer au fur et à mesure. Laisser \"\" si inconnu.",
+  "notice": {
+    "fr": "Page temporaire : les champions, terrains, badges et coordonnées affichés ici sont des exemples, ils seront remplacés au fur et à mesure.",
+    "en": "Temporary page: the leaders, fields, badges and coordinates shown here are examples and will be replaced as we go."
+  },
+  "_comment": "Page Ligue du site Village 14 (/league). Ce fichier se modifie dans Nextcloud : Public/Phantasmon/site/ligue.json (la page le relit dans la minute). L'icône de la ligue : déposer site/ligue.png à côté. Chaque texte a sa version française (fr) et anglaise (en). Pour une personne : minecraft = pseudo en jeu (pour son skin), discord = pseudo Discord, type = son type (en français ou en anglais, ex. \"Fée\"), field = son terrain (identifiant du wiki, ex. \"burning\"), coords = coordonnées de l'arène \"X Y Z\", server = son serveur (vide = defaultServer). DONNÉES D'EXEMPLE pour l'aperçu : à remplacer au fur et à mesure. Laisser \"\" si inconnu. Le bandeau en haut de la page vient de \"notice\" : le vider (\"notice\": \"\") pour l'enlever.",
   "name": {
     "fr": "Ligue Reborn",
     "en": "Reborn League"
@@ -14,8 +18,8 @@
     "en": "Eight leaders are waiting, each with their own type, field and gym. Take them on in any order you like, as they are available: every win earns you a badge."
   },
   "leaguePath": {
-    "fr": "Tes huit badges en poche, la Ligue s'ouvre. Tu affrontes les quatre membres du Conseil d'une seule traite, puis le Maître dans la foulée. C'est l'épreuve la plus dure du serveur : prépare ton équipe en conséquence.",
-    "en": "With your eight badges, the League opens. You face the four Elite members in one go, then the Champion right after. It is the hardest challenge on the server: build your team for it."
+    "fr": "Tes huit badges en poche, la Ligue s'ouvre. Tu affrontes les quatre membres du Conseil d'une seule traite, puis le Maître dans la foulée. C'est l'épreuve la plus dure du serveur : prépare ton équipe en conséquence. Si tu bats le Maître, tu peux prendre sa place, si tu le souhaites, et ce sera à toi de défendre le titre face aux prochains challengers.",
+    "en": "With your eight badges, the League opens. You face the four Elite members in one go, then the Champion right after. It is the hardest challenge on the server: build your team for it. Beat the Champion and you may take their place, if you wish: it will then be yours to defend against the next challengers."
   },
   "how": [
     {
@@ -208,8 +212,8 @@
     }
   ],
   "champion": {
-    "discord": "Emerge_LeDoc",
-    "minecraft": "Emerge_LeDoc",
+    "discord": "LuRo28",
+    "minecraft": "LuRo28",
     "type": "Normal",
     "field": "newworld",
     "coords": "7500 110 4430",

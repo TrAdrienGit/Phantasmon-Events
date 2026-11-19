@@ -39,6 +39,10 @@
   .hero p { color: var(--muted); max-width: 700px; margin: 12px 0 0; font-size: 16px; }
   @media (max-width: 640px) { .hero { padding: 22px 18px; flex-direction: column; align-items: flex-start; gap: 16px; } .emblem { width: 96px; height: 96px; } .hero h1 { font-size: 32px; } }
 
+  .notice { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; padding: 12px 16px; border-radius: 12px; font-size: 14px;
+            background: rgba(255,216,74,.12); border: 1px solid rgba(255,216,74,.45); color: var(--ink); }
+  .notice::before { content: "!"; flex: none; width: 22px; height: 22px; border-radius: 999px; display: grid; place-items: center; font-weight: 800; background: var(--gold); color: #1b1f23; }
+
   /* The two paths */
   .paths { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   @media (max-width: 860px) { .paths { grid-template-columns: 1fr; } }
@@ -220,6 +224,7 @@
     const notes = data.fieldNotes || {};
     const badges = gyms.map(g => { const t = typeOf(g.type); return t ? `<span class="badge on" style="--t:${t.color}" title="${esc(L(t.fr, t.en))}">${typeIcon(t)}</span>` : '<span class="badge"></span>'; }).join('');
     document.getElementById('app').innerHTML = `
+      ${tx(data.notice) ? `<div class="notice">${esc(tx(data.notice))}</div>` : ''}
       <section class="hero"><div class="emblem" id="emblem"><span>${L('Icône de la ligue', 'League icon')}</span><img src="/league/icon" alt="" onload="this.parentNode.classList.add('has');this.previousElementSibling.remove()" onerror="this.remove()"></div>
         <div><h1>${esc(tx(data.name))}</h1><p>${esc(tx(data.tagline))}</p></div></section>
       <h2>${L('Le parcours', 'The path')}</h2>
