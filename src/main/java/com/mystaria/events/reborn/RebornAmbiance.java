@@ -39,7 +39,31 @@ public final class RebornAmbiance {
 			Map.entry("shortcircuit", "short_circuit"),
 			// Mountains.
 			Map.entry("mountain", "mountain"),
-			Map.entry("snowymountain", "snowy_mountain"));
+			Map.entry("snowymountain", "snowy_mountain"),
+			// The rest (2026-11-19): every other field with its own ambiance; New World and Glitch borrow Cosmos and
+			// Corrupted, which already are those places.
+			Map.entry("electerrain", "electric_terrain"),
+			Map.entry("psyterrain", "psychic_terrain"),
+			Map.entry("chess", "chess_board"),
+			Map.entry("bigtop", "big_top"),
+			Map.entry("swamp", "swamp"),
+			Map.entry("rainbow", "rainbow"),
+			Map.entry("desert", "desert"),
+			Map.entry("rocky", "rocky"),
+			Map.entry("wasteland", "wasteland"),
+			Map.entry("ashenbeach", "ashen_beach"),
+			Map.entry("glitch", "corrupted"),
+			Map.entry("holy", "holy"),
+			Map.entry("mirror", "mirror"),
+			Map.entry("fairytale", "fairy_tale"),
+			Map.entry("flowergarden1", "flower_garden_1"),
+			Map.entry("flowergarden2", "flower_garden_2"),
+			Map.entry("flowergarden3", "flower_garden_3"),
+			Map.entry("flowergarden4", "flower_garden_4"),
+			Map.entry("flowergarden5", "flower_garden_5"),
+			Map.entry("starlight", "starlight"),
+			Map.entry("newworld", "cosmos"),
+			Map.entry("inverse", "inverse"));
 
 	/**
 	 * Field id -> the Showtime stadium it suggests (2026-11-19): shown only when the battle's scene asks for the
@@ -50,7 +74,40 @@ public final class RebornAmbiance {
 			Map.entry("cave", "cave"),
 			Map.entry("crystalcavern", "cave"),
 			Map.entry("darkcrystalcavern", "cave"),
-			Map.entry("dragonsden", "volcanic_den"));
+			Map.entry("dragonsden", "volcanic_den"),
+			Map.entry("watersurface", "sea"),
+			Map.entry("murkwatersurface", "sea"),
+			Map.entry("icy", "sea"),
+			Map.entry("underwater", "seabed"),
+			Map.entry("grassy", "meadow"),
+			Map.entry("misty", "meadow"),
+			Map.entry("rainbow", "meadow"),
+			Map.entry("starlight", "meadow"),
+			Map.entry("flowergarden1", "meadow"),
+			Map.entry("flowergarden2", "meadow"),
+			Map.entry("flowergarden3", "meadow"),
+			Map.entry("flowergarden4", "meadow"),
+			Map.entry("flowergarden5", "meadow"),
+			Map.entry("forest", "forest"),
+			Map.entry("burning", "forest"),
+			Map.entry("superheated", "badlands"),
+			Map.entry("swamp", "swamp"),
+			Map.entry("corrosive", "swamp"),
+			Map.entry("corrosivemist", "swamp"),
+			Map.entry("desert", "desert"),
+			Map.entry("rocky", "canyon"),
+			Map.entry("wasteland", "scrapyard"),
+			Map.entry("ashenbeach", "ashen_shore"),
+			Map.entry("mountain", "summit"),
+			Map.entry("snowymountain", "summit"),
+			Map.entry("holy", "temple"),
+			Map.entry("fairytale", "temple"),
+			Map.entry("factory", "factory_hall"),
+			Map.entry("shortcircuit", "factory_hall"),
+			Map.entry("chess", "chessboard"),
+			Map.entry("bigtop", "big_top"),
+			Map.entry("mirror", "mirror_hall"),
+			Map.entry("newworld", "void"));
 
 	private RebornAmbiance() {
 	}
