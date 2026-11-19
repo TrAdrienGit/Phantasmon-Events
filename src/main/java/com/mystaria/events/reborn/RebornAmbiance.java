@@ -107,7 +107,12 @@ public final class RebornAmbiance {
 			Map.entry("chess", "chessboard"),
 			Map.entry("bigtop", "big_top"),
 			Map.entry("mirror", "mirror_hall"),
-			Map.entry("newworld", "void"));
+			Map.entry("newworld", "void"),
+			// The four fields with no place of their own got one (2026-11-20).
+			Map.entry("electerrain", "power_station"),
+			Map.entry("psyterrain", "psychic_sanctum"),
+			Map.entry("glitch", "glitch_room"),
+			Map.entry("inverse", "inverse_hall"));
 
 	private RebornAmbiance() {
 	}
