@@ -1,5 +1,5 @@
 <style>
-  /* Village 14's header, shared by every page of the site (SitePages puts it in place of <!--SITE_HEADER-->). */
+  /* Village 14's header, shared by every page of the site (SitePages puts it in place of the page's marker). */
   .top { background: var(--bg2); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
   .top .wrap { display: flex; align-items: center; gap: 12px; height: 54px; }
   .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .02em; flex: none; white-space: nowrap; }
@@ -8,10 +8,53 @@
   .site-nav a { display: flex; align-items: center; padding: 0 12px; color: var(--muted); font-weight: 600; border-bottom: 2px solid transparent; }
   .site-nav a:hover { color: var(--ink); }
   .site-nav a.on { color: var(--ink); border-bottom-color: var(--accent); }
-  @media (max-width: 560px) { .brand span { display: none; } .site-nav { margin-left: 0; } .site-nav a { padding: 0 8px; } }
+  .head-end { margin-left: auto; display: flex; align-items: center; gap: 14px; flex: none; }
+  .lang { position: relative; }
+  .lang summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--line);
+                  border-radius: 8px; color: var(--muted); font-weight: 600; font-size: 13px; user-select: none; }
+  .lang summary::-webkit-details-marker { display: none; }
+  .lang summary:hover, .lang[open] summary { color: var(--ink); border-color: var(--accent); }
+  .lang summary::after { content: ""; width: 6px; height: 6px; border: solid currentColor; border-width: 0 2px 2px 0; transform: translateY(-2px) rotate(45deg); }
+  .lang .menu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 140px; background: var(--panel); border: 1px solid var(--line);
+                border-radius: 10px; padding: 4px; box-shadow: 0 10px 24px rgba(0,0,0,.25); display: flex; flex-direction: column; }
+  .lang .menu button { background: none; border: 0; text-align: left; font: inherit; color: var(--ink); padding: 8px 10px; border-radius: 7px; cursor: pointer; }
+  .lang .menu button:hover { background: var(--panel2); }
+  .lang .menu button.on { color: var(--accent); font-weight: 700; }
+  @media (max-width: 560px) { .brand span { display: none; } .site-nav { margin-left: 0; } .site-nav a { padding: 0 8px; } .head-end { gap: 8px; } }
 </style>
+<script>
+  // The site's language: French unless the visitor picked English (kept in this browser). L(fr, en) gives the text in
+  // it; an element with data-en="…" shows that text in English (data-en-html: as HTML).
+  (() => {
+    let lang = 'fr';
+    try { if (localStorage.getItem('village14.lang') === 'en') lang = 'en'; } catch (e) { /* storage blocked: French */ }
+    window.SITE_LANG = lang;
+    window.L = (fr, en) => lang === 'en' ? en : fr;
+    document.documentElement.lang = lang;
+    const apply = () => {
+      if (lang === 'en') {
+        document.querySelectorAll('[data-en]').forEach(el => { el.textContent = el.dataset.en; });
+        document.querySelectorAll('[data-en-html]').forEach(el => { el.innerHTML = el.dataset.enHtml; });
+      }
+      document.querySelectorAll('.lang .menu button').forEach(b => {
+        b.classList.toggle('on', b.dataset.lang === lang);
+        b.onclick = () => {
+          try { localStorage.setItem('village14.lang', b.dataset.lang); } catch (e) { /* nothing to keep */ }
+          location.reload();
+        };
+      });
+      document.addEventListener('click', e => { const d = document.querySelector('.lang'); if (d && !d.contains(e.target)) d.open = false; });
+    };
+    document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', apply) : apply();
+  })();
+</script>
 <header class="top"><div class="wrap">
   <a class="brand" href="/home"><img src="/site/logo.png" alt=""><span>Village 14</span></a>
-  <nav class="site-nav"><a href="/home" data-page="home">Accueil</a><a href="/tournament" data-page="tournament">Tournoi</a><a href="/download" data-page="download">Téléchargement</a></nav>
-  {{EXTRA}}
+  <nav class="site-nav"><a href="/home" data-page="home" data-en="Home">Accueil</a><a href="/tournament" data-page="tournament" data-en="Tournament">Tournoi</a><a href="/download" data-page="download" data-en="Download">Téléchargement</a></nav>
+  <div class="head-end">
+    {{EXTRA}}
+    <details class="lang"><summary id="langNow">FR</summary>
+      <div class="menu"><button data-lang="fr">Français</button><button data-lang="en">English</button></div></details>
+  </div>
 </div></header>
+<script>document.getElementById('langNow').textContent = window.SITE_LANG.toUpperCase();</script>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tournois · Village 14</title>
+<title data-en="Tournaments · Village 14">Tournois · Village 14</title>
 <link rel="icon" href="/site/logo.png">
 <style>
   :root {
@@ -23,9 +23,7 @@
   body { font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
   a { color: inherit; text-decoration: none; }
   .wrap { max-width: 1240px; margin: 0 auto; padding: 0 16px; }
-  .crumb { color: var(--muted); }
-  .crumb a:hover { color: var(--ink); }
-  .live-dot { margin-left: auto; color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 8px; }
+  .live-dot { color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 8px; }
   .live-dot i { width: 8px; height: 8px; border-radius: 50%; background: var(--live); box-shadow: 0 0 0 0 rgba(76,208,125,.6); animation: pulse 2s infinite; }
   @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(76,208,125,.55); } 70% { box-shadow: 0 0 0 8px rgba(76,208,125,0); } 100% { box-shadow: 0 0 0 0 rgba(76,208,125,0); } }
   main.wrap { padding: 28px 16px 56px; }
@@ -126,7 +124,8 @@
               border-radius: 12px; padding: 12px 16px; margin-top: 16px; }
   .champion .av { --s: 44px; }
   .champion b { font-size: 20px; } .champion span { color: var(--gold); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; }
-  .crumb { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .back { display: inline-block; color: var(--muted); font-size: 14px; margin: 0 0 12px; }
+  .back:hover { color: var(--ink); }
   .live-dot { flex: none; white-space: nowrap; }
   @media (max-width: 640px) {
     h1 { font-size: 24px; }
@@ -139,23 +138,21 @@
 </style>
 </head>
 <body>
-<!--SITE_HEADER page="tournament"--><span class="crumb" id="crumb">/ Tournois</span>
-  <span class="live-dot"><i></i><b>En direct</b></span><!--/SITE_HEADER-->
-<main class="wrap" id="app"><p class="empty">Chargement…</p></main>
+<!--SITE_HEADER page="tournament"--><span class="live-dot"><i></i><b data-en="Live">En direct</b></span><!--/SITE_HEADER-->
+<main class="wrap" id="app"><p class="empty" data-en="Loading…">Chargement…</p></main>
 <script>
 (() => {
   const app = document.getElementById('app');
-  const crumb = document.getElementById('crumb');
   const name = decodeURIComponent(location.pathname.replace(/^\/tournament\/?/, '').replace(/\/$/, ''));
-  const KIND = { SWISS: 'Ronde suisse', BRACKET: 'Double élimination' };
-  const STATUS = { REGISTRATION: 'Inscriptions', CHECK_IN: 'Check-in', RUNNING: 'En cours', FINISHED: 'Terminé', CANCELLED: 'Annulé' };
+  const KIND = { SWISS: L('Ronde suisse', 'Swiss rounds'), BRACKET: L('Double élimination', 'Double elimination') };
+  const STATUS = { REGISTRATION: L('Inscriptions', 'Registration'), CHECK_IN: 'Check-in', RUNNING: L('En cours', 'Live'), FINISHED: L('Terminé', 'Finished'), CANCELLED: L('Annulé', 'Cancelled') };
   const COLOUR = { REGISTRATION: 'var(--reg)', CHECK_IN: 'var(--chk)', RUNNING: 'var(--live)', FINISHED: 'var(--done)', CANCELLED: 'var(--bad)' };
   let tab = (location.hash || '').slice(1) || null;
   let shownRound = null;
   let last = '';
   const title = t => t.display_name || t.name;
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-  const date = iso => iso ? new Date(iso).toLocaleString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : null;
+  const date = iso => iso ? new Date(iso).toLocaleString(L('fr-FR', 'en-GB'), { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : null;
   const head = (player, size) => player && player !== '-'
     ? `<span class="av" style="--s:${size}px">${esc(player[0].toUpperCase())}<img src="/public/heads/${encodeURIComponent(player)}" alt="" loading="lazy" onerror="this.remove()"></span>`
     : `<span class="av" style="--s:${size}px"></span>`;
@@ -169,29 +166,28 @@
     return `<a class="card" href="/tournament/${encodeURIComponent(t.name)}" style="--c:${COLOUR[t.status]}">
       <div class="row1"><span class="name">${esc(title(t))}</span><span class="pill ${t.status}">${STATUS[t.status] ?? t.status}</span></div>
       <div class="meta">${esc(t.format_name)} · Bo${t.best_of} · ${KIND[t.kind] ?? t.kind}</div>
-      <div class="row3"><span class="stack">${shown}</span>${more}<span>${t.players.length} joueur${t.players.length > 1 ? 's' : ''}</span>
+      <div class="row3"><span class="stack">${shown}</span>${more}<span>${t.players.length} ${L('joueur', 'player')}${t.players.length > 1 ? 's' : ''}</span>
         ${next ? `<span style="margin-left:auto">${next}</span>` : ''}</div></a>`;
   }
 
   function nextStep(t) {
     const now = Date.now();
-    if (t.status === 'RUNNING') return t.current_round ? `${t.kind === 'SWISS' ? 'Ronde' : 'Vague'} ${t.current_round}/${t.planned_rounds ?? '?'}` : 'En cours';
+    if (t.status === 'RUNNING') return t.current_round ? `${t.kind === 'SWISS' ? L('Ronde', 'Round') : L('Vague', 'Wave')} ${t.current_round}/${t.planned_rounds ?? '?'}` : L('En cours', 'Live');
     if (t.status !== 'REGISTRATION' && t.status !== 'CHECK_IN') return null;
-    const steps = [['Inscriptions', t.registration_opens_at], ['Fin des inscriptions', t.registration_closes_at],
-      ['Check-in', t.check_in_opens_at], ['Début', t.check_in_closes_at]];
+    const steps = [[L('Inscriptions', 'Registration'), t.registration_opens_at], [L('Fin des inscriptions', 'Registration closes'), t.registration_closes_at],
+      ['Check-in', t.check_in_opens_at], [L('Début', 'Start'), t.check_in_closes_at]];
     const next = steps.find(s => s[1] && new Date(s[1]).getTime() > now);
     return next ? `${next[0]} · ${date(next[1])}` : null;
   }
 
   function showList(list) {
-    crumb.innerHTML = '/ Tournois';
-    document.title = 'Tournois · Village 14';
+    document.title = `${L('Tournois', 'Tournaments')} · Village 14`;
     const live = list.filter(t => t.status === 'RUNNING');
     const soon = list.filter(t => t.status === 'REGISTRATION' || t.status === 'CHECK_IN');
     const over = list.filter(t => t.status === 'FINISHED' || t.status === 'CANCELLED');
     const section = (title, items) => items.length ? `<h2>${title}</h2><div class="grid">${items.map(card).join('')}</div>` : '';
-    app.innerHTML = `<h1>Tournois</h1><p class="meta" style="margin:6px 0 0">Les tournois Phantasmon, mis à jour en direct.</p>`
-      + (list.length ? section('En cours', live) + section('À venir', soon) + section('Terminés', over) : '<p class="empty">Aucun tournoi pour le moment.</p>');
+    app.innerHTML = `<h1>${L('Tournois', 'Tournaments')}</h1><p class="meta" style="margin:6px 0 0">${L('Les tournois Phantasmon, mis à jour en direct.', 'Phantasmon tournaments, updated live.')}</p>`
+      + (list.length ? section(L('En cours', 'Live'), live) + section(L('À venir', 'Upcoming'), soon) + section(L('Terminés', 'Finished'), over) : `<p class="empty">${L('Aucun tournoi pour le moment.', 'No tournament yet.')}</p>`);
   }
 
   // ---------------------------------------------------------------- a tournament
@@ -199,15 +195,15 @@
   function steps(t) {
     const order = ['REGISTRATION', 'CHECK_IN', 'RUNNING', 'FINISHED'];
     const current = order.indexOf(t.status === 'CANCELLED' ? 'FINISHED' : t.status);
-    const labels = ['Inscriptions', 'Check-in', 'En cours', t.status === 'CANCELLED' ? 'Annulé' : 'Terminé'];
+    const labels = [L('Inscriptions', 'Registration'), 'Check-in', L('En cours', 'Live'), t.status === 'CANCELLED' ? L('Annulé', 'Cancelled') : L('Terminé', 'Finished')];
     const dates = [t.registration_opens_at, t.check_in_opens_at, t.check_in_closes_at, null];
     return `<div class="steps">${labels.map((l, i) => `<div class="step ${i < current ? 'done' : i === current ? 'now' : ''} ${t.status === 'CANCELLED' && i === 3 ? 'cancel' : ''}">
-      <i></i><b>${l}</b><span>${dates[i] ? date(dates[i]) : (i === 1 && !dates[i] ? 'par un admin' : '&nbsp;')}</span></div>`).join('')}</div>`;
+      <i></i><b>${l}</b><span>${dates[i] ? date(dates[i]) : (i === 1 && !dates[i] ? L('par un admin', 'by an admin') : '&nbsp;')}</span></div>`).join('')}</div>`;
   }
 
   function side(m, player, wins) {
-    if (player == null) return `<div class="side tbd">${head(null, 22)}<span class="who">À venir</span><span class="sc"></span></div>`;
-    if (player === '-') return `<div class="side tbd">${head(null, 22)}<span class="who">Exempt</span><span class="sc"></span></div>`;
+    if (player == null) return `<div class="side tbd">${head(null, 22)}<span class="who">${L('À venir', 'To come')}</span><span class="sc"></span></div>`;
+    if (player === '-') return `<div class="side tbd">${head(null, 22)}<span class="who">${L('Exempt', 'Bye')}</span><span class="sc"></span></div>`;
     const won = m.winner && m.winner === player, lost = m.winner && !won;
     const real = m.player1 && m.player1 !== '-' && m.player2 && m.player2 !== '-';
     const scored = real && (m.status !== 'PENDING' || wins > 0);
@@ -219,41 +215,41 @@
     const walk = m.player1 === '-' || m.player2 === '-';
     if (m.bracket === 'SWISS' && m.player2 == null) {
       return `<div class="match DONE" ${style}><div class="side won">${head(m.player1, 22)}<span class="who">${esc(m.player1)}</span><span class="sc">✓</span></div>
-        <div class="side tbd">${head(null, 22)}<span class="who">Exempté cette ronde</span><span class="sc"></span></div></div>`;
+        <div class="side tbd">${head(null, 22)}<span class="who">${L('Exempté cette ronde', 'Bye this round')}</span><span class="sc"></span></div></div>`;
     }
-    const badge = m.status === 'PLAYING' ? '<span class="badge live">LIVE</span>' : m.forfeit ? '<span class="badge ff">FORFAIT</span>' : '';
+    const badge = m.status === 'PLAYING' ? '<span class="badge live">LIVE</span>' : m.forfeit ? `<span class="badge ff">${L('FORFAIT', 'FORFEIT')}</span>` : '';
     return `<div class="match ${m.status} ${walk ? 'walk' : ''}" ${style}>${side(m, m.player1, m.wins1)}${side(m, m.player2, m.wins2)}${badge}</div>`;
   }
 
   function playersTab(t) {
-    if (!t.players.length) return '<p class="empty">Personne ne s’est encore inscrit.</p>';
+    if (!t.players.length) return `<p class="empty">${L('Personne ne s’est encore inscrit.', 'Nobody has registered yet.')}</p>`;
     return `<div class="players">${t.players.map(p => `<div class="player">${head(p.username, 30)}<span class="who">${esc(p.username)}</span>
-      <span class="st ${p.dropped ? 'out' : p.checked_in ? 'in' : 'wait'}">${p.dropped ? 'Éliminé' : p.checked_in ? 'Présent' : 'Inscrit'}</span></div>`).join('')}</div>`;
+      <span class="st ${p.dropped ? 'out' : p.checked_in ? 'in' : 'wait'}">${p.dropped ? L('Éliminé', 'Out') : p.checked_in ? L('Présent', 'Checked in') : L('Inscrit', 'Registered')}</span></div>`).join('')}</div>`;
   }
 
   function matchesTab(t) {
-    if (!t.matches.length) return '<p class="empty">Les matchs apparaissent au début du tournoi.</p>';
+    if (!t.matches.length) return `<p class="empty">${L('Les matchs apparaissent au début du tournoi.', 'Matches appear when the tournament starts.')}</p>`;
     if (t.kind === 'SWISS') {
       const rounds = [...new Set(t.matches.map(m => m.round))].sort((a, b) => a - b);
       const round = shownRound && rounds.includes(shownRound) ? shownRound : rounds[rounds.length - 1];
-      return `<div class="rounds">${rounds.map(r => `<button data-round="${r}" class="${r === round ? 'on' : ''}">Ronde ${r}</button>`).join('')}</div>
+      return `<div class="rounds">${rounds.map(r => `<button data-round="${r}" class="${r === round ? 'on' : ''}">${L('Ronde', 'Round')} ${r}</button>`).join('')}</div>
         <div class="matches">${t.matches.filter(m => m.round === round).map(m => matchBox(m)).join('')}</div>`;
     }
     const open = t.matches.filter(m => m.player1 !== '-' && m.player2 !== '-' && m.wave <= t.current_round && (m.wave === t.current_round || m.status !== 'DONE'));
-    return `<h2 style="margin-top:0">Vague ${t.current_round} / ${t.planned_rounds ?? '?'}</h2><div class="matches">${open.map(m => matchBox(m)).join('') || '<p class="empty">Aucun match ouvert.</p>'}</div>`;
+    return `<h2 style="margin-top:0">${L('Vague', 'Wave')} ${t.current_round} / ${t.planned_rounds ?? '?'}</h2><div class="matches">${open.map(m => matchBox(m)).join('') || `<p class="empty">${L('Aucun match ouvert.', 'No open match.')}</p>`}</div>`;
   }
 
   function standingsTab(t) {
-    if (!t.standings.length) return '<p class="empty">Le classement apparaît après les premiers matchs.</p>';
+    if (!t.standings.length) return `<p class="empty">${L('Le classement apparaît après les premiers matchs.', 'Standings appear after the first matches.')}</p>`;
     const swiss = t.kind === 'SWISS';
     const champion = t.status === 'FINISHED' && t.standings[0]
-      ? `<div class="champion">${head(t.standings[0].username, 44)}<div><span>Vainqueur</span><br><b>${esc(t.standings[0].username)}</b></div></div>` : '';
+      ? `<div class="champion">${head(t.standings[0].username, 44)}<div><span>${L('Vainqueur', 'Winner')}</span><br><b>${esc(t.standings[0].username)}</b></div></div>` : '';
     const rows = t.standings.map(s => `<tr class="${s.dropped ? 'out' : ''}"><td class="rk r${s.rank}">${s.rank}</td>
       <td><span class="pl">${head(s.username, 24)}${esc(s.username)}</span></td>
       ${swiss ? `<td class="n"><b>${s.points}</b></td><td class="n">${s.wins} - ${s.losses}</td><td class="n opt">${s.buchholz}</td><td class="n opt">${Math.round(s.opponents_win_rate * 100)} %</td>`
               : `<td class="n"><b>${s.wins}</b></td><td class="n">${s.losses}</td>`}</tr>`).join('');
-    return `${champion}<div class="table"><table><tr><th>#</th><th>Joueur</th>${swiss ? '<th class="n">Points</th><th class="n">V - D</th><th class="n opt">Buchholz</th><th class="n opt">Adv. %</th>'
-      : '<th class="n">Victoires</th><th class="n">Défaites</th>'}</tr>${rows}</table></div>`;
+    return `${champion}<div class="table"><table><tr><th>#</th><th>${L('Joueur', 'Player')}</th>${swiss ? `<th class="n">Points</th><th class="n">${L('V - D', 'W - L')}</th><th class="n opt">Buchholz</th><th class="n opt">${L('Adv. %', 'Opp. %')}</th>`
+      : `<th class="n">${L('Victoires', 'Wins')}</th><th class="n">${L('Défaites', 'Losses')}</th>`}</tr>${rows}</table></div>`;
   }
 
   /** The bracket laid out as in game: winners in columns, losers below, the grand final after the winners final. */
@@ -261,7 +257,7 @@
     const BW = 230, BH = 61, GAP = 56, VG = 18, LABEL = 26;
     const ms = t.matches;
     const k = Math.max(0, ...ms.filter(m => m.bracket === 'WINNERS').map(m => m.round));
-    if (!k) return '<p class="empty">L’arbre apparaît au début du tournoi.</p>';
+    if (!k) return `<p class="empty">${L('L’arbre apparaît au début du tournoi.', 'The bracket appears when the tournament starts.')}</p>`;
     const n = 1 << k, pos = {}, wY = {}, lY = {};
     const key = (b, r, p) => `${b}|${r}|${p}`;
     for (let r = 1; r <= k; r++) {
@@ -306,19 +302,18 @@
       return p ? matchBox(m, `style="left:${p[0]}px;top:${p[1]}px"`) : '';
     }).join('');
     const labels = `<span class="label" style="left:0;top:0;color:var(--accent)">Winner bracket</span>
-      <span class="label" style="left:${finalX}px;top:0;color:var(--gold)">Grande finale</span>
+      <span class="label" style="left:${finalX}px;top:0;color:var(--gold)">${L('Grande finale', 'Grand final')}</span>
       ${k > 1 ? `<span class="label" style="left:0;top:${losersTop}px;color:var(--bad)">Loser bracket</span>` : ''}`;
     return `<div class="bracket-wrap" id="bw"><div class="bracket" style="width:${width}px;height:${height}px">
       <svg width="${width}" height="${height}">${lines}</svg>${labels}${boxes}</div></div>`;
   }
 
   function show(t) {
-    crumb.innerHTML = `/ <a href="/tournament">Tournois</a> / ${esc(title(t))}`;
     document.title = `${title(t)} · Village 14`;
-    const tabs = [['joueurs', `Joueurs<em>${t.players.length}</em>`]];
+    const tabs = [['joueurs', `${L('Joueurs', 'Players')}<em>${t.players.length}</em>`]];
     if (t.matches.length) {
-      tabs.push(['matchs', 'Matchs'], ['classement', 'Classement']);
-      if (t.kind === 'BRACKET') tabs.push(['arbre', 'Arbre']);
+      tabs.push(['matchs', L('Matchs', 'Matches')], ['classement', L('Classement', 'Standings')]);
+      if (t.kind === 'BRACKET') tabs.push(['arbre', L('Arbre', 'Bracket')]);
     }
     const ids = tabs.map(x => x[0]);
     const chosen = ids.includes(tab) ? tab : t.kind === 'BRACKET' && ids.includes('arbre') ? 'arbre' : ids.includes('classement') ? 'classement' : 'joueurs';
@@ -326,10 +321,10 @@
     const body = { joueurs: playersTab, matchs: matchesTab, classement: standingsTab, arbre: bracketTab }[chosen](t);
     const keepScroll = document.getElementById('bw');
     const scroll = keepScroll ? [keepScroll.scrollLeft, keepScroll.scrollTop] : null;
-    app.innerHTML = `<section class="hero"><div class="title"><h1>${esc(title(t))}</h1><span class="pill ${t.status}">${STATUS[t.status] ?? t.status}</span></div>
+    app.innerHTML = `<a class="back" href="/tournament">← ${L('Tous les tournois', 'All tournaments')}</a><section class="hero"><div class="title"><h1>${esc(title(t))}</h1><span class="pill ${t.status}">${STATUS[t.status] ?? t.status}</span></div>
       <div class="tags"><span class="tag"><b>${esc(t.format_name)}</b></span><span class="tag"><b>Bo${t.best_of}</b></span>
-      <span class="tag">${KIND[t.kind] ?? t.kind}</span><span class="tag"><b>${t.players.length}</b> inscrits · <b>${present}</b> présents</span>
-      ${t.status === 'RUNNING' && t.current_round ? `<span class="tag">${t.kind === 'SWISS' ? 'Ronde' : 'Vague'} <b>${t.current_round}</b> / ${t.planned_rounds ?? '?'}</span>` : ''}</div>
+      <span class="tag">${KIND[t.kind] ?? t.kind}</span><span class="tag"><b>${t.players.length}</b> ${L('inscrits', 'registered')} · <b>${present}</b> ${L('présents', 'checked in')}</span>
+      ${t.status === 'RUNNING' && t.current_round ? `<span class="tag">${t.kind === 'SWISS' ? L('Ronde', 'Round') : L('Vague', 'Wave')} <b>${t.current_round}</b> / ${t.planned_rounds ?? '?'}</span>` : ''}</div>
       ${steps(t)}</section>
       <nav class="tabs">${tabs.map(x => `<button data-tab="${x[0]}" class="${x[0] === chosen ? 'on' : ''}">${x[1]}</button>`).join('')}</nav>
       <section>${body}</section>`;
@@ -348,7 +343,7 @@
   async function refresh() {
     try {
       const response = await fetch(name ? `/public/tournaments/${encodeURIComponent(name)}` : '/public/tournaments', { cache: 'no-store' });
-      if (!response.ok) { app.innerHTML = '<p class="empty">Tournoi introuvable. <a href="/tournament" style="color:var(--accent)">Tous les tournois</a></p>'; return; }
+      if (!response.ok) { app.innerHTML = `<p class="empty">${L('Tournoi introuvable.', 'Tournament not found.')} <a href="/tournament" style="color:var(--accent)">${L('Tous les tournois', 'All tournaments')}</a></p>`; return; }
       const text = await response.text();
       if (text === last) return; // nothing new: no redraw, no flicker
       last = text;

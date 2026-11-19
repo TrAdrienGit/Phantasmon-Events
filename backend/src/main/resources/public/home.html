@@ -50,19 +50,19 @@
 <!--SITE_HEADER page="home"--><!--/SITE_HEADER-->
 <main class="wrap">
   <h1>Village 14</h1>
-  <p class="lead">Le site de notre communauté Cobblemon : les tournois en cours et les mods à télécharger.</p>
+  <p class="lead" data-en="Our Cobblemon community's site: the running tournaments and the mods to download.">Le site de notre communauté Cobblemon : les tournois en cours et les mods à télécharger.</p>
   <h2>Pages</h2>
   <div class="grid two">
     <a class="card" href="/tournament">
       <span class="ico"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></span>
-      <span><p class="t">Tournoi</p><p class="s">Inscriptions, rondes, classements et tableaux en direct.</p></span><span class="go">→</span>
+      <span><p class="t" data-en="Tournament">Tournoi</p><p class="s" data-en="Registration, rounds, standings and brackets, live.">Inscriptions, rondes, classements et tableaux en direct.</p></span><span class="go">→</span>
     </a>
     <a class="card" href="/download">
       <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></span>
-      <span><p class="t">Téléchargement</p><p class="s">Les mods de la communauté et leurs packs de ressources.</p></span><span class="go">→</span>
+      <span><p class="t" data-en="Download">Téléchargement</p><p class="s" data-en="The community's mods and their resource packs.">Les mods de la communauté et leurs packs de ressources.</p></span><span class="go">→</span>
     </a>
   </div>
-  <h2>Dernières versions de mes mods</h2>
+  <h2 data-en="Latest versions of my mods">Dernières versions de mes mods</h2>
   <div class="grid" id="versions"></div>
 </main>
 <script>
@@ -74,14 +74,14 @@
     { key: 'events', name: 'Phantasmon Events' },
   ];
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const day = iso => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const day = iso => new Date(iso).toLocaleDateString(L('fr-FR', 'en-GB'), { day: 'numeric', month: 'long', year: 'numeric' });
   const box = document.getElementById('versions');
   const cards = {};
   for (const m of MODS) {
     const a = document.createElement('a');
     a.className = 'card mod';
     a.href = '/download';
-    a.innerHTML = `<p class="name">${esc(m.name)}</p><p class="ver none">Pas encore en ligne</p><p class="when"></p>`;
+    a.innerHTML = `<p class="name">${esc(m.name)}</p><p class="ver none">${L('Pas encore en ligne', 'Not online yet')}</p><p class="when"></p>`;
     box.append(a);
     cards[m.key] = { el: a, iso: '' };
   }
@@ -92,7 +92,7 @@
     const ver = c.el.querySelector('.ver');
     ver.className = 'ver';
     ver.textContent = version;
-    c.el.querySelector('.when').textContent = iso ? `Mise en ligne le ${day(iso)}` : '';
+    c.el.querySelector('.when').textContent = iso ? `${L('Mise en ligne le', 'Uploaded on')} ${day(iso)}` : '';
   };
   fetch('/download/files').then(r => r.ok ? r.json() : {}).then(files => {
     for (const m of MODS) if (files[m.key]) show(m.key, files[m.key].version, files[m.key].modified);

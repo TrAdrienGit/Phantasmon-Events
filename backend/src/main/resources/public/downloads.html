@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Téléchargement · Village 14</title>
+<title data-en="Download · Village 14">Téléchargement · Village 14</title>
 <link rel="icon" href="/site/logo.png">
 <style>
   :root {
@@ -71,12 +71,12 @@
 <body>
 <!--SITE_HEADER page="download"--><!--/SITE_HEADER-->
 <main class="wrap">
-  <h1>Téléchargement</h1>
-  <p class="lead">Les mods utilisés dans notre communauté, en plus du modpack, et les packs de ressources associés.</p>
-  <p class="lead">Je tiens les mods à jour sur les plateformes de modding classiques comme Modrinth ou CurseForge. Si je ne peux pas, le téléchargement est disponible directement depuis mon cloud.</p>
-  <p class="lead">Si vous souhaitez faire une inspection de sécurité du code des mods, le code est en accès libre et open source sur mon GitHub : vous pouvez y accéder avec les icônes associées.</p>
+  <h1 data-en="Download">Téléchargement</h1>
+  <p class="lead" data-en="The mods used in our community, on top of the modpack, and their resource packs.">Les mods utilisés dans notre communauté, en plus du modpack, et les packs de ressources associés.</p>
+  <p class="lead" data-en="I keep the mods up to date on the usual modding platforms such as Modrinth or CurseForge. When I cannot, the download is available straight from my cloud.">Je tiens les mods à jour sur les plateformes de modding classiques comme Modrinth ou CurseForge. Si je ne peux pas, le téléchargement est disponible directement depuis mon cloud.</p>
+  <p class="lead" data-en="If you want to run a security review of the mods' code, it is freely available and open source on my GitHub: you can reach it through the matching icons.">Si vous souhaitez faire une inspection de sécurité du code des mods, le code est en accès libre et open source sur mon GitHub : vous pouvez y accéder avec les icônes associées.</p>
   <div id="groups"></div>
-  <h2 style="margin-top:36px">Dépendances optionnelles</h2>
+  <h2 style="margin-top:36px" data-en="Optional dependencies">Dépendances optionnelles</h2>
   <div class="grid" id="optional"></div>
 </main>
 <script>
@@ -90,36 +90,36 @@
   // A column per mod; a mod's resource pack sits under it.
   const GROUPS = [
     { dev: 'Emerge le Doc', face: 'emerge', columns: [
-      [{ name: 'LeagueWay', icon: 'leagueway', desc: 'Ligue, arènes et progression Cobblemon.',
+      [{ name: 'LeagueWay', icon: 'leagueway', desc: L('Ligue, arènes et progression Cobblemon.', 'League, gyms and progression for Cobblemon.'),
          links: [{ label: 'Modrinth', modrinth: 'league-way' }] },
-       { name: 'Ressources additionnelles LeagueWay', icon: 'leagueway', pack: true, desc: 'Le pack de ressources qui accompagne LeagueWay.',
-         tags: ['Pack de ressources'], links: [{ label: 'Modrinth', modrinth: 'league-way', zip: true,
+       { name: L('Ressources additionnelles LeagueWay', 'LeagueWay additional resources'), icon: 'leagueway', pack: true, desc: L('Le pack de ressources qui accompagne LeagueWay.', 'The resource pack that comes with LeagueWay.'),
+         tags: [L('Pack de ressources', 'Resource pack')], links: [{ label: 'Modrinth', modrinth: 'league-way', zip: true,
            url: 'https://cdn.modrinth.com/data/4yH4VILK/versions/UUi6HJXg/LeagueWay%20-%20Additionnal%20Ressources%20-%20v1.4.zip' }] }] ] },
     { dev: 'MystAria', face: 'mystaria', columns: [
-      [{ name: 'Cobblemon Battle Showtime', icon: 'showtime', desc: 'Mise en scène des combats Cobblemon.',
+      [{ name: 'Cobblemon Battle Showtime', icon: 'showtime', desc: L('Mise en scène des combats Cobblemon.', 'Staging for Cobblemon battles.'),
          github: 'https://github.com/TrAdrienGit/Cobblemon-Battle-Showtime',
          links: [{ label: 'Modrinth', modrinth: 'cobblemon-battle-showtime' },
                  { label: 'CurseForge', url: 'https://www.curseforge.com/minecraft/mc-addons/cobblemon-battle-showtime/files', alt: true },
                  { label: 'Cloud', cloud: 'showtime', alt: true }] },
-       { name: 'Pack de ressources Showtime', icon: 'showtimePack', pack: true, desc: 'Les musiques de combat, de victoire et de défaite de Showtime.',
-         tags: ['Pack de ressources'], links: [{ label: 'Cloud Phantasmon', cloud: 'showtime-pack' }] }],
-      [{ name: 'Phantasmon Core', icon: 'core', desc: 'Le mod de base de la communauté Phantasmon.', tags: ['Pas encore publié'],
+       { name: L('Pack de ressources Showtime', 'Showtime resource pack'), icon: 'showtimePack', pack: true, desc: L('Les musiques de combat, de victoire et de défaite de Showtime.', 'Showtime\'s battle, victory and defeat music.'),
+         tags: [L('Pack de ressources', 'Resource pack')], links: [{ label: 'Cloud Phantasmon', cloud: 'showtime-pack' }] }],
+      [{ name: 'Phantasmon Core', icon: 'core', desc: L('Le mod de base de la communauté Phantasmon.', 'The Phantasmon community\'s base mod.'), tags: [L('Pas encore publié', 'Not published yet')],
          github: 'https://github.com/TrAdrienGit/Phantasmon-Client',
          links: [{ label: 'Cloud Phantasmon', cloud: 'core' }] },
-       { name: 'Pack de ressources Phantasmon', icon: 'phantasmonPack', pack: true, desc: 'Les musiques du hall de Phantasmon.',
-         tags: ['Pack de ressources'], links: [{ label: 'Cloud Phantasmon', cloud: 'phantasmon-pack' }] }],
-      [{ name: 'Phantasmon Events', icon: 'events', desc: 'Événements, tournois et ligues de la communauté.', tags: ['Pas encore publié', 'Nécessite Phantasmon Core'],
+       { name: L('Pack de ressources Phantasmon', 'Phantasmon resource pack'), icon: 'phantasmonPack', pack: true, desc: L('Les musiques du hall de Phantasmon.', 'Phantasmon\'s lobby music.'),
+         tags: [L('Pack de ressources', 'Resource pack')], links: [{ label: 'Cloud Phantasmon', cloud: 'phantasmon-pack' }] }],
+      [{ name: 'Phantasmon Events', icon: 'events', desc: L('Événements, tournois et ligues de la communauté.', 'The community\'s events, tournaments and leagues.'), tags: [L('Pas encore publié', 'Not published yet'), L('Nécessite Phantasmon Core', 'Requires Phantasmon Core')],
          github: 'https://github.com/TrAdrienGit/Phantasmon-Events',
          links: [{ label: 'Cloud Phantasmon', cloud: 'events' }] }] ] },
   ];
   const OPTIONAL = [
-    { name: 'Cobblemon Battle Extras', icon: 'extras', desc: 'Ajouts aux combats Cobblemon, pris en charge par nos mods.', tags: ['Optionnel'],
+    { name: 'Cobblemon Battle Extras', icon: 'extras', desc: L('Ajouts aux combats Cobblemon, pris en charge par nos mods.', 'Additions to Cobblemon battles, supported by our mods.'), tags: [L('Optionnel', 'Optional')],
       links: [{ label: 'Modrinth', modrinth: 'cobblemon-battle-extras' },
               { label: 'CurseForge', url: 'https://www.curseforge.com/minecraft/mc-mods/cobblemon-battle-extras/files', alt: true }] },
   ];
   const GH = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>';
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const day = iso => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const day = iso => new Date(iso).toLocaleDateString(L('fr-FR', 'en-GB'), { day: 'numeric', month: 'long', year: 'numeric' });
   const files = fetch('/download/files').then(r => r.ok ? r.json() : {}).catch(() => ({}));
 
   // The card's "last upload" line: the newest of what its buttons found.
@@ -127,7 +127,7 @@
     const line = el.querySelector('.when');
     if (!iso || (line.dataset.iso && line.dataset.iso >= iso)) return;
     line.dataset.iso = iso;
-    line.textContent = `Dernière mise en ligne : ${day(iso)}` + (version ? ` · version ${version}` : '');
+    line.textContent = `${L('Dernière mise en ligne : ', 'Last upload: ')}${day(iso)}` + (version ? ` · version ${version}` : '');
   }
 
   function card(m, optional) {
@@ -135,9 +135,9 @@
     el.className = 'mod' + (optional ? ' optional' : '') + (m.pack ? ' pack' : '');
     el.innerHTML = `
       <div class="head">${m.icon ? `<img class="icon" src="${ICONS[m.icon]}" alt="">` : ''}<div class="titles"><p class="name">${esc(m.name)}</p><p class="desc">${esc(m.desc)}</p></div>
-        ${m.github ? `<a class="gh" href="${m.github}" target="_blank" rel="noopener" title="Code source" aria-label="Code source sur GitHub">${GH}</a>` : ''}</div>
-      ${m.tags ? `<div class="tags">${m.tags.map(t => `<span class="tag${t === 'Optionnel' ? ' opt' : ''}">${esc(t)}</span>`).join('')}</div>` : ''}
-      <p class="note when">Dernière mise en ligne : inconnue</p>
+        ${m.github ? `<a class="gh" href="${m.github}" target="_blank" rel="noopener" title="${L('Code source', 'Source code')}" aria-label="${L('Code source sur GitHub', 'Source code on GitHub')}">${GH}</a>` : ''}</div>
+      ${m.tags ? `<div class="tags">${m.tags.map(t => `<span class="tag${t === L('Optionnel', 'Optional') ? ' opt' : ''}">${esc(t)}</span>`).join('')}</div>` : ''}
+      <p class="note when">${L('Dernière mise en ligne : inconnue', 'Last upload: unknown')}</p>
       <div class="links"></div>`;
     const links = el.querySelector('.links');
     for (const l of m.links) {
@@ -179,7 +179,7 @@
   for (const g of GROUPS) {
     const head = document.createElement('div');
     head.className = 'group-head';
-    head.innerHTML = `<img class="face" src="${FACES[g.face]}" alt=""><span>Mods de <b>${esc(g.dev)}</b></span>`;
+    head.innerHTML = `<img class="face" src="${FACES[g.face]}" alt=""><span>${L('Mods de', 'Mods by')} <b>${esc(g.dev)}</b></span>`;
     const grid = document.createElement('div');
     grid.className = 'grid';
     g.columns.forEach((column, c) => column.forEach((m, r) => {
