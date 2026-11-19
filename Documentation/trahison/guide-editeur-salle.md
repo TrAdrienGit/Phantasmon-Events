@@ -167,7 +167,7 @@ Même outil que l'éditeur du plan, mais avec un **bâton en main** (sinon tu co
 
 - clic gauche : coin A ; clic droit : coin B ;
 - accroupi : le bloc **devant** la face visée (utile pour de l'air) ;
-- `K` ouvre le panneau ; Échap le ferme sans rien perdre.
+- `K` ouvre le panneau (`F7` si LeagueWay est installé, qui prend K) ; Échap le ferme sans rien perdre.
 
 ## Les emplacements
 

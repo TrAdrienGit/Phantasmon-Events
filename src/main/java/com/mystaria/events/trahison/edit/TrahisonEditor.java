@@ -52,7 +52,9 @@ public final class TrahisonEditor {
 
 	/** Default key K: the editor's side panel while the editor is on. Rebindable in the controls. */
 	public static final KeyMapping OPEN_KEY = new KeyMapping("key.phantasmon_events.trahison_edit",
-			InputConstants.Type.KEYSYM, org.lwjgl.glfw.GLFW.GLFW_KEY_K, "key.categories.phantasmon_events");
+			InputConstants.Type.KEYSYM,
+			// LeagueWay takes K (its side menu) and keeps it from other mods: F7 by default then (2026-11-19).
+			net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("leagueway") ? org.lwjgl.glfw.GLFW.GLFW_KEY_F7 : org.lwjgl.glfw.GLFW.GLFW_KEY_K, "key.categories.phantasmon_events");
 
 	private static boolean active;
 	/** The hub the plan below was loaded for. */

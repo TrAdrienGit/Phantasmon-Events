@@ -38,7 +38,8 @@ public final class Inventory {
 			org.lwjgl.glfw.GLFW.GLFW_KEY_I, "key.categories.phantasmon_events");
 	/** Cycles the held item through the bag (and none). */
 	public static final KeyMapping CYCLE_KEY = new KeyMapping("key.phantasmon_events.trahison_item_cycle", InputConstants.Type.KEYSYM,
-			org.lwjgl.glfw.GLFW.GLFW_KEY_G, "key.categories.phantasmon_events");
+			// LeagueWay takes G (its dressing) and keeps it from other mods: Z by default then (O and R are Cobblemon's) (2026-11-19).
+			net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("leagueway") ? org.lwjgl.glfw.GLFW.GLFW_KEY_Z : org.lwjgl.glfw.GLFW.GLFW_KEY_G, "key.categories.phantasmon_events");
 
 	/** How close a teammate must be to hand him an item, in blocks (the backend adds a little slack). */
 	public static final double GIVE_REACH = 4.0;

@@ -27,7 +27,9 @@ public final class Trahison {
 
 	/** Key V: close the cabin you stand in, then open its voting pupitre (T2.4). Rebindable. */
 	public static final KeyMapping CABIN_KEY = new KeyMapping("key.phantasmon_events.trahison_cabin",
-			InputConstants.Type.KEYSYM, org.lwjgl.glfw.GLFW.GLFW_KEY_V, "key.categories.phantasmon_events");
+			InputConstants.Type.KEYSYM,
+			// LeagueWay takes V (its cinematic capture) and keeps it from other mods: Y by default then (2026-11-19).
+			net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("leagueway") ? org.lwjgl.glfw.GLFW.GLFW_KEY_Y : org.lwjgl.glfw.GLFW.GLFW_KEY_V, "key.categories.phantasmon_events");
 
 	/** Opens the map of the complex (T11). M by default (D150), rebindable if it clashes with the Cobblemon summary. */
 	public static final KeyMapping MAP_KEY = new KeyMapping("key.phantasmon_events.trahison_map",
