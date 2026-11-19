@@ -1,57 +1,66 @@
 {
-  "_comment": "Page Ligue du site Village 14 (/league). Ce fichier se modifie dans Nextcloud : Public/Phantasmon/site/ligue.json (la page le relit dans la minute). Chaque texte a sa version française (fr) et anglaise (en). Pour un membre : discord = pseudo Discord, minecraft = pseudo Minecraft (pour sa tête), laisser \"\" si inconnu.",
+  "_comment": "Page Ligue du site Village 14 (/league). Ce fichier se modifie dans Nextcloud : Public/Phantasmon/site/ligue.json (la page le relit dans la minute). L'icône de la ligue : déposer site/ligue.png à côté. Chaque texte a sa version française (fr) et anglaise (en). Pour une personne : minecraft = pseudo en jeu (pour son skin), discord = pseudo Discord, type = son type (en français ou en anglais, ex. \"Fée\"), field = son terrain (identifiant du wiki, ex. \"burning\"), coords = coordonnées de l'arène \"X Y Z\", server = son serveur (vide = defaultServer). Laisser \"\" si inconnu.",
   "name": { "fr": "Ligue Reborn", "en": "Reborn League" },
   "tagline": {
-    "fr": "La ligue de notre communauté : huit arènes, un Conseil 4 et un Maître, sur les terrains de Pokémon Reborn.",
-    "en": "Our community's league: eight gyms, an Elite Four and a Champion, on Pokémon Reborn's fields."
+    "fr": "Huit arènes, un Conseil 4 et un Maître. Chaque combat se joue sur un terrain de Pokémon Reborn : ici, connaître le terrain compte autant que connaître son équipe.",
+    "en": "Eight gyms, an Elite Four and a Champion. Every battle is fought on a Pokémon Reborn field: here, knowing the field matters as much as knowing your team."
+  },
+  "defaultServer": "Wild 14",
+  "badgesPath": {
+    "fr": "Huit champions t'attendent, chacun avec son type, son terrain et son arène. Affronte-les dans l'ordre que tu veux, selon leurs disponibilités : chaque victoire te rapporte un badge.",
+    "en": "Eight leaders are waiting, each with their own type, field and gym. Take them on in any order you like, as they are available: every win earns you a badge."
+  },
+  "leaguePath": {
+    "fr": "Tes huit badges en poche, la Ligue s'ouvre. Tu affrontes les quatre membres du Conseil d'une seule traite, puis le Maître dans la foulée. C'est l'épreuve la plus dure du serveur : prépare ton équipe en conséquence.",
+    "en": "With your eight badges, the League opens. You face the four Elite members in one go, then the Champion right after. It is the hardest challenge on the server: build your team for it."
   },
   "how": [
     {
-      "title": { "fr": "Le parcours", "en": "The path" },
+      "title": { "fr": "Le format", "en": "The format" },
       "text": {
-        "fr": "Chaque dresseur affronte les champions d'arène pour gagner leurs badges. Une fois tous les badges en poche, il peut défier le Conseil 4, puis le Maître de la Ligue.",
-        "en": "Each trainer challenges the gym leaders to earn their badges. With every badge in hand, they can take on the Elite Four, then the League Champion."
+        "fr": "National Dex Gen 9, avec les terrains custom de la Ligue Reborn. Les règles Smogon du format s'appliquent, et le terrain du champion est posé dès le début du combat.",
+        "en": "National Dex Gen 9, with the Reborn League's custom fields. The format's Smogon rules apply, and the leader's field is set from the start of the battle."
       }
     },
     {
-      "title": { "fr": "Le format", "en": "The format" },
+      "title": { "fr": "LeagueWay", "en": "LeagueWay" },
       "text": {
-        "fr": "Les combats se jouent en National Dex Gen 9 avec le modificateur League Reborn : les règles Smogon du format, plus les terrains et les Crests de Pokémon Reborn.",
-        "en": "Battles are played in National Dex Gen 9 with the League Reborn modifier: the format's Smogon rules, plus Pokémon Reborn's fields and Crests."
+        "fr": "La ligue passe par LeagueWay, le système d'Emerge le Doc : /dresseurs league-way pour défier un champion et suivre tes badges, /dresseurs profil pour voir ton profil ou celui d'un autre dresseur. Lie ton pseudo Minecraft à ton profil avant de commencer.",
+        "en": "The league runs through LeagueWay, Emerge le Doc's system: /dresseurs league-way to challenge a leader and follow your badges, /dresseurs profil to see your profile or another trainer's. Link your Minecraft name to your profile before you start."
       }
     },
     {
       "title": { "fr": "Les terrains", "en": "The fields" },
       "text": {
-        "fr": "Chaque arène a son terrain, choisi par son champion. Il est posé au début du combat et reste en place jusqu'à ce qu'une capacité le transforme. Le wiki plus bas détaille chaque terrain.",
-        "en": "Each gym has its own field, picked by its leader. It is set at the start of the battle and stays until a move transforms it. The wiki below details every field."
+        "fr": "Chaque champion a choisi son terrain. Il reste en place jusqu'à ce qu'une capacité le transforme. Le wiki en bas de page détaille chacun d'eux.",
+        "en": "Each leader picked their field. It stays until a move transforms it. The wiki at the bottom of the page details each one."
       }
     },
     {
       "title": { "fr": "Défier un champion", "en": "Challenging a leader" },
       "text": {
-        "fr": "Contacte le champion sur Discord pour fixer une date. Le combat se fait en jeu, dans le lobby Phantasmon, avec le terrain de l'arène.",
-        "en": "Reach the leader on Discord to set a date. The battle happens in game, in the Phantasmon lobby, on the gym's field."
+        "fr": "Contacte le champion sur Discord pour convenir d'un moment, puis rejoins son arène : ses coordonnées et son serveur sont sur sa carte.",
+        "en": "Reach the leader on Discord to set a time, then head to their gym: its coordinates and server are on their card."
       }
     }
   ],
   "gyms": [
-    { "order": 1, "leader": { "discord": "", "minecraft": "" }, "type": "", "field": "", "badge": { "fr": "À définir", "en": "To be decided" } },
-    { "order": 2, "leader": { "discord": "", "minecraft": "" }, "type": "", "field": "", "badge": { "fr": "À définir", "en": "To be decided" } },
-    { "order": 3, "leader": { "discord": "", "minecraft": "" }, "type": "", "field": "", "badge": { "fr": "À définir", "en": "To be decided" } },
-    { "order": 4, "leader": { "discord": "", "minecraft": "" }, "type": "", "field": "", "badge": { "fr": "À définir", "en": "To be decided" } },
-    { "order": 5, "leader": { "discord": "", "minecraft": "" }, "type": "", "field": "", "badge": { "fr": "À définir", "en": "To be decided" } },
-    { "order": 6, "leader": { "discord": "", "minecraft": "" }, "type": "", "field": "", "badge": { "fr": "À définir", "en": "To be decided" } },
-    { "order": 7, "leader": { "discord": "", "minecraft": "" }, "type": "", "field": "", "badge": { "fr": "À définir", "en": "To be decided" } },
-    { "order": 8, "leader": { "discord": "", "minecraft": "" }, "type": "", "field": "", "badge": { "fr": "À définir", "en": "To be decided" } }
+    { "leader": { "discord": "", "minecraft": "" }, "type": "", "field": "", "badge": { "fr": "", "en": "" }, "coords": "", "server": "" },
+    { "leader": { "discord": "", "minecraft": "" }, "type": "", "field": "", "badge": { "fr": "", "en": "" }, "coords": "", "server": "" },
+    { "leader": { "discord": "", "minecraft": "" }, "type": "", "field": "", "badge": { "fr": "", "en": "" }, "coords": "", "server": "" },
+    { "leader": { "discord": "", "minecraft": "" }, "type": "", "field": "", "badge": { "fr": "", "en": "" }, "coords": "", "server": "" },
+    { "leader": { "discord": "", "minecraft": "" }, "type": "", "field": "", "badge": { "fr": "", "en": "" }, "coords": "", "server": "" },
+    { "leader": { "discord": "", "minecraft": "" }, "type": "", "field": "", "badge": { "fr": "", "en": "" }, "coords": "", "server": "" },
+    { "leader": { "discord": "", "minecraft": "" }, "type": "", "field": "", "badge": { "fr": "", "en": "" }, "coords": "", "server": "" },
+    { "leader": { "discord": "", "minecraft": "" }, "type": "", "field": "", "badge": { "fr": "", "en": "" }, "coords": "", "server": "" }
   ],
   "elite": [
-    { "discord": "", "minecraft": "", "type": "", "field": "" },
-    { "discord": "", "minecraft": "", "type": "", "field": "" },
-    { "discord": "", "minecraft": "", "type": "", "field": "" },
-    { "discord": "", "minecraft": "", "type": "", "field": "" }
+    { "discord": "", "minecraft": "", "type": "", "field": "", "coords": "", "server": "" },
+    { "discord": "", "minecraft": "", "type": "", "field": "", "coords": "", "server": "" },
+    { "discord": "", "minecraft": "", "type": "", "field": "", "coords": "", "server": "" },
+    { "discord": "", "minecraft": "", "type": "", "field": "", "coords": "", "server": "" }
   ],
-  "champion": { "discord": "", "minecraft": "", "type": "", "field": "" },
+  "champion": { "discord": "", "minecraft": "", "type": "", "field": "", "coords": "", "server": "" },
   "members": [
     { "discord": "MystAria", "minecraft": "MystAria_", "role": { "fr": "Organisatrice", "en": "Organiser" } }
   ],

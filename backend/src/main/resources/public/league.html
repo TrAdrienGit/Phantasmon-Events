@@ -28,53 +28,88 @@
   .empty { color: var(--muted); }
 
   /* Hero */
-  .hero { position: relative; overflow: hidden; border-radius: 18px; padding: 40px 32px; border: 1px solid var(--line);
+  .hero { position: relative; overflow: hidden; border-radius: 18px; padding: 32px; border: 1px solid var(--line); display: flex; gap: 28px; align-items: center;
           background: radial-gradient(120% 140% at 0% 0%, rgba(56,196,188,.22), transparent 55%),
                       radial-gradient(120% 140% at 100% 100%, rgba(169,139,255,.22), transparent 55%), var(--panel); box-shadow: var(--shadow); }
+  .emblem { width: 132px; height: 132px; flex: none; border-radius: 22px; display: grid; place-items: center; position: relative; overflow: hidden;
+            border: 2px dashed var(--line); color: var(--dim); font-size: 12px; text-align: center; background: rgba(0,0,0,.12); }
+  .emblem.has { border: 0; background: none; }
+  .emblem img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
   .hero h1 { font-size: 44px; line-height: 1.05; margin: 0; letter-spacing: -.02em; }
-  .hero p { color: var(--muted); max-width: 680px; margin: 12px 0 0; font-size: 16px; }
-  .hero .path { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 24px; }
-  .hero .path span { padding: 6px 12px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--line); font-weight: 600; font-size: 13px; }
-  .hero .path i { color: var(--dim); font-style: normal; }
-  .hero .path .elite { border-color: var(--silver); } .hero .path .champ { border-color: var(--gold); color: var(--gold); }
-  @media (max-width: 640px) { .hero { padding: 26px 18px; } .hero h1 { font-size: 32px; } }
+  .hero p { color: var(--muted); max-width: 700px; margin: 12px 0 0; font-size: 16px; }
+  @media (max-width: 640px) { .hero { padding: 22px 18px; flex-direction: column; align-items: flex-start; gap: 16px; } .emblem { width: 96px; height: 96px; } .hero h1 { font-size: 32px; } }
+
+  /* The two paths */
+  .paths { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 860px) { .paths { grid-template-columns: 1fr; } }
+  .pathbox { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+  .pathbox::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--accent); }
+  .pathbox.league::before { background: linear-gradient(90deg, var(--silver), var(--gold)); }
+  .pathbox .step { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .pathbox h3 { margin: 4px 0 0; font-size: 22px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .pathbox h3 .hard { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: rgba(229,83,75,.15); color: #ff7b72; }
+  .pathbox p { color: var(--muted); margin: 10px 0 0; font-size: 14px; }
+  .badges { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
+  @media (max-width: 520px) { .badges { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .badge { aspect-ratio: 1; border-radius: 999px; display: grid; place-items: center; background: var(--panel2); border: 2px dashed var(--line); }
+  .badge.on { border: 2px solid var(--t); background: color-mix(in srgb, var(--t) 18%, var(--panel2)); }
+  .badge .ti { width: 60%; height: 60%; }
+  .chain { display: flex; align-items: center; gap: 6px; margin-top: 16px; flex-wrap: wrap; }
+  .chain span { padding: 6px 12px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--silver); font-weight: 600; font-size: 13px; }
+  .chain span.champ { border-color: var(--gold); color: var(--gold); }
+  .chain i { color: var(--dim); font-style: normal; }
 
   /* How it works */
-  .how { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .how { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
   .how div { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); }
-  .how b { display: flex; align-items: center; gap: 10px; font-size: 16px; }
-  .how b em { font-style: normal; width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); font-size: 13px; }
+  .how b { font-size: 16px; }
   .how p { color: var(--muted); margin: 8px 0 0; font-size: 14px; }
+  .how code { font-size: 13px; color: var(--ink); background: var(--panel2); border: 1px solid var(--line); border-radius: 5px; padding: 0 5px; }
 
-  /* People */
-  .people { display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  @media (max-width: 980px) { .people { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  @media (max-width: 520px) { .people { grid-template-columns: 1fr; } }
-  .person { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; box-shadow: var(--shadow);
-            display: flex; gap: 12px; align-items: center; position: relative; overflow: hidden; }
-  .person::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--c, var(--accent)); }
-  .person.vacant { opacity: .6; }
-  .face { width: 52px; height: 52px; flex: none; border-radius: 10px; background: var(--panel2); image-rendering: pixelated; display: grid; place-items: center;
-          font-weight: 800; font-size: 20px; color: var(--muted); overflow: hidden; position: relative; box-shadow: 0 0 0 1px var(--line); }
-  .face img { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
-  .person .who { min-width: 0; }
-  .person .rank { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-  .person .name { font-weight: 700; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .person .disc { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
-  .person .disc svg { width: 14px; height: 14px; fill: currentColor; flex: none; }
-  .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
-  .chip { font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--line); color: var(--muted); }
-  .chip.type { color: #fff; border: 0; background: var(--t, var(--dim)); }
-  .chip.field { cursor: pointer; color: var(--violet); border-color: currentColor; background: none; }
-  .champ-row { display: grid; gap: 12px; grid-template-columns: 3fr 1fr; }
-  @media (max-width: 980px) { .champ-row { grid-template-columns: 1fr; } }
-  .elite4 { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  @media (max-width: 520px) { .elite4 { grid-template-columns: 1fr; } }
-  .elite4 .person { --c: var(--silver); } .champion .person { --c: var(--gold); height: 100%; }
+  /* Type icons: Cobblemon's sheet, 18 icons of 36 px */
+  .ti { display: inline-block; width: 22px; height: 22px; flex: none; background: url(/site/types.png) no-repeat; background-size: 1800% 100%;
+        background-position: calc(var(--i) * 100% / 17) 0; image-rendering: pixelated; }
+
+  /* Trainer cards */
+  .trainers { display: grid; gap: 14px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (max-width: 1100px) { .trainers { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 820px) { .trainers { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 520px) { .trainers { grid-template-columns: 1fr; } }
+  .trainer { --t: var(--dim); position: relative; overflow: hidden; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--t) 55%, var(--line));
+             background: linear-gradient(160deg, color-mix(in srgb, var(--t) 30%, var(--panel)) 0%, var(--panel) 62%); box-shadow: var(--shadow);
+             display: flex; gap: 12px; padding: 14px; }
+  .trainer.vacant { opacity: .55; }
+  .trainer.champion { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), var(--shadow); }
+  .skin { width: 64px; height: 128px; flex: none; position: relative; align-self: center; display: grid; place-items: center; }
+  .skin img { width: 64px; height: 128px; image-rendering: pixelated; filter: drop-shadow(0 4px 6px rgba(0,0,0,.35)); }
+  .skin svg { width: 46px; height: 100px; fill: color-mix(in srgb, var(--t) 40%, var(--panel2)); }
+  .trainer .info { min-width: 0; display: flex; flex-direction: column; gap: 3px; flex: 1; }
+  .trainer .rank { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .trainer .name { font-weight: 800; font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .trainer .disc { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 5px; min-width: 0; }
+  .trainer .disc span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .trainer .disc svg { width: 14px; height: 14px; fill: #8c9eff; flex: none; }
+  .trainer .type { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; margin-top: 4px; }
+  .trainer .type .ti { width: 20px; height: 20px; }
+  .meta { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; font-size: 13px; color: var(--muted); }
+  .meta div { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .meta svg { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .meta a.field { color: var(--violet); font-weight: 600; }
+  .meta a.field:hover { text-decoration: underline; }
+  .coords { font-family: ui-monospace, Consolas, monospace; color: var(--ink); cursor: pointer; background: none; border: 0; padding: 0; font-size: 13px; white-space: nowrap; }
+  .coords:hover { color: var(--accent); }
+  .badge-name { font-style: italic; }
+  .champ-wrap { display: flex; justify-content: center; margin-top: 14px; }
+  .champ-wrap .trainer { width: min(100%, 380px); }
   .members { display: flex; flex-wrap: wrap; gap: 8px; }
   .member { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px 4px 4px; }
-  .member .face { width: 28px; height: 28px; border-radius: 999px; font-size: 12px; }
+  .face { width: 28px; height: 28px; flex: none; border-radius: 999px; background: var(--panel2); display: grid; place-items: center;
+          font-weight: 800; font-size: 12px; color: var(--muted); overflow: hidden; position: relative; }
+  .face img { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
   .member small { color: var(--muted); }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--accent); border-radius: 999px;
+           padding: 8px 16px; font-size: 14px; box-shadow: var(--shadow); opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
 
   /* Field wiki */
   .wiki-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; justify-content: space-between; }
@@ -106,29 +141,56 @@
   const lang = window.SITE_LANG;
   const tx = v => v == null ? '' : typeof v === 'string' ? v : (v[lang] ?? v.fr ?? '');
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-  const TYPES = { normal: '#9fa19f', feu: '#e62829', fire: '#e62829', eau: '#2980ef', water: '#2980ef', plante: '#3fa129', grass: '#3fa129',
-    'électrik': '#d4ac00', electrik: '#d4ac00', electric: '#d4ac00', glace: '#3dcef3', ice: '#3dcef3', combat: '#ff8000', fighting: '#ff8000',
-    poison: '#9141cb', sol: '#915121', ground: '#915121', vol: '#81b9ef', flying: '#81b9ef', psy: '#ef4179', psychic: '#ef4179',
-    insecte: '#91a119', bug: '#91a119', roche: '#afa981', rock: '#afa981', spectre: '#704170', ghost: '#704170', dragon: '#5060e1',
-    'ténèbres': '#624d4e', tenebres: '#624d4e', dark: '#624d4e', acier: '#60a1b8', steel: '#60a1b8', 'fée': '#ef70ef', fee: '#ef70ef', fairy: '#ef70ef' };
+  // Types: their Cobblemon icon (index in the sheet), colour and names; the JSON may name them in French or English.
+  const TYPE_LIST = [['normal', 'Normal', 'Normal', '#9fa19f'], ['fire', 'Feu', 'Fire', '#e62829'], ['water', 'Eau', 'Water', '#2980ef'],
+    ['grass', 'Plante', 'Grass', '#3fa129'], ['electric', 'Électrik', 'Electric', '#d4ac00'], ['ice', 'Glace', 'Ice', '#3dcef3'],
+    ['fighting', 'Combat', 'Fighting', '#ff8000'], ['poison', 'Poison', 'Poison', '#9141cb'], ['ground', 'Sol', 'Ground', '#915121'],
+    ['flying', 'Vol', 'Flying', '#81b9ef'], ['psychic', 'Psy', 'Psychic', '#ef4179'], ['bug', 'Insecte', 'Bug', '#91a119'],
+    ['rock', 'Roche', 'Rock', '#afa981'], ['ghost', 'Spectre', 'Ghost', '#704170'], ['dragon', 'Dragon', 'Dragon', '#5060e1'],
+    ['dark', 'Ténèbres', 'Dark', '#624d4e'], ['steel', 'Acier', 'Steel', '#60a1b8'], ['fairy', 'Fée', 'Fairy', '#ef70ef']];
+  const flat = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+  const TYPES = {};
+  TYPE_LIST.forEach(([id, fr, en, color], i) => { const t = { i, fr, en, color }; TYPES[id] = TYPES[flat(fr)] = TYPES[flat(en)] = t; });
+  TYPES.electrique = TYPES.electric;
+  const typeOf = v => TYPES[flat(v)] || null;
+  const typeIcon = t => t ? `<span class="ti" style="--i:${t.i}" role="img" aria-label="${esc(L(t.fr, t.en))}"></span>` : '';
   const DISCORD = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.3a18.4 18.4 0 0 0-5.6 0L8.6 3a19.7 19.7 0 0 0-4.9 1.5C.6 9.1-.3 13.6.1 18.1a19.9 19.9 0 0 0 6 3l1.3-2a12.9 12.9 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4a13 13 0 0 1-2 1l1.3 2a19.8 19.8 0 0 0 6-3c.5-5.2-.9-9.7-3.6-13.7zM8 15.4c-1.2 0-2.2-1.1-2.2-2.4S6.8 10.6 8 10.6s2.2 1.1 2.2 2.4-1 2.4-2.2 2.4zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4z"/></svg>';
+  const ICON = {
+    pin: '<svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+    server: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>',
+    field: '<svg viewBox="0 0 24 24"><path d="M3 17l5-8 4 5 3-4 6 7z"/><path d="M3 20h18"/></svg>',
+    badge: '<svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M8.5 14L7 22l5-3 5 3-1.5-8"/></svg>',
+  };
+  const SILHOUETTE = '<svg viewBox="0 0 16 32" aria-hidden="true"><path d="M4 0h8v8H4zM4 8h8v12H4zM0 8h4v12H0zM12 8h4v12h-4zM4 20h4v12H4zM8 20h4v12H8z"/></svg>';
   let fieldNames = {};
+  let defaultServer = 'Wild 14';
 
-  const face = (p, letter) => {
-    const n = p.minecraft || p.discord || '';
+  const face = p => {
+    const n = p.minecraft || p.discord || '?';
     const img = p.minecraft ? `<img src="/public/heads/${encodeURIComponent(p.minecraft)}" alt="" loading="lazy" onerror="this.remove()">` : '';
-    return `<span class="face">${esc((letter ?? n[0] ?? '?').toUpperCase())}${img}</span>`;
+    return `<span class="face">${esc(n[0].toUpperCase())}${img}</span>`;
   };
-  const typeChip = t => t ? `<span class="chip type" style="--t:${TYPES[String(t).toLowerCase()] || 'var(--dim)'}">${esc(t)}</span>` : '';
-  const fieldChip = f => f ? `<a class="chip field" href="#field-${esc(f)}" data-open="${esc(f)}">${esc(fieldNames[f] || f)}</a>` : '';
-  const person = (p, rank) => {
+  const coordsText = c => {
+    const n = String(c || '').match(/-?\d+(?:\.\d+)?/g);
+    return n && n.length === 3 ? `X ${n[0]} · Y ${n[1]} · Z ${n[2]}` : n && n.length === 2 ? `X ${n[0]} · Z ${n[1]}` : String(c || '');
+  };
+  const trainer = (p, rank, extra = '') => {
     const vacant = !p.discord && !p.minecraft;
+    const t = typeOf(p.type);
     const name = p.minecraft || p.discord || L('Place libre', 'Open seat');
-    return `<div class="person ${vacant ? 'vacant' : ''}">${face(p, vacant ? '?' : null)}<div class="who">
+    const skin = p.minecraft ? `<img src="/public/skins/${encodeURIComponent(p.minecraft)}" alt="" loading="lazy" onerror="this.replaceWith(document.createRange().createContextualFragment(window.SILHOUETTE))">` : SILHOUETTE;
+    const meta = [];
+    if (p.field) meta.push(`<div>${ICON.field}<a class="field" href="#field-${esc(p.field)}" data-open="${esc(p.field)}">${esc(fieldNames[p.field] || p.field)}</a></div>`);
+    if (tx(p.badge)) meta.push(`<div>${ICON.badge}<span class="badge-name">${esc(tx(p.badge))}</span></div>`);
+    if (p.coords) meta.push(`<div>${ICON.pin}<button class="coords" data-copy="${esc((String(p.coords).match(/-?\d+(?:\.\d+)?/g) || [p.coords]).join(' '))}" title="${L('Copier', 'Copy')}">${esc(coordsText(p.coords))}</button></div>`);
+    if (!vacant) meta.push(`<div>${ICON.server}<span>${esc(p.server || defaultServer)}</span></div>`);
+    return `<div class="trainer ${vacant ? 'vacant' : ''} ${extra}" style="${t ? `--t:${t.color}` : ''}"><div class="skin">${skin}</div><div class="info">
       <div class="rank">${esc(rank)}</div><div class="name">${esc(name)}</div>
-      ${p.discord ? `<div class="disc">${DISCORD}${esc(p.discord)}</div>` : ''}
-      <div class="chips">${typeChip(p.type)}${fieldChip(p.field)}${p.badge ? `<span class="chip">${esc(tx(p.badge))}</span>` : ''}</div></div></div>`;
+      ${p.discord ? `<div class="disc">${DISCORD}<span>${esc(p.discord)}</span></div>` : ''}
+      ${t ? `<div class="type">${typeIcon(t)}${esc(L(t.fr, t.en))}</div>` : ''}
+      ${meta.length ? `<div class="meta">${meta.join('')}</div>` : ''}</div></div>`;
   };
+  window.SILHOUETTE = SILHOUETTE;
 
   function fieldHtml(f, notes) {
     const pct = m => { const up = m > 1; return `<span class="mult ${up ? 'up' : m < 1 ? 'down' : ''}">×${String(m).replace('.', L(',', '.'))}</span>`; };
@@ -150,20 +212,30 @@
 
   function render(data, fields) {
     fieldNames = Object.fromEntries(fields.map(f => [f.id, tx(f.name)]));
+    defaultServer = data.defaultServer || defaultServer;
     document.title = `${tx(data.name)} · Village 14`;
-    const gyms = (data.gyms || []).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    const how = (data.how || []).map((h, i) => `<div><b><em>${i + 1}</em>${esc(tx(h.title))}</b><p>${esc(tx(h.text))}</p></div>`).join('');
+    const gyms = data.gyms || [];
+    const elite = data.elite || [];
+    const how = (data.how || []).map(h => `<div><b>${esc(tx(h.title))}</b><p>${esc(tx(h.text)).replace(/(\/dresseurs [a-z-]+)/g, '<code>$1</code>')}</p></div>`).join('');
     const notes = data.fieldNotes || {};
+    const badges = gyms.map(g => { const t = typeOf(g.type); return t ? `<span class="badge on" style="--t:${t.color}" title="${esc(L(t.fr, t.en))}">${typeIcon(t)}</span>` : '<span class="badge"></span>'; }).join('');
     document.getElementById('app').innerHTML = `
-      <section class="hero"><h1>${esc(tx(data.name))}</h1><p>${esc(tx(data.tagline))}</p>
-        <div class="path">${gyms.map((g, i) => `<span>${L('Arène', 'Gym')} ${i + 1}</span>`).join('<i>→</i>')}
-          <i>→</i><span class="elite">${L('Conseil 4', 'Elite Four')}</span><i>→</i><span class="champ">${L('Maître', 'Champion')}</span></div></section>
+      <section class="hero"><div class="emblem" id="emblem"><span>${L('Icône de la ligue', 'League icon')}</span><img src="/league/icon" alt="" onload="this.parentNode.classList.add('has');this.previousElementSibling.remove()" onerror="this.remove()"></div>
+        <div><h1>${esc(tx(data.name))}</h1><p>${esc(tx(data.tagline))}</p></div></section>
+      <h2>${L('Le parcours', 'The path')}</h2>
+      <div class="paths">
+        <div class="pathbox"><div class="step">${L('Étape 1', 'Step 1')}</div><h3>${L(`Les ${gyms.length} badges`, `The ${gyms.length} badges`)}</h3>
+          <p>${esc(tx(data.badgesPath))}</p><div class="badges">${badges}</div></div>
+        <div class="pathbox league"><div class="step">${L('Étape 2', 'Step 2')}</div><h3>${L('La Ligue', 'The League')} <span class="hard">${L("D'une traite", 'In one go')}</span></h3>
+          <p>${esc(tx(data.leaguePath))}</p>
+          <div class="chain">${elite.map((e, i) => `<span>${L('Conseil', 'Elite')} ${i + 1}</span>`).join('<i>→</i>')}<i>→</i><span class="champ">${L('Maître', 'Champion')}</span></div></div>
+      </div>
       <h2>${L('Comment ça marche', 'How it works')}</h2><div class="how">${how}</div>
       <h2>${L("Champions d'arène", 'Gym leaders')}</h2>
-      <div class="people">${gyms.map((g, i) => person({ ...g.leader, type: g.type, field: g.field, badge: g.badge }, `${L('Arène', 'Gym')} ${g.order ?? i + 1}`)).join('')}</div>
+      <div class="trainers">${gyms.map(g => trainer({ ...g.leader, type: g.type, field: g.field, badge: g.badge, coords: g.coords, server: g.server }, L("Champion d'arène", 'Gym leader'))).join('')}</div>
       <h2>${L('Conseil 4 et Maître', 'Elite Four and Champion')}</h2>
-      <div class="champ-row"><div class="elite4">${(data.elite || []).map((e, i) => person(e, `${L('Conseil', 'Elite')} ${i + 1}`)).join('')}</div>
-        <div class="champion">${person(data.champion || {}, L('Maître de la Ligue', 'League Champion'))}</div></div>
+      <div class="trainers">${elite.map((e, i) => trainer(e, `${L('Conseil 4', 'Elite Four')} · ${i + 1}`)).join('')}</div>
+      <div class="champ-wrap">${trainer(data.champion || {}, L('Maître de la Ligue', 'League Champion'), 'champion')}</div>
       ${(data.members || []).length ? `<h2>${L('Membres', 'Members')}</h2><div class="members">${data.members.map(m => `<span class="member">${face(m)}
         <span>${esc(m.minecraft || m.discord)}${m.discord && m.minecraft ? ` <small>· ${esc(m.discord)}</small>` : ''}${m.role ? ` <small>· ${esc(tx(m.role))}</small>` : ''}</span></span>`).join('')}</div>` : ''}
       <h2>${L('Wiki des terrains', 'Field wiki')}</h2>
@@ -171,7 +243,8 @@
         'Each field changes the battle\'s rules: type boosts, stronger or changed moves, and moves that change the field itself. Open a field to see its effects.')}</p>
         <input class="search" id="search" type="search" placeholder="${L('Chercher un terrain, une capacité…', 'Search a field, a move…')}"></div>
       <div class="fields" id="fields">${fields.map(f => fieldHtml(f, notes)).join('')}</div>
-      <p class="credit">${L('Terrains, chiffres et interactions repris de Pokémon Reborn, avec nos propres textes.', 'Fields, numbers and interactions taken from Pokémon Reborn, with our own texts.')}</p>`;
+      <p class="credit">${L('Terrains, chiffres et interactions repris de Pokémon Reborn, avec nos propres textes. Icônes de type : Cobblemon.', 'Fields, numbers and interactions taken from Pokémon Reborn, with our own texts. Type icons: Cobblemon.')}</p>
+      <div class="toast" id="toast"></div>`;
     const search = document.getElementById('search');
     search.oninput = () => {
       const q = search.value.trim().toLowerCase();
@@ -179,6 +252,12 @@
     };
     const open = id => { const d = document.getElementById('field-' + id); if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); } };
     document.querySelectorAll('[data-open]').forEach(a => a.onclick = e => { e.preventDefault(); open(a.dataset.open); history.replaceState(null, '', '#field-' + a.dataset.open); });
+    const toast = document.getElementById('toast');
+    document.querySelectorAll('[data-copy]').forEach(b => b.onclick = () => {
+      navigator.clipboard?.writeText(b.dataset.copy).then(() => {
+        toast.textContent = L('Coordonnées copiées', 'Coordinates copied'); toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 1400);
+      }).catch(() => {});
+    });
     if (location.hash.startsWith('#field-')) open(location.hash.slice(7));
   }
 

@@ -51,10 +51,13 @@ public class SitePages {
 		return page("home.html");
 	}
 
-	/** The site's logo (Phantasmon's icon), also its favicon. */
-	@GetMapping("/site/logo.png")
-	public ResponseEntity<byte[]> logo() throws IOException {
-		try (InputStream in = new ClassPathResource("public/logo.png").getInputStream()) {
+	/** The site's images: its logo (Phantasmon's icon, also the favicon) and Cobblemon's type icons. */
+	@GetMapping("/site/{name}.png")
+	public ResponseEntity<byte[]> image(@PathVariable String name) throws IOException {
+		if (!name.equals("logo") && !name.equals("types")) {
+			return ResponseEntity.notFound().build();
+		}
+		try (InputStream in = new ClassPathResource("public/" + name + ".png").getInputStream()) {
 			return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).cacheControl(CacheControl.maxAge(java.time.Duration.ofDays(1)))
 					.body(in.readAllBytes());
 		}

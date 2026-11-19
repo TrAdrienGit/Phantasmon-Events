@@ -33,6 +33,9 @@ public class LeaguePageController {
 	private static final Duration KEPT = Duration.ofMinutes(1);
 
 	private final String cloudUrl;
+	private final String iconUrl;
+	private volatile byte[] icon;
+	private volatile Instant iconUntil = Instant.EPOCH;
 	private final JsonMapper json = JsonMapper.builder().build();
 	private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
 	private volatile String cached;
@@ -42,6 +45,33 @@ public class LeaguePageController {
 			@Value("${phantasmon.downloads.share-base:https://server-linux.tail192969.ts.net:10000}") String shareBase,
 			@Value("${phantasmon.downloads.share-hash:GZ8ZJDgR}") String shareHash) {
 		this.cloudUrl = shareBase + "/api/public/dl/" + shareHash + "/site/ligue.json";
+		this.iconUrl = shareBase + "/api/public/dl/" + shareHash + "/site/ligue.png";
+	}
+
+	/** The league's icon, {@code site/ligue.png} in the cloud; 404 while there is none (the page keeps a place for it). */
+	@GetMapping("/league/icon")
+	public ResponseEntity<byte[]> icon() {
+		if (Instant.now().isAfter(iconUntil)) {
+			byte[] png = null;
+			try {
+				HttpResponse<byte[]> res = http.send(HttpRequest.newBuilder(URI.create(iconUrl)).timeout(Duration.ofSeconds(8)).GET().build(),
+						HttpResponse.BodyHandlers.ofByteArray());
+				if (res.statusCode() == 200 && res.body().length > 8 && res.body()[1] == 'P' && res.body()[2] == 'N' && res.body()[3] == 'G') {
+					png = res.body();
+				}
+			} catch (IOException e) {
+				// no icon this minute
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+			icon = png;
+			iconUntil = Instant.now().plus(KEPT);
+		}
+		byte[] png = icon;
+		if (png == null) {
+			return ResponseEntity.notFound().build();
+		}
+		return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).cacheControl(CacheControl.noCache()).body(png);
 	}
 
 	@GetMapping({ "/league", "/league/" })
