@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-en="League · Village 14">Ligue · Village 14</title>
+<link rel="icon" href="/site/logo.png">
+<style>
+  :root {
+    --bg: #101214; --bg2: #15181b; --panel: #1b1f23; --panel2: #22272c; --line: #2c3238; --ink: #eef1f3; --muted: #9aa4ad;
+    --dim: #6c757d; --accent: #38c4bc; --accent-ink: #062b29; --gold: #ffd84a; --silver: #d8dee6; --violet: #a98bff;
+    --shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 6px 18px rgba(0,0,0,.25);
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f3f5f7; --bg2: #e9edf1; --panel: #ffffff; --panel2: #f6f8fa; --line: #dde3e9; --ink: #182026; --muted: #5b6672;
+      --dim: #8a949e; --accent: #11968f; --accent-ink: #ffffff; --gold: #b88a00; --silver: #7d8a98; --violet: #7b55e0;
+      --shadow: 0 1px 2px rgba(16,24,40,.06), 0 4px 12px rgba(16,24,40,.06);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body { font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 0 16px; }
+  main.wrap { padding: 24px 16px 64px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 40px 0 14px; }
+  .empty { color: var(--muted); }
+
+  /* Hero */
+  .hero { position: relative; overflow: hidden; border-radius: 18px; padding: 40px 32px; border: 1px solid var(--line);
+          background: radial-gradient(120% 140% at 0% 0%, rgba(56,196,188,.22), transparent 55%),
+                      radial-gradient(120% 140% at 100% 100%, rgba(169,139,255,.22), transparent 55%), var(--panel); box-shadow: var(--shadow); }
+  .hero h1 { font-size: 44px; line-height: 1.05; margin: 0; letter-spacing: -.02em; }
+  .hero p { color: var(--muted); max-width: 680px; margin: 12px 0 0; font-size: 16px; }
+  .hero .path { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 24px; }
+  .hero .path span { padding: 6px 12px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--line); font-weight: 600; font-size: 13px; }
+  .hero .path i { color: var(--dim); font-style: normal; }
+  .hero .path .elite { border-color: var(--silver); } .hero .path .champ { border-color: var(--gold); color: var(--gold); }
+  @media (max-width: 640px) { .hero { padding: 26px 18px; } .hero h1 { font-size: 32px; } }
+
+  /* How it works */
+  .how { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .how div { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); }
+  .how b { display: flex; align-items: center; gap: 10px; font-size: 16px; }
+  .how b em { font-style: normal; width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); font-size: 13px; }
+  .how p { color: var(--muted); margin: 8px 0 0; font-size: 14px; }
+
+  /* People */
+  .people { display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (max-width: 980px) { .people { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 520px) { .people { grid-template-columns: 1fr; } }
+  .person { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; box-shadow: var(--shadow);
+            display: flex; gap: 12px; align-items: center; position: relative; overflow: hidden; }
+  .person::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--c, var(--accent)); }
+  .person.vacant { opacity: .6; }
+  .face { width: 52px; height: 52px; flex: none; border-radius: 10px; background: var(--panel2); image-rendering: pixelated; display: grid; place-items: center;
+          font-weight: 800; font-size: 20px; color: var(--muted); overflow: hidden; position: relative; box-shadow: 0 0 0 1px var(--line); }
+  .face img { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+  .person .who { min-width: 0; }
+  .person .rank { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .person .name { font-weight: 700; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .person .disc { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+  .person .disc svg { width: 14px; height: 14px; fill: currentColor; flex: none; }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .chip { font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--line); color: var(--muted); }
+  .chip.type { color: #fff; border: 0; background: var(--t, var(--dim)); }
+  .chip.field { cursor: pointer; color: var(--violet); border-color: currentColor; background: none; }
+  .champ-row { display: grid; gap: 12px; grid-template-columns: 3fr 1fr; }
+  @media (max-width: 980px) { .champ-row { grid-template-columns: 1fr; } }
+  .elite4 { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 520px) { .elite4 { grid-template-columns: 1fr; } }
+  .elite4 .person { --c: var(--silver); } .champion .person { --c: var(--gold); height: 100%; }
+  .members { display: flex; flex-wrap: wrap; gap: 8px; }
+  .member { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px 4px 4px; }
+  .member .face { width: 28px; height: 28px; border-radius: 999px; font-size: 12px; }
+  .member small { color: var(--muted); }
+
+  /* Field wiki */
+  .wiki-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; justify-content: space-between; }
+  .wiki-head p { color: var(--muted); margin: 0; max-width: 720px; font-size: 14px; }
+  .search { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; min-width: 240px; }
+  .search:focus { outline: none; border-color: var(--violet); }
+  .fields { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+  details.field { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+  details.field[open] { border-color: var(--violet); }
+  details.field summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
+  details.field summary::-webkit-details-marker { display: none; }
+  details.field summary::before { content: ""; width: 7px; height: 7px; border: solid var(--violet); border-width: 0 2px 2px 0; transform: rotate(-45deg); transition: transform .15s; flex: none; }
+  details.field[open] summary::before { transform: rotate(45deg); }
+  details.field summary b { font-size: 16px; }
+  details.field summary span { color: var(--muted); font-size: 13px; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fbody { padding: 0 16px 16px 35px; display: grid; gap: 14px; }
+  .fbody h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+  .fbody ul { margin: 0; padding-left: 18px; } .fbody li { margin: 2px 0; font-size: 14px; }
+  .fbody .note { background: rgba(169,139,255,.08); border-left: 3px solid var(--violet); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 14px; }
+  .mult { font-weight: 700; } .mult.up { color: #4cd07d; } .mult.down { color: #e5534b; }
+  .credit { color: var(--dim); font-size: 13px; margin-top: 18px; }
+</style>
+</head>
+<body>
+<!--SITE_HEADER page="league"--><!--/SITE_HEADER-->
+<main class="wrap" id="app"><p class="empty" data-en="Loading…">Chargement…</p></main>
+<script>
+(() => {
+  const lang = window.SITE_LANG;
+  const tx = v => v == null ? '' : typeof v === 'string' ? v : (v[lang] ?? v.fr ?? '');
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const TYPES = { normal: '#9fa19f', feu: '#e62829', fire: '#e62829', eau: '#2980ef', water: '#2980ef', plante: '#3fa129', grass: '#3fa129',
+    'électrik': '#d4ac00', electrik: '#d4ac00', electric: '#d4ac00', glace: '#3dcef3', ice: '#3dcef3', combat: '#ff8000', fighting: '#ff8000',
+    poison: '#9141cb', sol: '#915121', ground: '#915121', vol: '#81b9ef', flying: '#81b9ef', psy: '#ef4179', psychic: '#ef4179',
+    insecte: '#91a119', bug: '#91a119', roche: '#afa981', rock: '#afa981', spectre: '#704170', ghost: '#704170', dragon: '#5060e1',
+    'ténèbres': '#624d4e', tenebres: '#624d4e', dark: '#624d4e', acier: '#60a1b8', steel: '#60a1b8', 'fée': '#ef70ef', fee: '#ef70ef', fairy: '#ef70ef' };
+  const DISCORD = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.3a18.4 18.4 0 0 0-5.6 0L8.6 3a19.7 19.7 0 0 0-4.9 1.5C.6 9.1-.3 13.6.1 18.1a19.9 19.9 0 0 0 6 3l1.3-2a12.9 12.9 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4a13 13 0 0 1-2 1l1.3 2a19.8 19.8 0 0 0 6-3c.5-5.2-.9-9.7-3.6-13.7zM8 15.4c-1.2 0-2.2-1.1-2.2-2.4S6.8 10.6 8 10.6s2.2 1.1 2.2 2.4-1 2.4-2.2 2.4zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4z"/></svg>';
+  let fieldNames = {};
+
+  const face = (p, letter) => {
+    const n = p.minecraft || p.discord || '';
+    const img = p.minecraft ? `<img src="/public/heads/${encodeURIComponent(p.minecraft)}" alt="" loading="lazy" onerror="this.remove()">` : '';
+    return `<span class="face">${esc((letter ?? n[0] ?? '?').toUpperCase())}${img}</span>`;
+  };
+  const typeChip = t => t ? `<span class="chip type" style="--t:${TYPES[String(t).toLowerCase()] || 'var(--dim)'}">${esc(t)}</span>` : '';
+  const fieldChip = f => f ? `<a class="chip field" href="#field-${esc(f)}" data-open="${esc(f)}">${esc(fieldNames[f] || f)}</a>` : '';
+  const person = (p, rank) => {
+    const vacant = !p.discord && !p.minecraft;
+    const name = p.minecraft || p.discord || L('Place libre', 'Open seat');
+    return `<div class="person ${vacant ? 'vacant' : ''}">${face(p, vacant ? '?' : null)}<div class="who">
+      <div class="rank">${esc(rank)}</div><div class="name">${esc(name)}</div>
+      ${p.discord ? `<div class="disc">${DISCORD}${esc(p.discord)}</div>` : ''}
+      <div class="chips">${typeChip(p.type)}${fieldChip(p.field)}${p.badge ? `<span class="chip">${esc(tx(p.badge))}</span>` : ''}</div></div></div>`;
+  };
+
+  function fieldHtml(f, notes) {
+    const pct = m => { const up = m > 1; return `<span class="mult ${up ? 'up' : m < 1 ? 'down' : ''}">×${String(m).replace('.', L(',', '.'))}</span>`; };
+    const sec = (title, items) => items.length ? `<div><h4>${title}</h4><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul></div>` : '';
+    const note = notes[f.id] ? `<div class="note">${esc(tx(notes[f.id]))}</div>` : '';
+    const types = f.types.map(t => `${L('Capacités', 'Moves')} ${esc(tx(t.type))} ${pct(t.mult)}${t.cond ? ` (${esc(tx(t.cond))})` : ''}`);
+    const boosts = f.boosts.map(b => `${esc(tx(b.move))}${b.mult != null ? ` ${pct(b.mult)}` : ''}${b.mult === 0 ? ` (${L('échoue', 'fails')})` : ''}${b.type ? ` · ${L('devient aussi', 'also becomes')} ${esc(tx(b.type))}` : ''}`);
+    const acc = f.accuracy.map(a => `${esc(tx(a.move))} : ${L('précision', 'accuracy')} ${a.acc} %`);
+    const changes = f.changes.map(c => `${c.moves.map(m => esc(tx(m))).join(', ')} → <b>${esc(tx(c.to))}</b>`);
+    const misc = [];
+    if (f.naturePower) misc.push(`${L('Force Nature devient', 'Nature Power becomes')} <b>${esc(tx(f.naturePower))}</b>`);
+    if (f.mimicry) misc.push(`${L('Mimétisme donne le type', 'Mimicry gives the type')} <b>${esc(tx(f.mimicry))}</b>`);
+    if (f.statusMods.length) misc.push(`${L('Capacités de statut renforcées', 'Boosted status moves')} : ${f.statusMods.map(m => esc(tx(m))).join(', ')}`);
+    if (f.seed) misc.push(`${esc(tx(f.seed.item))}${f.seed.stats.length ? ` : ${f.seed.stats.map(s => `${esc(tx(s.stat))} ${s.by > 0 ? '+' : ''}${s.by}`).join(', ')}` : ''}`);
+    return `<details class="field" id="field-${esc(f.id)}"><summary><b>${esc(tx(f.name))}</b><span>${esc(tx(f.intro))}</span></summary>
+      <div class="fbody">${note}${sec(L('Types', 'Types'), types)}${sec(L('Capacités modifiées', 'Changed moves'), boosts)}${sec(L('Précision', 'Accuracy'), acc)}
+      ${sec(L('Transformations du terrain', 'Field changes'), changes)}${sec(L('Autres effets', 'Other effects'), misc)}</div></details>`;
+  }
+
+  function render(data, fields) {
+    fieldNames = Object.fromEntries(fields.map(f => [f.id, tx(f.name)]));
+    document.title = `${tx(data.name)} · Village 14`;
+    const gyms = (data.gyms || []).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const how = (data.how || []).map((h, i) => `<div><b><em>${i + 1}</em>${esc(tx(h.title))}</b><p>${esc(tx(h.text))}</p></div>`).join('');
+    const notes = data.fieldNotes || {};
+    document.getElementById('app').innerHTML = `
+      <section class="hero"><h1>${esc(tx(data.name))}</h1><p>${esc(tx(data.tagline))}</p>
+        <div class="path">${gyms.map((g, i) => `<span>${L('Arène', 'Gym')} ${i + 1}</span>`).join('<i>→</i>')}
+          <i>→</i><span class="elite">${L('Conseil 4', 'Elite Four')}</span><i>→</i><span class="champ">${L('Maître', 'Champion')}</span></div></section>
+      <h2>${L('Comment ça marche', 'How it works')}</h2><div class="how">${how}</div>
+      <h2>${L("Champions d'arène", 'Gym leaders')}</h2>
+      <div class="people">${gyms.map((g, i) => person({ ...g.leader, type: g.type, field: g.field, badge: g.badge }, `${L('Arène', 'Gym')} ${g.order ?? i + 1}`)).join('')}</div>
+      <h2>${L('Conseil 4 et Maître', 'Elite Four and Champion')}</h2>
+      <div class="champ-row"><div class="elite4">${(data.elite || []).map((e, i) => person(e, `${L('Conseil', 'Elite')} ${i + 1}`)).join('')}</div>
+        <div class="champion">${person(data.champion || {}, L('Maître de la Ligue', 'League Champion'))}</div></div>
+      ${(data.members || []).length ? `<h2>${L('Membres', 'Members')}</h2><div class="members">${data.members.map(m => `<span class="member">${face(m)}
+        <span>${esc(m.minecraft || m.discord)}${m.discord && m.minecraft ? ` <small>· ${esc(m.discord)}</small>` : ''}${m.role ? ` <small>· ${esc(tx(m.role))}</small>` : ''}</span></span>`).join('')}</div>` : ''}
+      <h2>${L('Wiki des terrains', 'Field wiki')}</h2>
+      <div class="wiki-head"><p>${L('Chaque terrain change les règles du combat : bonus de type, capacités renforcées ou transformées, et capacités qui changent le terrain lui-même. Ouvre un terrain pour voir ses effets.',
+        'Each field changes the battle\'s rules: type boosts, stronger or changed moves, and moves that change the field itself. Open a field to see its effects.')}</p>
+        <input class="search" id="search" type="search" placeholder="${L('Chercher un terrain, une capacité…', 'Search a field, a move…')}"></div>
+      <div class="fields" id="fields">${fields.map(f => fieldHtml(f, notes)).join('')}</div>
+      <p class="credit">${L('Terrains, chiffres et interactions repris de Pokémon Reborn, avec nos propres textes.', 'Fields, numbers and interactions taken from Pokémon Reborn, with our own texts.')}</p>`;
+    const search = document.getElementById('search');
+    search.oninput = () => {
+      const q = search.value.trim().toLowerCase();
+      document.querySelectorAll('details.field').forEach(d => { d.style.display = !q || d.textContent.toLowerCase().includes(q) ? '' : 'none'; });
+    };
+    const open = id => { const d = document.getElementById('field-' + id); if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); } };
+    document.querySelectorAll('[data-open]').forEach(a => a.onclick = e => { e.preventDefault(); open(a.dataset.open); history.replaceState(null, '', '#field-' + a.dataset.open); });
+    if (location.hash.startsWith('#field-')) open(location.hash.slice(7));
+  }
+
+  Promise.all([fetch('/league/data', { cache: 'no-store' }).then(r => r.json()), fetch('/league/fields').then(r => r.json())])
+    .then(([data, fields]) => render(data, fields))
+    .catch(() => { document.getElementById('app').innerHTML = `<p class="empty">${L('La page de la Ligue n’a pas pu se charger.', 'The league page could not load.')}</p>`; });
+})();
+</script>
+</body>
+</html>
