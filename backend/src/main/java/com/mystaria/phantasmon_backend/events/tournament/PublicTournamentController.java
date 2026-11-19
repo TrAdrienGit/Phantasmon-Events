@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * The tournaments' public page (plan-tournois.md, phase T5): no account, read only, for Discord or a stream —
- * {@code /t} lists the tournaments, {@code /t/<name>} shows one (players, rounds, standings or bracket), kept up to
+ * {@code /tournament} lists the tournaments, {@code /tournament/<name>} shows one (players, rounds, standings or bracket), kept up to
  * date by the page itself. The players' UUIDs are left out.
  */
 @RestController
@@ -37,12 +37,9 @@ public class PublicTournamentController {
 		return anonymous(service.get(name));
 	}
 
-	@GetMapping({ "/t", "/t/", "/t/{name}" })
+	@GetMapping({ "/tournament", "/tournament/", "/tournament/{name}" })
 	public ResponseEntity<String> page() throws IOException {
-		try (InputStream in = new ClassPathResource("public/tournament.html").getInputStream()) {
-			return ResponseEntity.ok().contentType(MediaType.TEXT_HTML).cacheControl(CacheControl.noCache())
-					.body(new String(in.readAllBytes(), StandardCharsets.UTF_8));
-		}
+		return com.mystaria.phantasmon_backend.events.SitePages.page("tournament.html");
 	}
 
 	private static TournamentService.View anonymous(TournamentService.View view) {

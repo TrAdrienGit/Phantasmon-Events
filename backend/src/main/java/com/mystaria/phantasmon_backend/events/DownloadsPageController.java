@@ -27,9 +27,9 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * The public site's downloads tab ({@code /d}), next to the tournaments' tab ({@code /t}): the community's mods and
+ * The public site's downloads tab ({@code /download}), next to the tournaments' tab ({@code /tournament}): the community's mods and
  * their optional dependencies. The newest Modrinth file is looked up by the page itself; our unpublished mods come from
- * the public File Browser share, where {@code /d/latest/<core|events>} redirects to the newest matching jar (or to the
+ * the public File Browser share, where {@code /download/latest/<kind>} redirects to the newest matching jar (or to the
  * share's page if none is found).
  */
 @RestController
@@ -67,21 +67,18 @@ public class DownloadsPageController {
 		this.shareHash = shareHash;
 	}
 
-	@GetMapping({ "/d", "/d/" })
+	@GetMapping({ "/download", "/download/" })
 	public ResponseEntity<String> page() throws IOException {
-		try (InputStream in = new ClassPathResource("public/downloads.html").getInputStream()) {
-			return ResponseEntity.ok().contentType(MediaType.TEXT_HTML).cacheControl(CacheControl.noCache())
-					.body(new String(in.readAllBytes(), StandardCharsets.UTF_8));
-		}
+		return SitePages.page("downloads.html");
 	}
 
 	/** The newest file of each kind, with its version and upload date, for the page's cards. */
-	@GetMapping("/d/files")
+	@GetMapping("/download/files")
 	public ResponseEntity<Map<String, FileView>> files() {
 		return ResponseEntity.ok().cacheControl(CacheControl.noCache()).body(current());
 	}
 
-	@GetMapping("/d/latest/{kind}")
+	@GetMapping("/download/latest/{kind}")
 	public ResponseEntity<Void> latest(@PathVariable String kind) {
 		if (!KINDS.containsKey(kind)) {
 			return ResponseEntity.notFound().build();

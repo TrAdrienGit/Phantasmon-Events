@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Village 14</title>
+<link rel="icon" href="/site/logo.png">
+<style>
+  :root {
+    --bg: #101214; --bg2: #15181b; --panel: #1b1f23; --panel2: #22272c; --line: #2c3238; --ink: #eef1f3; --muted: #9aa4ad;
+    --dim: #6c757d; --accent: #38c4bc; --accent-ink: #062b29;
+    --shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 6px 18px rgba(0,0,0,.25);
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f3f5f7; --bg2: #e9edf1; --panel: #ffffff; --panel2: #f6f8fa; --line: #dde3e9; --ink: #182026; --muted: #5b6672;
+      --dim: #8a949e; --accent: #11968f; --accent-ink: #ffffff;
+      --shadow: 0 1px 2px rgba(16,24,40,.06), 0 4px 12px rgba(16,24,40,.06);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body { font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 0 16px; }
+  main.wrap { padding: 28px 16px 56px; }
+  h1 { font-size: 30px; line-height: 1.15; margin: 0; letter-spacing: -.01em; }
+  .lead { color: var(--muted); margin: 8px 0 0; max-width: 720px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 30px 0 12px; }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 760px) { .grid, .grid.two { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; box-shadow: var(--shadow);
+          display: flex; gap: 14px; align-items: center; position: relative; overflow: hidden; transition: transform .12s, border-color .12s; }
+  .card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent); }
+  a.card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .card .t { font-weight: 700; font-size: 18px; margin: 0; }
+  .card .s { color: var(--muted); font-size: 14px; margin: 2px 0 0; }
+  .card .go { margin-left: auto; color: var(--accent); font-size: 22px; flex: none; }
+  .card .ico { width: 44px; height: 44px; flex: none; border-radius: 10px; display: grid; place-items: center; background: var(--panel2); color: var(--accent); }
+  .card .ico svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .ver { font-size: 26px; font-weight: 800; letter-spacing: -.01em; margin: 4px 0 0; }
+  .ver.none { font-size: 15px; font-weight: 600; color: var(--muted); }
+  .when { color: var(--dim); font-size: 13px; margin: 2px 0 0; }
+  .mod { display: block; }
+  .mod .name { font-weight: 700; margin: 0; }
+</style>
+</head>
+<body>
+<!--SITE_HEADER page="home"--><!--/SITE_HEADER-->
+<main class="wrap">
+  <h1>Village 14</h1>
+  <p class="lead">Le site de notre communauté Cobblemon : les tournois en cours et les mods à télécharger.</p>
+  <h2>Pages</h2>
+  <div class="grid two">
+    <a class="card" href="/tournament">
+      <span class="ico"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></span>
+      <span><p class="t">Tournoi</p><p class="s">Inscriptions, rondes, classements et tableaux en direct.</p></span><span class="go">→</span>
+    </a>
+    <a class="card" href="/download">
+      <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></span>
+      <span><p class="t">Téléchargement</p><p class="s">Les mods de la communauté et leurs packs de ressources.</p></span><span class="go">→</span>
+    </a>
+  </div>
+  <h2>Dernières versions de mes mods</h2>
+  <div class="grid" id="versions"></div>
+</main>
+<script>
+(() => {
+  // The newest file of each of MystAria's mods in the cloud (DownloadsPageController); Modrinth for Showtime if newer.
+  const MODS = [
+    { key: 'showtime', name: 'Cobblemon Battle Showtime', modrinth: 'cobblemon-battle-showtime' },
+    { key: 'core', name: 'Phantasmon Core' },
+    { key: 'events', name: 'Phantasmon Events' },
+  ];
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const day = iso => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const box = document.getElementById('versions');
+  const cards = {};
+  for (const m of MODS) {
+    const a = document.createElement('a');
+    a.className = 'card mod';
+    a.href = '/download';
+    a.innerHTML = `<p class="name">${esc(m.name)}</p><p class="ver none">Pas encore en ligne</p><p class="when"></p>`;
+    box.append(a);
+    cards[m.key] = { el: a, iso: '' };
+  }
+  const show = (key, version, iso) => {
+    const c = cards[key];
+    if (!version || (c.iso && iso && c.iso >= iso)) return;
+    c.iso = iso || c.iso;
+    const ver = c.el.querySelector('.ver');
+    ver.className = 'ver';
+    ver.textContent = version;
+    c.el.querySelector('.when').textContent = iso ? `Mise en ligne le ${day(iso)}` : '';
+  };
+  fetch('/download/files').then(r => r.ok ? r.json() : {}).then(files => {
+    for (const m of MODS) if (files[m.key]) show(m.key, files[m.key].version, files[m.key].modified);
+  }).catch(() => {});
+  for (const m of MODS.filter(m => m.modrinth)) {
+    const q = `?loaders=${encodeURIComponent('["fabric"]')}&game_versions=${encodeURIComponent('["1.21.1"]')}`;
+    fetch(`https://api.modrinth.com/v2/project/${m.modrinth}/version${q}`).then(r => r.ok ? r.json() : [])
+      .then(v => { if (v[0]) show(m.key, v[0].version_number, v[0].date_published); }).catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>

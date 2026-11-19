@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tournois Phantasmon</title>
+<title>Tournois · Village 14</title>
+<link rel="icon" href="/site/logo.png">
 <style>
   :root {
     --bg: #101214; --bg2: #15181b; --panel: #1b1f23; --panel2: #22272c; --line: #2c3238; --ink: #eef1f3; --muted: #9aa4ad;
@@ -22,15 +23,6 @@
   body { font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
   a { color: inherit; text-decoration: none; }
   .wrap { max-width: 1240px; margin: 0 auto; padding: 0 16px; }
-  .top { background: var(--bg2); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
-  .top .wrap { display: flex; align-items: center; gap: 12px; height: 54px; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .02em; }
-  .gem { width: 22px; height: 22px; border-radius: 5px; background: linear-gradient(135deg, var(--accent), #1f7f7a); box-shadow: 0 0 0 2px rgba(56,196,188,.2); }
-  .site-nav { display: flex; gap: 2px; align-self: stretch; flex: none; }
-  .site-nav a { display: flex; align-items: center; padding: 0 12px; color: var(--muted); font-weight: 600; border-bottom: 2px solid transparent; }
-  .site-nav a:hover { color: var(--ink); }
-  .site-nav a.on { color: var(--ink); border-bottom-color: var(--accent); }
-  @media (max-width: 480px) { .brand { font-size: 0; gap: 0; } .site-nav { margin-left: 0; } .site-nav a { padding: 0 9px; } }
   .crumb { color: var(--muted); }
   .crumb a:hover { color: var(--ink); }
   .live-dot { margin-left: auto; color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 8px; }
@@ -135,7 +127,6 @@
   .champion .av { --s: 44px; }
   .champion b { font-size: 20px; } .champion span { color: var(--gold); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; }
   .crumb { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-  .brand { flex: none; }
   .live-dot { flex: none; white-space: nowrap; }
   @media (max-width: 640px) {
     h1 { font-size: 24px; }
@@ -148,16 +139,14 @@
 </style>
 </head>
 <body>
-<header class="top"><div class="wrap">
-  <a class="brand" href="/t"><span class="gem"></span>Phantasmon</a><nav class="site-nav"><a class="on" href="/t">Tournoi</a><a href="/d">Téléchargement</a></nav><span class="crumb" id="crumb">/ Tournois</span>
-  <span class="live-dot"><i></i><b>En direct</b></span>
-</div></header>
+<!--SITE_HEADER page="tournament"--><span class="crumb" id="crumb">/ Tournois</span>
+  <span class="live-dot"><i></i><b>En direct</b></span><!--/SITE_HEADER-->
 <main class="wrap" id="app"><p class="empty">Chargement…</p></main>
 <script>
 (() => {
   const app = document.getElementById('app');
   const crumb = document.getElementById('crumb');
-  const name = decodeURIComponent(location.pathname.replace(/^\/t\/?/, '').replace(/\/$/, ''));
+  const name = decodeURIComponent(location.pathname.replace(/^\/tournament\/?/, '').replace(/\/$/, ''));
   const KIND = { SWISS: 'Ronde suisse', BRACKET: 'Double élimination' };
   const STATUS = { REGISTRATION: 'Inscriptions', CHECK_IN: 'Check-in', RUNNING: 'En cours', FINISHED: 'Terminé', CANCELLED: 'Annulé' };
   const COLOUR = { REGISTRATION: 'var(--reg)', CHECK_IN: 'var(--chk)', RUNNING: 'var(--live)', FINISHED: 'var(--done)', CANCELLED: 'var(--bad)' };
@@ -177,7 +166,7 @@
     const shown = t.players.slice(0, 6).map(p => head(p.username, 22)).join('');
     const more = t.players.length > 6 ? `<span class="more">+${t.players.length - 6}</span>` : '';
     const next = nextStep(t);
-    return `<a class="card" href="/t/${encodeURIComponent(t.name)}" style="--c:${COLOUR[t.status]}">
+    return `<a class="card" href="/tournament/${encodeURIComponent(t.name)}" style="--c:${COLOUR[t.status]}">
       <div class="row1"><span class="name">${esc(title(t))}</span><span class="pill ${t.status}">${STATUS[t.status] ?? t.status}</span></div>
       <div class="meta">${esc(t.format_name)} · Bo${t.best_of} · ${KIND[t.kind] ?? t.kind}</div>
       <div class="row3"><span class="stack">${shown}</span>${more}<span>${t.players.length} joueur${t.players.length > 1 ? 's' : ''}</span>
@@ -196,7 +185,7 @@
 
   function showList(list) {
     crumb.innerHTML = '/ Tournois';
-    document.title = 'Tournois Phantasmon';
+    document.title = 'Tournois · Village 14';
     const live = list.filter(t => t.status === 'RUNNING');
     const soon = list.filter(t => t.status === 'REGISTRATION' || t.status === 'CHECK_IN');
     const over = list.filter(t => t.status === 'FINISHED' || t.status === 'CANCELLED');
@@ -324,8 +313,8 @@
   }
 
   function show(t) {
-    crumb.innerHTML = `/ <a href="/t">Tournois</a> / ${esc(title(t))}`;
-    document.title = `${title(t)} · Tournois Phantasmon`;
+    crumb.innerHTML = `/ <a href="/tournament">Tournois</a> / ${esc(title(t))}`;
+    document.title = `${title(t)} · Village 14`;
     const tabs = [['joueurs', `Joueurs<em>${t.players.length}</em>`]];
     if (t.matches.length) {
       tabs.push(['matchs', 'Matchs'], ['classement', 'Classement']);
@@ -359,7 +348,7 @@
   async function refresh() {
     try {
       const response = await fetch(name ? `/public/tournaments/${encodeURIComponent(name)}` : '/public/tournaments', { cache: 'no-store' });
-      if (!response.ok) { app.innerHTML = '<p class="empty">Tournoi introuvable. <a href="/t" style="color:var(--accent)">Tous les tournois</a></p>'; return; }
+      if (!response.ok) { app.innerHTML = '<p class="empty">Tournoi introuvable. <a href="/tournament" style="color:var(--accent)">Tous les tournois</a></p>'; return; }
       const text = await response.text();
       if (text === last) return; // nothing new: no redraw, no flicker
       last = text;
