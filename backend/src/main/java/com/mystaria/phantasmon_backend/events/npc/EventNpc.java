@@ -70,7 +70,7 @@ public class EventNpc {
 	@Column
 	private String intro;
 
-	/** The Showtime ambiance its battles impose (V11); null: the player's pick. */
+	/** The Showtime scene its battles impose (V11; V13: "<ambiance>|<stadium>" too); null: the player's pick. */
 	@Column
 	private String ambiance;
 

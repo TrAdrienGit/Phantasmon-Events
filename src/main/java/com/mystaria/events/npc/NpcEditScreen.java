@@ -40,6 +40,8 @@ public final class NpcEditScreen extends Screen {
 	private final Ui.Dropdown<String[]> format;
 	private final Ui.Dropdown<String> intro;
 	private final Ui.Dropdown<String> ambiance;
+	/** The stadium imposed with it (Showtime 1.3): "" = the preset's own, else the player's. */
+	private final Ui.Dropdown<String> stadium;
 	/** League Reborn's field its battles impose; "" for none. */
 	private final Ui.Dropdown<String> field;
 	private boolean aiDebug;
@@ -64,7 +66,12 @@ public final class NpcEditScreen extends Screen {
 		String currentIntro = npc.intro() == null ? "" : npc.intro();
 		String currentAmbiance = npc.ambiance() == null ? "" : npc.ambiance();
 		intro = new Ui.Dropdown<>(intros(currentIntro), NpcEditScreen::introName, currentIntro);
-		ambiance = new Ui.Dropdown<>(ambiances(currentAmbiance), NpcEditScreen::ambianceName, currentAmbiance);
+		// Saved as one Showtime scene, "<ambiance>|<stadium>" (2026-11-19).
+		String sceneAmbiance = com.mystaria.showtime.ambiance.Ambiances.sceneAmbiance(currentAmbiance);
+		String sceneStadium = com.mystaria.showtime.ambiance.Ambiances.sceneStadium(currentAmbiance);
+		ambiance = new Ui.Dropdown<>(ambiances(sceneAmbiance), NpcEditScreen::ambianceName, sceneAmbiance);
+		String currentStadium = sceneStadium == null ? "" : sceneStadium;
+		stadium = new Ui.Dropdown<>(stadiums(currentStadium), NpcEditScreen::stadiumName, currentStadium);
 		String currentField = npc.field() == null ? "" : npc.field();
 		List<String> fields = new ArrayList<>();
 		fields.add("");
@@ -104,7 +111,7 @@ public final class NpcEditScreen extends Screen {
 		return all;
 	}
 
-	/** "" (the player's pick), then every Showtime ambiance, reserved ones and resource packs' included. */
+	/** "" (the player's pick), then Showtime's presets and ambiances, reserved ones and resource packs' included. */
 	static List<String> ambiances(String current) {
 		List<String> all = new ArrayList<>();
 		all.add("");
@@ -118,6 +125,27 @@ public final class NpcEditScreen extends Screen {
 	static Component introName(String id) {
 		return id.isEmpty() ? Component.translatable("phantasmon_events.npc.player_pick")
 				: com.mystaria.showtime.battle.BattleCinematic.introDisplayName(id);
+	}
+
+	/** "" (the preset's own, else the player's), "none" (the world as it is), then every Showtime stadium. */
+	static List<String> stadiums(String current) {
+		List<String> all = new ArrayList<>();
+		all.add("");
+		all.add(com.mystaria.showtime.ambiance.Ambiances.FIELD_STADIUM);
+		all.add(com.mystaria.showtime.ambiance.Ambiances.NONE);
+		all.addAll(com.mystaria.showtime.ambiance.Ambiances.stadiumIds());
+		if (!all.contains(current)) {
+			all.add(current);
+		}
+		return all;
+	}
+
+	static Component stadiumName(String id) {
+		if (com.mystaria.showtime.ambiance.Ambiances.FIELD_STADIUM.equals(id)) {
+			return Component.translatable("phantasmon_events.npc.stadium_field");
+		}
+		return id.isEmpty() ? Component.translatable("phantasmon_events.npc.stadium_auto")
+				: com.mystaria.showtime.ambiance.Ambiances.stadiumName(id);
 	}
 
 	static Component ambianceName(String id) {
@@ -187,8 +215,10 @@ public final class NpcEditScreen extends Screen {
 		// Showtime staging
 		section(g, "phantasmon_events.npc.section.show", x, row, w);
 		row += 24;
-		ui.dropdown(g, intro, x, row, (w - 8) / 2, 15, Component.translatable("phantasmon_events.npc.intro"));
-		ui.dropdown(g, ambiance, x + (w - 8) / 2 + 8, row, (w - 8) / 2, 15, Component.translatable("phantasmon_events.npc.ambiance"));
+		int showThird = (w - 16) / 3;
+		ui.dropdown(g, intro, x, row, showThird, 15, Component.translatable("phantasmon_events.npc.intro"));
+		ui.dropdown(g, stadium, x + showThird + 8, row, showThird, 15, Component.translatable("phantasmon_events.npc.stadium"));
+		ui.dropdown(g, ambiance, x + 2 * (showThird + 8), row, w - 2 * (showThird + 8), 15, Component.translatable("phantasmon_events.npc.ambiance"));
 		row += 19;
 		MenuUi.small(g, Component.translatable("phantasmon_events.npc.show_note"), x, row, w, c.edge());
 		row += 14;
@@ -293,7 +323,8 @@ public final class NpcEditScreen extends Screen {
 		body.put("format_id", format.value[0]);
 		body.put("ai_debug", aiDebug);
 		body.put("intro", intro.value);
-		body.put("ambiance", ambiance.value);
+		body.put("ambiance", com.mystaria.showtime.ambiance.Ambiances.scene(ambiance.value,
+				stadium.value.isEmpty() ? null : stadium.value));
 		body.put("field", field.value);
 		post("/admin/events/npcs/" + npc.uuid(), body, "phantasmon_events.npc.saved");
 	}

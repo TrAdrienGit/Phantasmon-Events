@@ -1665,5 +1665,8 @@
   "league_reborn.field.newworld": "Nouveau Monde",
   "league_reborn.newworld.intro": "Des ténèbres naît un monde nouveau...",
   "league_reborn.field.inverse": "Terrain Inversé",
-  "league_reborn.inverse.intro": "!ésrevni tse niarret eL"
+  "league_reborn.inverse.intro": "!ésrevni tse niarret eL",
+  "phantasmon_events.npc.stadium": "Stade",
+  "phantasmon_events.npc.stadium_auto": "Celui du préréglage, sinon du joueur",
+  "phantasmon_events.npc.stadium_field": "Celui du terrain Reborn"
 }

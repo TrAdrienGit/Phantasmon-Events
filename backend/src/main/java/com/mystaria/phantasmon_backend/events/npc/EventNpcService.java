@@ -235,7 +235,12 @@ public class EventNpcService implements NpcOpponentProvider {
 
 	/** A Showtime intro name ({@code PBR_ENTRANCE}) or a mod's namespaced one, as the core's lobby takes them. */
 	private static final java.util.regex.Pattern INTRO = java.util.regex.Pattern.compile("[A-Z0-9_]{1,40}|[a-z0-9_.-]{1,64}:[a-z0-9_./-]{1,64}");
-	private static final java.util.regex.Pattern AMBIANCE = java.util.regex.Pattern.compile("[a-z0-9_.-]{1,64}:[a-z0-9_./-]{1,64}");
+	/**
+	 * A Showtime scene (2026-11-19): an ambiance id, optionally followed by "|" and a stadium id (or "none", or "field": the League Reborn field's own); the
+	 * ambiance may be left out ("|stadium": each player's own ambiance in that stadium).
+	 */
+	private static final java.util.regex.Pattern AMBIANCE = java.util.regex.Pattern.compile(
+			"(?=.)(?:[a-z0-9_.-]{1,64}:[a-z0-9_./-]{1,64})?(?:\\|(?:[a-z0-9_.-]{1,64}:[a-z0-9_./-]{1,64}|none|field))?");
 
 	private static String showtimeId(Object value, java.util.regex.Pattern pattern, String error) {
 		if (value == null || value.toString().isBlank()) {

@@ -50,6 +50,7 @@ public final class LeagueReborn {
 		ShowdownInterpreter.registerUpdateInstructionParser("-leaguereborn",
 				(battle, instructionSet, message, messages) -> new Line(message));
 		LeagueRebornHud.register();
+		RebornAmbiance.register();
 	}
 
 	/** The engine, called with Showdown's Dex (index.js's global) and the field data; kept as globalThis.LeagueReborn. */

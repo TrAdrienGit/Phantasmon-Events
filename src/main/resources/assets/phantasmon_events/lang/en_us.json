@@ -1665,5 +1665,8 @@
   "league_reborn.field.newworld": "New World",
   "league_reborn.newworld.intro": "From the darkness, a new world is born...",
   "league_reborn.field.inverse": "Inverse Field",
-  "league_reborn.inverse.intro": "!desrever si dleif ehT"
+  "league_reborn.inverse.intro": "!desrever si dleif ehT",
+  "phantasmon_events.npc.stadium": "Stadium",
+  "phantasmon_events.npc.stadium_auto": "Preset's, else player's",
+  "phantasmon_events.npc.stadium_field": "The Reborn field's"
 }

@@ -77,10 +77,25 @@ public final class LeagueRebornHud {
 				case "league_reborn.start" -> laid(fieldId(args), 0);
 				case "league_reborn.now" -> laid(fieldId(args), number(args, 1, 0));
 				case "league_reborn.cleared" -> field = null;
+				// The caves' moments are named after what happens to the cave (shared by the whole family).
+				case "league_reborn.text.cave_crumbling" -> RebornAmbiance.moment("cave_rumble");
+				case "league_reborn.text.cave_collapsed" -> RebornAmbiance.moment("cave_collapse");
+				// Any other field event: the ambiance plays the moment of the same name if it has one (steam, ice spikes...).
 				default -> {
+					if (text.getKey().startsWith(EVENT)) {
+						RebornAmbiance.moment(text.getKey().substring(EVENT.length()));
+					}
 				}
 			}
 		}
+	}
+
+	private static final String EVENT = "league_reborn.text.";
+
+	/** The field in play in this client's current battle, or null (none, or another battle's). */
+	public static String currentField() {
+		ClientBattle battle = CobblemonClient.INSTANCE.getBattle();
+		return battle != null && battle.getBattleId().equals(battleId) ? field : null;
 	}
 
 	private static void laid(String id, int left) {

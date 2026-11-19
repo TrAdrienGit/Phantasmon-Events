@@ -71,6 +71,20 @@ class EventNpcShowtimeIntegrationTest {
 		assertThat(opponent.intro()).isEqualTo("phantasmon_events:gym_rock");
 		assertThat(opponent.ambiance()).isEqualTo("phantasmon_events:gym_leader");
 
+		// A scene with a stadium (2026-11-19): "<ambiance>|<stadium>", the ambiance optional, "none" for the world.
+		for (String scene : new String[] {"cobblemon_battle_showtime:crystal_cavern|cobblemon_battle_showtime:cave",
+				"|cobblemon_battle_showtime:arena", "cobblemon_battle_showtime:storm|none", "|field"}) {
+			mockMvc.perform(post("/admin/events/npcs/" + npc).header("Authorization", token).contentType(MediaType.APPLICATION_JSON)
+					.content("{\"ambiance\":\"" + scene + "\"}"))
+					.andExpect(status().isOk())
+					.andExpect(jsonPath("$.ambiance").value(scene));
+		}
+		for (String bad : new String[] {"|", "a:b|", "a:b|c:d|e:f", "a:b|nope"}) {
+			mockMvc.perform(post("/admin/events/npcs/" + npc).header("Authorization", token).contentType(MediaType.APPLICATION_JSON)
+					.content("{\"ambiance\":\"" + bad + "\"}"))
+					.andExpect(status().isBadRequest());
+		}
+
 		mockMvc.perform(post("/admin/events/npcs/" + npc).header("Authorization", token).contentType(MediaType.APPLICATION_JSON)
 				.content("{\"intro\":\"PBR_ENTRANCE\",\"ambiance\":\"\"}"))
 				.andExpect(jsonPath("$.intro").value("PBR_ENTRANCE"))
