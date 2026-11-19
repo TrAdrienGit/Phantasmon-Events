@@ -39,7 +39,10 @@ public final class EventHubsTab implements HubManagerTab {
 
 	@Override
 	public List<Component> details(HubAdminDto hub) {
-		return List.of(Component.translatable("phantasmon_events.hub_tab.radius", hub.radius() == null ? "?" : hub.radius()));
+		String ambiance = HubAmbiances.of(hub.name());
+		return List.of(Component.translatable("phantasmon_events.hub_tab.radius", hub.radius() == null ? "?" : hub.radius()),
+				Component.translatable("phantasmon_events.hub_tab.ambiance_line", ambiance == null
+						? Component.translatable("phantasmon_events.hub_tab.ambiance_none") : HubAmbiances.label(ambiance)));
 	}
 
 	@Override
@@ -50,6 +53,28 @@ public final class EventHubsTab implements HubManagerTab {
 						(hub, values, done, status) -> {
 							PhantasmonApi.hubs().adminResizeHub(hub.name(), Integer.parseInt(values.get(0)));
 							later(done);
+						}),
+				// The hub's ambiance (2026-11-19): everyone in it sees it, battle or not.
+				new Action(Component.translatable("phantasmon_events.hub_tab.ambiance"), false,
+						List.of(Field.choice(Component.translatable("phantasmon_events.hub_tab.field.ambiance"), HubAmbiances::options,
+								hub -> {
+									String current = HubAmbiances.of(hub.name());
+									return current == null ? "" : current;
+								})),
+						(hub, values, done, status) -> {
+							String ambiance = values.get(0);
+							PhantasmonApi.post("/admin/events/hubs/" + hub.name() + "/ambiance", Map.of("ambiance", ambiance), Map.class)
+									.thenAccept(result -> Minecraft.getInstance().execute(() -> {
+										HubAmbiances.changed(hub.name(), ambiance);
+										status.accept(Component.translatable("phantasmon_events.hub.ambiance_set", hub.name(),
+												ambiance.isEmpty() ? Component.translatable("phantasmon_events.hub_tab.ambiance_none")
+														: HubAmbiances.label(ambiance)));
+										done.run();
+									}))
+									.exceptionally(ex -> {
+										status.accept(Component.translatable("phantasmon_events.hub.ambiance_failed", hub.name()));
+										return null;
+									});
 						}),
 				new Action(Component.translatable("phantasmon_events.hub_tab.source"), false, (hub, done, status) -> {
 					PhantasmonApi.hubs().createMirrorAnchor(hub.name(), false);

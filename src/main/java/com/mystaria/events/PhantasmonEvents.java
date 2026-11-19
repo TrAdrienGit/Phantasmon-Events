@@ -40,6 +40,7 @@ public final class PhantasmonEvents implements ClientModInitializer {
 		com.mystaria.events.intro.LeagueIntro.all().forEach(com.mystaria.showtime.api.ShowtimeHooks::registerIntro);
 		MirrorCopy.register();
 		com.mystaria.events.hub.EventHubsTab.register();
+		com.mystaria.events.hub.HubAmbiances.register();
 		com.mystaria.events.npc.EventNpcs.register();
 		com.mystaria.events.reborn.LeagueReborn.register();
 		MirrorGhosts.register();
@@ -54,6 +55,7 @@ public final class PhantasmonEvents implements ClientModInitializer {
 			com.mystaria.events.tournament.TournamentOpponent.tick();
 			MirrorCopy.tick();
 			com.mystaria.events.npc.EventNpcs.tick();
+			com.mystaria.events.hub.HubAmbiances.tick();
 		});
 		ClientChunkEvents.CHUNK_LOAD.register((level, chunk) -> {
 			MirrorCapture.onChunkLoad(chunk.getPos());

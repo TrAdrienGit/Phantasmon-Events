@@ -45,6 +45,8 @@ Toutes demandent un jeton de joueur, sauf la page publique des tournois et la co
 | `GET` | `/public/heads/{username}` | Public | Tête du joueur (PNG 64 × 64, visage et calque du chapeau), tirée du skin Mojang par le backend et gardée 6 h ; 404 pour un inconnu ou sans skin |
 | `GET` | `/events/mirror/{hub}`, `/events/mirror/{hub}/tile/{tx}/{tz}`, `/events/mirror/{hub}/ghosts` | Joueur | Terrain d'un hub miroir (D-38) |
 | `DELETE` | `/admin/events/mirror/{hub}/ghosts` | Admin | Effacer les blocs fantômes d'un hub miroir |
+| `GET` | `/events/hubs/ambiances` | Joueur | Les hubs qui ont une ambiance : `[{ "hub", "ambiance" }]` (2026-11-19) |
+| `POST` | `/admin/events/hubs/{name}/ambiance` `{ "ambiance" }` | Admin | L'ambiance Showtime du hub, vue par tous ceux qui y sont, combat ou non ; `""` ou `null` : aucune. `ERROR_HUB_NOT_FOUND`, `ERROR_HUB_AMBIANCE` (id invalide) |
 | `POST` | `/admin/hubs/{name}/resize` `{ "delta" }` | Admin | Agrandir / réduire un hub miroir (`ERROR_HUB_NOT_MIRROR`, `ERROR_HUB_INVALID_RADIUS`) |
 | `GET` / `POST` | `/server/mirror/...` | Jeton du serveur | Copie du serveur dédié (§2.2) |
 | `GET` | `/events/trahison/layout/{hub}` | Joueur | Plan fixe du jeu de trahison, dernière version (`version: 0` si le hub n'en a pas) ; `?version=n` : cette version (celle que la partie a retenue au démarrage) |
@@ -121,6 +123,7 @@ Reçus par le cœur et confiés au module (`EventsWsHandler`), ou envoyés par l
 | `EventsMirrorTileChanged`, `EventsMirrorReset` | S2C | Une tuile a changé ; la copie est à refaire (redimensionnement) |
 | `EventsTournamentChanged`, `EventsTournamentAnnounce` | S2C | Un tournoi a changé ; annonce dans le chat |
 | `EventsNpcsChanged` | S2C | **Tous les clients connectés** : un dresseur PNJ ou un événement a changé ; le client relit `GET /events/npcs` |
+| `EventsHubAmbiancesChanged` | S2C | **Tous les clients connectés** : l'ambiance d'un hub a changé ; le client relit `GET /events/hubs/ambiances` |
 | `EventsTrahisonPing` | C2S | Jeu de trahison (`TrahisonWsHandler`, tous les types `EventsTrahison*`) : vérifie la liaison avec le module |
 | `EventsTrahisonPong` | S2C | Réponse au Ping, au seul joueur qui l'a envoyé. Tous les messages du jeu : [`trahison/protocole.md`](trahison/protocole.md) |
 
@@ -168,6 +171,7 @@ en V18-V19 et V22-V24), la ligne de base `0` puis les `IF NOT EXISTS` ne changen
 | 10 | `V10__trahison_map_notes.sql` | `trahison_map_notes` (2026-11-17) : traits et bloc-notes de la carte, une ligne par partie et par compte (T11.4, §5.9) |
 | 11 | `V11__event_npc_intro_ambiance.sql` | `event_npcs.intro`, `event_npcs.ambiance` (2026-11-18) : intro et ambiance Showtime imposées aux combats du PNJ |
 | 12 | `V12__event_npc_field.sql` | `event_npcs.field` (2026-11-18) : terrain League Reborn imposé aux combats du PNJ |
+| 14 | `V14__event_hub_ambiances.sql` | `event_hub_ambiances` (2026-11-19) : l'ambiance Showtime de chaque hub (§5.10) |
 | 13 | `V13__event_npc_scene.sql` | `event_npcs.ambiance` passe en VARCHAR(270) (2026-11-19) : une scène `<ambiance>|<stade>` tient deux ids |
 | 8 | `V8__trahison_rooms.sql` | `trahison_rooms` (2026-11-16) : la banque de salles du jeu de trahison, une ligne par salle (§5.7) |
 | 7 | `V7__trahison_layouts.sql` | `trahison_layouts` (2026-11-16) : les versions du plan fixe du jeu de trahison, par hub (§5.6) |
@@ -305,3 +309,14 @@ Index : `(room_id, step_id)` et `(mechanism)`.
 | `updated_at` | `TIMESTAMPTZ` | Dernière écriture |
 
 Seul l'auteur lit et écrit sa ligne pendant la partie ; à la fin, tout le monde peut tout lire (D15).
+
+### 5.10 `event_hub_ambiances` (V14 du module)
+
+| Colonne | Type | Rôle |
+|---|---|---|
+| `hub_uuid` | `UUID` | Clé : le hub (un renommage le garde). Pas de clé étrangère : une ligne dont le hub a disparu est ignorée, puis effacée au changement suivant |
+| `ambiance` | `VARCHAR(130)` | Id d'ambiance Showtime (`cobblemon_battle_showtime:holy`, `phantasmon_events:...`) ; pas de ligne : aucune |
+| `updated_by` | `UUID` | L'admin qui l'a choisie |
+| `updated_at` | `TIMESTAMPTZ` | Dernier changement |
+
+Côté client (`hub/HubAmbiances`) : l'ambiance est donnée à Showtime (`ShowtimeHooks.setAreaAmbiance`) tant que le joueur se tient dans une zone du hub (source, copie ou ancre ordinaire) ; elle reste fixée à la zone, pas au joueur. Un combat la remplace le temps du combat.
