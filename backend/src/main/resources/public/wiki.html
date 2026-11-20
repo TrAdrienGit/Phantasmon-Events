@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-en="Wiki · Village 14">Wiki · Village 14</title>
+<link rel="icon" href="/site/logo.png">
+<style>
+  :root {
+    --bg: #101214; --bg2: #15181b; --panel: #1b1f23; --panel2: #22272c; --line: #2c3238; --ink: #eef1f3; --muted: #9aa4ad;
+    --dim: #6c757d; --accent: #38c4bc; --accent-ink: #062b29; --gold: #ffd84a; --silver: #d8dee6; --violet: #a98bff;
+    --shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 6px 18px rgba(0,0,0,.25);
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f3f5f7; --bg2: #e9edf1; --panel: #ffffff; --panel2: #f6f8fa; --line: #dde3e9; --ink: #182026; --muted: #5b6672;
+      --dim: #8a949e; --accent: #11968f; --accent-ink: #ffffff; --gold: #b88a00; --silver: #7d8a98; --violet: #7b55e0;
+      --shadow: 0 1px 2px rgba(16,24,40,.06), 0 4px 12px rgba(16,24,40,.06);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body { font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 0 16px; }
+  main.wrap { padding: 24px 16px 64px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 40px 0 14px; }
+  .empty { color: var(--muted); }
+
+  /* Hero */
+  .hero { position: relative; overflow: hidden; border-radius: 18px; padding: 32px; border: 1px solid var(--line); display: flex; gap: 28px; align-items: center;
+          background: radial-gradient(120% 140% at 0% 0%, rgba(56,196,188,.22), transparent 55%),
+                      radial-gradient(120% 140% at 100% 100%, rgba(169,139,255,.22), transparent 55%), var(--panel); box-shadow: var(--shadow); }
+  .emblem { width: 132px; height: 132px; flex: none; border-radius: 22px; display: grid; place-items: center; position: relative; overflow: hidden;
+            border: 2px dashed var(--line); color: var(--dim); font-size: 12px; text-align: center; background: rgba(0,0,0,.12); }
+  .emblem.has { border: 0; background: none; }
+  .emblem img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+  .hero h1 { font-size: 44px; line-height: 1.05; margin: 0; letter-spacing: -.02em; }
+  .hero p { color: var(--muted); max-width: 700px; margin: 12px 0 0; font-size: 16px; }
+  @media (max-width: 640px) { .hero { padding: 22px 18px; flex-direction: column; align-items: flex-start; gap: 16px; } .emblem { width: 96px; height: 96px; } .hero h1 { font-size: 32px; } }
+
+  .notice { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; padding: 12px 16px; border-radius: 12px; font-size: 14px;
+            background: rgba(255,216,74,.12); border: 1px solid rgba(255,216,74,.45); color: var(--ink); }
+  .notice::before { content: "!"; flex: none; width: 22px; height: 22px; border-radius: 999px; display: grid; place-items: center; font-weight: 800; background: var(--gold); color: #1b1f23; }
+
+  /* The two paths */
+  .paths { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 860px) { .paths { grid-template-columns: 1fr; } }
+  .pathbox { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+  .pathbox::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--accent); }
+  .pathbox.league::before { background: linear-gradient(90deg, var(--silver), var(--gold)); }
+  .pathbox .step { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .pathbox h3 { margin: 4px 0 0; font-size: 22px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .pathbox h3 .hard { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: rgba(229,83,75,.15); color: #ff7b72; }
+  .pathbox p { color: var(--muted); margin: 10px 0 0; font-size: 14px; }
+  .badges { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
+  @media (max-width: 520px) { .badges { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .badge { aspect-ratio: 1; border-radius: 999px; display: grid; place-items: center; background: var(--panel2); border: 2px dashed var(--line); }
+  .badge.on { border: 2px solid var(--t); background: color-mix(in srgb, var(--t) 18%, var(--panel2)); }
+  .badge .ti { width: 60%; height: 60%; }
+  .chain { display: flex; align-items: center; gap: 6px; margin-top: 16px; flex-wrap: wrap; }
+  .chain span { padding: 6px 12px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--silver); font-weight: 600; font-size: 13px; }
+  .chain span.champ { border-color: var(--gold); color: var(--gold); }
+  .chain i { color: var(--dim); font-style: normal; }
+
+  /* How it works */
+  .how { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+  .how div { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); }
+  .how b { font-size: 16px; }
+  .how p { color: var(--muted); margin: 8px 0 0; font-size: 14px; }
+  .how code { font-size: 13px; color: var(--ink); background: var(--panel2); border: 1px solid var(--line); border-radius: 5px; padding: 0 5px; }
+
+  /* Type icons: Cobblemon's sheet, 18 icons of 36 px */
+  .ti { display: inline-block; width: 22px; height: 22px; flex: none; background: url(/site/types.png) no-repeat; background-size: 1800% 100%;
+        background-position: calc(var(--i) * 100% / 17) 0; image-rendering: pixelated; }
+
+  /* Trainer cards */
+  .trainers { display: grid; gap: 14px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (max-width: 1100px) { .trainers { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 820px) { .trainers { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 520px) { .trainers { grid-template-columns: 1fr; } }
+  .trainer { --t: var(--dim); position: relative; overflow: hidden; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--t) 55%, var(--line));
+             background: linear-gradient(160deg, color-mix(in srgb, var(--t) 30%, var(--panel)) 0%, var(--panel) 62%); box-shadow: var(--shadow);
+             display: flex; gap: 12px; padding: 14px; }
+  .trainer.vacant { opacity: .55; }
+  .trainer.champion { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), var(--shadow); }
+  .skin { width: 64px; height: 128px; flex: none; position: relative; align-self: center; display: grid; place-items: center; }
+  .skin img { width: 64px; height: 128px; image-rendering: pixelated; filter: drop-shadow(0 4px 6px rgba(0,0,0,.35)); }
+  .skin svg { width: 46px; height: 100px; fill: color-mix(in srgb, var(--t) 40%, var(--panel2)); }
+  .trainer .info { min-width: 0; display: flex; flex-direction: column; gap: 3px; flex: 1; }
+  .trainer .rank { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .trainer .name { font-weight: 800; font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .trainer .disc { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 5px; min-width: 0; }
+  .trainer .disc span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .trainer .disc svg { width: 14px; height: 14px; fill: #8c9eff; flex: none; }
+  .trainer .type { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; margin-top: 4px; }
+  .trainer .type .ti { width: 20px; height: 20px; }
+  .meta { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; font-size: 13px; color: var(--muted); }
+  .meta div { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .meta svg { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .meta a.field { color: var(--violet); font-weight: 600; }
+  .meta a.field:hover { text-decoration: underline; }
+  .coords { font-family: ui-monospace, Consolas, monospace; color: var(--ink); cursor: pointer; background: none; border: 0; padding: 0; font-size: 13px; white-space: nowrap; }
+  .coords:hover { color: var(--accent); }
+  .badge-name { font-style: italic; }
+  .champ-wrap { display: flex; justify-content: center; margin-top: 14px; }
+  .champ-wrap .trainer { width: min(100%, 380px); }
+  .members { display: flex; flex-wrap: wrap; gap: 8px; }
+  .member { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px 4px 4px; }
+  .face { width: 28px; height: 28px; flex: none; border-radius: 999px; background: var(--panel2); display: grid; place-items: center;
+          font-weight: 800; font-size: 12px; color: var(--muted); overflow: hidden; position: relative; }
+  .face img { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+  .member small { color: var(--muted); }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--accent); border-radius: 999px;
+           padding: 8px 16px; font-size: 14px; box-shadow: var(--shadow); opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+
+  /* Field change graphs */
+  .glegend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .glegend span { font-size: 13px; color: var(--muted); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+  .glegend b { color: var(--accent); }
+  .glegend .dashl { display: inline-block; width: 26px; vertical-align: middle; border-top: 2px dashed var(--dim); }
+  .graphs { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 540px), 1fr)); margin-top: 14px; }
+  .graph { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; box-shadow: var(--shadow); min-width: 0; }
+  .graph.wide { grid-column: 1 / -1; }
+  .graph h3 { margin: 0 0 8px; font-size: 16px; }
+  .graph > p { color: var(--muted); margin: 0 0 8px; font-size: 14px; }
+  .graph .scroll { overflow-x: auto; }
+  .graph svg { display: block; width: 100%; height: auto; }
+  .graph.wide svg { max-width: 900px; margin: 0 auto; }
+  .graph svg .e { fill: none; stroke: var(--dim); stroke-width: 1.6; }
+  .graph svg .e.dash { stroke-dasharray: 6 4; }
+  .graph svg .ah, .graph svg .dot { fill: var(--dim); }
+  .graph svg .lbl { font: 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--muted); text-anchor: middle; }
+  .graph svg .lbl.halo { paint-order: stroke; stroke: var(--panel); stroke-width: 5px; stroke-linejoin: round; }
+  .graph svg .grp { fill: var(--accent); font-weight: 700; }
+  .graph svg .n rect { fill: var(--panel2); stroke: var(--violet); stroke-width: 1.4; }
+  .graph svg .n text { font: 600 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); text-anchor: middle; dominant-baseline: central; }
+  .graph svg a.n:hover rect, .graph svg a.n:focus rect { fill: color-mix(in srgb, var(--violet) 22%, var(--panel2)); }
+  .graph svg .n.none rect { stroke: var(--dim); stroke-dasharray: 4 3; }
+  .graph svg .n.hub rect { stroke: var(--gold); }
+  .gnotes { color: var(--muted); font-size: 14px; margin: 14px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+
+  /* Field wiki */
+  .wiki-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; justify-content: space-between; }
+  .wiki-head p { color: var(--muted); margin: 0; max-width: 720px; font-size: 14px; }
+  .search { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; min-width: 240px; }
+  .search:focus { outline: none; border-color: var(--violet); }
+  .fields { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+  details.field { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+  details.field[open] { border-color: var(--violet); }
+  details.field summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
+  details.field summary::-webkit-details-marker { display: none; }
+  details.field summary::before { content: ""; width: 7px; height: 7px; border: solid var(--violet); border-width: 0 2px 2px 0; transform: rotate(-45deg); transition: transform .15s; flex: none; }
+  details.field[open] summary::before { transform: rotate(45deg); }
+  details.field summary b { font-size: 16px; }
+  details.field summary span { color: var(--muted); font-size: 13px; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fbody { padding: 0 16px 16px 35px; display: grid; gap: 14px; }
+  .fbody h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+  .fbody ul { margin: 0; padding-left: 18px; } .fbody li { margin: 2px 0; font-size: 14px; }
+  .fbody .note { background: rgba(169,139,255,.08); border-left: 3px solid var(--violet); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 14px; }
+  .mult { font-weight: 700; } .mult.up { color: #4cd07d; } .mult.down { color: #e5534b; }
+  .credit { color: var(--dim); font-size: 13px; margin-top: 18px; }
+</style>
+</head>
+<body>
+<!--SITE_HEADER page="wiki"--><!--/SITE_HEADER-->
+<main class="wrap" id="app"><p class="empty" data-en="Loading…">Chargement…</p></main>
+<script>
+(() => {
+  const lang = window.SITE_LANG;
+  const tx = v => v == null ? '' : typeof v === 'string' ? v : (v[lang] ?? v.fr ?? '');
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  // Types: their Cobblemon icon (index in the sheet), colour and names; the JSON may name them in French or English.
+  const TYPE_LIST = [['normal', 'Normal', 'Normal', '#9fa19f'], ['fire', 'Feu', 'Fire', '#e62829'], ['water', 'Eau', 'Water', '#2980ef'],
+    ['grass', 'Plante', 'Grass', '#3fa129'], ['electric', 'Électrik', 'Electric', '#d4ac00'], ['ice', 'Glace', 'Ice', '#3dcef3'],
+    ['fighting', 'Combat', 'Fighting', '#ff8000'], ['poison', 'Poison', 'Poison', '#9141cb'], ['ground', 'Sol', 'Ground', '#915121'],
+    ['flying', 'Vol', 'Flying', '#81b9ef'], ['psychic', 'Psy', 'Psychic', '#ef4179'], ['bug', 'Insecte', 'Bug', '#91a119'],
+    ['rock', 'Roche', 'Rock', '#afa981'], ['ghost', 'Spectre', 'Ghost', '#704170'], ['dragon', 'Dragon', 'Dragon', '#5060e1'],
+    ['dark', 'Ténèbres', 'Dark', '#624d4e'], ['steel', 'Acier', 'Steel', '#60a1b8'], ['fairy', 'Fée', 'Fairy', '#ef70ef']];
+  const flat = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+  const TYPES = {};
+  TYPE_LIST.forEach(([id, fr, en, color], i) => { const t = { i, fr, en, color }; TYPES[id] = TYPES[flat(fr)] = TYPES[flat(en)] = t; });
+  TYPES.electrique = TYPES.electric;
+  const typeOf = v => TYPES[flat(v)] || null;
+  const typeIcon = t => t ? `<span class="ti" style="--i:${t.i}" role="img" aria-label="${esc(L(t.fr, t.en))}"></span>` : '';
+  const DISCORD = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.3a18.4 18.4 0 0 0-5.6 0L8.6 3a19.7 19.7 0 0 0-4.9 1.5C.6 9.1-.3 13.6.1 18.1a19.9 19.9 0 0 0 6 3l1.3-2a12.9 12.9 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4a13 13 0 0 1-2 1l1.3 2a19.8 19.8 0 0 0 6-3c.5-5.2-.9-9.7-3.6-13.7zM8 15.4c-1.2 0-2.2-1.1-2.2-2.4S6.8 10.6 8 10.6s2.2 1.1 2.2 2.4-1 2.4-2.2 2.4zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4z"/></svg>';
+  const ICON = {
+    pin: '<svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+    server: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>',
+    field: '<svg viewBox="0 0 24 24"><path d="M3 17l5-8 4 5 3-4 6 7z"/><path d="M3 20h18"/></svg>',
+    badge: '<svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M8.5 14L7 22l5-3 5 3-1.5-8"/></svg>',
+  };
+  const SILHOUETTE = '<svg viewBox="0 0 16 32" aria-hidden="true"><path d="M4 0h8v8H4zM4 8h8v12H4zM0 8h4v12H0zM12 8h4v12h-4zM4 20h4v12H4zM8 20h4v12H8z"/></svg>';
+  let fieldNames = {};
+  let defaultServer = 'Wild 14';
+
+  const face = p => {
+    const n = p.minecraft || p.discord || '?';
+    const img = p.minecraft ? `<img src="/public/heads/${encodeURIComponent(p.minecraft)}" alt="" loading="lazy" onerror="this.remove()">` : '';
+    return `<span class="face">${esc(n[0].toUpperCase())}${img}</span>`;
+  };
+  const coordsText = c => {
+    const n = String(c || '').match(/-?\d+(?:\.\d+)?/g);
+    return n && n.length === 3 ? `X ${n[0]} · Y ${n[1]} · Z ${n[2]}` : n && n.length === 2 ? `X ${n[0]} · Z ${n[1]}` : String(c || '');
+  };
+  const trainer = (p, rank, extra = '') => {
+    const vacant = !p.discord && !p.minecraft;
+    const t = typeOf(p.type);
+    const name = p.minecraft || p.discord || L('Place libre', 'Open seat');
+    const skin = p.minecraft ? `<img src="/public/skins/${encodeURIComponent(p.minecraft)}" alt="" loading="lazy" onerror="this.replaceWith(document.createRange().createContextualFragment(window.SILHOUETTE))">` : SILHOUETTE;
+    const meta = [];
+    if (p.field) meta.push(`<div>${ICON.field}<a class="field" href="#field-${esc(p.field)}" data-open="${esc(p.field)}">${esc(fieldNames[p.field] || p.field)}</a></div>`);
+    if (tx(p.badge)) meta.push(`<div>${ICON.badge}<span class="badge-name">${esc(tx(p.badge))}</span></div>`);
+    if (p.coords) meta.push(`<div>${ICON.pin}<button class="coords" data-copy="${esc((String(p.coords).match(/-?\d+(?:\.\d+)?/g) || [p.coords]).join(' '))}" title="${L('Copier', 'Copy')}">${esc(coordsText(p.coords))}</button></div>`);
+    if (!vacant) meta.push(`<div>${ICON.server}<span>${esc(p.server || defaultServer)}</span></div>`);
+    return `<div class="trainer ${vacant ? 'vacant' : ''} ${extra}" style="${t ? `--t:${t.color}` : ''}"><div class="skin">${skin}</div><div class="info">
+      <div class="rank">${esc(rank)}</div><div class="name">${esc(name)}</div>
+      ${p.discord ? `<div class="disc">${DISCORD}<span>${esc(p.discord)}</span></div>` : ''}
+      ${t ? `<div class="type">${typeIcon(t)}${esc(L(t.fr, t.en))}</div>` : ''}
+      ${meta.length ? `<div class="meta">${meta.join('')}</div>` : ''}</div></div>`;
+  };
+  window.SILHOUETTE = SILHOUETTE;
+
+  function fieldHtml(f, notes) {
+    const pct = m => { const up = m > 1; return `<span class="mult ${up ? 'up' : m < 1 ? 'down' : ''}">×${String(m).replace('.', L(',', '.'))}</span>`; };
+    const sec = (title, items) => items.length ? `<div><h4>${title}</h4><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul></div>` : '';
+    const note = notes[f.id] ? `<div class="note">${esc(tx(notes[f.id]))}</div>` : '';
+    const types = f.types.map(t => `${L('Capacités', 'Moves')} ${esc(tx(t.type))} ${pct(t.mult)}${t.cond ? ` (${esc(tx(t.cond))})` : ''}`);
+    const boosts = f.boosts.map(b => `${esc(tx(b.move))}${b.mult != null ? ` ${pct(b.mult)}` : ''}${b.mult === 0 ? ` (${L('échoue', 'fails')})` : ''}${b.type ? ` · ${L('devient aussi', 'also becomes')} ${esc(tx(b.type))}` : ''}`);
+    const acc = f.accuracy.map(a => `${esc(tx(a.move))} : ${L('précision', 'accuracy')} ${a.acc} %`);
+    const changes = f.changes.map(c => `${c.moves.map(m => esc(tx(m))).join(', ')} → <b>${esc(tx(c.to))}</b>`);
+    const misc = [];
+    if (f.naturePower) misc.push(`${L('Force Nature devient', 'Nature Power becomes')} <b>${esc(tx(f.naturePower))}</b>`);
+    if (f.mimicry) misc.push(`${L('Mimétisme donne le type', 'Mimicry gives the type')} <b>${esc(tx(f.mimicry))}</b>`);
+    if (f.statusMods.length) misc.push(`${L('Capacités de statut renforcées', 'Boosted status moves')} : ${f.statusMods.map(m => esc(tx(m))).join(', ')}`);
+    if (f.seed) misc.push(`${esc(tx(f.seed.item))}${f.seed.stats.length ? ` : ${f.seed.stats.map(s => `${esc(tx(s.stat))} ${s.by > 0 ? '+' : ''}${s.by}`).join(', ')}` : ''}`);
+    return `<details class="field" id="field-${esc(f.id)}"><summary><b>${esc(tx(f.name))}</b><span>${esc(tx(f.intro))}</span></summary>
+      <div class="fbody">${note}${sec(L('Types', 'Types'), types)}${sec(L('Capacités modifiées', 'Changed moves'), boosts)}${sec(L('Précision', 'Accuracy'), acc)}
+      ${sec(L('Transformations du terrain', 'Field changes'), changes)}${sec(L('Autres effets', 'Other effects'), misc)}</div></details>`;
+  }
+
+  // Field change graphs (2026-11-20): which Reborn field turns into which, drawn as SVG in the site's language. Data
+  // from the mod's fields.json (moves) and engine.js (weather, pledges, terrain moves); move names as in Cobblemon.
+  const MOVES = Object.fromEntries(`aciddownpour|Déluge Causti-Toxique|Acid Downpour;blizzard|Blizzard|Blizzard;bloomdoom|Pétalexplosion Éblouissante|Bloom Doom;
+    boomburst|Bang Sonique|Boomburst;bounce|Rebond|Bounce;bulldoze|Piétisol|Bulldoze;chargebeam|Rayon Chargé|Charge Beam;clearsmog|Bain de Smog|Clear Smog;
+    continentalcrush|Apocalypse Gigalithique|Continental Crush;cut|Coupe|Cut;darkpulse|Vibrobscur|Dark Pulse;darkvoid|Trou Noir|Dark Void;defog|Anti-Brume|Defog;
+    diamondstorm|Orage Adamantin|Diamond Storm;discharge|Coup d'Jus|Discharge;dive|Plongée|Dive;earthquake|Séisme|Earthquake;eruption|Éruption|Eruption;
+    explosion|Explosion|Explosion;firepledge|Aire de Feu|Fire Pledge;fissure|Abîme|Fissure;flameburst|Rebondifeu|Flame Burst;flowershield|Garde Florale|Flower Shield;
+    fly|Vol|Fly;geomancy|Géo-Contrôle|Geomancy;gigavolthavoc|Fulguro-Lance Gigavolt|Gigavolt Havoc;glaciate|Ère Glaciaire|Glaciate;gravity|Gravité|Gravity;
+    growth|Croissance|Growth;gust|Tornade|Gust;heatwave|Canicule|Heat Wave;hurricane|Vent Violent|Hurricane;hydrovortex|Super Tourbillon Abyssal|Hydro Vortex;
+    hypervoice|Mégaphone|Hyper Voice;incinerate|Calcination|Incinerate;infernooverdrive|Pyro-Explosion Cataclysmique|Inferno Overdrive;ingrain|Racines|Ingrain;
+    iondeluge|Déluge Plasmique|Ion Deluge;lavaplume|Ébullilave|Lava Plume;lightthatburnsthesky|Apocalypsis Luminis|Light That Burns the Sky;magnitude|Ampleur|Magnitude;
+    mindblown|Caboche-Kaboum|Mind Blown;mudsport|Lance-Boue|Mud Sport;muddywater|Ocroupi|Muddy Water;nightdaze|Explonuit|Night Daze;
+    oceanicoperetta|Symphonie des Ondines|Oceanic Operetta;paraboliccharge|Parabocharge|Parabolic Charge;poisongas|Gaz Toxik|Poison Gas;powergem|Rayon Gemme|Power Gem;
+    raindance|Danse Pluie|Rain Dance;razorwind|Coupe-Vent|Razor Wind;rototiller|Fertilisation|Rototiller;sandtomb|Tourbi-Sable|Sand Tomb;scald|Ébullition|Scald;
+    searingshot|Incendie|Searing Shot;seedflare|Fulmigraine|Seed Flare;selfdestruct|Destruction|Self-Destruct;skydrop|Chute Libre|Sky Drop;sludgewave|Cradovague|Sludge Wave;
+    smog|Purédpois|Smog;sparklingaria|Aria de l'Écume|Sparkling Aria;steameruption|Jet de Vapeur|Steam Eruption;stompingtantrum|Trépignement|Stomping Tantrum;
+    subzeroslammer|Laser Cryogénique|Subzero Slammer;sunnyday|Zénith|Sunny Day;supersonicskystrike|Piqué Supersonic|Supersonic Skystrike;surf|Surf|Surf;
+    tailwind|Vent Arrière|Tailwind;tectonicrage|Éruption Géo-Sismique|Tectonic Rage;twister|Ouragan|Twister;waterpledge|Aire d'Eau|Water Pledge;
+    watersport|Tourniquet|Water Sport;waterspout|Giclédo|Water Spout;whirlpool|Siphon|Whirlpool;whirlwind|Cyclone|Whirlwind;wildcharge|Éclair Fou|Wild Charge;
+    xscissor|Plaie Croix|X-Scissor;grasspledge|Aire d'Herbe|Grass Pledge;steelroller|Métalliroue|Steel Roller;topsyturvy|Renversement|Topsy-Turvy;
+    plasmafists|Plasma Punch|Plasma Fists;conversion|Conversion|Conversion;conversion2|Conversion 2|Conversion 2;mist|Brume|Mist;
+    electricterrain|Champ Électrifié|Electric Terrain;grassyterrain|Champ Herbu|Grassy Terrain;mistyterrain|Champ Brumeux|Misty Terrain;
+    psychicterrain|Champ Psychique|Psychic Terrain;hail|Grêle|Hail;sandstorm|Tempête de Sable|Sandstorm`
+    .split(';').map(r => r.trim().split('|')).map(([id, fr, en]) => [id, { fr, en }]));
+  // Moves that change fields together, shown as one coloured word on the arrows.
+  const GROUPS = {
+    fire: [{ fr: 'Feu', en: 'Fire' }, 'heatwave eruption searingshot flameburst lavaplume firepledge mindblown incinerate infernooverdrive'],
+    wind: [{ fr: 'Vent', en: 'Wind' }, 'whirlwind gust razorwind defog hurricane twister tailwind supersonicskystrike'],
+    quake: [{ fr: 'Séisme', en: 'Quake' }, 'earthquake bulldoze magnitude fissure tectonicrage'],
+    ice: [{ fr: 'Blizzard', en: 'Blizzard' }, 'blizzard glaciate subzeroslammer'],
+    water: [{ fr: 'Eau', en: 'Water' }, 'watersport surf muddywater waterspout waterpledge sparklingaria hydrovortex oceanicoperetta'],
+    growth: [{ fr: 'Croissance', en: 'Growth' }, 'growth flowershield raindance sunnyday rototiller ingrain watersport bloomdoom'],
+  };
+  const GRAPH_FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  const measure = (() => { const c = document.createElement('canvas').getContext('2d'); return (s, font) => { c.font = font; return c.measureText(s).width; }; })();
+  const N = (k, x, y, o = {}) => ({ k, x, y, ...o });
+  const E = (a, b, l, o = {}) => ({ a, b, l, ...o });
+  const turns = n => ({ fr: `${n} tours`, en: `${n} turns` });
+
+  // A fan: each source on its own row, its arrow joining a bus that leads to one target (or one source to many).
+  function fan(sources, target, { w = 780, row = 40, top = 34, srcX = 100, busX = 610, tgtX = 700, out = false, dash = false } = {}) {
+    const h = top * 2 + row * (sources.length - 1);
+    const mid = top + row * (sources.length - 1) / 2;
+    const nodes = [N(target.k, out ? srcX : tgtX, mid, target)];
+    const edges = [];
+    sources.forEach(([k, l, o = {}], i) => {
+      const y = top + row * i;
+      const key = k + '#' + i;
+      nodes.push(N(key, out ? tgtX : srcX, y, { f: k, ...o }));
+      edges.push(out ? E([busX, y], key, l, { above: true, dash }) : E(key, [busX, y], l, { above: true, arrow: false, dash }));
+    });
+    edges.push(out ? E(target.k, [busX, mid], '', { arrow: false, dash }) : E([busX, mid], target.k, '', { dash }));
+    edges.push(E([busX, top], [busX, top + row * (sources.length - 1)], '', { arrow: false, dash }));
+    return { w, h, nodes, edges, dots: [[busX, mid]] };
+  }
+
+  const GRAPHS = [
+    { title: { fr: 'Eau', en: 'Water' }, w: 640, h: 540, nodes: [N('underwater', 150, 40), N('watersurface', 150, 300), N('murkwatersurface', 500, 170), N('icy', 500, 410),
+        N('indoor', 500, 515, { none: true })],
+      edges: [E('watersurface', 'underwater', '{dive}, {gravity}', { bend: -110 }), E('underwater', 'watersurface', '{dive}, {fly},\n{bounce}, {skydrop}', { bend: -110 }),
+        E('underwater', 'murkwatersurface', '{sludgewave} ×2, {aciddownpour}'), E('watersurface', 'murkwatersurface', '{sludgewave} ×2,\n{aciddownpour}', { bend: -50 }),
+        E('murkwatersurface', 'watersurface', '{whirlpool}', { bend: -50 }), E('watersurface', 'icy', '{@ice}', { bend: -40 }),
+        E('icy', 'watersurface', '{@fire},\n{scald} ×2, {steameruption} ×2', { bend: -40 }), E('murkwatersurface', 'icy', '{@ice}'),
+        E('icy', 'indoor', { fr: '{@quake} (sur de l\'eau)', en: '{@quake} (over water)' })] },
+    { title: { fr: 'Grottes et cristaux', en: 'Caves and crystals' }, w: 680, h: 360, nodes: [N('cave', 130, 50), N('crystalcavern', 480, 50), N('darkcrystalcavern', 480, 310), N('dragonsden', 130, 310)],
+      edges: [E('cave', 'crystalcavern', '{powergem}, {diamondstorm}', { bend: -45 }), E('crystalcavern', 'cave', '{@quake}', { bend: -45 }),
+        E('crystalcavern', 'darkcrystalcavern', '{darkpulse}, {darkvoid},\n{nightdaze},\n{lightthatburnsthesky}', { bend: -150 }),
+        E('darkcrystalcavern', 'crystalcavern', { fr: '{sunnyday}\n(le soleil)', en: '{sunnyday}\n(the sun)' }, { bend: -150, dash: true }),
+        E('darkcrystalcavern', 'cave', '{@quake}'), E('dragonsden', 'cave', '{surf} ×2, {muddywater} ×2,\n{sparklingaria} ×2, {glaciate},\n{subzeroslammer}, {oceanicoperetta},\n{hydrovortex}')] },
+    { title: { fr: 'Herbe, brume et poison', en: 'Grass, mist and poison' }, wide: true, w: 1060, h: 650,
+      nodes: [N('none1', 585, 30, { f: 'indoor', none: true }), N('misty', 390, 160), N('corrosivemist', 780, 160), N('any', 90, 320, { hub: true }),
+        N('grassy', 390, 320), N('corrosive', 780, 320), N('forest', 390, 480), N('burning', 650, 480), N('superheated', 950, 480),
+        N('none2', 950, 610, { f: 'indoor', none: true })],
+      edges: [E('misty', 'corrosivemist', '{smog} ×2, {poisongas} ×2,\n{clearsmog} ×2, {aciddownpour}', { bend: 45 }), E('corrosivemist', 'misty', '{seedflare}', { bend: 45 }),
+        E('misty', 'none1', '{@wind}', { lp: [445, 85] }), E('corrosivemist', 'none1', '{@wind}, {@fire},\n{explosion}, {selfdestruct}', { lp: [760, 78] }),
+        E('corrosivemist', 'corrosive', '{gravity}'), E('grassy', 'corrosive', '{sludgewave}, {aciddownpour}', { bend: -40 }), E('corrosive', 'grassy', '{seedflare}', { bend: -40 }),
+        E('grassy', 'burning', '{@fire}'), E('forest', 'burning', '{@fire}'), E('superheated', 'burning', '{@fire}, {explosion}, {selfdestruct}', { above: true }),
+        E('burning', 'none2', '{@wind}, {@water}, {sludgewave},\n{sandtomb}, {continentalcrush}', { lp: [745, 600] }), E('superheated', 'none2', '{@ice}'),
+        E('any', 'misty', { fr: '{mistyterrain} : 5 tours\n{mist} : 3 tours', en: '{mistyterrain}: 5 turns\n{mist}: 3 turns' }, { dash: true }),
+        E('any', 'grassy', { fr: '{grassyterrain} : 5 tours', en: '{grassyterrain}: 5 turns' }, { dash: true, above: true }),
+        E('any', 'burning', { fr: '{firepledge} + {grasspledge} : 4 tours', en: '{firepledge} + {grasspledge}: 4 turns' },
+          { dash: true, via: [[90, 570], [650, 570]], lp: [370, 570] })] },
+    { title: { fr: 'Montagne, usine et ciel', en: 'Mountain, factory and sky' }, w: 640, h: 470, nodes: [N('mountain', 120, 50), N('snowymountain', 500, 50),
+        N('factory', 120, 240), N('shortcircuit', 500, 240), N('newworld', 120, 420), N('starlight', 500, 420)],
+      edges: [E('mountain', 'snowymountain', { fr: '{@ice}\n{hail} pendant 3 tours', en: '{@ice}\n3 turns of {hail}' }, { bend: -60 }), E('snowymountain', 'mountain', '{@fire}', { bend: -60 }),
+        E('factory', 'shortcircuit', '{@quake}, {explosion},\n{selfdestruct}, {discharge},\n{lightthatburnsthesky}', { bend: -80 }),
+        E('shortcircuit', 'factory', '{paraboliccharge}, {wildcharge},\n{chargebeam}, {iondeluge},\n{gigavolthavoc}, {discharge}', { bend: -80 }),
+        E('newworld', 'starlight', '{gravity}, {geomancy}', { bend: -40 }), E('starlight', 'newworld', { fr: 'fin de {gravity}', en: '{gravity} ends' }, { bend: -40, dash: true })] },
+    { title: { fr: 'Jardin Fleuri', en: 'Flower Garden' }, wide: true, w: 800, h: 360,
+      nodes: [1, 2, 3, 4, 5].map(i => N('flowergarden' + i, 80 + (i - 1) * 140, 180, { label: { fr: 'Jardin ' + i, en: 'Garden ' + i } })).concat(N('burning', 720, 40)),
+      edges: [1, 2, 3, 4].flatMap(i => [E('flowergarden' + i, 'flowergarden' + (i + 1), '{@growth}', { bend: -90 }),
+        E('flowergarden' + (i + 1), 'flowergarden' + i, i === 1 ? '{cut}, {xscissor},\n{aciddownpour}' : '{cut}, {xscissor}', { bend: -90 })])
+        .concat([3, 4, 5].map(i => E([80 + (i - 1) * 140, 165], [80 + (i - 1) * 140, 40], '', { arrow: false })))
+        .concat([E([360, 40], 'burning', '{@fire}', { lp: [430, 40] })])
+        .concat([3, 4, 5].map(i => E([80 + (i - 1) * 140, 195], [80 + (i - 1) * 140, 320], '', { arrow: false })))
+        .concat([E([640, 320], 'flowergarden1', '{aciddownpour}', { via: [[14, 320], [14, 180]], lp: [430, 320] })]),
+      dots: [[500, 40], [640, 40], [360, 320], [500, 320], [640, 320]] },
+    Object.assign(fan([['icy', { fr: '{@quake} (sur de l\'eau)', en: '{@quake} (over water)' }], ['electerrain', '{mudsport}, {tectonicrage}'], ['chess', '{stompingtantrum}, {tectonicrage}'],
+      ['mirror', '{@quake}, {boomburst}, {hypervoice}, {explosion}, {selfdestruct}'], ['holy', '{lightthatburnsthesky}'], ['rainbow', '{lightthatburnsthesky}'],
+      ['starlight', '{lightthatburnsthesky}'], ['misty', '{@wind}'], ['corrosivemist', '{@wind}, {@fire}, {explosion}, {selfdestruct}'],
+      ['burning', '{@wind}, {@water}, {sludgewave}, {sandtomb}, {continentalcrush}'], ['superheated', '{@ice}']], { k: 'indoor', none: true }),
+      { title: { fr: 'Vers « sans terrain »', en: 'Back to no field' }, wide: true }),
+    Object.assign(fan([['rainbow', { fr: '{raindance} + {sunnyday} : 5 tours · {firepledge} + {waterpledge} : 4 tours', en: '{raindance} + {sunnyday}: 5 turns · {firepledge} + {waterpledge}: 4 turns' }],
+      ['swamp', { fr: '{waterpledge} + {grasspledge} : 4 tours', en: '{waterpledge} + {grasspledge}: 4 turns' }],
+      ['burning', { fr: '{firepledge} + {grasspledge} : 4 tours', en: '{firepledge} + {grasspledge}: 4 turns' }],
+      ['electerrain', { fr: '{electricterrain} : 5 tours · {iondeluge}, {plasmafists} : 3 tours', en: '{electricterrain}: 5 turns · {iondeluge}, {plasmafists}: 3 turns' }],
+      ['grassy', { fr: '{grassyterrain} : 5 tours', en: '{grassyterrain}: 5 turns' }],
+      ['misty', { fr: '{mistyterrain} : 5 tours · {mist} : 3 tours', en: '{mistyterrain}: 5 turns · {mist}: 3 turns' }],
+      ['psyterrain', { fr: '{psychicterrain} : 5 tours', en: '{psychicterrain}: 5 turns' }],
+      ['inverse', { fr: '{topsyturvy} : 3 tours', en: '{topsyturvy}: 3 turns' }],
+      ['glitch', { fr: '{conversion} + {conversion2} : 5 tours', en: '{conversion} + {conversion2}: 5 turns' }],
+      ['indoor', { fr: '{steelroller} : 5 tours', en: '{steelroller}: 5 turns' }, { none: true }]],
+      { k: 'any', hub: true }, { out: true, srcX: 90, busX: 175, tgtX: 690, dash: true }),
+      { title: { fr: 'Depuis n\'importe quel terrain', en: 'From any field' }, wide: true, temp: true }),
+  ];
+
+  function nodeName(n) {
+    if (n.label) return tx(n.label);
+    const f = n.f || n.k;
+    if (f === 'indoor') return L('Sans terrain', 'No field');
+    if (f === 'any') return L('N\'importe quel terrain', 'Any field');
+    return fieldNames[f] || f;
+  }
+
+  function labelLines(l) {
+    return (typeof l === 'string' ? l : tx(l)).split('\n').map(line => line.split(/(\{@?[a-z0-9]+\})/).filter(Boolean).map(p => {
+      const m = p.match(/^\{(@?)([a-z0-9]+)\}$/);
+      if (!m) return { t: p };
+      return m[1] ? { t: tx(GROUPS[m[2]][0]), g: true } : { t: tx(MOVES[m[2]]) || m[2] };
+    }));
+  }
+
+  function graphSvg(g, gi) {
+    const nodes = {};
+    g.nodes.forEach(n => { const name = nodeName(n); nodes[n.k] = { ...n, name, w: Math.max(64, measure(name, `600 13px ${GRAPH_FONT}`) + 24), h: 30 }; });
+    const at = p => typeof p === 'string' ? nodes[p] : { x: p[0], y: p[1], point: true };
+    const clip = (n, p) => {
+      if (n.point) return [n.x, n.y];
+      const dx = p[0] - n.x, dy = p[1] - n.y, hw = n.w / 2 + 4, hh = n.h / 2 + 4;
+      const s = Math.min(hw / Math.max(Math.abs(dx), 1e-6), hh / Math.max(Math.abs(dy), 1e-6));
+      return [n.x + dx * s, n.y + dy * s];
+    };
+    const f1 = v => Math.round(v * 10) / 10;
+    const lines = [], labels = [];
+    for (const e of g.edges) {
+      const A = at(e.a), B = at(e.b);
+      let d, lp;
+      if (e.bend) {
+        const mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2, len = Math.hypot(B.x - A.x, B.y - A.y);
+        const c = [mx - (B.y - A.y) / len * e.bend, my + (B.x - A.x) / len * e.bend];
+        const s = clip(A, c), t = clip(B, c);
+        d = `M${f1(s[0])} ${f1(s[1])}Q${f1(c[0])} ${f1(c[1])} ${f1(t[0])} ${f1(t[1])}`;
+        lp = [(s[0] + 2 * c[0] + t[0]) / 4, (s[1] + 2 * c[1] + t[1]) / 4];
+      } else {
+        const pts = [[A.x, A.y], ...(e.via || []), [B.x, B.y]];
+        const s = clip(A, pts[1]), t = clip(B, pts[pts.length - 2]);
+        const all = [s, ...pts.slice(1, -1), t];
+        d = 'M' + all.map(p => `${f1(p[0])} ${f1(p[1])}`).join('L');
+        lp = e.lp || [(all[0][0] + all[1][0]) / 2, (all[0][1] + all[1][1]) / 2];
+      }
+      lines.push(`<path class="e${e.dash ? ' dash' : ''}" d="${d}"${e.arrow === false ? '' : ` marker-end="url(#ah${gi})"`}/>`);
+      if (!e.l) continue;
+      const ls = labelLines(e.l);
+      const y0 = e.above ? lp[1] - 7 - (ls.length - 1) * 15 : lp[1] - (ls.length - 1) * 7.5 + 4;
+      ls.forEach((parts, i) => labels.push(`<text class="lbl${e.above ? '' : ' halo'}" x="${f1(lp[0])}" y="${f1(y0 + i * 15)}">${parts.map(p => p.g ? `<tspan class="grp">${esc(p.t)}</tspan>` : esc(p.t)).join('')}</text>`));
+    }
+    const boxes = Object.values(nodes).filter(n => !n.point).map(n => {
+      const f = n.f || n.k;
+      const cls = `n${n.none ? ' none' : ''}${n.hub ? ' hub' : ''}`;
+      const body = `<rect x="${f1(n.x - n.w / 2)}" y="${n.y - n.h / 2}" width="${f1(n.w)}" height="${n.h}" rx="8"/><text x="${n.x}" y="${n.y}">${esc(n.name)}</text>`;
+      return fieldNames[f] ? `<a class="${cls}" href="#field-${esc(f)}" data-open="${esc(f)}">${body}</a>` : `<g class="${cls}">${body}</g>`;
+    });
+    const dots = (g.dots || []).map(([x, y]) => `<circle class="dot" cx="${x}" cy="${y}" r="3.5"/>`);
+    return `<svg viewBox="0 0 ${g.w} ${g.h}" style="min-width:${Math.round(g.w * 0.72)}px" role="img" aria-label="${esc(tx(g.title))}">
+      <defs><marker id="ah${gi}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+      ${lines.join('')}${labels.join('')}${boxes.join('')}${dots.join('')}</svg>`;
+  }
+
+  function graphsHtml() {
+    const cards = GRAPHS.map((g, i) => `<div class="graph${g.wide ? ' wide' : ''}"><h3>${esc(tx(g.title))}</h3>
+      ${g.temp ? `<p>${L('Ces terrains sont temporaires : ils se posent sur le terrain du combat et le lui rendent quand leurs tours sont écoulés.',
+        'These fields are temporary: they settle on the battle\'s field and give it back when their turns run out.')}</p>` : ''}
+      <div class="scroll">${graphSvg(g, i)}</div></div>`).join('');
+    const groups = Object.values(GROUPS).map(([name, ids]) => `<span><b>${esc(tx(name))}</b> : ${ids.split(' ').map(id => esc(tx(MOVES[id]))).join(', ')}</span>`).join('');
+    const notes = [
+      L('Avec Amplifield Rock ou Terrain Extender, les champs posés par une capacité durent 8 tours au lieu de 5 (le double pour les autres).',
+        'With Amplifield Rock or Terrain Extender, fields laid by a move last 8 turns instead of 5 (twice as long for the others).'),
+      L('L\'Arc-en-ciel dure 8 tours sur Désert, Montagne et Montagne Enneigée, ou si la pluie ou le soleil vient d\'une Roche Chaude ou d\'une Roche Humide.',
+        'The Rainbow lasts 8 turns on Desert, Mountain and Snowy Mountain, or when the rain or sun comes from a Heat Rock or Damp Rock.'),
+      L('Le Terrain en Feu s\'éteint sous la pluie ou une tempête de sable et rend le terrain qu\'il avait remplacé.',
+        'The Burning Field goes out under rain or a sandstorm and gives back the field it replaced.'),
+      L('Une graine utilisée sur le Jardin Fleuri le fait grandir d\'un stade.', 'A seed used on the Flower Garden grows it by one stage.'),
+      L('Sous l\'Eau et Nouveau Monde ne changent pas avec les champs, les Aires ni la météo.', 'Underwater and New World do not change with terrains, pledges or weather.'),
+    ];
+    return `<h2>${L('Transformations des terrains', 'Field changes')}</h2>
+      <div class="wiki-head"><p>${L('Certaines capacités changent le terrain du combat. Chaque flèche part du terrain actuel et mène au terrain qu\'il devient. Clique sur un terrain pour ouvrir sa fiche dans le wiki.',
+        'Some moves change the battle\'s field. Each arrow leads from the current field to the field it becomes. Click a field to open its page in the wiki.')}</p></div>
+      <div class="glegend"><span><b>×2</b> : ${L('la capacité doit être utilisée deux fois (elles se cumulent : une fois, puis une capacité sans ×2, suffit aussi)', 'the move must be used twice (they add up: once, then a move without ×2, is enough too)')}</span>
+        <span><i class="dashl"></i> ${L('par la météo ou pour quelques tours', 'by the weather or for a few turns')}</span>${groups}</div>
+      <div class="graphs">${cards}</div>
+      <ul class="gnotes">${notes.map(n => `<li>${n}</li>`).join('')}</ul>`;
+  }
+
+  function render(data, fields) {
+    fieldNames = Object.fromEntries(fields.map(f => [f.id, tx(f.name)]));
+    document.title = `${L('Wiki', 'Wiki')} · Village 14`;
+    const notes = data.fieldNotes || {};
+    document.getElementById('app').innerHTML = `
+      <section class="hero"><div><h1>${L('Wiki des terrains', 'Field wiki')}</h1>
+        <p>${L('Les terrains de Pokémon Reborn joués sur le serveur : comment ils se transforment les uns en les autres, et ce que chacun change au combat.',
+          "Pokémon Reborn's fields as played on the server: how they turn into one another, and what each one changes in battle.")}</p></div></section>
+      ${graphsHtml()}
+      <h2>${L('Les terrains', 'The fields')}</h2>
+      <div class="wiki-head"><p>${L('Chaque terrain change les règles du combat : bonus de type, capacités renforcées ou transformées, et capacités qui changent le terrain lui-même. Ouvre un terrain pour voir ses effets.',
+        'Each field changes the battle\'s rules: type boosts, stronger or changed moves, and moves that change the field itself. Open a field to see its effects.')}</p>
+        <input class="search" id="search" type="search" placeholder="${L('Chercher un terrain, une capacité…', 'Search a field, a move…')}"></div>
+      <div class="fields" id="fields">${fields.map(f => fieldHtml(f, notes)).join('')}</div>
+      <p class="credit">${L('Terrains, chiffres et interactions repris de Pokémon Reborn, avec nos propres textes.', 'Fields, numbers and interactions taken from Pokémon Reborn, with our own texts.')}</p>`;
+    const search = document.getElementById('search');
+    search.oninput = () => {
+      const q = search.value.trim().toLowerCase();
+      document.querySelectorAll('details.field').forEach(d => { d.style.display = !q || d.textContent.toLowerCase().includes(q) ? '' : 'none'; });
+    };
+    const open = id => { const d = document.getElementById('field-' + id); if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); } };
+    document.querySelectorAll('[data-open]').forEach(a => a.onclick = e => { e.preventDefault(); open(a.dataset.open); history.replaceState(null, '', '#field-' + a.dataset.open); });
+    if (location.hash.startsWith('#field-')) open(location.hash.slice(7));
+  }
+
+  Promise.all([fetch('/league/data', { cache: 'no-store' }).then(r => r.json()), fetch('/league/fields').then(r => r.json())])
+    .then(([data, fields]) => render(data, fields))
+    .catch(() => { document.getElementById('app').innerHTML = `<p class="empty">${L('Le wiki n’a pas pu se charger.', 'The wiki could not load.')}</p>`; });
+})();
+</script>
+</body>
+</html>

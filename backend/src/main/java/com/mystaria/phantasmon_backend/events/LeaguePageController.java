@@ -79,6 +79,12 @@ public class LeaguePageController {
 		return SitePages.page("league.html");
 	}
 
+	/** The field wiki: the field change graphs and every field's effects (moved off the league's page 2026-11-20). */
+	@GetMapping({ "/wiki", "/wiki/" })
+	public ResponseEntity<String> wiki() throws IOException {
+		return SitePages.page("wiki.html");
+	}
+
 	@GetMapping("/league/data")
 	public ResponseEntity<String> data() throws IOException {
 		if (cached == null || Instant.now().isAfter(until)) {
