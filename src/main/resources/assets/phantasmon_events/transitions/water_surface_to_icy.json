@@ -1,0 +1,92 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:water_surface"
+	],
+	"to": [
+		"cobblemon_battle_showtime:icy"
+	],
+	"ticks": 60,
+	"blend": 40,
+	"arrive": 36,
+	"camera": {
+		"seconds": 3.4,
+		"reach": 1.0,
+		"shake": 0.2,
+		"shake_seconds": 0.8
+	},
+	"cover": {
+		"mode": "spread",
+		"colors": [
+			"#eef8ff",
+			"#cfe6f2",
+			"#dff0fa",
+			"#bcd8ec"
+		],
+		"edge": "#ffffff",
+		"alpha": 238,
+		"start": 2,
+		"ticks": 34,
+		"fade": 12
+	},
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#e8f8ff",
+			"particle": "minecraft:snowflake",
+			"count": 200,
+			"burst": 50,
+			"burst_block": "minecraft:ice",
+			"sound": "minecraft:entity.player.hurt_freeze",
+			"volume": 1.0,
+			"pitch": 0.6
+		},
+		{
+			"at": 2,
+			"dust": 100,
+			"dust_particle": "minecraft:white_ash",
+			"dust_radius": 1.4,
+			"sound": "minecraft:block.amethyst_block.resonate",
+			"volume": 1.0,
+			"pitch": 1.6
+		},
+		{
+			"at": 10,
+			"particle": "minecraft:snowflake",
+			"count": 160,
+			"sound": "minecraft:block.glass.break",
+			"volume": 0.8,
+			"pitch": 0.6
+		},
+		{
+			"at": 20,
+			"debris": 50,
+			"debris_block": "minecraft:packed_ice",
+			"dust": 60,
+			"dust_particle": "minecraft:cloud",
+			"dust_radius": 1.6,
+			"sound": "minecraft:block.glass.break",
+			"volume": 0.8,
+			"pitch": 0.5
+		},
+		{
+			"at": 36,
+			"burst": 40,
+			"burst_block": "minecraft:packed_ice",
+			"shake": 0.3,
+			"shake_seconds": 0.7,
+			"particle": "minecraft:wax_off",
+			"count": 120,
+			"sound": "minecraft:block.glass.break",
+			"volume": 1.0,
+			"pitch": 0.4,
+			"notes": [
+				1.6,
+				1.9,
+				1.4
+			],
+			"note_sound": "minecraft:block.amethyst_block.chime",
+			"note_every": 3,
+			"note_volume": 0.8
+		}
+	]
+}

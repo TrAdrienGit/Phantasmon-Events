@@ -1,0 +1,66 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:underwater"
+	],
+	"to": [
+		"cobblemon_battle_showtime:water_surface"
+	],
+	"ticks": 60,
+	"blend": 34,
+	"arrive": 34,
+	"camera": {
+		"seconds": 3.4,
+		"reach": 1.0,
+		"shake": 0.3,
+		"shake_seconds": 1.0
+	},
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#f2fbff",
+			"flash_ticks": 22,
+			"dust": 160,
+			"dust_particle": "minecraft:bubble_pop",
+			"dust_radius": 1.4,
+			"sound": "minecraft:ambient.underwater.exit",
+			"volume": 1.0
+		},
+		{
+			"at": 2,
+			"particle": "minecraft:splash",
+			"count": 300,
+			"burst": 50,
+			"burst_block": "minecraft:light_blue_stained_glass",
+			"sound": "minecraft:entity.player.splash.high_speed",
+			"volume": 1.0,
+			"pitch": 0.7
+		},
+		{
+			"at": 6,
+			"dust": 90,
+			"dust_particle": "minecraft:cloud",
+			"dust_radius": 1.5,
+			"particle": "minecraft:falling_water",
+			"count": 200,
+			"shake": 0.18,
+			"shake_seconds": 0.6,
+			"sound": "minecraft:entity.generic.splash",
+			"volume": 1.0,
+			"pitch": 0.5
+		},
+		{
+			"at": 18,
+			"particle": "minecraft:splash",
+			"count": 200,
+			"sound": "minecraft:entity.dolphin.splash",
+			"volume": 0.8
+		},
+		{
+			"at": 32,
+			"particle": "minecraft:end_rod",
+			"count": 60,
+			"sound": "minecraft:entity.dolphin.play",
+			"volume": 0.6
+		}
+	]
+}

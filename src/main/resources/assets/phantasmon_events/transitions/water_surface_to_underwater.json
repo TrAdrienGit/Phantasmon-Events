@@ -1,0 +1,77 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:water_surface"
+	],
+	"to": [
+		"cobblemon_battle_showtime:underwater"
+	],
+	"ticks": 60,
+	"blend": 30,
+	"arrive": 30,
+	"camera": {
+		"seconds": 3.4,
+		"reach": 1.0,
+		"shake": 0.3,
+		"shake_seconds": 1.0
+	},
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#bff0ff",
+			"flash_ticks": 22,
+			"particle": "minecraft:splash",
+			"count": 260,
+			"burst": 40,
+			"burst_block": "minecraft:prismarine",
+			"sound": "minecraft:entity.player.splash.high_speed",
+			"volume": 1.0,
+			"pitch": 0.6
+		},
+		{
+			"at": 2,
+			"dust": 140,
+			"dust_particle": "minecraft:bubble_pop",
+			"dust_radius": 1.4,
+			"sound": "minecraft:ambient.underwater.enter",
+			"volume": 1.0
+		},
+		{
+			"at": 8,
+			"particle": "minecraft:falling_water",
+			"count": 160,
+			"filter": "cobblemon_battle_showtime:shaders/post/haze.json",
+			"filter_ticks": 30,
+			"sound": "minecraft:block.bubble_column.upwards_inside",
+			"volume": 1.0,
+			"pitch": 0.7
+		},
+		{
+			"at": 16,
+			"dust": 120,
+			"dust_particle": "minecraft:bubble_pop",
+			"dust_radius": 1.6,
+			"particle": "minecraft:nautilus",
+			"count": 80,
+			"shake": 0.15,
+			"shake_seconds": 0.6,
+			"sound": "minecraft:block.bubble_column.upwards_inside",
+			"volume": 0.9,
+			"pitch": 0.5
+		},
+		{
+			"at": 30,
+			"particle": "minecraft:glow",
+			"count": 80,
+			"sound": "minecraft:block.conduit.activate",
+			"volume": 0.7,
+			"pitch": 0.9
+		},
+		{
+			"at": 40,
+			"particle": "minecraft:bubble_pop",
+			"count": 160,
+			"sound": "minecraft:entity.dolphin.ambient_water",
+			"volume": 0.6
+		}
+	]
+}
