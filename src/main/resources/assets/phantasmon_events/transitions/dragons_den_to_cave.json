@@ -1,0 +1,86 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:dragons_den"
+	],
+	"to": [
+		"cobblemon_battle_showtime:cave"
+	],
+	"ticks": 64,
+	"blend": 50,
+	"arrive": 44,
+	"veins_fade": 0,
+	"camera": {
+		"seconds": 3.6,
+		"reach": 1.0,
+		"shake": 0.25,
+		"shake_seconds": 1.0
+	},
+	"cues": [
+		{
+			"at": 0,
+			"dust": 220,
+			"dust_particle": "minecraft:cloud",
+			"dust_radius": 1.6,
+			"flash": "#e8f0f0",
+			"particle": "minecraft:splash",
+			"count": 200,
+			"sound": "minecraft:block.lava.extinguish",
+			"volume": 1.0,
+			"pitch": 0.5
+		},
+		{
+			"at": 2,
+			"dust": 40,
+			"dust_particle": "minecraft:campfire_cosy_smoke",
+			"dust_radius": 1.4,
+			"burst": 50,
+			"burst_block": "minecraft:magma_block",
+			"sound": "minecraft:block.fire.extinguish",
+			"volume": 1.0,
+			"pitch": 0.6
+		},
+		{
+			"at": 8,
+			"dust": 120,
+			"dust_particle": "minecraft:cloud",
+			"dust_radius": 1.5,
+			"particle": "minecraft:falling_water",
+			"count": 160,
+			"shake": 0.16,
+			"shake_seconds": 0.5,
+			"sound": "minecraft:block.lava.extinguish",
+			"volume": 0.9,
+			"pitch": 0.7
+		},
+		{
+			"at": 16,
+			"debris": 50,
+			"debris_block": "minecraft:basalt",
+			"dust": 30,
+			"dust_particle": "minecraft:campfire_cosy_smoke",
+			"dust_radius": 1.2,
+			"sound": "minecraft:block.basalt.break",
+			"volume": 1.0,
+			"pitch": 0.6
+		},
+		{
+			"at": 26,
+			"rockfall": 6,
+			"dust": 80,
+			"dust_particle": "minecraft:cloud",
+			"dust_radius": 1.4,
+			"shake": 0.2,
+			"shake_seconds": 0.6,
+			"sound": "minecraft:block.deepslate.break",
+			"volume": 0.9,
+			"pitch": 0.5
+		},
+		{
+			"at": 40,
+			"particle": "minecraft:white_ash",
+			"count": 160,
+			"sound": "minecraft:block.pointed_dripstone.drip_water",
+			"volume": 0.9
+		}
+	]
+}

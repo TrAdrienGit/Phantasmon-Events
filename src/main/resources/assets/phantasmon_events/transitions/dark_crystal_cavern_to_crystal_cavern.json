@@ -1,0 +1,90 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:dark_crystal_cavern"
+	],
+	"to": [
+		"cobblemon_battle_showtime:crystal_cavern"
+	],
+	"ticks": 60,
+	"blend": 44,
+	"arrive": 30,
+	"veins_fade": 20,
+	"camera": {
+		"seconds": 3.4,
+		"reach": 1.0,
+		"shake": 0.18,
+		"shake_seconds": 0.8
+	},
+	"leaving": {
+		"crystal": {
+			"exit": "shatter",
+			"spread": 24,
+			"flare": 6,
+			"break_ticks": 7,
+			"shards": "minecraft:amethyst_block",
+			"shard_count": 20,
+			"sound": "minecraft:block.amethyst_block.break",
+			"volume": 0.8,
+			"sparkle": "minecraft:end_rod"
+		}
+	},
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#fff2b0",
+			"particle": "minecraft:end_rod",
+			"count": 140,
+			"sound": "minecraft:block.beacon.activate",
+			"volume": 1.0,
+			"pitch": 0.8,
+			"notes": [
+				1.0,
+				1.2,
+				1.5,
+				2.0
+			],
+			"note_sound": "minecraft:block.note_block.bell",
+			"note_every": 5,
+			"note_volume": 0.8
+		},
+		{
+			"at": 4,
+			"burst": 50,
+			"burst_block": "minecraft:glowstone",
+			"dust": 60,
+			"dust_particle": "minecraft:wax_off",
+			"dust_radius": 1.5,
+			"sound": "minecraft:block.amethyst_block.resonate",
+			"volume": 1.0,
+			"pitch": 1.2
+		},
+		{
+			"at": 14,
+			"debris": 40,
+			"debris_block": "minecraft:amethyst_block",
+			"particle": "minecraft:glow",
+			"count": 80,
+			"shake": 0.14,
+			"shake_seconds": 0.5,
+			"sound": "minecraft:block.amethyst_cluster.place",
+			"volume": 1.0,
+			"pitch": 0.9
+		},
+		{
+			"at": 28,
+			"particle": "minecraft:electric_spark",
+			"count": 100,
+			"sound": "minecraft:block.amethyst_block.chime",
+			"volume": 1.0,
+			"pitch": 1.4
+		},
+		{
+			"at": 38,
+			"particle": "minecraft:end_rod",
+			"count": 120,
+			"sound": "minecraft:block.beacon.power_select",
+			"volume": 0.7,
+			"pitch": 1.5
+		}
+	]
+}

@@ -1,0 +1,81 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:crystal_cavern"
+	],
+	"to": [
+		"cobblemon_battle_showtime:dark_crystal_cavern"
+	],
+	"ticks": 60,
+	"blend": 40,
+	"arrive": 40,
+	"veins_fade": 22,
+	"camera": {
+		"seconds": 3.4,
+		"reach": 1.0,
+		"shake": 0.3,
+		"shake_seconds": 1.2
+	},
+	"leaving": {
+		"crystal": {
+			"exit": "shatter",
+			"spread": 24,
+			"flare": 5,
+			"break_ticks": 7,
+			"shards": "minecraft:crying_obsidian",
+			"shard_count": 22,
+			"sound": "minecraft:block.amethyst_cluster.break",
+			"volume": 0.8,
+			"sparkle": "minecraft:reverse_portal"
+		}
+	},
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#1a0030",
+			"filter": "cobblemon_battle_showtime:shaders/post/wobble.json",
+			"filter_ticks": 36,
+			"particle": "minecraft:reverse_portal",
+			"count": 160,
+			"sound": "minecraft:entity.warden.sonic_boom",
+			"volume": 0.5,
+			"pitch": 0.6
+		},
+		{
+			"at": 2,
+			"burst": 50,
+			"burst_block": "minecraft:obsidian",
+			"sound": "minecraft:block.sculk_shrieker.shriek",
+			"volume": 0.6,
+			"pitch": 0.7
+		},
+		{
+			"at": 10,
+			"dust": 90,
+			"dust_particle": "minecraft:squid_ink",
+			"dust_radius": 1.5,
+			"shake": 0.18,
+			"shake_seconds": 0.6,
+			"sound": "minecraft:block.sculk.spread",
+			"volume": 1.0,
+			"pitch": 0.5
+		},
+		{
+			"at": 20,
+			"debris": 40,
+			"debris_block": "minecraft:crying_obsidian",
+			"particle": "minecraft:sculk_soul",
+			"count": 60,
+			"sound": "minecraft:block.respawn_anchor.deplete",
+			"volume": 0.9,
+			"pitch": 0.6
+		},
+		{
+			"at": 36,
+			"particle": "minecraft:portal",
+			"count": 200,
+			"sound": "minecraft:block.amethyst_block.resonate",
+			"volume": 0.9,
+			"pitch": 0.5
+		}
+	]
+}
