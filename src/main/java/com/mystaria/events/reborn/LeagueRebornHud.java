@@ -62,11 +62,7 @@ public final class LeagueRebornHud {
 		if (battle == null) {
 			return;
 		}
-		if (!battle.getBattleId().equals(battleId)) {
-			battleId = battle.getBattleId();
-			turn = 0;
-			field = null;
-		}
+		follow(battle);
 		for (Component message : messages) {
 			if (!(message.getContents() instanceof TranslatableContents text)) {
 				continue;
@@ -95,8 +91,36 @@ public final class LeagueRebornHud {
 	/** The field in play in this client's current battle, or null (none, or another battle's). */
 	public static String currentField() {
 		ClientBattle battle = CobblemonClient.INSTANCE.getBattle();
-		return battle != null && battle.getBattleId().equals(battleId) ? field : null;
+		if (battle == null) {
+			return null;
+		}
+		follow(battle);
+		return field;
 	}
+
+	/**
+	 * A new battle: its field is the one its rules lay down ({@code League Reborn = <field>}), known from its start
+	 * (2026-11-20: it was only known from the engine's first message, after the intro, so the field's stadium and
+	 * ambiance were built and swapped in once the intro was over; now they are ready behind it).
+	 */
+	private static void follow(ClientBattle battle) {
+		if (battle.getBattleId().equals(battleId)) {
+			return;
+		}
+		battleId = battle.getBattleId();
+		turn = 0;
+		field = null;
+		turns = 0;
+		setTurn = 0;
+		for (String rule : battle.getBattleFormat().getRuleSet()) {
+			if (rule.startsWith(RULE)) {
+				String id = rule.substring(RULE.length()).trim();
+				field = id.isEmpty() || "indoor".equals(id) ? null : id; // "indoor": the engine's base layer, no field
+			}
+		}
+	}
+
+	private static final String RULE = "League Reborn =";
 
 	private static void laid(String id, int left) {
 		field = id;
