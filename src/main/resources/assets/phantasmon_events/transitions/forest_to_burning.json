@@ -1,0 +1,125 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:forest"
+	],
+	"to": [
+		"cobblemon_battle_showtime:burning"
+	],
+	"ticks": 64,
+	"blend": 44,
+	"arrive": 36,
+	"hold_old": 34,
+	"veins_fade": 0,
+	"camera": {
+		"seconds": 3.6,
+		"reach": 1.0,
+		"shake": 0.3,
+		"shake_seconds": 1.0
+	},
+	"fronts": [
+		{
+			"start": 0,
+			"ticks": 38,
+			"particle": "minecraft:flame",
+			"density": 0.8,
+			"height": [
+				0,
+				2.5
+			],
+			"motion": [
+				0,
+				0.06,
+				0
+			],
+			"depth": 2.5,
+			"sound": "minecraft:block.fire.ambient",
+			"volume": 0.9,
+			"pitch": 0.8,
+			"sound_every": 3
+		},
+		{
+			"start": 4,
+			"ticks": 38,
+			"particle": "minecraft:large_smoke",
+			"density": 0.4,
+			"height": [
+				1,
+				4
+			],
+			"motion": [
+				0,
+				0.1,
+				0
+			],
+			"depth": 3
+		},
+		{
+			"start": 2,
+			"ticks": 34,
+			"particle": "minecraft:lava",
+			"density": 0.06,
+			"height": [
+				0,
+				1
+			],
+			"motion": [
+				0,
+				0,
+				0
+			],
+			"depth": 2
+		}
+	],
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#ff8a30",
+			"burst": 50,
+			"burst_block": "minecraft:oak_leaves",
+			"particle": "minecraft:flame",
+			"count": 180,
+			"sound": "minecraft:item.firecharge.use",
+			"volume": 1.0,
+			"pitch": 0.6
+		},
+		{
+			"at": 4,
+			"debris": 60,
+			"debris_block": "minecraft:oak_leaves",
+			"sound": "minecraft:entity.blaze.shoot",
+			"volume": 0.8,
+			"pitch": 0.5
+		},
+		{
+			"at": 16,
+			"debris": 40,
+			"debris_block": "minecraft:oak_log",
+			"dust": 50,
+			"dust_particle": "minecraft:campfire_cosy_smoke",
+			"dust_radius": 1.4,
+			"shake": 0.2,
+			"shake_seconds": 0.6,
+			"sound": "minecraft:block.wood.break",
+			"volume": 1.0,
+			"pitch": 0.5
+		},
+		{
+			"at": 34,
+			"flash": "#ff6a10",
+			"flash_ticks": 16,
+			"dust": 160,
+			"dust_particle": "minecraft:large_smoke",
+			"dust_radius": 1.8,
+			"sound": "minecraft:entity.generic.explode",
+			"volume": 0.4,
+			"pitch": 0.6
+		},
+		{
+			"at": 46,
+			"particle": "minecraft:ash",
+			"count": 260,
+			"sound": "minecraft:block.fire.ambient",
+			"volume": 1.0
+		}
+	]
+}

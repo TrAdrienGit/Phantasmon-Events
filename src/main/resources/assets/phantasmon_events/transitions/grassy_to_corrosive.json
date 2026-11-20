@@ -1,0 +1,108 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:grassy"
+	],
+	"to": [
+		"cobblemon_battle_showtime:corrosive"
+	],
+	"ticks": 64,
+	"blend": 44,
+	"arrive": 40,
+	"hold_old": 32,
+	"veins_fade": 0,
+	"camera": {
+		"seconds": 3.6,
+		"reach": 1.0,
+		"shake": 0.25,
+		"shake_seconds": 0.9
+	},
+	"fronts": [
+		{
+			"start": 2,
+			"ticks": 34,
+			"particle": "minecraft:item_slime",
+			"density": 0.6,
+			"height": [
+				0,
+				0.5
+			],
+			"motion": [
+				0,
+				0.05,
+				0
+			],
+			"depth": 2,
+			"sound": "minecraft:entity.slime.squish_small",
+			"volume": 0.5,
+			"pitch": 0.6,
+			"sound_every": 5
+		},
+		{
+			"start": 2,
+			"ticks": 34,
+			"particle": "minecraft:squid_ink",
+			"density": 0.4,
+			"height": [
+				0,
+				0.3
+			],
+			"motion": [
+				0,
+				0.03,
+				0
+			],
+			"depth": 2
+		}
+	],
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#9aff40",
+			"burst": 60,
+			"burst_block": "minecraft:slime_block",
+			"particle": "minecraft:squid_ink",
+			"count": 140,
+			"sound": "minecraft:entity.slime.squish",
+			"volume": 1.0,
+			"pitch": 0.5
+		},
+		{
+			"at": 3,
+			"dust": 100,
+			"dust_particle": "minecraft:witch",
+			"dust_radius": 1.4,
+			"sound": "minecraft:block.brewing_stand.brew",
+			"volume": 1.0,
+			"pitch": 0.5
+		},
+		{
+			"at": 14,
+			"debris": 40,
+			"debris_block": "minecraft:moss_block",
+			"shake": 0.15,
+			"shake_seconds": 0.5,
+			"sound": "minecraft:block.moss.break",
+			"volume": 1.0,
+			"pitch": 0.5
+		},
+		{
+			"at": 32,
+			"flash": "#5a2a7a",
+			"flash_ticks": 18,
+			"dust": 150,
+			"dust_particle": "minecraft:large_smoke",
+			"dust_radius": 1.8,
+			"sound": "minecraft:entity.slime.squish",
+			"volume": 1.0,
+			"pitch": 0.4
+		},
+		{
+			"at": 44,
+			"particle": "minecraft:item_slime",
+			"count": 200,
+			"sound": "minecraft:block.bubble_column.bubble_pop",
+			"volume": 1.0,
+			"pitch": 0.5
+		}
+	]
+}

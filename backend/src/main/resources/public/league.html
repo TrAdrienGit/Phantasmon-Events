@@ -297,21 +297,31 @@
   }
 
   const GRAPHS = [
-    { title: { fr: 'Eau', en: 'Water' }, w: 640, h: 450, nodes: [N('underwater', 150, 40), N('watersurface', 150, 300), N('murkwatersurface', 500, 170), N('icy', 500, 410)],
+    { title: { fr: 'Eau', en: 'Water' }, w: 640, h: 540, nodes: [N('underwater', 150, 40), N('watersurface', 150, 300), N('murkwatersurface', 500, 170), N('icy', 500, 410),
+        N('indoor', 500, 515, { none: true })],
       edges: [E('watersurface', 'underwater', '{dive}, {gravity}', { bend: -110 }), E('underwater', 'watersurface', '{dive}, {fly},\n{bounce}, {skydrop}', { bend: -110 }),
-        E('underwater', 'murkwatersurface', '{sludgewave}, {aciddownpour} ×2'), E('watersurface', 'murkwatersurface', '{sludgewave},\n{aciddownpour} ×2', { bend: -50 }),
+        E('underwater', 'murkwatersurface', '{sludgewave} ×2, {aciddownpour}'), E('watersurface', 'murkwatersurface', '{sludgewave} ×2,\n{aciddownpour}', { bend: -50 }),
         E('murkwatersurface', 'watersurface', '{whirlpool}', { bend: -50 }), E('watersurface', 'icy', '{@ice}', { bend: -40 }),
-        E('icy', 'watersurface', '{@fire}, {scald},\n{steameruption} ×2', { bend: -40 }), E('murkwatersurface', 'icy', '{@ice}')] },
+        E('icy', 'watersurface', '{@fire},\n{scald} ×2, {steameruption} ×2', { bend: -40 }), E('murkwatersurface', 'icy', '{@ice}'),
+        E('icy', 'indoor', { fr: '{@quake} (sur de l\'eau)', en: '{@quake} (over water)' })] },
     { title: { fr: 'Grottes et cristaux', en: 'Caves and crystals' }, w: 680, h: 360, nodes: [N('cave', 130, 50), N('crystalcavern', 480, 50), N('darkcrystalcavern', 480, 310), N('dragonsden', 130, 310)],
       edges: [E('cave', 'crystalcavern', '{powergem}, {diamondstorm}', { bend: -45 }), E('crystalcavern', 'cave', '{@quake}', { bend: -45 }),
         E('crystalcavern', 'darkcrystalcavern', '{darkpulse}, {darkvoid},\n{nightdaze},\n{lightthatburnsthesky}', { bend: -150 }),
         E('darkcrystalcavern', 'crystalcavern', { fr: '{sunnyday}\n(le soleil)', en: '{sunnyday}\n(the sun)' }, { bend: -150, dash: true }),
-        E('darkcrystalcavern', 'cave', '{@quake}'), E('dragonsden', 'cave', '{surf}, {muddywater},\n{glaciate}… ×2')] },
-    { title: { fr: 'Herbe, brume et poison', en: 'Grass, mist and poison' }, w: 640, h: 520, nodes: [N('misty', 120, 40), N('corrosivemist', 480, 40), N('grassy', 120, 200),
-        N('corrosive', 480, 200), N('forest', 120, 350), N('burning', 360, 350), N('superheated', 360, 480)],
-      edges: [E('misty', 'corrosivemist', '{smog}, {poisongas},\n{clearsmog}, {aciddownpour} ×2', { bend: -60 }), E('corrosivemist', 'misty', '{seedflare}', { bend: -60 }),
-        E('corrosivemist', 'corrosive', '{gravity}'), E('grassy', 'corrosive', '{sludgewave}, {aciddownpour}', { bend: -45 }), E('corrosive', 'grassy', '{seedflare}', { bend: -45 }),
-        E('grassy', 'burning', '{@fire}'), E('forest', 'burning', '{@fire}'), E('superheated', 'burning', '{@fire}, {explosion}, {selfdestruct}')] },
+        E('darkcrystalcavern', 'cave', '{@quake}'), E('dragonsden', 'cave', '{surf} ×2, {muddywater} ×2,\n{sparklingaria} ×2, {glaciate},\n{subzeroslammer}, {oceanicoperetta},\n{hydrovortex}')] },
+    { title: { fr: 'Herbe, brume et poison', en: 'Grass, mist and poison' }, wide: true, w: 1060, h: 650,
+      nodes: [N('none1', 585, 30, { f: 'indoor', none: true }), N('misty', 390, 160), N('corrosivemist', 780, 160), N('any', 90, 320, { hub: true }),
+        N('grassy', 390, 320), N('corrosive', 780, 320), N('forest', 390, 480), N('burning', 650, 480), N('superheated', 950, 480),
+        N('none2', 950, 610, { f: 'indoor', none: true })],
+      edges: [E('misty', 'corrosivemist', '{smog} ×2, {poisongas} ×2,\n{clearsmog} ×2, {aciddownpour}', { bend: 45 }), E('corrosivemist', 'misty', '{seedflare}', { bend: 45 }),
+        E('misty', 'none1', '{@wind}', { lp: [445, 85] }), E('corrosivemist', 'none1', '{@wind}, {@fire},\n{explosion}, {selfdestruct}', { lp: [760, 78] }),
+        E('corrosivemist', 'corrosive', '{gravity}'), E('grassy', 'corrosive', '{sludgewave}, {aciddownpour}', { bend: -40 }), E('corrosive', 'grassy', '{seedflare}', { bend: -40 }),
+        E('grassy', 'burning', '{@fire}'), E('forest', 'burning', '{@fire}'), E('superheated', 'burning', '{@fire}, {explosion}, {selfdestruct}', { above: true }),
+        E('burning', 'none2', '{@wind}, {@water}, {sludgewave},\n{sandtomb}, {continentalcrush}', { lp: [745, 600] }), E('superheated', 'none2', '{@ice}'),
+        E('any', 'misty', { fr: '{mistyterrain} : 5 tours\n{mist} : 3 tours', en: '{mistyterrain}: 5 turns\n{mist}: 3 turns' }, { dash: true }),
+        E('any', 'grassy', { fr: '{grassyterrain} : 5 tours', en: '{grassyterrain}: 5 turns' }, { dash: true, above: true }),
+        E('any', 'burning', { fr: '{firepledge} + {grasspledge} : 4 tours', en: '{firepledge} + {grasspledge}: 4 turns' },
+          { dash: true, via: [[90, 570], [650, 570]], lp: [370, 570] })] },
     { title: { fr: 'Montagne, usine et ciel', en: 'Mountain, factory and sky' }, w: 640, h: 470, nodes: [N('mountain', 120, 50), N('snowymountain', 500, 50),
         N('factory', 120, 240), N('shortcircuit', 500, 240), N('newworld', 120, 420), N('starlight', 500, 420)],
       edges: [E('mountain', 'snowymountain', { fr: '{@ice}\n{hail} pendant 3 tours', en: '{@ice}\n3 turns of {hail}' }, { bend: -60 }), E('snowymountain', 'mountain', '{@fire}', { bend: -60 }),
@@ -427,7 +437,7 @@
     return `<h2>${L('Transformations des terrains', 'Field changes')}</h2>
       <div class="wiki-head"><p>${L('Certaines capacités changent le terrain du combat. Chaque flèche part du terrain actuel et mène au terrain qu\'il devient. Clique sur un terrain pour ouvrir sa fiche dans le wiki.',
         'Some moves change the battle\'s field. Each arrow leads from the current field to the field it becomes. Click a field to open its page in the wiki.')}</p></div>
-      <div class="glegend"><span><b>×2</b> : ${L('la capacité doit être utilisée deux fois', 'the move must be used twice')}</span>
+      <div class="glegend"><span><b>×2</b> : ${L('la capacité doit être utilisée deux fois (elles se cumulent : une fois, puis une capacité sans ×2, suffit aussi)', 'the move must be used twice (they add up: once, then a move without ×2, is enough too)')}</span>
         <span><i class="dashl"></i> ${L('par la météo ou pour quelques tours', 'by the weather or for a few turns')}</span>${groups}</div>
       <div class="graphs">${cards}</div>
       <ul class="gnotes">${notes.map(n => `<li>${n}</li>`).join('')}</ul>`;

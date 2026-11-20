@@ -1,0 +1,115 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:corrosive"
+	],
+	"to": [
+		"cobblemon_battle_showtime:grassy"
+	],
+	"ticks": 64,
+	"blend": 44,
+	"arrive": 30,
+	"hold_old": 32,
+	"veins_fade": 22,
+	"camera": {
+		"seconds": 3.6,
+		"reach": 1.0,
+		"shake": 0.18,
+		"shake_seconds": 0.7
+	},
+	"fronts": [
+		{
+			"start": 2,
+			"ticks": 36,
+			"particle": "minecraft:happy_villager",
+			"density": 0.6,
+			"height": [
+				0,
+				1
+			],
+			"motion": [
+				0,
+				0.03,
+				0
+			],
+			"depth": 2,
+			"sound": "minecraft:block.grass.place",
+			"volume": 0.6,
+			"pitch": 1.0,
+			"sound_every": 4
+		},
+		{
+			"start": 4,
+			"ticks": 34,
+			"particle": "minecraft:spore_blossom_air",
+			"density": 0.3,
+			"height": [
+				0.5,
+				2.5
+			],
+			"motion": [
+				0,
+				0,
+				0
+			],
+			"depth": 3
+		}
+	],
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#e8ffc0",
+			"burst": 60,
+			"burst_block": "minecraft:moss_block",
+			"particle": "minecraft:end_rod",
+			"count": 100,
+			"sound": "minecraft:block.beacon.activate",
+			"volume": 0.9,
+			"pitch": 1.2,
+			"notes": [
+				0.8,
+				1.0,
+				1.2,
+				1.6
+			],
+			"note_sound": "minecraft:block.note_block.flute",
+			"note_every": 4,
+			"note_volume": 0.8
+		},
+		{
+			"at": 3,
+			"dust": 120,
+			"dust_particle": "minecraft:composter",
+			"dust_radius": 1.6,
+			"sound": "minecraft:block.azalea.place",
+			"volume": 1.0
+		},
+		{
+			"at": 14,
+			"particle": "minecraft:happy_villager",
+			"count": 160,
+			"shake": 0.12,
+			"shake_seconds": 0.4,
+			"sound": "minecraft:item.bone_meal.use",
+			"volume": 1.0
+		},
+		{
+			"at": 32,
+			"flash": "#c8f0a0",
+			"flash_ticks": 18,
+			"dust": 140,
+			"dust_particle": "minecraft:cloud",
+			"dust_radius": 1.8,
+			"sound": "minecraft:block.big_dripleaf.place",
+			"volume": 1.0,
+			"pitch": 0.8
+		},
+		{
+			"at": 44,
+			"particle": "minecraft:spore_blossom_air",
+			"count": 200,
+			"sound": "minecraft:item.bone_meal.use",
+			"volume": 0.8,
+			"pitch": 1.2
+		}
+	]
+}

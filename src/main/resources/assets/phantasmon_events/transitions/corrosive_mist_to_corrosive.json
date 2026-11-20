@@ -1,0 +1,89 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:corrosive_mist"
+	],
+	"to": [
+		"cobblemon_battle_showtime:corrosive"
+	],
+	"ticks": 60,
+	"blend": 44,
+	"arrive": 40,
+	"veins_fade": 0,
+	"camera": {
+		"seconds": 3.4,
+		"reach": 1.0,
+		"shake": 0.35,
+		"shake_seconds": 1.0
+	},
+	"fronts": [
+		{
+			"start": 0,
+			"ticks": 30,
+			"particle": "minecraft:witch",
+			"density": 0.6,
+			"height": [
+				3,
+				7
+			],
+			"motion": [
+				0,
+				-0.25,
+				0
+			],
+			"depth": 3,
+			"sound": "minecraft:block.slime_block.fall",
+			"volume": 0.6,
+			"pitch": 0.5,
+			"sound_every": 5
+		}
+	],
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#5a3a6a",
+			"particle": "minecraft:reverse_portal",
+			"count": 160,
+			"sound": "minecraft:block.beacon.deactivate",
+			"volume": 1.0,
+			"pitch": 0.5
+		},
+		{
+			"at": 4,
+			"debris": 60,
+			"debris_block": "minecraft:purple_concrete_powder",
+			"sound": "minecraft:entity.slime.squish",
+			"volume": 1.0,
+			"pitch": 0.5
+		},
+		{
+			"at": 12,
+			"dust": 140,
+			"dust_particle": "minecraft:squid_ink",
+			"dust_radius": 1.6,
+			"burst": 40,
+			"burst_block": "minecraft:slime_block",
+			"shake": 0.3,
+			"shake_seconds": 0.6,
+			"sound": "minecraft:block.slime_block.fall",
+			"volume": 1.0,
+			"pitch": 0.5
+		},
+		{
+			"at": 22,
+			"particle": "minecraft:item_slime",
+			"count": 160,
+			"sound": "minecraft:block.brewing_stand.brew",
+			"volume": 0.9,
+			"pitch": 0.6
+		},
+		{
+			"at": 36,
+			"dust": 60,
+			"dust_particle": "minecraft:witch",
+			"dust_radius": 1.4,
+			"sound": "minecraft:block.bubble_column.bubble_pop",
+			"volume": 1.0,
+			"pitch": 0.5
+		}
+	]
+}
