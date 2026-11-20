@@ -239,7 +239,7 @@ public final class TournamentsPage implements MenuPage {
 			card(g, shown.get(i), x, cy, right - x - 8);
 		}
 		ui.unclip(g);
-		MenuUi.scrollbar(g, right - 5, top, view, total, scroll, false);
+		ui.scrollbar(g, right - 5, top, view, total, scroll, s -> scroll = s);
 	}
 
 	private void card(GuiGraphics g, TournamentDto t, int cx, int cy, int w) {
@@ -468,7 +468,7 @@ public final class TournamentsPage implements MenuPage {
 	private int area(GuiGraphics g, int total) {
 		int view = bottom - contentTop;
 		scroll = Math.max(0, Math.min(scroll, Math.max(0, total - view)));
-		MenuUi.scrollbar(g, right - 5, contentTop, view, total, scroll, false);
+		ui.scrollbar(g, right - 5, contentTop, view, total, scroll, s -> scroll = s);
 		ui.clip(g, x, contentTop, right, bottom);
 		return contentTop - scroll;
 	}
@@ -824,6 +824,9 @@ public final class TournamentsPage implements MenuPage {
 
 	@Override
 	public boolean drag(double mouseX, double mouseY) {
+		if (ui.drag(mouseY)) {
+			return true;
+		}
 		if (!Double.isNaN(dragX)) {
 			panX += (int) Math.round(mouseX - dragX);
 			panY += (int) Math.round(mouseY - dragY);
@@ -836,6 +839,7 @@ public final class TournamentsPage implements MenuPage {
 
 	@Override
 	public void release() {
+		ui.release();
 		dragX = Double.NaN;
 	}
 

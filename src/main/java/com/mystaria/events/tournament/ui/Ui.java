@@ -2,6 +2,7 @@ package com.mystaria.events.tournament.ui;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntConsumer;
 
 import org.lwjgl.glfw.GLFW;
 
@@ -20,6 +21,10 @@ import com.mystaria.phantasmon.client.gui.menu.MenuUi;
 public final class Ui {
 
 	private record Zone(int x, int y, int w, int h, int clipTop, int clipBottom, Runnable action) {
+	}
+
+	/** A scrollbar drawn this frame: its geometry, where its owner keeps the scroll, whether it is on the open list. */
+	private record Bar(int x, int y, int view, int total, int scroll, IntConsumer set, boolean overlay) {
 	}
 
 	/** A text field's kind: what may be typed. */
@@ -75,6 +80,11 @@ public final class Ui {
 	}
 
 	private final List<Zone> zones = new ArrayList<>();
+	private final List<Bar> bars = new ArrayList<>();
+	/** The bar being dragged, and where on its thumb it was taken. */
+	private Bar grabbed;
+	private int grab;
+	private boolean inOverlay;
 	private int clipTop = Integer.MIN_VALUE;
 	private int clipBottom = Integer.MAX_VALUE;
 	private int mouseX;
@@ -84,6 +94,7 @@ public final class Ui {
 	/** A new frame: the zones are drawn again. */
 	public void begin(int mouseX, int mouseY) {
 		zones.clear();
+		bars.clear();
 		this.mouseX = mouseX;
 		this.mouseY = mouseY;
 		clipTop = Integer.MIN_VALUE;
@@ -105,6 +116,60 @@ public final class Ui {
 
 	public boolean hovered(int x, int y, int w, int h) {
 		return mouseY >= clipTop && mouseY < clipBottom && MenuUi.inside(mouseX, mouseY, x, y, w, h);
+	}
+
+	/**
+	 * A scrollbar ({@link MenuUi#scrollbar}'s look) that can be taken and dragged as well as scrolled with the wheel
+	 * (2026-11-20: the bars only followed the wheel). A click on the track brings the thumb's middle there.
+	 * {@code set}: receives the new scroll, in pixels like {@code scroll}.
+	 */
+	public void scrollbar(GuiGraphics g, int x, int y, int view, int total, int scroll, IntConsumer set) {
+		int[] thumb = MenuUi.thumb(y, view, total, scroll);
+		if (thumb == null) {
+			return;
+		}
+		boolean held = grabbed != null && grabbed.x() == x && grabbed.y() == y;
+		MenuUi.scrollbar(g, x, y, view, total, scroll, held || MenuUi.inside(mouseX, mouseY, x - 2, thumb[0], 9, thumb[1]));
+		bars.add(new Bar(x, y, view, total, scroll, set, inOverlay));
+	}
+
+	/** Follows a drag of the bar taken by {@link #click}; returns whether one is held. */
+	public boolean drag(double mouseY) {
+		if (grabbed == null) {
+			return false;
+		}
+		Bar bar = grabbed;
+		int height = MenuUi.thumb(bar.y(), bar.view(), bar.total(), 0)[1];
+		int room = Math.max(1, bar.view() - height);
+		int max = bar.total() - bar.view();
+		double at = (mouseY - grab - bar.y()) / room;
+		bar.set().accept((int) Math.round(Math.max(0, Math.min(1, at)) * max));
+		return true;
+	}
+
+	public void release() {
+		grabbed = null;
+	}
+
+	/** A click on a bar takes it: on the thumb where it was, on the track by the thumb's middle. */
+	private boolean takeBar(double x, double y) {
+		for (int i = bars.size() - 1; i >= 0; i--) {
+			Bar bar = bars.get(i);
+			// An open list is over everything: only its own bar may be taken.
+			if (open != null && !bar.overlay()) {
+				continue;
+			}
+			if (MenuUi.inside(x, y, bar.x() - 2, bar.y(), 9, bar.view())) {
+				int[] thumb = MenuUi.thumb(bar.y(), bar.view(), bar.total(), bar.scroll());
+				boolean onThumb = y >= thumb[0] && y < thumb[0] + thumb[1];
+				grab = onThumb ? (int) y - thumb[0] : thumb[1] / 2;
+				grabbed = bar;
+				drag(y);
+				MenuUi.click();
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** A clickable zone with no drawing of its own (a card, a row). */
@@ -231,6 +296,7 @@ public final class Ui {
 		}
 		g.pose().pushPose();
 		g.pose().translate(0, 0, 400);
+		inOverlay = true;
 		// Any click outside closes it.
 		zone(-10000, -10000, 30000, 30000, () -> open = null);
 		g.fill(openX - 1, top - 1, openX + openW + 1, top + height + 1, c.accent());
@@ -251,8 +317,10 @@ public final class Ui {
 			});
 		}
 		if (list.values.size() > rows) {
-			MenuUi.scrollbar(g, openX + openW - 4, top + 1, rows * ROW, list.values.size() * ROW, list.scroll * ROW, false);
+			scrollbar(g, openX + openW - 4, top + 1, rows * ROW, list.values.size() * ROW, list.scroll * ROW,
+					s -> list.scroll = Math.round(s / (float) ROW));
 		}
+		inOverlay = false;
 		g.pose().popPose();
 	}
 
@@ -267,6 +335,9 @@ public final class Ui {
 
 	/** A click: the topmost zone under it acts. Returns whether one did (a click elsewhere drops the focus). */
 	public boolean click(double x, double y) {
+		if (takeBar(x, y)) {
+			return true;
+		}
 		for (int i = zones.size() - 1; i >= 0; i--) {
 			Zone zone = zones.get(i);
 			if (y >= zone.clipTop() && y < zone.clipBottom() && MenuUi.inside(x, y, zone.x(), zone.y(), zone.w(), zone.h())) {

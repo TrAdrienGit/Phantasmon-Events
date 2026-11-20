@@ -97,7 +97,7 @@ public final class TournamentForm {
 		int total = editing == null ? 330 : 190;
 		int view = bottom - y;
 		scroll = Math.max(0, Math.min(scroll, Math.max(0, total - view)));
-		MenuUi.scrollbar(g, right - 5, y, view, total, scroll, false);
+		ui.scrollbar(g, right - 5, y, view, total, scroll, s -> scroll = s);
 		ui.clip(g, x, y, right, bottom);
 		int top = y - scroll;
 		int row = top;

@@ -281,6 +281,18 @@ public final class NpcEditScreen extends Screen {
 		return super.mouseClicked(mouseX, mouseY, button);
 	}
 
+	/** A drop-down list's scrollbar taken by {@link Ui#click} follows the mouse (2026-11-20: only the wheel moved it). */
+	@Override
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		return button == 0 && ui.drag(mouseY) || super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+	}
+
+	@Override
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
+		ui.release();
+		return super.mouseReleased(mouseX, mouseY, button);
+	}
+
 	@Override
 	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
 		return ui.scrollList(scrollY) || super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
