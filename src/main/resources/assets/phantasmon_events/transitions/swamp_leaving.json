@@ -1,0 +1,82 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:swamp"
+	],
+	"to": [
+		"*"
+	],
+	"ticks": 56,
+	"blend": 40,
+	"arrive": 34,
+	"camera": {
+		"seconds": 3.0,
+		"reach": 1.0,
+		"shake": 0.22,
+		"shake_seconds": 0.8
+	},
+	"hold_old": 26,
+	"fronts": [
+		{
+			"start": 0,
+			"ticks": 26,
+			"particle": "minecraft:splash",
+			"density": 0.6,
+			"height": [
+				0,
+				0.6
+			],
+			"motion": [
+				0,
+				0.1,
+				0
+			],
+			"depth": 2.5,
+			"sound": "minecraft:block.mud.place",
+			"volume": 0.6,
+			"pitch": 0.8,
+			"sound_every": 4,
+			"inward": true
+		}
+	],
+	"cues": [
+		{
+			"at": 0,
+			"particle": "minecraft:splash",
+			"count": 200,
+			"sound": "minecraft:entity.generic.splash",
+			"volume": 1.0,
+			"pitch": 0.6
+		},
+		{
+			"at": 6,
+			"dust": 120,
+			"dust_particle": "minecraft:cloud",
+			"dust_radius": 1.4,
+			"debris": 40,
+			"debris_block": "minecraft:mud",
+			"sound": "minecraft:block.mud.break",
+			"volume": 1.0,
+			"pitch": 0.6
+		},
+		{
+			"at": 16,
+			"particle": "minecraft:falling_water",
+			"count": 120,
+			"shake": 0.12,
+			"shake_seconds": 0.4,
+			"sound": "minecraft:block.bubble_column.bubble_pop",
+			"volume": 1.0,
+			"pitch": 0.6
+		},
+		{
+			"at": 26,
+			"flash": "#e0e8d0",
+			"flash_ticks": 12,
+			"dust": 80,
+			"dust_particle": "minecraft:cloud",
+			"dust_radius": 1.6,
+			"sound": "minecraft:block.water.ambient",
+			"volume": 0.8
+		}
+	]
+}

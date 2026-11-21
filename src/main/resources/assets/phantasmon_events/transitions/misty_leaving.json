@@ -1,0 +1,81 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:misty"
+	],
+	"to": [
+		"*"
+	],
+	"ticks": 56,
+	"blend": 40,
+	"arrive": 34,
+	"camera": {
+		"seconds": 3.0,
+		"reach": 1.0,
+		"shake": 0.22,
+		"shake_seconds": 0.8
+	},
+	"hold_old": 26,
+	"fronts": [
+		{
+			"start": 0,
+			"ticks": 30,
+			"particle": "minecraft:cloud",
+			"density": 0.6,
+			"height": [
+				0.2,
+				2
+			],
+			"motion": [
+				0.2,
+				0.05,
+				0.1
+			],
+			"depth": 3,
+			"sound": "minecraft:entity.breeze.idle_air",
+			"volume": 0.6,
+			"pitch": 1.0,
+			"sound_every": 4
+		}
+	],
+	"cues": [
+		{
+			"at": 0,
+			"particle": "minecraft:small_gust",
+			"count": 60,
+			"sound": "minecraft:entity.breeze.wind_burst",
+			"volume": 1.0,
+			"pitch": 0.8
+		},
+		{
+			"at": 4,
+			"dust": 140,
+			"dust_particle": "minecraft:cloud",
+			"dust_radius": 1.6,
+			"particle": "minecraft:cherry_leaves",
+			"count": 120,
+			"sound": "minecraft:entity.breeze.whirl",
+			"volume": 1.0
+		},
+		{
+			"at": 14,
+			"particle": "minecraft:gust",
+			"count": 12,
+			"shake": 0.12,
+			"shake_seconds": 0.4,
+			"sound": "minecraft:entity.breeze.wind_burst",
+			"volume": 0.8,
+			"pitch": 1.1
+		},
+		{
+			"at": 26,
+			"flash": "#ffffff",
+			"flash_ticks": 12,
+			"dust": 80,
+			"dust_particle": "minecraft:cloud",
+			"dust_radius": 1.9,
+			"sound": "minecraft:block.amethyst_block.chime",
+			"volume": 0.8,
+			"pitch": 1.5
+		}
+	]
+}

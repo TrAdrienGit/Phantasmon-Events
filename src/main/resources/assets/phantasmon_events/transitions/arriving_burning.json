@@ -1,0 +1,106 @@
+{
+	"from": [
+		"*"
+	],
+	"to": [
+		"cobblemon_battle_showtime:burning"
+	],
+	"ticks": 56,
+	"blend": 40,
+	"arrive": 34,
+	"camera": {
+		"seconds": 3.0,
+		"reach": 1.0,
+		"shake": 0.3,
+		"shake_seconds": 0.8
+	},
+	"hold_old": 26,
+	"fronts": [
+		{
+			"start": 0,
+			"ticks": 32,
+			"particle": "minecraft:flame",
+			"density": 0.8,
+			"height": [
+				0,
+				1.2
+			],
+			"motion": [
+				0,
+				0.05,
+				0
+			],
+			"depth": 2.5,
+			"sound": "minecraft:block.fire.ambient",
+			"volume": 0.9,
+			"pitch": 0.8,
+			"sound_every": 3
+		},
+		{
+			"start": 4,
+			"ticks": 32,
+			"particle": "minecraft:large_smoke",
+			"density": 0.35,
+			"height": [
+				0.5,
+				2
+			],
+			"motion": [
+				0,
+				0.08,
+				0
+			],
+			"depth": 3
+		}
+	],
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#ff8a30",
+			"particle": "minecraft:flame",
+			"count": 200,
+			"burst": 50,
+			"burst_block": "minecraft:magma_block",
+			"sound": "minecraft:item.firecharge.use",
+			"volume": 1.0,
+			"pitch": 0.6
+		},
+		{
+			"at": 6,
+			"dust": 60,
+			"dust_particle": "minecraft:campfire_cosy_smoke",
+			"dust_radius": 1.3,
+			"sound": "minecraft:entity.blaze.shoot",
+			"volume": 0.8,
+			"pitch": 0.5
+		},
+		{
+			"at": 16,
+			"particle": "minecraft:lava",
+			"count": 60,
+			"shake": 0.18,
+			"shake_seconds": 0.5,
+			"sound": "minecraft:entity.generic.burn",
+			"volume": 1.0,
+			"pitch": 0.5
+		},
+		{
+			"at": 26,
+			"flash": "#ff6a10",
+			"flash_ticks": 14,
+			"dust": 140,
+			"dust_particle": "minecraft:large_smoke",
+			"dust_radius": 1.8,
+			"sound": "minecraft:entity.generic.explode",
+			"volume": 0.4,
+			"pitch": 0.6
+		},
+		{
+			"at": 38,
+			"particle": "minecraft:ash",
+			"count": 220,
+			"sound": "minecraft:block.fire.ambient",
+			"volume": 1.0
+		}
+	]
+}

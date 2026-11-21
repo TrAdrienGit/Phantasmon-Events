@@ -1,0 +1,91 @@
+{
+	"from": [
+		"*"
+	],
+	"to": [
+		"cobblemon_battle_showtime:rainbow"
+	],
+	"ticks": 56,
+	"blend": 40,
+	"arrive": 34,
+	"camera": {
+		"seconds": 3.0,
+		"reach": 1.0,
+		"shake": 0.22,
+		"shake_seconds": 0.8
+	},
+	"hold_old": 26,
+	"fronts": [
+		{
+			"start": 0,
+			"ticks": 30,
+			"particle": "minecraft:end_rod",
+			"density": 0.5,
+			"height": [
+				0.5,
+				3
+			],
+			"motion": [
+				0,
+				0.05,
+				0
+			],
+			"depth": 2.5,
+			"sound": "minecraft:block.amethyst_block.chime",
+			"volume": 0.6,
+			"pitch": 1.6,
+			"sound_every": 4
+		}
+	],
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#ffffff",
+			"particle": "minecraft:firework",
+			"count": 200,
+			"sound": "minecraft:block.beacon.activate",
+			"volume": 1.0,
+			"pitch": 1.4,
+			"notes": [
+				1.0,
+				1.12,
+				1.26,
+				1.33,
+				1.5,
+				1.68,
+				1.89,
+				2.0
+			],
+			"note_sound": "minecraft:block.note_block.chime",
+			"note_every": 3,
+			"note_volume": 0.8
+		},
+		{
+			"at": 6,
+			"dust": 120,
+			"dust_particle": "minecraft:wax_on",
+			"dust_radius": 1.4,
+			"burst": 40,
+			"burst_block": "minecraft:yellow_stained_glass"
+		},
+		{
+			"at": 16,
+			"particle": "minecraft:glow",
+			"count": 140,
+			"shake": 0.1,
+			"shake_seconds": 0.4,
+			"sound": "minecraft:entity.firework_rocket.twinkle",
+			"volume": 0.9
+		},
+		{
+			"at": 26,
+			"flash": "#fff8e0",
+			"flash_ticks": 12,
+			"particle": "minecraft:happy_villager",
+			"count": 140,
+			"sound": "minecraft:entity.player.levelup",
+			"volume": 0.4,
+			"pitch": 1.6
+		}
+	]
+}

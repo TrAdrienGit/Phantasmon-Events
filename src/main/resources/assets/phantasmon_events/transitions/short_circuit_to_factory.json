@@ -1,0 +1,96 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:short_circuit"
+	],
+	"to": [
+		"cobblemon_battle_showtime:factory"
+	],
+	"ticks": 62,
+	"blend": 44,
+	"arrive": 38,
+	"camera": {
+		"seconds": 3.5,
+		"reach": 1.0,
+		"shake": 0.2,
+		"shake_seconds": 0.9
+	},
+	"hold_old": 28,
+	"fronts": [
+		{
+			"start": 6,
+			"ticks": 26,
+			"particle": "minecraft:electric_spark",
+			"density": 0.8,
+			"height": [
+				0,
+				2.5
+			],
+			"motion": [
+				0,
+				0.08,
+				0
+			],
+			"depth": 2,
+			"sound": "minecraft:block.respawn_anchor.charge",
+			"volume": 0.6,
+			"pitch": 1.2,
+			"sound_every": 5
+		}
+	],
+	"cues": [
+		{
+			"at": 0,
+			"particle": "minecraft:electric_spark",
+			"count": 220,
+			"sound": "minecraft:block.respawn_anchor.charge",
+			"volume": 1.0,
+			"pitch": 0.6
+		},
+		{
+			"at": 6,
+			"flash": "#fff0b0",
+			"burst": 40,
+			"burst_block": "minecraft:copper_block",
+			"sound": "minecraft:block.beacon.power_select",
+			"volume": 0.9,
+			"pitch": 0.6
+		},
+		{
+			"at": 16,
+			"particle": "minecraft:end_rod",
+			"count": 120,
+			"shake": 0.12,
+			"shake_seconds": 0.4,
+			"sound": "minecraft:block.beacon.activate",
+			"volume": 1.0,
+			"pitch": 0.8
+		},
+		{
+			"at": 28,
+			"flash": "#ffffff",
+			"flash_ticks": 16,
+			"dust": 80,
+			"dust_particle": "minecraft:white_smoke",
+			"dust_radius": 1.5,
+			"sound": "minecraft:block.beacon.activate",
+			"volume": 1.0,
+			"pitch": 1.2,
+			"notes": [
+				0.8,
+				1.0,
+				1.2,
+				1.6
+			],
+			"note_sound": "minecraft:block.note_block.bit",
+			"note_every": 4,
+			"note_volume": 0.8
+		},
+		{
+			"at": 40,
+			"particle": "minecraft:electric_spark",
+			"count": 160,
+			"sound": "minecraft:block.copper_bulb.turn_on",
+			"volume": 1.0
+		}
+	]
+}

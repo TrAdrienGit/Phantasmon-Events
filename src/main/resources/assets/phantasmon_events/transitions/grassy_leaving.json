@@ -1,0 +1,80 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:grassy"
+	],
+	"to": [
+		"*"
+	],
+	"ticks": 56,
+	"blend": 40,
+	"arrive": 34,
+	"camera": {
+		"seconds": 3.0,
+		"reach": 1.0,
+		"shake": 0.22,
+		"shake_seconds": 0.8
+	},
+	"hold_old": 26,
+	"fronts": [
+		{
+			"start": 0,
+			"ticks": 26,
+			"particle": "minecraft:composter",
+			"density": 0.5,
+			"height": [
+				0,
+				0.8
+			],
+			"motion": [
+				0,
+				0.04,
+				0
+			],
+			"depth": 2,
+			"sound": "minecraft:block.grass.break",
+			"volume": 0.5,
+			"pitch": 0.9,
+			"sound_every": 4,
+			"inward": true
+		}
+	],
+	"cues": [
+		{
+			"at": 0,
+			"particle": "minecraft:happy_villager",
+			"count": 140,
+			"sound": "minecraft:block.azalea.break",
+			"volume": 1.0,
+			"pitch": 0.8
+		},
+		{
+			"at": 6,
+			"debris": 60,
+			"debris_block": "minecraft:short_grass",
+			"dust": 80,
+			"dust_particle": "minecraft:cloud",
+			"dust_radius": 1.4,
+			"sound": "minecraft:block.grass.break",
+			"volume": 1.0,
+			"pitch": 0.7
+		},
+		{
+			"at": 16,
+			"particle": "minecraft:composter",
+			"count": 120,
+			"shake": 0.1,
+			"shake_seconds": 0.4,
+			"sound": "minecraft:entity.breeze.wind_burst",
+			"volume": 0.6,
+			"pitch": 1.2
+		},
+		{
+			"at": 26,
+			"flash": "#f0ffe0",
+			"flash_ticks": 12,
+			"dust": 60,
+			"dust_particle": "minecraft:cloud",
+			"dust_radius": 1.6
+		}
+	]
+}

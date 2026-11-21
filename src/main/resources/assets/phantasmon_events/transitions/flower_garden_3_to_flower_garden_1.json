@@ -1,0 +1,107 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:flower_garden_3"
+	],
+	"to": [
+		"cobblemon_battle_showtime:flower_garden_1"
+	],
+	"ticks": 62,
+	"blend": 44,
+	"arrive": 38,
+	"camera": {
+		"seconds": 3.5,
+		"reach": 1.0,
+		"shake": 0.2,
+		"shake_seconds": 0.9
+	},
+	"hold_old": 32,
+	"fronts": [
+		{
+			"start": 2,
+			"ticks": 34,
+			"particle": "minecraft:item_slime",
+			"density": 0.6,
+			"height": [
+				0,
+				0.6
+			],
+			"motion": [
+				0,
+				0.04,
+				0
+			],
+			"depth": 2,
+			"sound": "minecraft:entity.slime.squish_small",
+			"volume": 0.5,
+			"pitch": 0.6,
+			"sound_every": 5
+		},
+		{
+			"start": 2,
+			"ticks": 34,
+			"particle": "minecraft:squid_ink",
+			"density": 0.35,
+			"height": [
+				0,
+				0.4
+			],
+			"motion": [
+				0,
+				0.03,
+				0
+			],
+			"depth": 2
+		}
+	],
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#a8e040",
+			"particle": "minecraft:item_slime",
+			"count": 200,
+			"sound": "minecraft:entity.slime.squish",
+			"volume": 1.0,
+			"pitch": 0.5
+		},
+		{
+			"at": 4,
+			"debris": 70,
+			"debris_block": "minecraft:dead_bush",
+			"sound": "minecraft:block.brewing_stand.brew",
+			"volume": 1.0,
+			"pitch": 0.5
+		},
+		{
+			"at": 14,
+			"dust": 120,
+			"dust_particle": "minecraft:squid_ink",
+			"dust_radius": 1.6,
+			"burst": 40,
+			"burst_block": "minecraft:poppy",
+			"shake": 0.14,
+			"shake_seconds": 0.5,
+			"sound": "minecraft:block.grass.break",
+			"volume": 1.0,
+			"pitch": 0.5
+		},
+		{
+			"at": 32,
+			"flash": "#5a6a2a",
+			"flash_ticks": 16,
+			"dust": 140,
+			"dust_particle": "minecraft:large_smoke",
+			"dust_radius": 1.8,
+			"sound": "minecraft:entity.slime.squish",
+			"volume": 1.0,
+			"pitch": 0.4
+		},
+		{
+			"at": 44,
+			"particle": "minecraft:mycelium",
+			"count": 200,
+			"sound": "minecraft:block.grass.break",
+			"volume": 0.8,
+			"pitch": 0.6
+		}
+	]
+}

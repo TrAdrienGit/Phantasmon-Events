@@ -1,0 +1,80 @@
+{
+	"from": [
+		"*"
+	],
+	"to": [
+		"cobblemon_battle_showtime:electric_terrain"
+	],
+	"ticks": 56,
+	"blend": 40,
+	"arrive": 34,
+	"camera": {
+		"seconds": 3.0,
+		"reach": 1.0,
+		"shake": 0.3,
+		"shake_seconds": 0.8
+	},
+	"hold_old": 26,
+	"fronts": [
+		{
+			"start": 0,
+			"ticks": 28,
+			"particle": "minecraft:electric_spark",
+			"density": 0.9,
+			"height": [
+				0,
+				1.2
+			],
+			"motion": [
+				0,
+				0.06,
+				0
+			],
+			"depth": 2,
+			"sound": "minecraft:block.respawn_anchor.charge",
+			"volume": 0.6,
+			"pitch": 1.2,
+			"sound_every": 4
+		}
+	],
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#ffe040",
+			"particle": "minecraft:electric_spark",
+			"count": 260,
+			"sound": "minecraft:entity.lightning_bolt.impact",
+			"volume": 0.6,
+			"pitch": 0.8
+		},
+		{
+			"at": 4,
+			"burst": 50,
+			"burst_block": "minecraft:gold_block",
+			"sound": "minecraft:block.beacon.power_select",
+			"volume": 0.9,
+			"pitch": 1.4
+		},
+		{
+			"at": 14,
+			"particle": "minecraft:end_rod",
+			"count": 120,
+			"shake": 0.2,
+			"shake_seconds": 0.5,
+			"sound": "minecraft:block.respawn_anchor.charge",
+			"volume": 1.0,
+			"pitch": 0.8
+		},
+		{
+			"at": 26,
+			"flash": "#fffbe0",
+			"flash_ticks": 12,
+			"dust": 100,
+			"dust_particle": "minecraft:electric_spark",
+			"dust_radius": 1.6,
+			"sound": "minecraft:block.beacon.activate",
+			"volume": 0.9,
+			"pitch": 1.6
+		}
+	]
+}

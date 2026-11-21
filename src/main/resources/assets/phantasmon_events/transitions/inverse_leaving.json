@@ -1,0 +1,75 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:inverse"
+	],
+	"to": [
+		"*"
+	],
+	"ticks": 56,
+	"blend": 40,
+	"arrive": 34,
+	"camera": {
+		"seconds": 3.0,
+		"reach": 1.0,
+		"shake": 0.22,
+		"shake_seconds": 0.8
+	},
+	"hold_old": 26,
+	"fronts": [
+		{
+			"start": 0,
+			"ticks": 26,
+			"particle": "minecraft:reverse_portal",
+			"density": 0.6,
+			"height": [
+				2,
+				6
+			],
+			"motion": [
+				0,
+				-0.2,
+				0
+			],
+			"depth": 2.5
+		}
+	],
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#40e0a0",
+			"filter": "cobblemon_battle_showtime:shaders/post/wobble.json",
+			"filter_ticks": 30,
+			"particle": "minecraft:reverse_portal",
+			"count": 220,
+			"sound": "minecraft:block.end_portal_frame.fill",
+			"volume": 1.0,
+			"pitch": 0.6
+		},
+		{
+			"at": 8,
+			"debris": 50,
+			"debris_block": "minecraft:prismarine",
+			"sound": "minecraft:entity.enderman.teleport",
+			"volume": 0.9,
+			"pitch": 1.4
+		},
+		{
+			"at": 18,
+			"particle": "minecraft:portal",
+			"count": 160,
+			"shake": 0.18,
+			"shake_seconds": 0.5,
+			"sound": "minecraft:block.respawn_anchor.deplete",
+			"volume": 0.9,
+			"pitch": 1.2
+		},
+		{
+			"at": 26,
+			"flash": "#ffffff",
+			"flash_ticks": 12,
+			"sound": "minecraft:block.beacon.deactivate",
+			"volume": 0.9,
+			"pitch": 1.4
+		}
+	]
+}

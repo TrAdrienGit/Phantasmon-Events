@@ -1,0 +1,110 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:flower_garden_2"
+	],
+	"to": [
+		"cobblemon_battle_showtime:flower_garden_3"
+	],
+	"ticks": 56,
+	"blend": 44,
+	"arrive": 38,
+	"camera": {
+		"seconds": 3.5,
+		"reach": 1.0,
+		"shake": 0.12,
+		"shake_seconds": 0.6
+	},
+	"hold_old": 30,
+	"fronts": [
+		{
+			"start": 2,
+			"ticks": 32,
+			"particle": "minecraft:happy_villager",
+			"density": 0.7,
+			"height": [
+				0,
+				0.8
+			],
+			"motion": [
+				0,
+				0.04,
+				0
+			],
+			"depth": 2,
+			"sound": "minecraft:item.bone_meal.use",
+			"volume": 0.6,
+			"pitch": 1.0,
+			"sound_every": 4
+		},
+		{
+			"start": 4,
+			"ticks": 30,
+			"particle": "minecraft:cherry_leaves",
+			"density": 0.42,
+			"height": [
+				0.5,
+				2.5
+			],
+			"motion": [
+				0,
+				-0.02,
+				0
+			],
+			"depth": 2.5
+		}
+	],
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#ffffff",
+			"particle": "minecraft:spore_blossom_air",
+			"count": 220,
+			"sound": "minecraft:block.azalea.place",
+			"volume": 1.0,
+			"pitch": 1.0,
+			"notes": [
+				1.0,
+				1.26,
+				1.5
+			],
+			"note_sound": "minecraft:block.note_block.flute",
+			"note_every": 4,
+			"note_volume": 0.8
+		},
+		{
+			"at": 4,
+			"burst": 60,
+			"burst_block": "minecraft:flowering_azalea_leaves",
+			"sound": "minecraft:item.bone_meal.use",
+			"volume": 1.0,
+			"pitch": 1.0
+		},
+		{
+			"at": 16,
+			"dust": 140,
+			"dust_particle": "minecraft:composter",
+			"dust_radius": 1.6,
+			"sound": "minecraft:block.cherry_leaves.place",
+			"volume": 1.0,
+			"pitch": 1.0
+		},
+		{
+			"at": 30,
+			"flash": "#ffffff",
+			"flash_ticks": 12,
+			"particle": "minecraft:cherry_leaves",
+			"count": 260,
+			"sound": "minecraft:entity.player.levelup",
+			"volume": 0.4,
+			"pitch": 1.5
+		},
+		{
+			"at": 40,
+			"particle": "minecraft:wax_on",
+			"count": 120,
+			"sound": "minecraft:block.amethyst_block.chime",
+			"volume": 0.8,
+			"pitch": 1.6
+		}
+	]
+}

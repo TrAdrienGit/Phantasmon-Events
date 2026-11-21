@@ -1,0 +1,83 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:starlight"
+	],
+	"to": [
+		"*"
+	],
+	"ticks": 56,
+	"blend": 40,
+	"arrive": 34,
+	"camera": {
+		"seconds": 3.0,
+		"reach": 1.0,
+		"shake": 0.22,
+		"shake_seconds": 0.8
+	},
+	"hold_old": 26,
+	"fronts": [
+		{
+			"start": 0,
+			"ticks": 26,
+			"particle": "minecraft:end_rod",
+			"density": 0.5,
+			"height": [
+				0,
+				4
+			],
+			"motion": [
+				0,
+				0.25,
+				0
+			],
+			"depth": 2.5,
+			"sound": "minecraft:entity.firework_rocket.twinkle_far",
+			"volume": 0.6,
+			"pitch": 1.0,
+			"sound_every": 5
+		}
+	],
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#e8f0ff",
+			"particle": "minecraft:firework",
+			"count": 200,
+			"sound": "minecraft:entity.firework_rocket.large_blast_far",
+			"volume": 0.8,
+			"pitch": 0.8
+		},
+		{
+			"at": 6,
+			"dust": 120,
+			"dust_particle": "minecraft:end_rod",
+			"dust_radius": 1.5,
+			"sound": "minecraft:block.beacon.deactivate",
+			"volume": 0.9,
+			"pitch": 1.2
+		},
+		{
+			"at": 16,
+			"particle": "minecraft:glow",
+			"count": 120,
+			"shake": 0.12,
+			"shake_seconds": 0.4,
+			"notes": [
+				2.0,
+				1.5,
+				1.2,
+				1.0
+			],
+			"note_sound": "minecraft:block.note_block.chime",
+			"note_every": 4,
+			"note_volume": 0.8
+		},
+		{
+			"at": 26,
+			"flash": "#ffffff",
+			"flash_ticks": 12,
+			"sound": "minecraft:entity.firework_rocket.twinkle",
+			"volume": 0.8
+		}
+	]
+}

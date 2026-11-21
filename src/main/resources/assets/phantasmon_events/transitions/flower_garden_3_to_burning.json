@@ -1,0 +1,123 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:flower_garden_3"
+	],
+	"to": [
+		"cobblemon_battle_showtime:burning"
+	],
+	"ticks": 62,
+	"blend": 44,
+	"arrive": 38,
+	"camera": {
+		"seconds": 3.5,
+		"reach": 1.0,
+		"shake": 0.3,
+		"shake_seconds": 0.9
+	},
+	"hold_old": 32,
+	"fronts": [
+		{
+			"start": 0,
+			"ticks": 36,
+			"particle": "minecraft:flame",
+			"density": 0.8,
+			"height": [
+				0,
+				1.2
+			],
+			"motion": [
+				0,
+				0.05,
+				0
+			],
+			"depth": 2.5,
+			"sound": "minecraft:block.fire.ambient",
+			"volume": 0.9,
+			"pitch": 0.8,
+			"sound_every": 3
+		},
+		{
+			"start": 4,
+			"ticks": 36,
+			"particle": "minecraft:large_smoke",
+			"density": 0.35,
+			"height": [
+				0.5,
+				2
+			],
+			"motion": [
+				0,
+				0.08,
+				0
+			],
+			"depth": 3
+		},
+		{
+			"start": 2,
+			"ticks": 34,
+			"particle": "minecraft:lava",
+			"density": 0.06,
+			"height": [
+				0,
+				0.5
+			],
+			"motion": [
+				0,
+				0,
+				0
+			],
+			"depth": 2
+		}
+	],
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#ff8a30",
+			"burst": 60,
+			"burst_block": "minecraft:rose_bush",
+			"particle": "minecraft:flame",
+			"count": 180,
+			"sound": "minecraft:item.firecharge.use",
+			"volume": 1.0,
+			"pitch": 0.6
+		},
+		{
+			"at": 4,
+			"debris": 60,
+			"debris_block": "minecraft:poppy",
+			"sound": "minecraft:entity.blaze.shoot",
+			"volume": 0.8,
+			"pitch": 0.5
+		},
+		{
+			"at": 14,
+			"particle": "minecraft:lava",
+			"count": 60,
+			"shake": 0.18,
+			"shake_seconds": 0.6,
+			"sound": "minecraft:entity.generic.burn",
+			"volume": 1.0,
+			"pitch": 0.5
+		},
+		{
+			"at": 32,
+			"flash": "#ff6a10",
+			"flash_ticks": 16,
+			"dust": 160,
+			"dust_particle": "minecraft:large_smoke",
+			"dust_radius": 1.8,
+			"sound": "minecraft:entity.generic.explode",
+			"volume": 0.4,
+			"pitch": 0.6
+		},
+		{
+			"at": 44,
+			"particle": "minecraft:ash",
+			"count": 260,
+			"debris": 30,
+			"debris_block": "minecraft:coal_block",
+			"sound": "minecraft:block.fire.ambient",
+			"volume": 1.0
+		}
+	]
+}

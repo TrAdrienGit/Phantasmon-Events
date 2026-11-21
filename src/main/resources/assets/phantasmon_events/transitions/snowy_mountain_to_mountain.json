@@ -1,0 +1,105 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:snowy_mountain"
+	],
+	"to": [
+		"cobblemon_battle_showtime:mountain"
+	],
+	"ticks": 62,
+	"blend": 44,
+	"arrive": 38,
+	"camera": {
+		"seconds": 3.5,
+		"reach": 1.0,
+		"shake": 0.2,
+		"shake_seconds": 0.9
+	},
+	"hold_old": 34,
+	"fronts": [
+		{
+			"start": 2,
+			"ticks": 38,
+			"particle": "minecraft:cloud",
+			"density": 0.5,
+			"height": [
+				0,
+				1.2
+			],
+			"motion": [
+				0,
+				0.06,
+				0
+			],
+			"depth": 3,
+			"sound": "minecraft:block.fire.extinguish",
+			"volume": 0.5,
+			"pitch": 0.8,
+			"sound_every": 5
+		},
+		{
+			"start": 4,
+			"ticks": 36,
+			"particle": "minecraft:falling_water",
+			"density": 0.6,
+			"height": [
+				0.2,
+				1.5
+			],
+			"motion": [
+				0,
+				0,
+				0
+			],
+			"depth": 2.5
+		}
+	],
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#ffd8a0",
+			"particle": "minecraft:flame",
+			"count": 140,
+			"burst": 50,
+			"burst_block": "minecraft:snow_block",
+			"sound": "minecraft:item.firecharge.use",
+			"volume": 1.0,
+			"pitch": 0.6
+		},
+		{
+			"at": 3,
+			"dust": 160,
+			"dust_particle": "minecraft:cloud",
+			"dust_radius": 1.6,
+			"sound": "minecraft:block.fire.extinguish",
+			"volume": 1.0,
+			"pitch": 0.6
+		},
+		{
+			"at": 16,
+			"particle": "minecraft:dripping_water",
+			"count": 200,
+			"shake": 0.12,
+			"shake_seconds": 0.5,
+			"sound": "minecraft:block.pointed_dripstone.drip_water",
+			"volume": 1.0
+		},
+		{
+			"at": 34,
+			"flash": "#fff0d8",
+			"flash_ticks": 18,
+			"dust": 180,
+			"dust_particle": "minecraft:cloud",
+			"dust_radius": 1.9,
+			"sound": "minecraft:block.lava.extinguish",
+			"volume": 0.8,
+			"pitch": 0.9
+		},
+		{
+			"at": 46,
+			"particle": "minecraft:small_gust",
+			"count": 60,
+			"sound": "minecraft:entity.breeze.idle_air",
+			"volume": 0.8
+		}
+	]
+}

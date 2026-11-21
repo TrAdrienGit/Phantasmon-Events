@@ -1,0 +1,79 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:mirror"
+	],
+	"to": [
+		"*"
+	],
+	"ticks": 56,
+	"blend": 40,
+	"arrive": 34,
+	"camera": {
+		"seconds": 3.0,
+		"reach": 1.0,
+		"shake": 0.4,
+		"shake_seconds": 0.8
+	},
+	"hold_old": 26,
+	"fronts": [
+		{
+			"start": 0,
+			"ticks": 22,
+			"particle": "minecraft:end_rod",
+			"density": 0.4,
+			"height": [
+				0,
+				3
+			],
+			"motion": [
+				0,
+				-0.05,
+				0
+			],
+			"depth": 2,
+			"sound": "minecraft:block.glass.break",
+			"volume": 0.7,
+			"pitch": 1.0,
+			"sound_every": 3
+		}
+	],
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#ffffff",
+			"burst": 90,
+			"burst_block": "minecraft:glass",
+			"sound": "minecraft:block.glass.break",
+			"volume": 1.0,
+			"pitch": 0.5
+		},
+		{
+			"at": 2,
+			"debris": 90,
+			"debris_block": "minecraft:light_gray_stained_glass",
+			"sound": "minecraft:block.glass.break",
+			"volume": 1.0,
+			"pitch": 0.8
+		},
+		{
+			"at": 10,
+			"debris": 60,
+			"debris_block": "minecraft:glass",
+			"shake": 0.25,
+			"shake_seconds": 0.5,
+			"sound": "minecraft:block.glass.break",
+			"volume": 1.0,
+			"pitch": 1.1
+		},
+		{
+			"at": 26,
+			"flash": "#e8f0ff",
+			"flash_ticks": 14,
+			"particle": "minecraft:wax_off",
+			"count": 160,
+			"sound": "minecraft:block.amethyst_block.chime",
+			"volume": 0.8,
+			"pitch": 1.8
+		}
+	]
+}

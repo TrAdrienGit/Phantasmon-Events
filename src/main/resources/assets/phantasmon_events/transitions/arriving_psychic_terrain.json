@@ -1,0 +1,81 @@
+{
+	"from": [
+		"*"
+	],
+	"to": [
+		"cobblemon_battle_showtime:psychic_terrain"
+	],
+	"ticks": 56,
+	"blend": 40,
+	"arrive": 34,
+	"camera": {
+		"seconds": 3.0,
+		"reach": 1.0,
+		"shake": 0.22,
+		"shake_seconds": 0.8
+	},
+	"hold_old": 26,
+	"fronts": [
+		{
+			"start": 0,
+			"ticks": 30,
+			"particle": "minecraft:portal",
+			"density": 0.8,
+			"height": [
+				0,
+				1.5
+			],
+			"motion": [
+				0,
+				0.05,
+				0
+			],
+			"depth": 2.5,
+			"sound": "minecraft:entity.illusioner.mirror_move",
+			"volume": 0.5,
+			"pitch": 1.2,
+			"sound_every": 6
+		}
+	],
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#ff8ad8",
+			"filter": "cobblemon_battle_showtime:shaders/post/wobble.json",
+			"filter_ticks": 30,
+			"particle": "minecraft:reverse_portal",
+			"count": 200,
+			"sound": "minecraft:entity.illusioner.cast_spell",
+			"volume": 1.0,
+			"pitch": 1.2
+		},
+		{
+			"at": 6,
+			"burst": 40,
+			"burst_block": "minecraft:purpur_block",
+			"sound": "minecraft:block.beacon.activate",
+			"volume": 0.9,
+			"pitch": 1.6
+		},
+		{
+			"at": 16,
+			"particle": "minecraft:witch",
+			"count": 160,
+			"shake": 0.14,
+			"shake_seconds": 0.5,
+			"sound": "minecraft:entity.illusioner.prepare_mirror",
+			"volume": 0.9
+		},
+		{
+			"at": 26,
+			"flash": "#ffd0ff",
+			"flash_ticks": 12,
+			"dust": 100,
+			"dust_particle": "minecraft:portal",
+			"dust_radius": 1.6,
+			"sound": "minecraft:block.amethyst_block.resonate",
+			"volume": 0.9,
+			"pitch": 1.6
+		}
+	]
+}

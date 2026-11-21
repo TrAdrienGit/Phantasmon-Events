@@ -1,0 +1,83 @@
+{
+	"from": [
+		"cobblemon_battle_showtime:superheated"
+	],
+	"to": [
+		"*"
+	],
+	"ticks": 56,
+	"blend": 40,
+	"arrive": 34,
+	"camera": {
+		"seconds": 3.0,
+		"reach": 1.0,
+		"shake": 0.22,
+		"shake_seconds": 0.8
+	},
+	"veins_fade": 18,
+	"hold_old": 26,
+	"fronts": [
+		{
+			"start": 0,
+			"ticks": 30,
+			"particle": "minecraft:cloud",
+			"density": 0.6,
+			"height": [
+				0,
+				1.5
+			],
+			"motion": [
+				0,
+				0.07,
+				0
+			],
+			"depth": 3,
+			"sound": "minecraft:block.fire.extinguish",
+			"volume": 0.6,
+			"pitch": 0.9,
+			"sound_every": 4
+		}
+	],
+	"cues": [
+		{
+			"at": 0,
+			"flash": "#e8f8ff",
+			"particle": "minecraft:snowflake",
+			"count": 220,
+			"burst": 50,
+			"burst_block": "minecraft:ice",
+			"sound": "minecraft:block.glass.break",
+			"volume": 0.9,
+			"pitch": 0.6
+		},
+		{
+			"at": 3,
+			"dust": 200,
+			"dust_particle": "minecraft:cloud",
+			"dust_radius": 1.6,
+			"sound": "minecraft:block.lava.extinguish",
+			"volume": 1.0,
+			"pitch": 0.7
+		},
+		{
+			"at": 14,
+			"particle": "minecraft:dripping_water",
+			"count": 160,
+			"shake": 0.14,
+			"shake_seconds": 0.5,
+			"sound": "minecraft:block.fire.extinguish",
+			"volume": 0.9
+		},
+		{
+			"at": 26,
+			"flash": "#ffffff",
+			"flash_ticks": 14,
+			"dust": 120,
+			"dust_particle": "minecraft:cloud",
+			"dust_radius": 1.8,
+			"sound": "minecraft:block.amethyst_block.chime",
+			"volume": 0.8,
+			"pitch": 1.6
+		}
+	]
+}
