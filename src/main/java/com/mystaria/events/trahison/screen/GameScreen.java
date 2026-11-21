@@ -113,6 +113,7 @@ public final class GameScreen extends TrahisonScreen {
 		if (bar) {
 			int[] thumb = MenuUi.thumb(wy + 1, wh - 2, content, listScroll);
 			g.fill(x + w - 4, thumb[0], x + w - 2, thumb[0] + thumb[1], TrahisonPalette.EDGE);
+			bars.add(x + w - 4, wy + 1, wh - 2, listScroll, content, 16, s -> listScroll = s);
 		}
 	}
 
@@ -216,6 +217,7 @@ public final class GameScreen extends TrahisonScreen {
 		if (used > viewH) {
 			int[] thumb = MenuUi.thumb(cy, viewH, used, ctxScroll);
 			g.fill(x + w + 1, thumb[0], x + w + 3, thumb[0] + thumb[1], TrahisonPalette.EDGE);
+			bars.add(x + w + 1, cy, viewH, ctxScroll, used, 16, s -> ctxScroll = s);
 		}
 	}
 

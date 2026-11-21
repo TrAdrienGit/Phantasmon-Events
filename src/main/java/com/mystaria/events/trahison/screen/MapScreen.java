@@ -90,6 +90,8 @@ public final class MapScreen extends TrahisonScreen {
 	private boolean drawing;
 	private Stroke stroke;
 	private int notesScroll;
+	/** The caret and text length last followed: the view follows the caret only when it moves, not over a dragged bar. */
+	private long notesFollowed = -1;
 
 	// Geometry of this frame, for the mouse.
 	private int ax;
@@ -865,7 +867,9 @@ public final class MapScreen extends TrahisonScreen {
 		int innerH = boxH - 8;
 		int content = lines.size() * LINE_H;
 		int caretLine = NoteBuffer.lineOf(lines, shown.caret());
-		if (mine && editable()) { // keep the caret in view while typing
+		long caretKey = (long) shown.caret() << 20 | shown.text().length();
+		if (mine && editable() && caretKey != notesFollowed) { // keep the caret in view while typing
+			notesFollowed = caretKey;
 			if (caretLine * LINE_H < notesScroll) {
 				notesScroll = caretLine * LINE_H;
 			} else if ((caretLine + 1) * LINE_H > notesScroll + innerH) {
@@ -897,6 +901,7 @@ public final class MapScreen extends TrahisonScreen {
 			int thumb = Math.max(12, innerH * innerH / content);
 			int thumbY = top + 4 + (innerH - thumb) * notesScroll / Math.max(1, content - innerH);
 			g.fill(x + w - 5, thumbY, x + w - 3, thumbY + thumb, TrahisonPalette.EDGE_LIGHT);
+			bars.add(x + w - 5, top + 4, innerH, notesScroll, content, 12, s -> notesScroll = s);
 		}
 		Component count = Component.literal(text.length() + "/" + MapNotes.MAX_NOTES);
 		int cw = TrahisonUi.width(count);

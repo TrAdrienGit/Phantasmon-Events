@@ -69,6 +69,7 @@ public abstract class TrahisonScreen extends Screen {
 
 	@Override
 	public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+		bars.begin();
 		float open = TrahisonUi.easeOut(TrahisonUi.progress(openedAt, 160));
 		g.fill(0, 0, width, height, TrahisonUi.withAlpha(TrahisonPalette.VEIL, Math.round(((TrahisonPalette.VEIL >>> 24) & 0xFF) * open)));
 		boolean asking = modal != null;
@@ -108,7 +109,24 @@ public abstract class TrahisonScreen extends Screen {
 			modalUi.click(mouseX, mouseY, button);
 			return true;
 		}
+		if (button == 0 && bars.click(mouseX, mouseY)) {
+			return true;
+		}
 		return ui.click(mouseX, mouseY, button) || super.mouseClicked(mouseX, mouseY, button);
+	}
+
+	/** The scrollbars drawn this frame, taken and dragged with the mouse. */
+	protected final com.mystaria.events.trahison.ui.DragBars bars = new com.mystaria.events.trahison.ui.DragBars();
+
+	@Override
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		return button == 0 && bars.drag(mouseY) || super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+	}
+
+	@Override
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
+		bars.release();
+		return super.mouseReleased(mouseX, mouseY, button);
 	}
 
 	@Override

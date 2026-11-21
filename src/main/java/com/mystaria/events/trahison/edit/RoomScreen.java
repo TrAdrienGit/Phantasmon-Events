@@ -110,6 +110,7 @@ public final class RoomScreen extends Screen {
 
 	@Override
 	public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+		bars.begin();
 		if (!RoomEditor.isActive()) {
 			onClose();
 			return;
@@ -214,6 +215,7 @@ public final class RoomScreen extends Screen {
 		}
 		ui.unclip(g);
 		RoomUi.scrollbar(g, cx + cw - 5, listY + 2, listH - 4, todoScroll, content);
+		bars.add(cx + cw - 5, listY + 2, listH - 4, todoScroll, content, 12, s -> todoScroll = s);
 		String selected = RoomEditor.selectedSlot;
 		boolean canAct = selected != null && RoomEditor.unplaced.contains(selected);
 		boolean hasSelection = RoomEditor.selectionCanonical() != null;
@@ -282,6 +284,7 @@ public final class RoomScreen extends Screen {
 		}
 		ui.unclip(g);
 		RoomUi.scrollbar(g, cx + cw - 5, listY + 2, listH - 4, listScroll, content);
+		bars.add(cx + cw - 5, listY + 2, listH - 4, listScroll, content, 12, s -> listScroll = s);
 
 		MenuUi.text(g, t("field.kind"), cx + 2, kindY + 5, LABEL_W - 6, TrahisonPalette.TEXT_MUTED);
 		ui.cycle(g, cx + LABEL_W, kindY, cw - LABEL_W, ROW_H, RoomUi.kind(newKind), dir -> newKind = RoomUi.step(RoomChecks.KINDS, newKind, dir));
@@ -383,6 +386,7 @@ public final class RoomScreen extends Screen {
 		ui.unclip(g);
 		formScroll = RoomUi.clamp(formScroll, content - (bottom - top));
 		RoomUi.scrollbar(g, cx + cw - 6, top + 2, bottom - top - 4, formScroll, content);
+		bars.add(cx + cw - 6, top + 2, bottom - top - 4, formScroll, content, 12, s -> formScroll = s);
 	}
 
 	private record Box(RoomDto.P min, RoomDto.P size) {
@@ -535,6 +539,7 @@ public final class RoomScreen extends Screen {
 		}
 		ui.unclip(g);
 		RoomUi.scrollbar(g, cx + cw - 5, top + 2, bottom - top - 4, errorScroll, content);
+		bars.add(cx + cw - 5, top + 2, bottom - top - 4, errorScroll, content, 12, s -> errorScroll = s);
 		ui.button(g, cx, actionY, cw, ROW_H, t("errors.back"), ButtonKind.PRIMARY, null, () -> view = View.SLOTS);
 	}
 
@@ -607,10 +612,27 @@ public final class RoomScreen extends Screen {
 
 	// ---------------------------------------------------------------- input
 
+	/** The scrollbars drawn this frame, taken and dragged with the mouse (2026-11-21). */
+	private final com.mystaria.events.trahison.ui.DragBars bars = new com.mystaria.events.trahison.ui.DragBars();
+
+	@Override
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		return button == 0 && bars.drag(mouseY) || super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+	}
+
+	@Override
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
+		bars.release();
+		return super.mouseReleased(mouseX, mouseY, button);
+	}
+
 	@Override
 	public boolean mouseClicked(double x, double y, int button) {
 		if (confirm != null) {
 			modalUi.click(x, y, button);
+			return true;
+		}
+		if (button == 0 && bars.click(x, y)) {
 			return true;
 		}
 		PanelUi.Field before = ui.focused();

@@ -320,6 +320,7 @@ public final class GmScreen extends TrahisonScreen {
 			int[] thumb = MenuUi.thumb(cy + 1, ch - 2, rightContent + 4, rightScroll);
 			if (thumb != null) {
 				g.fill(x + w - 4, thumb[0], x + w - 2, thumb[0] + thumb[1], TrahisonPalette.EDGE);
+				bars.add(x + w - 4, cy + 1, ch - 2, rightScroll, rightContent + 4, 16, s -> rightScroll = s);
 			}
 		}
 	}

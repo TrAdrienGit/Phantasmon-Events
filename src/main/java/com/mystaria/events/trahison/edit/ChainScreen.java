@@ -96,6 +96,7 @@ final class ChainScreen extends Screen {
 
 	@Override
 	public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+		bars.begin();
 		if (!RoomEditor.isActive()) {
 			minecraft.setScreen(null);
 			return;
@@ -195,6 +196,7 @@ final class ChainScreen extends Screen {
 		}
 		ui.unclip(g);
 		RoomUi.scrollbar(g, x + LIST_W - 5, top + 2, listH - 4, listScroll, content);
+		bars.add(x + LIST_W - 5, top + 2, listH - 4, listScroll, content, 12, s -> listScroll = s);
 	}
 
 	private void askRemove(String id) {
@@ -282,6 +284,7 @@ final class ChainScreen extends Screen {
 		ui.unclip(g);
 		formScroll = RoomUi.clamp(formScroll, content - (bottom - top));
 		RoomUi.scrollbar(g, x + w - 6, top + 2, bottom - top - 4, formScroll, content);
+		bars.add(x + w - 6, top + 2, bottom - top - 4, formScroll, content, 12, s -> formScroll = s);
 		applyFields(step);
 	}
 
@@ -519,10 +522,27 @@ final class ChainScreen extends Screen {
 
 	// ---------------------------------------------------------------- input
 
+	/** The scrollbars drawn this frame, taken and dragged with the mouse (2026-11-21). */
+	private final com.mystaria.events.trahison.ui.DragBars bars = new com.mystaria.events.trahison.ui.DragBars();
+
+	@Override
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		return button == 0 && bars.drag(mouseY) || super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+	}
+
+	@Override
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
+		bars.release();
+		return super.mouseReleased(mouseX, mouseY, button);
+	}
+
 	@Override
 	public boolean mouseClicked(double x, double y, int button) {
 		if (confirm != null) {
 			modalUi.click(x, y, button);
+			return true;
+		}
+		if (button == 0 && bars.click(x, y)) {
 			return true;
 		}
 		PanelUi.Field before = ui.focused();

@@ -121,6 +121,7 @@ public final class EditorScreen extends Screen {
 
 	@Override
 	public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+		bars.begin();
 		if (!TrahisonEditor.isActive()) {
 			onClose();
 			return;
@@ -210,6 +211,7 @@ public final class EditorScreen extends Screen {
 		}
 		ui.unclip(g);
 		scrollbar(g, cx + cw - 5, listY + 2, listH - 4, listScroll, content);
+		bars.add(cx + cw - 5, listY + 2, listH - 4, listScroll, content, 12, s -> listScroll = s);
 
 		int bx = cx;
 		boolean selected = TrahisonEditor.selectedId != null && TrahisonEditor.exists(TrahisonEditor.selectedKind, TrahisonEditor.selectedId);
@@ -365,6 +367,7 @@ public final class EditorScreen extends Screen {
 		ui.unclip(g);
 		formScroll = clamp(formScroll, content - (bottom - top));
 		scrollbar(g, cx + cw - 6, top + 2, bottom - top - 4, formScroll, content);
+		bars.add(cx + cw - 6, top + 2, bottom - top - 4, formScroll, content, 12, s -> formScroll = s);
 	}
 
 	/** Draws the form's rows from {@code y} and returns the y below the last one. */
@@ -662,6 +665,7 @@ public final class EditorScreen extends Screen {
 		}
 		ui.unclip(g);
 		scrollbar(g, cx + cw - 5, top + 2, bottom - top - 4, errorScroll, content);
+		bars.add(cx + cw - 5, top + 2, bottom - top - 4, errorScroll, content, 12, s -> errorScroll = s);
 		ui.button(g, cx, actionY, cw, ROW_H, t("errors.back"), ButtonKind.PRIMARY, null, () -> view = View.LIST);
 	}
 
@@ -741,10 +745,27 @@ public final class EditorScreen extends Screen {
 
 	// ---------------------------------------------------------------- input
 
+	/** The scrollbars drawn this frame, taken and dragged with the mouse (2026-11-21). */
+	private final com.mystaria.events.trahison.ui.DragBars bars = new com.mystaria.events.trahison.ui.DragBars();
+
+	@Override
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		return button == 0 && bars.drag(mouseY) || super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+	}
+
+	@Override
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
+		bars.release();
+		return super.mouseReleased(mouseX, mouseY, button);
+	}
+
 	@Override
 	public boolean mouseClicked(double x, double y, int button) {
 		if (confirm != null) {
 			modalUi.click(x, y, button);
+			return true;
+		}
+		if (button == 0 && bars.click(x, y)) {
 			return true;
 		}
 		PanelUi.Field before = ui.focused();
