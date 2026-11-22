@@ -120,16 +120,26 @@ public final class RebornAmbiance {
 	static void register() {
 		ShowtimeHooks.addAmbianceOverride(RebornAmbiance::current);
 		ShowtimeHooks.setFieldStadium(RebornAmbiance::stadium);
+		// A battle seen from afar shows its field's ambiance (and stadium) too (2026-11-22).
+		DistantFields.register();
+		ShowtimeHooks.addDistantAmbianceOverride(() -> ambianceOf(DistantFields.current()));
+		ShowtimeHooks.setDistantFieldStadium(() -> stadiumOf(DistantFields.current()));
 	}
 
 	private static String current() {
-		String field = LeagueRebornHud.currentField();
+		return ambianceOf(LeagueRebornHud.currentField());
+	}
+
+	private static String stadium() {
+		return stadiumOf(LeagueRebornHud.currentField());
+	}
+
+	private static String ambianceOf(String field) {
 		String id = field == null ? null : BY_FIELD.get(field);
 		return id == null ? null : SHOWTIME + id;
 	}
 
-	private static String stadium() {
-		String field = LeagueRebornHud.currentField();
+	private static String stadiumOf(String field) {
 		String id = field == null ? null : STADIUM_BY_FIELD.get(field);
 		return id == null ? null : SHOWTIME + id;
 	}

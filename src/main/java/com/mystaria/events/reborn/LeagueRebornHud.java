@@ -129,7 +129,7 @@ public final class LeagueRebornHud {
 	}
 
 	/** The field id, from its name's lang key ({@code league_reborn.field.<id>}). */
-	private static String fieldId(Object[] args) {
+	static String fieldId(Object[] args) {
 		if (args.length > 0 && args[0] instanceof Component name && name.getContents() instanceof TranslatableContents key
 				&& key.getKey().startsWith(FIELD_KEY)) {
 			return key.getKey().substring(FIELD_KEY.length());
