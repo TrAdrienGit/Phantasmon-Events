@@ -191,4 +191,4 @@ issu de Mirror) au lieu d'un monde solo :
   les envoie toutes les 0,5 s (`POST /server/mirror/{hub}/ghosts`) et ils apparaissent dans la zone source et les
   autres copies ; les autres joueurs ne peuvent rien y peindre.
 
-Pas encore essayé en jeu : le serveur Minecraft reste éteint pour l'instant (mémoire).
+Pas encore essayé en jeu (à faire sur notre serveur Minecraft dédié, en service depuis novembre 2026).

@@ -1,6 +1,7 @@
 # Plan : le jeu de trahison
 
-> Brouillon du 2026-11-13 (troisième version, après les réponses du même jour), à valider. Il rassemble les décisions prises ce jour-là, les propositions qui en
+> Version du 2026-11-13 (troisième version, après les réponses du même jour), validée par la propriétaire le même jour ;
+> les décisions prises depuis sont dans [`decisions-tranchees.md`](decisions-tranchees.md). Il rassemble les décisions prises ce jour-là, les propositions qui en
 > découlent et les questions encore ouvertes. Les propositions sont marquées **(proposition)**.
 
 ## 1. Objectif

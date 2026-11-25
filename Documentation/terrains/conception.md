@@ -184,7 +184,7 @@ installé), et les dégâts comparés au calcul de Reborn, avant d'aller en jeu.
 - `tools/reborn-fields/test.js <dossier showdown>` : 11 tests dans le Showdown de Cobblemon (dossier `showdown/` d'une
   instance), tous verts.
 
-**2026-11-18 (suite) : branché dans le jeu (pas encore testé en jeu).**
+**2026-11-18 (suite) : branché dans le jeu (validé en jeu par Adrien le même jour).**
 
 - Backend : récompense `FIELD` (valeur = id du terrain), `BattleLobbySetField`, `field` / `field_fixed` / `fields` dans
   `BattleLobbyUpdated`, la règle ajoutée à `battle_rules`, et **celui qui pose le terrain héberge** (l'autre n'a pas
@@ -236,7 +236,7 @@ Le code écrit à la main dans les scripts de Reborn (hors Rejuvenation) pour El
   comportement de Showdown (testé).
 - `test.js` : 28 tests, tous verts.
 
-**2026-11-18 (suite) : lot 2, les terrains aquatiques (à valider en jeu).**
+**2026-11-18 (suite) : lot 2, les terrains aquatiques (validé en jeu par Adrien le même jour).**
 
 Water Surface, Underwater, Murkwater Surface et Swamp, plus ce que Reborn partage entre terrains :
 
@@ -265,13 +265,14 @@ Water Surface, Underwater, Murkwater Surface et Swamp, plus ce que Reborn partag
 - `test.js` : 37 tests, tous verts.
 
 Reste à faire : les textes propres à chaque message ; les autres terrains ; les graines de Reborn (les graines de
-Showdown réagissent pour l'instant à ses 4 terrains) ; Gobe-Bombe sous l'eau.
+Showdown réagissent pour l'instant à ses 4 terrains) ; Gobe-Bombe sous l'eau. Depuis : les autres terrains sont faits
+(lots 3 à 8, le jour même), les graines aussi (2026-11-19).
 
 Écarts connus avec Reborn, à traiter : l'efficacité combinée de Reborn ne descend pas sous ×0,25 (arrondi
 `ceil` de `fieldTypeChange`) ; Showdown arrondit les multiplicateurs au 4096e, Reborn calcule en flottants (écarts
 d'un point de dégâts possibles).
 
-**2026-11-18 (suite) : lots 3 à 8, tous les autres terrains (à valider en jeu).**
+**2026-11-18 (suite) : lots 3 à 8, tous les autres terrains (validés en jeu par Adrien le même jour, poussés : `f2371b9`, `5f64984`).**
 
 Le code propre de Reborn pour les 37 terrains restants, en un passage (même méthode : `HOOKS`, `shared`, `PATCHES`) :
 
@@ -344,3 +345,32 @@ n'ont en fait pas de code de terrain dans Reborn.
 - Écart : Carapiège (Superheated) ne donne que sa Déf. +1 (le piège demande la capacité choisie) ; Puissance donne le
   +2 de Showdown.
 - Textes `league_reborn.text.seed_*` FR/EN. `test.js` : 5 tests de plus, tous verts.
+
+**2026-11-19 : une ambiance et un stade pour chaque terrain (validé en jeu par Adrien, poussé).**
+
+- `reborn/RebornAmbiance` : la table terrain → ambiance de Cobblemon Battle Showtime, imposée au combat
+  (`ShowtimeHooks.setAmbianceOverride`) ; le stade du terrain (mer, fond marin, grottes, landes, halls…) quand le
+  joueur l'a demandé. Les ambiances et les stades eux-mêmes sont dans Showtime (`Documentation/stadiums.md`).
+- Le PNJ peut imposer sa scène ; le lobby propose les préréglages, stades et ambiances (Phantasmon).
+
+**2026-11-20 : les quatre derniers stades, le terrain lu dans les règles du combat (validé, poussé).**
+
+- Quatre halls de plus dans Showtime pour les terrains qui n'en avaient pas (Electric, Psychic, Glitch, Inverse).
+- Le client lit le terrain dans les règles du combat (`League Reborn = <terrain>`), aussi pour un spectateur.
+
+**2026-11-20 et 2026-11-21 : les transitions entre terrains (validées en jeu, poussées).**
+
+- Quand un terrain se transforme en combat, une scène de deux à trois secondes remplace la coupure : moteur dans
+  Showtime (`ambiance/Transitions`, format dans son `data-formats.md`), contenu ici (`assets/phantasmon_events/transitions/`,
+  62 fichiers : cristaux qui poussent, s'éteignent ou s'effondrent, eau polluée, purifiée, gelée, plongée et remontée,
+  herbe, brume, poison, lave qui refroidit, arrivée et départ d'un terrain).
+- Référence de qualité : Crystal Cavern → Cave (2026-11-20 : caméra large qui tourne, secousses, débris).
+- Les graphes des changements de terrain sont sur la page `/wiki` du site public (Village 14).
+
+**2026-11-22 : les combats vus de loin (validé en jeu par Adrien).**
+
+- `reborn/DistantFields` : un joueur qui regarde de loin un combat League Reborn voit l'ambiance de son terrain
+  (`ShowtimeHooks.addDistantAmbianceOverride`) ; les vrais blocs autour du terrain sont habillés de ceux du stade.
+
+**En cours (2026-11-20, pas encore validé ni commité) :** l'IA Reborn avec réglages, dont la prise en compte des
+terrains (voir `ia-reborn-terrains.md`).

@@ -156,7 +156,7 @@ Joueurs, Matchs, Classement (vainqueur mis en avant), Arbre (traits SVG, glissab
 téléphone ; mise à jour en direct sans clignoter. Les têtes passent par le backend (`/public/heads/<pseudo>`) : les
 visiteurs n'appellent aucun service tiers et aucun UUID ne sort.
 
-## 10. Retours sur la page web (Adrien, 2026-11-11 ; corrigés le 2026-11-12, à valider)
+## 10. Retours sur la page web (Adrien, 2026-11-11 ; corrigés le 2026-11-12, validés et commités le 2026-11-13)
 
 - **Un vrai nom de tournoi** : l'admin tape un nom lisible (majuscules, espaces, accents : « Weekly OU #1 ») ; le
   slug minuscule qui sert d'identifiant (URL, commandes) en est tiré tout seul (accents ôtés, `_`, 32 caractères,

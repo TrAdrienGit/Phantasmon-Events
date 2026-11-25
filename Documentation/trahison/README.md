@@ -1,6 +1,7 @@
 # Le jeu de trahison
 
-> Une partie de Phantasmon Events. Conception terminée le 2026-11-13, code pas encore commencé.
+> Une partie de Phantasmon Events. Conception validée le 2026-11-13 ; code écrit du 2026-11-16 au 2026-11-18 et déployé,
+> **pas encore essayé en jeu** (état et suite : [`reprise.md`](reprise.md)).
 > Cette page est le contexte court à charger avant de travailler sur le jeu.
 
 ## Ce que c'est

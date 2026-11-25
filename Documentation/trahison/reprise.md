@@ -11,13 +11,13 @@
 > - **Questions ouvertes** dans [`decisions.md`](decisions.md) : D250 à D259 (création guidée), D260 (cachettes des
 >   salles), D270 à D274 (contrôles du plan).
 >
-> **Mode d'essai fait le 2026-11-18 (code et tests verts, non vu en jeu ; non commité, non déployé) :** le mode d'essai `room try` de
+> **Mode d'essai fait le 2026-11-18 (commité le 2026-11-18, `74bbaa6`, et déployé avec les versions suivantes ; pas encore vu en jeu) :** le mode d'essai `room try` de
 > l'éditeur de salle. Dans le monde solo où la salle est construite, sans partie ni hub ni factices :
 > `/phantasmon event trahison room try` rend la salle de l'éditeur jouable (instance de salle admin seule côté backend,
 > ancrée sur la boîte de l'éditeur ; emplacements interactifs, mini-jeux, indices, aides, sortie) ; les étapes de
 > coopération se jouent seule pendant l'essai (sans toucher `solo`/`hold`) ; `room try reset`, `room try skip` (étape
 > en cours), `room try stop` ; un petit panneau montre l'étape en cours. Rien n'est enregistré comme partie. Questions
-> D280 à D289. Puis vérifier, pousser, redéployer (backend + `--events`), mettre à jour le pas à pas du guide (étape 6).
+> D280 à D289. Le pas à pas du guide de la salle en parle.
 >
 > **Suite :** relire `decisions.md` ; premier essai et corrections ; lore et vrais textes (T9.4) ; habillage (T9.5) ; T10.
 
@@ -34,7 +34,8 @@
 | e393708 | T3.4 cadre des mini-jeux (client) ; T1.4 client provisoire (HUD bracelet, animatrice, écrans joueur et MJ) | Build client, clés de langue identiques EN/FR |
 | 56c12d3 | Salles branchées sur le moteur, salles persistées, routes des salles réservées aux admins | 138 tests verts |
 
-Rien n'a encore tourné **en jeu** : aucun déploiement n'a été fait (ni mod, ni module backend).
+Rien n'a encore tourné **en jeu**. Le mod et le module backend sont déployés depuis le 2026-11-18 (premier déploiement,
+`660df60`), mais aucune partie ni salle n'a encore été essayée.
 
 ## Travail interrompu
 
