@@ -42,7 +42,7 @@ public final class MirrorSharing {
 	public static void register() {
 		PhantasmonApi.registerSettingToggle(new PhantasmonApi.SettingToggle(
 				Component.translatable("phantasmon_events.settings.share_mirror_blocks"),
-				Component.translatable("phantasmon_events.settings.share_mirror_blocks.hint"),
+				null,
 				MirrorSharing::enabled, MirrorSharing::toggle));
 	}
 

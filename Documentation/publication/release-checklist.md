@@ -98,7 +98,7 @@ First public release.
 ## Before you publish
 
 - [ ] Phantasmon is published (its Modrinth slug is the one in the description's links).
-- [ ] Settings → "Send blocks to the mirror hubs" off: walking through a mirror hub's source zone sends nothing.
+- [ ] Settings → "Hub terrain sync" off: walking through a mirror hub's source zone sends nothing.
 - [ ] CurseForge: no link to the backend's `/download` page in the description (no external download links).
 - [ ] Clean instance: Fabric API + Cobblemon + Showtime + Phantasmon + Phantasmon Events, no resource pack. With a
       backend that has the module: NPCs show and can be battled, the Tournaments page opens. With a backend without

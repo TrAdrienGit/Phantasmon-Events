@@ -79,8 +79,7 @@ the backend (the whole zone the first time, then each block that changes, includ
 of signs). Nothing is sent to the Minecraft server. **Only set up a mirror hub on a server whose owners agree**: many
 servers forbid copying their builds, and the builds belong to their authors.
 
-Sending is on by default. Any player can turn it off: Phantasmon menu (**H**), Settings, "Send blocks to the mirror
-hubs"; their game then reads and sends nothing.
+Sending is on by default. Any player can turn it off: Phantasmon menu (**H**), Settings, "Hub terrain sync"; their game then reads and sends nothing.
 
 <!-- Screenshot: a mirror hub -->
 
@@ -130,7 +129,7 @@ does, and adds no other server. What it sends there:
 - event NPCs, tournaments, registrations and results;
 - **mirror hubs:** when you walk near the source zone of a mirror hub on a server, the blocks of that zone, as
   described above, so the organiser's copy stays up to date. This happens only where an organiser of your backend has
-  set up a mirror hub, and you can turn it off in Settings ("Send blocks to the mirror hubs", on by default).
+  set up a mirror hub, and you can turn it off in Settings ("Hub terrain sync", on by default).
 
 Tournament results and players' names are shown on the backend's public web pages. Player skins come from Mojang as in
 vanilla. See Phantasmon's page for what the backend receives.
