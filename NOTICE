@@ -6,3 +6,18 @@ This product is licensed under the Apache License, Version 2.0 (see LICENSE).
 Anyone may use, modify and redistribute it, including commercially, as long as
 this NOTICE file is kept and credit is given to the original author above.
 Modified files must carry a notice stating that they were changed.
+
+Third-party credits
+-------------------
+
+Pokémon Reborn (https://www.rebornevo.com), by Amethyst and the Pokémon Reborn team.
+The League Reborn field data and effects (assets/phantasmon_events/league_reborn/), the move table
+(assets/phantasmon_events/ai/reborn_moves.json) and the Reborn battle AI (ai/RebornBattleAI.java) are
+adapted from Pokémon Reborn's scripts, with credit as its FAQ asks. Pokémon Reborn's texts and graphics
+are not included. Phantasmon Events is not affiliated with or endorsed by the Pokémon Reborn team.
+
+Smogon (https://www.smogon.com/stats/): the expert AI's competitive sets
+(assets/phantasmon_events/ai/smogon_sets.json) are derived from Smogon's usage statistics.
+
+Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.
+Not affiliated with Nintendo, The Pokémon Company, Game Freak or the Cobblemon team.

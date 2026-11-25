@@ -109,6 +109,8 @@
   "phantasmon_events.screen.bracket.reset": "[Finale décisive] ",
   "phantasmon_events.error.error_tournament_too_late": "[Tournoi] Ce match est décidé et ses joueurs sont déjà passés au tour suivant de l'arbre : il ne se corrige plus.",
   "phantasmon_events.hub.cleaned": "[Hub] « %s » : %s bloc(s) fantôme(s) retiré(s).",
+  "phantasmon_events.settings.share_mirror_blocks": "Envoyer les blocs aux hubs miroirs",
+  "phantasmon_events.settings.share_mirror_blocks.hint": "Près de la zone source d'un hub miroir sur un serveur, ton jeu envoie au backend les blocs de cette zone, pour que la copie de l'organisateur reste à jour. Désactivé : rien n'est envoyé.",
   "phantasmon_events.hub.clean_failed": "[Hub] Impossible de nettoyer « %s ».",
   "phantasmon_events.hub.tp_solo_only": "[Hub] Le téléport ne marche que dans un monde solo.",
   "phantasmon_events.hub.tp_unknown": "[Hub] Aucun joueur « %s » dans le hub ici.",

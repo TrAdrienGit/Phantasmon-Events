@@ -3,10 +3,18 @@
 	"id": "phantasmon_events",
 	"version": "${version}",
 	"name": "Phantasmon Events",
-	"description": "Phantasmon add-on for community events: mirror hubs copying a multiplayer server's terrain into a single-player world.",
+	"description": "Phantasmon add-on for community events: trainer NPCs, League intros, tournaments, mirror hubs, and Pokémon Reborn's field effects (adapted from Pokémon Reborn by Amethyst and the Reborn team, rebornevo.com; not affiliated with them).",
 	"authors": [
 		"Mystaria"
 	],
+	"contributors": [
+		"Pokémon Reborn team (field data, move table and battle AI adapted, rebornevo.com)"
+	],
+	"contact": {
+		"homepage": "https://github.com/TrAdrienGit/Phantasmon-Events",
+		"sources": "https://github.com/TrAdrienGit/Phantasmon-Events",
+		"issues": "https://github.com/TrAdrienGit/Phantasmon-Events/issues"
+	},
 	"license": "Apache-2.0",
 	"icon": "assets/phantasmon_events/icon.png",
 	"environment": "client",
@@ -27,7 +35,7 @@
 		"java": ">=21",
 		"fabric-api": "*",
 		"cobblemon": ">=1.8.1",
-		"phantasmon": ">=0.1.0 <0.2.0",
-		"cobblemon_battle_showtime": ">=1.4.0 <2.0.0"
+		"phantasmon": ">=0.1.66 <0.2.0",
+		"cobblemon_battle_showtime": ">=1.7.30 <2.0.0"
 	}
 }

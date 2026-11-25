@@ -23,8 +23,10 @@ public final class EventHubsTab implements HubManagerTab {
 	private EventHubsTab() {
 	}
 
+	/** Also the mirror hubs' switch on the Settings page, with the rest of their registration. */
 	public static void register() {
 		PhantasmonApi.registerHubManagerTab(new EventHubsTab());
+		MirrorSharing.register();
 	}
 
 	@Override

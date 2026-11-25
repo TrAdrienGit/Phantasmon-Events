@@ -73,6 +73,11 @@ public final class MirrorCapture {
 		if (mc.level == null || mc.player == null || mc.hasSingleplayerServer() || !PhantasmonApi.isAuthenticated()) {
 			return;
 		}
+		if (!MirrorSharing.enabled()) {
+			// Refused in the settings: nothing read, nothing sent, and what was waiting is dropped.
+			SOURCES.clear();
+			return;
+		}
 		follow(PhantasmonApi.anchorsHere());
 		// One tile (16 × 16 × 384 blocks) read per tick, all sources together.
 		for (Source source : SOURCES.values()) {
