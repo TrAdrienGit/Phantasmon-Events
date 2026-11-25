@@ -796,7 +796,10 @@ public final class TournamentsPage implements MenuPage {
 			notes.add(Component.translatable("phantasmon_events.tp.admin.auto_start", when(t.checkInClosesAt())));
 		}
 		if (running) {
-			notes.add(Component.translatable("phantasmon_events.tp.admin.web", "server-linux.tail192969.ts.net/t/" + t.name()));
+			// The backend this client uses (it can move: Oracle migration), not a fixed host.
+			java.net.URI backend = com.mystaria.phantasmon.client.network.BackendConfig.BASE_URL;
+			String host = backend == null ? "?" : backend.getHost() + (backend.getPort() > 0 ? ":" + backend.getPort() : "");
+			notes.add(Component.translatable("phantasmon_events.tp.admin.web", host + "/t/" + t.name()));
 		}
 		for (Component note : notes) {
 			ny += MenuUi.paragraph(g, note, x, ny, w, c.muted()) + 4;

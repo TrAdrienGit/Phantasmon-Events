@@ -144,6 +144,8 @@ public class MirrorService {
 		final Map<Long, Tile> tiles = new HashMap<>();
 		long version;
 		boolean dirty;
+		/** Last {@link #terrain} lookup (System.nanoTime), for unloading a terrain nobody used for a while. */
+		volatile long lastUsed = System.nanoTime();
 
 		Terrain(int side) {
 			this.side = side;
@@ -471,7 +473,7 @@ public class MirrorService {
 			WsMessage message = WsMessage.of("EventsMirrorGhosts", Map.of("hub", hub.getName(),
 					"changes", changes.subList(from, Math.min(changes.size(), from + MAX_CHANGES))));
 			publish(hub, message);
-			watchers.getOrDefault(hub.getUuid(), Set.of()).forEach(watcher -> sessionRegistry.send(watcher, message));
+			sessionRegistry.sendAll(watchers.getOrDefault(hub.getUuid(), Set.of()), message);
 		}
 	}
 
@@ -504,7 +506,7 @@ public class MirrorService {
 	}
 
 	private void publish(Hub hub, WsMessage message) {
-		subscribers.getOrDefault(hub.getUuid(), Set.of()).forEach(subscriber -> sessionRegistry.send(subscriber, message));
+		sessionRegistry.sendAll(subscribers.getOrDefault(hub.getUuid(), Set.of()), message);
 		feeds.computeIfAbsent(hub.getUuid(), uuid -> new Feed()).add(message);
 	}
 
@@ -635,27 +637,62 @@ public class MirrorService {
 
 	// ---------------------------------------------------------------- files
 
+	/**
+	 * A terrain unused this long (no copy built, nobody in its source zone) is dropped from memory once saved; the next
+	 * lookup reads its mirror.bin again. A large hub (the Onyx league: 329×329) holds about 50 MB while loaded.
+	 */
+	static final long UNLOAD_AFTER_NANOS = java.util.concurrent.TimeUnit.MINUTES.toNanos(10);
+
 	@Scheduled(fixedRate = 10_000)
 	public void saveDirty() {
-		terrains.forEach((uuid, terrain) -> hubRepository.findById(uuid).ifPresent(hub -> {
-			byte[] bytes;
+		terrains.forEach((uuid, terrain) -> {
+			boolean dirty;
 			synchronized (terrain) {
-				if (!terrain.dirty) {
-					return;
-				}
-				terrain.dirty = false;
-				bytes = write(terrain);
+				dirty = terrain.dirty;
 			}
-			try {
-				Path folder = root.resolve("hub_" + hub.getName());
-				Files.createDirectories(folder);
-				Path temp = folder.resolve("mirror.bin.tmp");
-				Files.write(temp, bytes);
-				Files.move(temp, folder.resolve("mirror.bin"), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-			} catch (IOException ex) {
-				log.warn("Could not save the terrain of mirror hub {}", hub.getName(), ex);
+			// Only a dirty terrain needs its hub (for the folder name): no query every 10 s for the clean ones.
+			if (dirty) {
+				hubRepository.findById(uuid).ifPresent(hub -> save(hub, terrain));
 			}
-		}));
+			unloadIfIdle(uuid);
+		});
+	}
+
+	/** Drops the hub's terrain from memory if it is saved, unused for {@link #UNLOAD_AFTER_NANOS} and nobody follows it. */
+	void unloadIfIdle(UUID hubUuid) {
+		if (!subscribers.getOrDefault(hubUuid, Set.of()).isEmpty() || !watchers.getOrDefault(hubUuid, Set.of()).isEmpty()) {
+			return;
+		}
+		long now = System.nanoTime();
+		terrains.computeIfPresent(hubUuid, (uuid, terrain) -> {
+			synchronized (terrain) {
+				return !terrain.dirty && now - terrain.lastUsed > UNLOAD_AFTER_NANOS ? null : terrain;
+			}
+		});
+	}
+
+	private void save(Hub hub, Terrain terrain) {
+		byte[] bytes;
+		synchronized (terrain) {
+			if (!terrain.dirty) {
+				return;
+			}
+			terrain.dirty = false;
+			bytes = write(terrain);
+		}
+		try {
+			Path folder = root.resolve("hub_" + hub.getName());
+			Files.createDirectories(folder);
+			Path temp = folder.resolve("mirror.bin.tmp");
+			Files.write(temp, bytes);
+			Files.move(temp, folder.resolve("mirror.bin"), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+		} catch (IOException ex) {
+			log.warn("Could not save the terrain of mirror hub {}", hub.getName(), ex);
+			// Dirty again: retried in 10 s, and never unloaded from memory unsaved.
+			synchronized (terrain) {
+				terrain.dirty = true;
+			}
+		}
 	}
 
 	private Hub mirrorHub(String name) {
@@ -669,7 +706,13 @@ public class MirrorService {
 
 	/** The hub's terrain, loaded for {@code radius} if not in memory yet. */
 	private Terrain terrain(Hub hub, int radius) {
-		return terrains.computeIfAbsent(hub.getUuid(), uuid -> {
+		// compute (not computeIfAbsent): the lookup time is stamped under the map's lock, so an unload
+		// (unloadIfIdle, also atomic on this key) never drops a terrain someone just took.
+		return terrains.compute(hub.getUuid(), (uuid, loaded) -> {
+			if (loaded != null) {
+				loaded.lastUsed = System.nanoTime();
+				return loaded;
+			}
 			Terrain terrain = new Terrain(2 * radius + 1);
 			Path file = root.resolve("hub_" + hub.getName()).resolve("mirror.bin");
 			if (Files.isRegularFile(file)) {
