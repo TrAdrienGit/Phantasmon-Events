@@ -87,8 +87,18 @@ public final class NpcEditScreen extends Screen {
 		List<String[]> all = new ArrayList<>();
 		all.add(new String[] { "free", Component.translatable("phantasmon_events.npc.format_free").getString() });
 		all.addAll(TournamentForm.FORMATS);
+		all.addAll(DOUBLES_FORMATS);
 		return all;
 	}
+
+	/** Doubles formats (2026-11-27): NPCs may battle in doubles; tournaments stay singles until doubles are validated. */
+	static final List<String[]> DOUBLES_FORMATS = List.of(
+			new String[] { "gen9doublesou", "Doubles OU" },
+			new String[] { "gen9doublesubers", "Doubles Ubers" },
+			new String[] { "gen9doublesuu", "Doubles UU" },
+			new String[] { "gen9nationaldexdoubles", "NatDex Doubles" },
+			new String[] { "gen9championsdoubles", "Champions Doubles" },
+			new String[] { "gen9championsvgc2026regmc", "Champions VGC (4 of 6)" });
 
 	/**
 	 * "" (the player's pick), then every intro: Showtime's own, then the add-ons' (the League's), reserved ones

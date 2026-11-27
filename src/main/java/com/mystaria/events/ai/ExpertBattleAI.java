@@ -187,8 +187,8 @@ public final class ExpertBattleAI implements PhantasmonBattleAI {
 
 	private ShowdownActionResponse decide(ActiveBattlePokemon active, BattleSide side, ShowdownMoveset moveset, boolean forceSwitch) {
 		readLog(active.getBattle());
-		ActiveBattlePokemon foeSlot = side.getOppositeSide().getActivePokemon().get(0);
-		BattlePokemon foeActive = foeSlot.getBattlePokemon();
+		// Doubles: the first foe still standing (the move is aimed at it, GhostBattles.withTarget).
+		BattlePokemon foeActive = PhantasmonAiSupport.firstFoe(side);
 		if (foeActive != null) {
 			seenFoes.add(foeActive.getUuid());
 		}

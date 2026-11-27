@@ -1048,7 +1048,8 @@ public final class RebornBattleAI implements PhantasmonBattleAI {
 		Set<UUID> ours = new HashSet<>();
 		party.forEach(pokemon -> ours.add(pokemon.getUuid()));
 		readLog(active.getBattle(), ours);
-		BattlePokemon foePokemon = side.getOppositeSide().getActivePokemon().get(0).getBattlePokemon();
+		// Doubles: the first foe still standing (the move is aimed at it, GhostBattles.withTarget).
+		BattlePokemon foePokemon = PhantasmonAiSupport.firstFoe(side);
 		BattlePokemon mine = active.getBattlePokemon();
 		if (foePokemon == null) {
 			return null;

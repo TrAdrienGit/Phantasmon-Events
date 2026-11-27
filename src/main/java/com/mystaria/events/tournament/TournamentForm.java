@@ -44,7 +44,10 @@ public final class TournamentForm {
 			new String[] { "gen9lc", "LC" },
 			new String[] { "gen9monotype", "Monotype" },
 			new String[] { "gen91v1", "1v1" },
-			new String[] { "gen9anythinggoes", "Anything Goes" });
+			new String[] { "gen9anythinggoes", "Anything Goes" },
+			new String[] { "gen9championsou", "Champions OU" },
+			new String[] { "gen9championsuu", "Champions UU" },
+			new String[] { "gen9championsnationaldex", "Champions NatDex" });
 
 	/** The four dated steps: their API field and their label. */
 	private static final String[][] DATES = {
