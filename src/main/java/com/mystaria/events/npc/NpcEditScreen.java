@@ -62,7 +62,9 @@ public final class NpcEditScreen extends Screen {
 		ai = new Ui.Dropdown<>(AIS, NpcEditScreen::aiName, AIS.contains(npc.ai()) ? npc.ai() : "normal");
 		List<String[]> formats = formats();
 		format = new Ui.Dropdown<>(formats, f -> Component.literal(f[1]),
-				formats.stream().filter(f -> f[0].equals(npc.formatId())).findFirst().orElse(formats.get(0)));
+				formats.stream().filter(f -> f[0].equals(npc.formatId())).findFirst()
+						.orElse(formats.stream().filter(f -> "free".equals(f[0])).findFirst().orElseThrow()))
+				.headers(f -> f[0].startsWith("#"));
 		String currentIntro = npc.intro() == null ? "" : npc.intro();
 		String currentAmbiance = npc.ambiance() == null ? "" : npc.ambiance();
 		intro = new Ui.Dropdown<>(intros(currentIntro), NpcEditScreen::introName, currentIntro);
@@ -83,22 +85,92 @@ public final class NpcEditScreen extends Screen {
 				: com.mystaria.events.reborn.LeagueReborn.fieldName(id), currentField);
 	}
 
+	/**
+	 * The battle formats, as the lobby's format picker lists them (2026-11-27): one header ("#...") per column and
+	 * sub-group — Singles (National Dex, Gen 9, Champions), Doubles, Random, Others — the backend's catalogue order.
+	 */
 	static List<String[]> formats() {
 		List<String[]> all = new ArrayList<>();
-		all.add(new String[] { "free", Component.translatable("phantasmon_events.npc.format_free").getString() });
-		all.addAll(TournamentForm.FORMATS);
-		all.addAll(DOUBLES_FORMATS);
+		for (String[] entry : CATALOGUE) {
+			if (entry[0].startsWith("#")) {
+				String[] keys = entry[1].split("\\|");
+				all.add(new String[] { entry[0], Component.translatable("phantasmon_events.npc.format_group_" + keys[0]).getString()
+						+ " · " + Component.translatable("phantasmon_events.npc.format_sub_" + keys[1]).getString() });
+			} else if ("free".equals(entry[0])) {
+				all.add(new String[] { "free", Component.translatable("phantasmon_events.npc.format_free").getString() });
+			} else {
+				all.add(entry);
+			}
+		}
 		return all;
 	}
 
-	/** Doubles formats (2026-11-27): NPCs may battle in doubles; tournaments stay singles until doubles are validated. */
-	static final List<String[]> DOUBLES_FORMATS = List.of(
+	/** Headers: "#id", "column|sub-group" (lang keys); formats: Showdown id, short name. */
+	private static final List<String[]> CATALOGUE = List.of(
+			new String[] { "#singles_natdex", "singles|natdex" },
+			new String[] { "gen9nationaldex", "NatDex OU" },
+			new String[] { "gen9nationaldexubers", "NatDex Ubers" },
+			new String[] { "gen9nationaldexmonotype", "NatDex Monotype" },
+			new String[] { "gen9nationaldexuu", "NatDex UU" },
+			new String[] { "gen9nationaldexru", "NatDex RU" },
+			new String[] { "gen9nationaldexlc", "NatDex LC" },
+			new String[] { "gen9nationaldex1v1", "NatDex 1v1" },
+			new String[] { "gen9nationaldexag", "NatDex AG" },
+			new String[] { "gen9nationaldexmonotypeubers", "NatDex Monotype Ubers" },
+			new String[] { "gen9nationaldexubersuu", "NatDex Ubers UU" },
+			new String[] { "#singles_gen9", "singles|gen9" },
+			new String[] { "gen9ou", "OU" },
+			new String[] { "gen9anythinggoes", "Anything Goes" },
+			new String[] { "gen9ubers", "Ubers" },
+			new String[] { "gen9monotype", "Monotype" },
+			new String[] { "gen9uu", "UU" },
+			new String[] { "gen91v1", "1v1" },
+			new String[] { "gen9ru", "RU" },
+			new String[] { "gen9pu", "PU" },
+			new String[] { "gen9nu", "NU" },
+			new String[] { "gen9lc", "LC" },
+			new String[] { "gen9zu", "ZU" },
+			new String[] { "gen9bssregi", "BSS Reg I (3 of 6)" },
+			new String[] { "gen9ubersuu", "Ubers UU" },
+			new String[] { "gen9lcuu", "LC UU" },
+			new String[] { "#singles_champions", "singles|champions" },
+			new String[] { "gen9championsnationaldex", "Champions NatDex" },
+			new String[] { "gen9championsou", "Champions OU" },
+			new String[] { "gen9championsbssregmc", "Champions BSS (3 of 6)" },
+			new String[] { "gen9championsuu", "Champions UU" },
+			new String[] { "#doubles_natdex", "doubles|natdex" },
+			new String[] { "gen9nationaldexdoubles", "NatDex Doubles" },
+			new String[] { "gen9nationaldexdoublesubers", "NatDex Doubles Ubers" },
+			new String[] { "#doubles_gen9", "doubles|gen9" },
 			new String[] { "gen9doublesou", "Doubles OU" },
 			new String[] { "gen9doublesubers", "Doubles Ubers" },
 			new String[] { "gen9doublesuu", "Doubles UU" },
-			new String[] { "gen9nationaldexdoubles", "NatDex Doubles" },
+			new String[] { "gen92v2doubles", "2v2 Doubles" },
+			new String[] { "gen9vgc2024regg", "VGC 2024 Reg G (4 of 6)" },
+			new String[] { "gen9vgc2025regi", "VGC 2025 Reg I (4 of 6)" },
+			new String[] { "gen9doubleslc", "Doubles LC" },
+			new String[] { "#doubles_champions", "doubles|champions" },
+			new String[] { "gen9championsvgc2026regmc", "Champions VGC (4 of 6)" },
 			new String[] { "gen9championsdoubles", "Champions Doubles" },
-			new String[] { "gen9championsvgc2026regmc", "Champions VGC (4 of 6)" });
+			new String[] { "#random_singles", "random|singles" },
+			new String[] { "gen9randombattle", "Random Battle" },
+			new String[] { "gen9monotyperandombattle", "Monotype Random Battle" },
+			new String[] { "gen9hackmonscup", "Hackmons Cup" },
+			new String[] { "#random_doubles", "random|doubles" },
+			new String[] { "gen9randomdoublesbattle", "Random Doubles Battle" },
+			new String[] { "gen9doubleshackmonscup", "Doubles Hackmons Cup" },
+			new String[] { "#other_free", "other|free" },
+			new String[] { "free", "" },
+			new String[] { "#other_natdex", "other|natdex" },
+			new String[] { "gen9nationaldexaaa", "NatDex AAA" },
+			new String[] { "gen9nationaldexstabmons", "NatDex STABmons" },
+			new String[] { "gen9nationaldexmonoletter", "NatDex Monoletter" },
+			new String[] { "#other_gen9", "other|gen9" },
+			new String[] { "gen9balancedhackmons", "Balanced Hackmons" },
+			new String[] { "gen9almostanyability", "Almost Any Ability" },
+			new String[] { "gen9stabmons", "STABmons" },
+			new String[] { "gen9monocolor", "Monocolor" },
+			new String[] { "gen9nfe", "NFE" });
 
 	/**
 	 * "" (the player's pick), then every intro: Showtime's own, then the add-ons' (the League's), reserved ones

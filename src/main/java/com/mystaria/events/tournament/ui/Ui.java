@@ -223,11 +223,23 @@ public final class Ui {
 		private final java.util.function.Function<T, Component> name;
 		public T value;
 		private int scroll;
+		/** Choices that are group headers ("Simple", "Double"): shown, not pickable (2026-11-27). */
+		private java.util.function.Predicate<T> header = choice -> false;
 
 		public Dropdown(List<T> values, java.util.function.Function<T, Component> name, T value) {
 			this.values = values;
 			this.name = name;
 			this.value = value;
+		}
+
+		/** Marks the choices that only head a group of the list. */
+		public Dropdown<T> headers(java.util.function.Predicate<T> header) {
+			this.header = header;
+			return this;
+		}
+
+		public boolean isHeader(T choice) {
+			return header.test(choice);
 		}
 
 		public Component name(T choice) {
@@ -304,6 +316,13 @@ public final class Ui {
 		for (int i = 0; i < rows; i++) {
 			T choice = list.values.get(list.scroll + i);
 			int ry = top + 1 + i * ROW;
+			if (list.isHeader(choice)) {
+				// Group header: its name in the accent colour over a full-width accent line, not clickable.
+				MenuUi.text(g, list.name(choice), openX + 4, ry + 3, openW - 14, c.accentHot());
+				g.fill(openX + 2, ry + ROW - 1, openX + openW - 6, ry + ROW, c.accent());
+				zone(openX, ry, openW, ROW, () -> { });
+				continue;
+			}
 			boolean hot = hovered(openX, ry, openW, ROW);
 			if (choice.equals(list.value)) {
 				MenuUi.selectedRow(g, openX + 1, ry, openW - 2, ROW);
